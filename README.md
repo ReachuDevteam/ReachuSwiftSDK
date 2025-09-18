@@ -1,131 +1,89 @@
 # Reachu Swift SDK
 
-A Swift SDK for the Reachu platform - add ecommerce to any iOS, macOS, tvOS or watchOS application.
+A modular Swift SDK for the Reachu ecommerce platform. Add shopping cart, checkout, and livestream features to any iOS, macOS, tvOS or watchOS application.
 
-## Features
+## 🏗️ Modular Architecture
 
-- **API Integration** (REST & GraphQL)
-- **Products & Channels** management
-- **Cart** functionality
-- **Checkout** process
-- **Payments** processing
-- **Orders** management
-- **Multi Currency** support
-- **LiveShow** (coming in Phase 3)
-- **UI Components** (optional)
+This SDK is designed with a modular architecture that allows you to import only the features you need:
 
-## Installation
+- **ReachuCore** (Required) - Core ecommerce functionality
+- **ReachuUI** (Optional) - SwiftUI components
+- **ReachuLiveShow** (Optional) - Livestream shopping features
+- **ReachuLiveUI** (Optional) - Livestream UI components
 
-### Swift Package Manager
+## 📦 Installation
 
-Add the Reachu Swift SDK to your project using Xcode or by adding it to your `Package.swift`:
+Add the Reachu Swift SDK to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ReachuDevteam/swift-sdk.git", from: "1.0.0")
+    .package(url: "https://github.com/angelosv/ReachuSwiftSDK.git", from: "1.0.0")
 ]
 ```
 
-### Modular Installation
+### Choose Your Modules
 
-Choose only the modules you need:
+Import only what you need:
 
-#### Core Only (Required)
 ```swift
-.product(name: "ReachuCore", package: "swift-sdk")
+// Core functionality only
+.product(name: "ReachuCore", package: "ReachuSwiftSDK")
+
+// Core + UI Components
+.product(name: "ReachuUI", package: "ReachuSwiftSDK")
+
+// Core + LiveShow
+.product(name: "ReachuLiveShow", package: "ReachuSwiftSDK")
+
+// Everything
+.product(name: "ReachuComplete", package: "ReachuSwiftSDK")
 ```
 
-#### Core + UI Components
-```swift
-.product(name: "ReachuUI", package: "swift-sdk")
-```
-
-#### Core + LiveShow
-```swift
-.product(name: "ReachuLiveShow", package: "swift-sdk")
-```
-
-#### Everything
-```swift
-.product(name: "ReachuComplete", package: "swift-sdk")
-```
-
-## Quick Start
-
-### 1. Configure the SDK
+## 🚀 Quick Start
 
 ```swift
 import ReachuCore
 
-// In your AppDelegate or App struct
+// Configure the SDK
 Reachu.configure(
     apiKey: "your-reachu-api-key",
     environment: .production
 )
-```
 
-### 2. Basic Usage
-
-```swift
-// Get products
+// Use the modules
 let products = try await Reachu.shared.products.getProducts()
-
-// Get channels
-let channels = try await Reachu.shared.products.getChannels()
-
-// Cart operations
-let cart = try await Reachu.shared.cart.createCart()
-let updatedCart = try await Reachu.shared.cart.addToCart(
-    productId: "product-123",
-    quantity: 1,
-    cartId: cart.id
-)
-
-// Checkout
-let checkout = try await Reachu.shared.checkout.createCheckout(cartId: cart.id)
-
-// Process payment
-let payment = try await Reachu.shared.payments.initiatePayment(
-    checkoutId: checkout.id,
-    paymentMethod: paymentMethod
+let cart = try await Reachu.shared.cart.createCart(
+    customerSessionId: "session-123",
+    currency: "USD"
 )
 ```
 
-### 3. With UI Components (Optional)
+## 📋 Development Status
 
-```swift
-import ReachuUI
+🚧 **This SDK is currently under active development**
 
-struct ShopView: View {
-    var body: some View {
-        // Ready-to-use UI components
-        ProductListView()
-        CartView()
-        CheckoutView()
-    }
-}
-```
+See [PLAN_DESARROLLO_MODULAR.md](PLAN_DESARROLLO_MODULAR.md) for the complete development roadmap and task breakdown.
 
-## Development Status
+### Current Phase
+- **Phase 1**: Core module development (In Progress)
+- **Phase 2**: UI Components (Planned)
+- **Phase 3**: LiveShow features (Planned)
 
-This SDK is under active development in phases:
+## 📚 Documentation
 
-- ✅ **Phase 1**: Core Reachu functionality (Products, Cart, Checkout, Payments, Orders)
-- 🚧 **Phase 2**: UI Components (SwiftUI components)  
-- 📋 **Phase 3**: LiveShow functionality
+- [Development Plan](PLAN_DESARROLLO_MODULAR.md) - Complete roadmap and architecture
+- [Package Configuration](Package.swift) - Swift Package Manager setup
 
-## Documentation
-
-- [API Reference](docs/api-reference.md)
-- [Examples](docs/examples/)
-- [Migration Guide](docs/migration.md)
-
-## Requirements
+## ⚡ Requirements
 
 - iOS 15.0+ / macOS 12.0+ / tvOS 15.0+ / watchOS 8.0+
 - Xcode 14.0+
 - Swift 5.9+
 
-## License
+## 🤝 Contributing
+
+This project follows a structured development plan. Please check the [development plan](PLAN_DESARROLLO_MODULAR.md) for current tasks and contribution guidelines.
+
+## 📄 License
 
 MIT License - see [LICENSE](LICENSE) for details.
