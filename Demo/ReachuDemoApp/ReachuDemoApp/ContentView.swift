@@ -191,20 +191,103 @@ struct ColorSwatch: View {
 }
 
 struct ProductCatalogDemoView: View {
+    @State private var products: [Product] = []
+    @State private var isLoading = true
+    private let mockService = MockReachuService.shared
+    
     var body: some View {
-        VStack {
-            Text("Product Catalog")
-                .font(ReachuTypography.largeTitle)
-            
-            Text("Coming soon...")
-                .font(ReachuTypography.body)
-                .foregroundColor(ReachuColors.textSecondary)
-            
-            Spacer()
+        Group {
+            if isLoading {
+                ProgressView("Loading products...")
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: [
+                        GridItem(.flexible()),
+                        GridItem(.flexible())
+                    ], spacing: ReachuSpacing.md) {
+                        ForEach(products) { product in
+                            ProductCardView(product: product)
+                        }
+                    }
+                    .padding(ReachuSpacing.lg)
+                }
+            }
         }
-        .padding()
         .navigationTitle("Products")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await loadProducts()
+        }
+    }
+    
+    private func loadProducts() async {
+        do {
+            products = try await mockService.getProducts()
+            isLoading = false
+        } catch {
+            isLoading = false
+            print("Error loading products: \(error)")
+        }
+    }
+}
+
+struct ProductCardView: View {
+    let product: Product
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            AsyncImage(url: URL(string: product.images.first?.url ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(ReachuColors.background)
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(ReachuColors.textSecondary)
+                    )
+            }
+            .frame(height: 120)
+            .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium))
+            
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text(product.title)
+                    .font(ReachuTypography.headline)
+                    .lineLimit(2)
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                if let brand = product.brand {
+                    Text(brand)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                }
+                
+                HStack {
+                    Text(product.price.displayAmount)
+                        .font(ReachuTypography.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(ReachuColors.primary)
+                    
+                    Spacer()
+                    
+                    if let quantity = product.quantity, quantity > 0 {
+                        RButton(title: "Add", style: .primary, size: .small) {
+                            print("Add \(product.title) to cart")
+                        }
+                    } else {
+                        Text("Out of Stock")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.error)
+                    }
+                }
+            }
+        }
+        .padding(ReachuSpacing.md)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
 }
 
