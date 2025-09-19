@@ -12,6 +12,10 @@ let package = Package(
             name: "DemoAppLib",
             targets: ["DemoAppLib"]
         ),
+        .executable(
+            name: "DemoApp",
+            targets: ["DemoApp"]
+        ),
     ],
     dependencies: [
         // Referencia local al SDK que estás desarrollando
@@ -24,6 +28,13 @@ let package = Package(
                 .product(name: "ReachuDesignSystem", package: "ReachuSwiftSDK"),
             ],
             path: "Sources/DemoAppLib"
+        ),
+        .executableTarget(
+            name: "DemoApp",
+            dependencies: [
+                "DemoAppLib"
+            ],
+            path: "Sources/DemoApp"
         )
     ]
 )
