@@ -21,8 +21,6 @@ let package = Package(
         .executableTarget(
             name: "ReachuSDKDemo",
             dependencies: [
-                .product(name: "ReachuCore", package: "ReachuSwiftSDK"),
-                .product(name: "ReachuUI", package: "ReachuSwiftSDK"),
                 .product(name: "ReachuDesignSystem", package: "ReachuSwiftSDK"),
             ],
             swiftSettings: [

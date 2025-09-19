@@ -1,7 +1,5 @@
 import Foundation
 import SwiftUI
-import ReachuCore
-import ReachuUI
 import ReachuDesignSystem
 
 @main
