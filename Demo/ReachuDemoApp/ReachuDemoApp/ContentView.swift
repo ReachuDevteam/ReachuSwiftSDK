@@ -191,153 +191,132 @@ struct ColorSwatch: View {
 }
 
 struct ProductCatalogDemoView: View {
+    @State private var selectedVariant: ProductCardVariant = .grid
+    private let products = DemoProductData.sampleProducts
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: ReachuSpacing.xl) {
-                // Header
-                VStack(spacing: ReachuSpacing.md) {
-                    Text("Product Catalog Demo")
-                        .font(ReachuTypography.largeTitle)
-                        .foregroundColor(ReachuColors.primary)
-                    
-                    Text("Showing the RProductCard component with real images and improved features")
-                        .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, ReachuSpacing.xl)
+        VStack(spacing: 0) {
+            // Variant Selector
+            VStack(spacing: ReachuSpacing.sm) {
+                Text("Choose Layout")
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(ReachuColors.textPrimary)
                 
-                // Features List
-                VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                    Text("✅ Component Features")
-                        .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textPrimary)
-                    
-                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                        FeatureRow(icon: "🖼️", title: "Real Images", description: "High-quality Unsplash images with error handling")
-                        FeatureRow(icon: "🎠", title: "Multiple Images", description: "Swipe through product images with TabView")
-                        FeatureRow(icon: "🎯", title: "Smart Ordering", description: "Images ordered by 'order' field (0,1 priority)")
-                        FeatureRow(icon: "📱", title: "4 Variants", description: "Grid, List, Hero, and Minimal layouts")
-                        FeatureRow(icon: "⚠️", title: "Error States", description: "Intelligent placeholders for broken/loading images")
-                        FeatureRow(icon: "🎨", title: "Design System", description: "Uses ReachuDesignSystem tokens consistently")
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: ReachuSpacing.sm) {
+                        VariantButton(title: "Grid", variant: .grid, selected: selectedVariant == .grid) {
+                            selectedVariant = .grid
+                        }
+                        VariantButton(title: "List", variant: .list, selected: selectedVariant == .list) {
+                            selectedVariant = .list
+                        }
+                        VariantButton(title: "Hero", variant: .hero, selected: selectedVariant == .hero) {
+                            selectedVariant = .hero
+                        }
+                        VariantButton(title: "Minimal", variant: .minimal, selected: selectedVariant == .minimal) {
+                            selectedVariant = .minimal
+                        }
                     }
+                    .padding(.horizontal)
                 }
-                .padding(ReachuSpacing.lg)
-                .background(ReachuColors.surface)
-                .cornerRadius(ReachuBorderRadius.large)
-                .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
-                
-                // SDK Status
-                VStack(spacing: ReachuSpacing.md) {
-                    Text("🚀 SDK Status")
-                        .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.success)
-                    
-                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                        StatusRow(status: .success, title: "RProductCard", description: "Complete with all variants")
-                        StatusRow(status: .success, title: "Image System", description: "AsyncImage with error handling")
-                        StatusRow(status: .success, title: "Mock Data", description: "6 products with real Unsplash images")
-                        StatusRow(status: .success, title: "Design System", description: "Colors, typography, spacing tokens")
-                        StatusRow(status: .pending, title: "RProductSlider", description: "Coming next - array-based component")
-                    }
-                }
-                .padding(ReachuSpacing.lg)
-                .background(ReachuColors.surfaceSecondary)
-                .cornerRadius(ReachuBorderRadius.large)
-                
-                // Next Steps
-                VStack(spacing: ReachuSpacing.md) {
-                    Text("📋 Next Steps")
-                        .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textPrimary)
-                    
-                    Text("To see the RProductCard in action, you need to configure ReachuUI and ReachuTesting dependencies in the Xcode project. The component is ready and working in the SDK!")
-                        .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(ReachuSpacing.lg)
-                .background(ReachuColors.info.opacity(0.1))
-                .cornerRadius(ReachuBorderRadius.medium)
             }
-            .padding(ReachuSpacing.lg)
+            .padding(.vertical, ReachuSpacing.md)
+            .background(ReachuColors.surfaceSecondary)
+            
+            // Products Display
+            ScrollView {
+                Group {
+                    switch selectedVariant {
+                    case .grid:
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: ReachuSpacing.md) {
+                            ForEach(products) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .grid,
+                                    onTap: { print("Tapped: \(product.title)") },
+                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                )
+                            }
+                        }
+                        .padding(ReachuSpacing.lg)
+                        
+                    case .list:
+                        LazyVStack(spacing: ReachuSpacing.sm) {
+                            ForEach(products) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .list,
+                                    onTap: { print("Tapped: \(product.title)") },
+                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                )
+                            }
+                        }
+                        .padding(ReachuSpacing.lg)
+                        
+                    case .hero:
+                        LazyVStack(spacing: ReachuSpacing.xl) {
+                            ForEach(products) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .hero,
+                                    showDescription: true,
+                                    onTap: { print("Tapped: \(product.title)") },
+                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                )
+                            }
+                        }
+                        .padding(ReachuSpacing.lg)
+                        
+                    case .minimal:
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: ReachuSpacing.sm) {
+                                ForEach(products) { product in
+                                    SimpleProductCard(
+                                        product: product,
+                                        variant: .minimal,
+                                        onTap: { print("Tapped: \(product.title)") }
+                                    )
+                                }
+                            }
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        }
+                        .padding(.vertical, ReachuSpacing.lg)
+                    }
+                }
+            }
         }
-        .navigationTitle("Product Catalog")
+        .navigationTitle("Product Cards")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-struct FeatureRow: View {
-    let icon: String
+struct VariantButton: View {
     let title: String
-    let description: String
+    let variant: ProductCardVariant
+    let selected: Bool
+    let action: () -> Void
     
     var body: some View {
-        HStack(spacing: ReachuSpacing.md) {
-            Text(icon)
-                .font(.title2)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(ReachuTypography.body)
-                    .fontWeight(.semibold)
-                    .foregroundColor(ReachuColors.textPrimary)
-                
-                Text(description)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textSecondary)
-            }
-            
-            Spacer()
+        Button(action: action) {
+            Text(title)
+                .font(ReachuTypography.caption1)
+                .fontWeight(.medium)
+                .foregroundColor(selected ? .white : ReachuColors.primary)
+                .padding(.horizontal, ReachuSpacing.md)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background(selected ? ReachuColors.primary : Color.clear)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.circle)
+                        .stroke(ReachuColors.primary, lineWidth: 1)
+                )
+                .cornerRadius(ReachuBorderRadius.circle)
         }
     }
 }
 
-struct StatusRow: View {
-    enum Status {
-        case success, pending, warning
-        
-        var color: Color {
-            switch self {
-            case .success: return ReachuColors.success
-            case .pending: return ReachuColors.warning
-            case .warning: return ReachuColors.error
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .success: return "✅"
-            case .pending: return "⏳"
-            case .warning: return "⚠️"
-            }
-        }
-    }
-    
-    let status: Status
-    let title: String
-    let description: String
-    
-    var body: some View {
-        HStack(spacing: ReachuSpacing.md) {
-            Text(status.icon)
-                .font(.title3)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(ReachuTypography.body)
-                    .fontWeight(.semibold)
-                    .foregroundColor(ReachuColors.textPrimary)
-                
-                Text(description)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(status.color)
-            }
-            
-            Spacer()
-        }
-    }
-}
 
 struct ShoppingCartDemoView: View {
     var body: some View {
@@ -372,6 +351,488 @@ struct CheckoutDemoView: View {
         .padding()
         .navigationTitle("Checkout")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - Demo Models and Components
+
+enum ProductCardVariant {
+    case grid, list, hero, minimal
+}
+
+struct DemoProduct: Identifiable, Codable {
+    let id: Int
+    let title: String
+    let brand: String?
+    let description: String?
+    let sku: String
+    let quantity: Int?
+    let price: DemoPrice
+    let images: [DemoProductImage]
+    
+    init(id: Int, title: String, brand: String? = nil, description: String? = nil, sku: String, quantity: Int? = nil, price: DemoPrice, images: [DemoProductImage] = []) {
+        self.id = id
+        self.title = title
+        self.brand = brand
+        self.description = description
+        self.sku = sku
+        self.quantity = quantity
+        self.price = price
+        self.images = images
+    }
+}
+
+struct DemoPrice: Codable {
+    let amount: Float
+    let currency_code: String
+    let compare_at: Float?
+    
+    init(amount: Float, currency_code: String, compare_at: Float? = nil) {
+        self.amount = amount
+        self.currency_code = currency_code
+        self.compare_at = compare_at
+    }
+    
+    var displayAmount: String {
+        "\(currency_code) \(String(format: "%.2f", amount))"
+    }
+    
+    var displayCompareAtAmount: String? {
+        if let compareAt = compare_at {
+            return "\(currency_code) \(String(format: "%.2f", compareAt))"
+        }
+        return nil
+    }
+}
+
+struct DemoProductImage: Identifiable, Codable {
+    let id: String
+    let url: String
+    let order: Int
+    
+    init(id: String, url: String, order: Int = 0) {
+        self.id = id
+        self.url = url
+        self.order = order
+    }
+}
+
+class DemoProductData {
+    static let sampleProducts: [DemoProduct] = [
+        DemoProduct(
+            id: 101,
+            title: "Reachu Wireless Headphones",
+            brand: "Reachu Audio",
+            description: "Experience immersive sound with premium noise-cancelling technology and crystal clear audio quality.",
+            sku: "RCH-HP-001",
+            quantity: 50,
+            price: DemoPrice(amount: 199.99, currency_code: "USD", compare_at: 249.99),
+            images: [
+                DemoProductImage(id: "img101-1", url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center", order: 0),
+                DemoProductImage(id: "img101-2", url: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop&crop=center", order: 1),
+                DemoProductImage(id: "img101-3", url: "https://images.unsplash.com/photo-1487215078519-e21cc028cb29?w=400&h=300&fit=crop&crop=center", order: 2)
+            ]
+        ),
+        DemoProduct(
+            id: 102,
+            title: "Reachu Smart Watch Series 5",
+            brand: "Reachu Wearables",
+            description: "Track your fitness, monitor your health, and stay connected with our latest smartwatch featuring advanced sensors.",
+            sku: "RCH-SW-005",
+            quantity: 30,
+            price: DemoPrice(amount: 349.99, currency_code: "USD"),
+            images: [
+                DemoProductImage(id: "img102-1", url: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=300&fit=crop&crop=center", order: 1),
+                DemoProductImage(id: "img102-2", url: "https://images.unsplash.com/photo-1544117519-31a4b719223d?w=400&h=300&fit=crop&crop=center", order: 0)
+            ]
+        ),
+        DemoProduct(
+            id: 103,
+            title: "Reachu Minimalist Backpack",
+            brand: "Reachu Gear",
+            description: "Stylish and durable backpack perfect for daily commutes, travel, and outdoor adventures.",
+            sku: "RCH-BP-001",
+            quantity: 0, // Out of stock
+            price: DemoPrice(amount: 89.99, currency_code: "USD", compare_at: 100.00),
+            images: [
+                DemoProductImage(id: "img103-1", url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop&crop=center", order: 0),
+                DemoProductImage(id: "img103-2", url: "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=400&h=300&fit=crop&crop=center", order: 1),
+                DemoProductImage(id: "img103-3", url: "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?w=400&h=300&fit=crop&crop=center", order: 2)
+            ]
+        ),
+        DemoProduct(
+            id: 104,
+            title: "Reachu Wireless Charging Pad",
+            brand: "Reachu Power",
+            description: "Fast and convenient wireless charging for all your devices with sleek design and safety features.",
+            sku: "RCH-CP-002",
+            quantity: 15, // Back in stock
+            price: DemoPrice(amount: 39.99, currency_code: "USD"),
+            images: [
+                DemoProductImage(id: "img104-1", url: "https://images.unsplash.com/photo-1585338447937-7082f8fc763d?w=400&h=300&fit=crop&crop=center", order: 0),
+                DemoProductImage(id: "img104-2", url: "https://images.unsplash.com/photo-1609592373050-87a8f2e04f40?w=400&h=300&fit=crop&crop=center", order: 1)
+            ]
+        ),
+        DemoProduct(
+            id: 105,
+            title: "Reachu Bluetooth Speaker",
+            brand: "Reachu Audio",
+            description: "Portable bluetooth speaker with 360-degree sound, waterproof design, and 12-hour battery life.",
+            sku: "RCH-BT-003",
+            quantity: 25,
+            price: DemoPrice(amount: 79.99, currency_code: "USD", compare_at: 99.99),
+            images: [
+                DemoProductImage(id: "img105-1", url: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=300&fit=crop&crop=center", order: 1),
+                DemoProductImage(id: "img105-2", url: "https://images.unsplash.com/photo-1588422904075-be4be63e1bd6?w=400&h=300&fit=crop&crop=center", order: 0),
+                DemoProductImage(id: "img105-3", url: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&h=300&fit=crop&crop=center", order: 2)
+            ]
+        ),
+        DemoProduct(
+            id: 106,
+            title: "Reachu Gaming Mouse",
+            brand: "Reachu Gaming",
+            description: "High-precision gaming mouse with customizable RGB lighting and ergonomic design.",
+            sku: "RCH-GM-004",
+            quantity: 40,
+            price: DemoPrice(amount: 59.99, currency_code: "USD"),
+            images: [
+                DemoProductImage(id: "img106-1", url: "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=300&fit=crop&crop=center", order: 0),
+                DemoProductImage(id: "img106-2", url: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&h=300&fit=crop&crop=center", order: 1)
+            ]
+        )
+    ]
+}
+
+struct SimpleProductCard: View {
+    let product: DemoProduct
+    let variant: ProductCardVariant
+    let showBrand: Bool
+    let showDescription: Bool
+    let onTap: (() -> Void)?
+    let onAddToCart: (() -> Void)?
+    
+    init(
+        product: DemoProduct,
+        variant: ProductCardVariant = .grid,
+        showBrand: Bool = true,
+        showDescription: Bool = false,
+        onTap: (() -> Void)? = nil,
+        onAddToCart: (() -> Void)? = nil
+    ) {
+        self.product = product
+        self.variant = variant
+        self.showBrand = showBrand
+        self.showDescription = showDescription
+        self.onTap = onTap
+        self.onAddToCart = onAddToCart
+    }
+    
+    var body: some View {
+        Button(action: { onTap?() }) {
+            switch variant {
+            case .grid:
+                gridLayout
+            case .list:
+                listLayout
+            case .hero:
+                heroLayout
+            case .minimal:
+                minimalLayout
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var gridLayout: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            productImage(height: 160)
+            
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                if showBrand, let brand = product.brand {
+                    Text(brand)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .lineLimit(1)
+                }
+                
+                Text(product.title)
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(2)
+                
+                if showDescription, let description = product.description {
+                    Text(description)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .lineLimit(2)
+                }
+                
+                HStack {
+                    priceView
+                    Spacer()
+                    addToCartButton
+                }
+            }
+            .padding(ReachuSpacing.md)
+        }
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+    }
+    
+    private var listLayout: some View {
+        HStack(spacing: ReachuSpacing.md) {
+            productImage(height: 80)
+                .frame(width: 80)
+            
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                if showBrand, let brand = product.brand {
+                    Text(brand)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .lineLimit(1)
+                }
+                
+                Text(product.title)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(2)
+                
+                if showDescription, let description = product.description {
+                    Text(description)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                HStack {
+                    priceView
+                    Spacer()
+                    addToCartButton
+                }
+            }
+            
+            Spacer()
+        }
+        .padding(ReachuSpacing.md)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    private var heroLayout: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
+            productImage(height: 240)
+            
+            VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                if showBrand, let brand = product.brand {
+                    Text(brand)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .textCase(.uppercase)
+                }
+                
+                Text(product.title)
+                    .font(ReachuTypography.title2)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(3)
+                
+                if showDescription, let description = product.description {
+                    Text(description)
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .lineLimit(3)
+                }
+                
+                HStack {
+                    priceView
+                    Spacer()
+                    RButton(title: "Add to Cart", style: .primary, size: .large) {
+                        onAddToCart?()
+                    }
+                    .disabled(!isInStock)
+                }
+            }
+            .padding(ReachuSpacing.lg)
+        }
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.xl)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
+    }
+    
+    private var minimalLayout: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            productImage(height: 100)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(product.title)
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(2)
+                
+                priceView
+            }
+            .padding(ReachuSpacing.sm)
+        }
+        .frame(width: 120)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
+    }
+    
+    private func productImage(height: CGFloat) -> some View {
+        Group {
+            // Single image for list and minimal variants
+            if variant == .list || variant == .minimal {
+                singleImageView(height: height)
+            } else {
+                // Multiple images with TabView for grid and hero variants
+                multipleImagesView(height: height)
+            }
+        }
+    }
+    
+    /// Multiple images view with pagination for grid and hero variants
+    private func multipleImagesView(height: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            if sortedImages.count > 1 {
+                // Multiple images with TabView for pagination
+                TabView {
+                    ForEach(sortedImages, id: \.id) { image in
+                        singleImageView(height: height, imageUrl: image.url)
+                            .tag(image.id)
+                    }
+                }
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+                .frame(height: height)
+            } else {
+                // Single image or fallback
+                singleImageView(height: height)
+            }
+        }
+        .cornerRadius(ReachuBorderRadius.medium)
+    }
+    
+    /// Single image view with error handling and placeholders
+    private func singleImageView(height: CGFloat, imageUrl: String? = nil) -> some View {
+        let urlString = imageUrl ?? primaryImageUrl
+        let imageURL = URL(string: urlString ?? "")
+        
+        return AsyncImage(url: imageURL) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            case .failure(_):
+                // Imagen rota - mostrar placeholder con ícono de error
+                placeholderView(systemImage: "exclamationmark.triangle", color: ReachuColors.error, text: "Image unavailable")
+            case .empty:
+                // Cargando - mostrar placeholder con ícono de carga
+                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary, text: nil)
+            @unknown default:
+                // Fallback - mostrar placeholder genérico
+                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary, text: nil)
+            }
+        }
+        .frame(height: height)
+        .clipped()
+        .cornerRadius(ReachuBorderRadius.medium)
+    }
+    
+    /// Placeholder view for loading/error states
+    private func placeholderView(systemImage: String, color: Color, text: String?) -> some View {
+        Rectangle()
+            .fill(ReachuColors.background)
+            .overlay(
+                VStack(spacing: ReachuSpacing.xs) {
+                    Image(systemName: systemImage)
+                        .font(.title2)
+                        .foregroundColor(color)
+                    
+                    if let text = text {
+                        Text(text)
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(color)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            )
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
+    private var sortedImages: [DemoProductImage] {
+        let images = product.images
+        
+        // Si no hay imágenes, retornar array vacío
+        guard !images.isEmpty else { return [] }
+        
+        // Ordenar por el campo 'order', con 0 y 1 al inicio
+        return images.sorted { first, second in
+            // Priorizar order 0 y 1
+            let firstPriority = (first.order == 0 || first.order == 1) ? first.order : Int.max
+            let secondPriority = (second.order == 0 || second.order == 1) ? second.order : Int.max
+            
+            if firstPriority != secondPriority {
+                return firstPriority < secondPriority
+            }
+            
+            // Si ambos tienen la misma prioridad, ordenar por order normal
+            return first.order < second.order
+        }
+    }
+    
+    /// URL de la imagen principal (primera en el orden)
+    private var primaryImageUrl: String? {
+        sortedImages.first?.url
+    }
+    
+    private var priceView: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(product.price.displayAmount)
+                .font(variant == .hero ? ReachuTypography.title3 : ReachuTypography.body)
+                .fontWeight(.semibold)
+                .foregroundColor(ReachuColors.primary)
+            
+            if let compareAtAmount = product.price.displayCompareAtAmount {
+                Text(compareAtAmount)
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                    .strikethrough()
+            }
+        }
+    }
+    
+    private var addToCartButton: some View {
+        Group {
+            if variant == .minimal {
+                EmptyView()
+            } else if isInStock {
+                RButton(
+                    title: variant == .list ? "Add" : "Add to Cart",
+                    style: .primary,
+                    size: variant == .list ? .small : .medium
+                ) {
+                    onAddToCart?()
+                }
+            } else {
+                Text("Out of Stock")
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.error)
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(ReachuColors.error.opacity(0.1))
+                    .cornerRadius(ReachuBorderRadius.small)
+            }
+        }
+    }
+    
+    private var isInStock: Bool {
+        (product.quantity ?? 0) > 0
     }
 }
 
