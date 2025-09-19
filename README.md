@@ -38,3 +38,14 @@ Import only what you need:
 // Everything
 .product(name: "ReachuComplete", package: "ReachuSwiftSDK")
 ```
+
+### Demo App (Optional)
+
+For SDK development and testing:
+
+```swift
+// Demo app - only for development/testing
+.product(name: "ReachuSDKDemo", package: "ReachuSwiftSDK")
+```
+
+The demo app is completely optional and won't be included unless explicitly requested.

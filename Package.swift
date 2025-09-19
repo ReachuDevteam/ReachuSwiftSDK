@@ -50,7 +50,8 @@ let package = Package(
         .library(
             name: "ReachuComplete",
             targets: ["ReachuCore", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
-        )
+        ),
+        
     ],
     dependencies: [
         // GraphQL client for Reachu API
@@ -132,6 +133,7 @@ let package = Package(
             ],
             path: "Sources/ReachuTesting"
         ),
+        
         
         // MARK: - Test Targets
         .testTarget(
