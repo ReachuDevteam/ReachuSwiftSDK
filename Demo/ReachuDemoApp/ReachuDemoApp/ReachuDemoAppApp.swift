@@ -13,7 +13,7 @@ struct ReachuDemoAppApp: App {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    print("🚀 Reachu SDK Demo App iniciada")
+                    print("Reachu SDK Demo App iniciada")
                 }
         }
     }
