@@ -10,6 +10,10 @@ let package = Package(
     products: [
         .executable(
             name: "DemoApp",
+            targets: ["DemoApp"]
+        ),
+        .library(
+            name: "DemoAppLib",
             targets: ["DemoAppLib"]
         ),
     ],
@@ -18,12 +22,19 @@ let package = Package(
         .package(path: "../../"),
     ],
     targets: [
-        .executableTarget(
+        .target(
             name: "DemoAppLib",
             dependencies: [
                 .product(name: "ReachuDesignSystem", package: "ReachuSwiftSDK"),
             ],
             path: "Sources/DemoAppLib"
+        ),
+        .executableTarget(
+            name: "DemoApp",
+            dependencies: [
+                "DemoAppLib"
+            ],
+            path: "Sources/DemoApp"
         )
     ]
 )

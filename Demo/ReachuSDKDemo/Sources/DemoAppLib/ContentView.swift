@@ -2,8 +2,9 @@ import Foundation
 import SwiftUI
 import ReachuDesignSystem
 
-struct ContentView: View {
-    var body: some View {
+public struct ContentView: View {
+    public init() {}
+    public var body: some View {
         NavigationView {
             VStack(spacing: 20) {
                 Text("Reachu SDK Demo")

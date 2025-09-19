@@ -4,8 +4,9 @@ import ReachuDesignSystem
 
 // MARK: - Test Views
 
-struct ProductTestView: View {
-    var body: some View {
+public struct ProductTestView: View {
+    public init() {}
+    public var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 Text("Product Components Test")
@@ -40,8 +41,9 @@ struct ProductTestView: View {
     }
 }
 
-struct CartTestView: View {
-    var body: some View {
+public struct CartTestView: View {
+    public init() {}
+    public var body: some View {
         VStack(spacing: 20) {
             Text("Cart Components Test")
                 .font(.title2)
@@ -63,8 +65,9 @@ struct CartTestView: View {
     }
 }
 
-struct DesignSystemTestView: View {
-    var body: some View {
+public struct DesignSystemTestView: View {
+    public init() {}
+    public var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 Text("Design System Test")
@@ -169,11 +172,15 @@ struct DesignSystemTestView: View {
     }
 }
 
-struct ColorSwatch: View {
+public struct ColorSwatch: View {
+    public init(name: String, color: Color) {
+        self.name = name
+        self.color = color
+    }
     let name: String
     let color: Color
     
-    var body: some View {
+    public var body: some View {
         VStack {
             Rectangle()
                 .fill(color)
