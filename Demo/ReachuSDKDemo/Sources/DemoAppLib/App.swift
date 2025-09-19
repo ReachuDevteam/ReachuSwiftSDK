@@ -9,14 +9,40 @@ public struct DemoAppContent: App {
     
     public var body: some Scene {
         WindowGroup {
-            ContentView()
-                .onAppear {
-                    setupReachuSDK()
-                }
+            SimpleTestView()
         }
     }
+}
+
+// Vista simple para debugging
+public struct SimpleTestView: View {
+    public init() {}
     
-    private func setupReachuSDK() {
-        print("🚀 Reachu SDK Demo iniciado")
+    public var body: some View {
+        VStack(spacing: 20) {
+            Text("🚀 Reachu SDK Demo")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            Text("App funcionando correctamente")
+                .font(.title2)
+                .foregroundColor(.secondary)
+            
+            Button("Test Button") {
+                print("✅ Button funcionando")
+            }
+            .padding()
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(8)
+        }
+        .padding()
+        .onAppear {
+            print("✅ SimpleTestView apareció correctamente")
+        }
     }
+}
+
+#Preview {
+    SimpleTestView()
 }
