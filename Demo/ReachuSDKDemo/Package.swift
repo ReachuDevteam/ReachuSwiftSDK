@@ -8,10 +8,6 @@ let package = Package(
         .macOS(.v12)
     ],
     products: [
-        .executable(
-            name: "DemoApp",
-            targets: ["DemoApp"]
-        ),
         .library(
             name: "DemoAppLib",
             targets: ["DemoAppLib"]
@@ -28,13 +24,6 @@ let package = Package(
                 .product(name: "ReachuDesignSystem", package: "ReachuSwiftSDK"),
             ],
             path: "Sources/DemoAppLib"
-        ),
-        .executableTarget(
-            name: "DemoApp",
-            dependencies: [
-                "DemoAppLib"
-            ],
-            path: "Sources/DemoApp"
         )
     ]
 )

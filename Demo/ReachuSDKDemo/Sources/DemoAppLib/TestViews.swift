@@ -211,3 +211,9 @@ struct SpacingExample: View {
         }
     }
 }
+
+#Preview("Design System Test") {
+    NavigationView {
+        DesignSystemTestView()
+    }
+}
