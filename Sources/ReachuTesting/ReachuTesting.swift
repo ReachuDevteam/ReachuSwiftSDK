@@ -12,8 +12,3 @@ public struct ReachuTesting {
         print("🧪 Reachu Testing utilities initialized")
     }
 }
-
-// MARK: - Public Exports
-
-// Export MockDataProvider for use in other modules
-public typealias ReachuMockDataProvider = MockDataProvider

@@ -14,8 +14,8 @@ public class MockDataProvider {
             id: 101,
             title: "Reachu Wireless Headphones",
             brand: "Reachu Audio",
-            description: "Experience immersive sound with noise-cancelling technology.",
-            tags: "audio, headphones, wireless",
+            description: "Experience immersive sound with our premium noise-cancelling wireless headphones. Perfect for music lovers and professionals.",
+            tags: "audio, headphones, wireless, noise-cancelling",
             sku: "RCH-HP-001",
             quantity: 50,
             price: Price(
@@ -56,12 +56,23 @@ public class MockDataProvider {
             images: [
                 ProductImage(
                     id: "img101-1",
-                    url: "https://via.placeholder.com/400x300/000000/FFFFFF?text=Headphones+Black",
-                    order: 1
+                    url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
                 ),
                 ProductImage(
                     id: "img101-2",
-                    url: "https://via.placeholder.com/400x300/FFFFFF/000000?text=Headphones+White",
+                    url: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 1
+                ),
+                ProductImage(
+                    id: "img101-3",
+                    url: "https://images.unsplash.com/photo-1487215078519-e21cc028cb29?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
                     order: 2
                 )
             ],
@@ -72,8 +83,8 @@ public class MockDataProvider {
             id: 102,
             title: "Reachu Smart Watch Series 5",
             brand: "Reachu Wearables",
-            description: "Track your fitness and stay connected with the latest smartwatch.",
-            tags: "wearable, smartwatch, fitness",
+            description: "Track your fitness, monitor your health, and stay connected with our latest smartwatch featuring advanced sensors and long battery life.",
+            tags: "wearable, smartwatch, fitness, health",
             sku: "RCH-SW-005",
             quantity: 30,
             price: Price(
@@ -112,8 +123,17 @@ public class MockDataProvider {
             images: [
                 ProductImage(
                     id: "img102-1",
-                    url: "https://via.placeholder.com/400x300/FF5733/FFFFFF?text=Smartwatch",
+                    url: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
                     order: 1
+                ),
+                ProductImage(
+                    id: "img102-2",
+                    url: "https://images.unsplash.com/photo-1544117519-31a4b719223d?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
                 )
             ],
             supplier: "Reachu Innovations",
@@ -123,8 +143,8 @@ public class MockDataProvider {
             id: 103,
             title: "Reachu Minimalist Backpack",
             brand: "Reachu Gear",
-            description: "Stylish and durable backpack for daily commutes.",
-            tags: "bag, backpack, travel",
+            description: "Stylish and durable backpack perfect for daily commutes, travel, and outdoor adventures. Made with premium materials and thoughtful design.",
+            tags: "bag, backpack, travel, outdoor, minimalist",
             sku: "RCH-BP-001",
             quantity: 0, // Out of stock
             price: Price(
@@ -165,8 +185,24 @@ public class MockDataProvider {
             images: [
                 ProductImage(
                     id: "img103-1",
-                    url: "https://via.placeholder.com/400x300/333333/FFFFFF?text=Backpack",
+                    url: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
+                ),
+                ProductImage(
+                    id: "img103-2",
+                    url: "https://images.unsplash.com/photo-1622560480605-d83c853bc5c3?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
                     order: 1
+                ),
+                ProductImage(
+                    id: "img103-3",
+                    url: "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 2
                 )
             ],
             supplier: "Reachu Outdoors",
@@ -176,10 +212,10 @@ public class MockDataProvider {
             id: 104,
             title: "Reachu Wireless Charging Pad",
             brand: "Reachu Power",
-            description: "Fast and convenient wireless charging for your devices.",
-            tags: "charger, wireless, power",
+            description: "Fast and convenient wireless charging for all your devices. Sleek design with LED indicator and built-in safety features.",
+            tags: "charger, wireless, power, fast-charging",
             sku: "RCH-CP-002",
-            quantity: 0, // Out of stock
+            quantity: 15, // Back in stock
             price: Price(
                 amount: 39.99,
                 currency_code: "USD",
@@ -197,12 +233,131 @@ public class MockDataProvider {
             images: [
                 ProductImage(
                     id: "img104-1",
-                    url: "https://via.placeholder.com/400x300/666666/FFFFFF?text=Charging+Pad",
+                    url: "https://images.unsplash.com/photo-1585338447937-7082f8fc763d?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
+                ),
+                ProductImage(
+                    id: "img104-2",
+                    url: "https://images.unsplash.com/photo-1609592373050-87a8f2e04f40?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
                     order: 1
                 )
             ],
             supplier: "Reachu Energy",
             supplier_id: 4
+        ),
+        Product(
+            id: 105,
+            title: "Reachu Bluetooth Speaker",
+            brand: "Reachu Audio",
+            description: "Portable bluetooth speaker with 360-degree sound, waterproof design, and 12-hour battery life. Perfect for outdoor adventures.",
+            tags: "speaker, bluetooth, portable, waterproof, music",
+            sku: "RCH-BT-003",
+            quantity: 25,
+            price: Price(
+                amount: 79.99,
+                currency_code: "USD",
+                amount_incl_taxes: 87.99,
+                tax_amount: 8.00,
+                tax_rate: 0.10,
+                compare_at: 99.99,
+                compare_at_incl_taxes: 109.99
+            ),
+            variants: [
+                Variant(
+                    id: "v105-red",
+                    barcode: "1234567890130",
+                    price: Price(amount: 79.99, currency_code: "USD"),
+                    quantity: 10,
+                    sku: "RCH-BT-003-RED",
+                    title: "Red"
+                ),
+                Variant(
+                    id: "v105-blue",
+                    barcode: "1234567890131",
+                    price: Price(amount: 79.99, currency_code: "USD"),
+                    quantity: 15,
+                    sku: "RCH-BT-003-BLU",
+                    title: "Blue"
+                )
+            ],
+            barcode: "1234567890130",
+            options: [
+                Option(id: "opt4", name: "Color", order: 1, values: "Red, Blue")
+            ],
+            categories: [
+                Category(id: 1, name: "Electronics"),
+                Category(id: 5, name: "Audio")
+            ],
+            images: [
+                ProductImage(
+                    id: "img105-1",
+                    url: "https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 1
+                ),
+                ProductImage(
+                    id: "img105-2",
+                    url: "https://images.unsplash.com/photo-1588422904075-be4be63e1bd6?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
+                ),
+                ProductImage(
+                    id: "img105-3",
+                    url: "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 2
+                )
+            ],
+            supplier: "Reachu Audio",
+            supplier_id: 1
+        ),
+        Product(
+            id: 106,
+            title: "Reachu Gaming Mouse",
+            brand: "Reachu Gaming",
+            description: "High-precision gaming mouse with customizable RGB lighting, programmable buttons, and ergonomic design for competitive gaming.",
+            tags: "gaming, mouse, rgb, precision, ergonomic",
+            sku: "RCH-GM-004",
+            quantity: 40,
+            price: Price(
+                amount: 59.99,
+                currency_code: "USD",
+                amount_incl_taxes: 65.99,
+                tax_amount: 6.00,
+                tax_rate: 0.10
+            ),
+            variants: [],
+            barcode: "1234567890132",
+            options: [],
+            categories: [
+                Category(id: 1, name: "Electronics"),
+                Category(id: 9, name: "Gaming")
+            ],
+            images: [
+                ProductImage(
+                    id: "img106-1",
+                    url: "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 0
+                ),
+                ProductImage(
+                    id: "img106-2",
+                    url: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&h=300&fit=crop&crop=center",
+                    width: 400,
+                    height: 300,
+                    order: 1
+                )
+            ],
+            supplier: "Reachu Gaming",
+            supplier_id: 5
         )
     ]
 }

@@ -81,8 +81,8 @@ public struct RProductCard: View {
     /// Grid Layout - Vertical card for product catalogs
     private var gridLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-            // Product Image
-            productImage(height: 160)
+            // Product Images with pagination
+            productImagesView(height: 160, showPagination: sortedImages.count > 1)
             
             // Product Info
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -122,9 +122,8 @@ public struct RProductCard: View {
     /// List Layout - Horizontal card for search results
     private var listLayout: some View {
         HStack(spacing: ReachuSpacing.md) {
-            // Product Image (smaller for list)
-            productImage(height: 80)
-                .frame(width: 80)
+            // Product Image (single image for list)
+            productImageView(height: 80, width: 80)
             
             // Product Info
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -167,8 +166,8 @@ public struct RProductCard: View {
     /// Hero Layout - Large featured product
     private var heroLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-            // Large Product Image
-            productImage(height: 240)
+            // Large Product Images with full pagination
+            productImagesView(height: 300, showPagination: sortedImages.count > 1)
             
             VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                 if showBrand, let brand = product.brand {
@@ -209,8 +208,8 @@ public struct RProductCard: View {
     /// Minimal Layout - Compact for carousels
     private var minimalLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            // Compact Product Image
-            productImage(height: 100)
+            // Compact Product Image (single image only)
+            productImageView(height: 100, width: 120)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
@@ -228,26 +227,82 @@ public struct RProductCard: View {
         .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     
-    // MARK: - Reusable Components
+    // MARK: - Image Components
     
-    private func productImage(height: CGFloat) -> some View {
-        AsyncImage(url: URL(string: product.images.first?.url ?? "")) { image in
-            image
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        } placeholder: {
-            Rectangle()
-                .fill(ReachuColors.background)
-                .overlay(
-                    Image(systemName: "photo")
-                        .font(.title2)
-                        .foregroundColor(ReachuColors.textSecondary)
-                )
+    /// Multiple images view with pagination for grid and hero variants
+    private func productImagesView(height: CGFloat, showPagination: Bool) -> some View {
+        VStack(spacing: 0) {
+            if sortedImages.count > 1 && showPagination {
+                // Multiple images with TabView for pagination
+                TabView {
+                    ForEach(sortedImages, id: \.id) { image in
+                        productImageView(
+                            height: height,
+                            imageUrl: image.url
+                        )
+                        .tag(image.id)
+                    }
+                }
+#if os(iOS) || os(tvOS) || os(watchOS)
+                .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
+#endif
+                .frame(height: height)
+            } else {
+                // Single image or fallback
+                productImageView(height: height)
+            }
         }
-        .frame(height: height)
+        .cornerRadius(ReachuBorderRadius.medium)
+    }
+    
+    /// Single image view with error handling and placeholders
+    private func productImageView(height: CGFloat, width: CGFloat? = nil, imageUrl: String? = nil) -> some View {
+        let urlString = imageUrl ?? primaryImageUrl
+        let imageURL = URL(string: urlString ?? "")
+        
+        return AsyncImage(url: imageURL) { phase in
+            switch phase {
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            case .failure(_):
+                // Imagen rota - mostrar placeholder con ícono de error
+                placeholderView(systemImage: "exclamationmark.triangle", color: ReachuColors.error)
+            case .empty:
+                // Cargando - mostrar placeholder con ícono de carga
+                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+            @unknown default:
+                // Fallback - mostrar placeholder genérico
+                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+            }
+        }
+        .frame(width: width, height: height)
         .clipped()
         .cornerRadius(ReachuBorderRadius.medium)
     }
+    
+    /// Placeholder view for loading/error states
+    private func placeholderView(systemImage: String, color: Color) -> some View {
+        Rectangle()
+            .fill(ReachuColors.background)
+            .overlay(
+                VStack(spacing: ReachuSpacing.xs) {
+                    Image(systemName: systemImage)
+                        .font(.title2)
+                        .foregroundColor(color)
+                    
+                    if systemImage == "exclamationmark.triangle" {
+                        Text("Image unavailable")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(color)
+                            .multilineTextAlignment(.center)
+                    }
+                }
+            )
+    }
+    
+    // MARK: - Reusable Components
     
     private var priceView: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -290,13 +345,43 @@ public struct RProductCard: View {
         }
     }
     
+    // MARK: - Computed Properties
+    
     private var isInStock: Bool {
         (product.quantity ?? 0) > 0
+    }
+    
+    /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
+    private var sortedImages: [ProductImage] {
+        let images = product.images
+        
+        // Si no hay imágenes, retornar array vacío
+        guard !images.isEmpty else { return [] }
+        
+        // Ordenar por el campo 'order', con 0 y 1 al inicio
+        return images.sorted { first, second in
+            // Priorizar order 0 y 1
+            let firstPriority = (first.order == 0 || first.order == 1) ? first.order : Int.max
+            let secondPriority = (second.order == 0 || second.order == 1) ? second.order : Int.max
+            
+            if firstPriority != secondPriority {
+                return firstPriority < secondPriority
+            }
+            
+            // Si ambos tienen la misma prioridad, ordenar por order normal
+            return first.order < second.order
+        }
+    }
+    
+    /// URL de la imagen principal (primera en el orden)
+    private var primaryImageUrl: String? {
+        sortedImages.first?.url
     }
 }
 
 // MARK: - Previews
 
+#if DEBUG
 #Preview("Grid Variant") {
     VStack(spacing: ReachuSpacing.lg) {
         RProductCard(
@@ -414,3 +499,4 @@ public struct RProductCard: View {
     }
     .background(ReachuColors.background)
 }
+#endif

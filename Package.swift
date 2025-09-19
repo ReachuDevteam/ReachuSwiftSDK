@@ -97,7 +97,6 @@ let package = Package(
             dependencies: [
                 "ReachuCore",
                 "ReachuDesignSystem",
-                "ReachuTesting", // For mock data in previews
             ],
             path: "Sources/ReachuUI"
         ),

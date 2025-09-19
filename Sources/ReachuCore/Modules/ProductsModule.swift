@@ -1,12 +1,15 @@
 import Foundation
 
-/// Module for managing products and channels from Reachu
+/// Products module for managing products and channels
+/// Provides functionality to fetch products, search, and manage product data
 public class ProductsModule {
     
-    /// Get all available products
+    public init() {}
+    
+    /// Get products with pagination and filtering
     /// - Parameters:
-    ///   - limit: Maximum number of products to return
-    ///   - offset: Number of products to skip
+    ///   - limit: Number of products to fetch (default: 20)
+    ///   - offset: Offset for pagination (default: 0)  
     ///   - channelId: Optional channel ID to filter by
     /// - Returns: Array of products
     public func getProducts(
@@ -18,17 +21,17 @@ public class ProductsModule {
         throw ReachuError.notImplemented("ProductsModule.getProducts will be implemented in Task 2")
     }
     
-    /// Get a specific product by ID
+    /// Get a single product by ID
     /// - Parameter id: Product ID
     /// - Returns: Product details
     public func getProduct(id: String) async throws -> Product {
         throw ReachuError.notImplemented("ProductsModule.getProduct will be implemented in Task 2")
     }
     
-    /// Search products by query
+    /// Search products
     /// - Parameters:
-    ///   - query: Search query
-    ///   - filters: Optional product filters
+    ///   - query: Search query string
+    ///   - filters: Optional filters to apply
     /// - Returns: Array of matching products
     public func searchProducts(
         query: String,
