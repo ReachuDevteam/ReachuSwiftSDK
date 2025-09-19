@@ -2,15 +2,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "ReachuSDKDemo",
+    name: "DemoApp",
     platforms: [
         .iOS(.v15),
         .macOS(.v12)
     ],
     products: [
         .executable(
-            name: "ReachuSDKDemo",
-            targets: ["ReachuSDKDemo"]
+            name: "DemoApp",
+            targets: ["DemoAppLib"]
         ),
     ],
     dependencies: [
@@ -19,19 +19,11 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "ReachuSDKDemo",
+            name: "DemoAppLib",
             dependencies: [
                 .product(name: "ReachuDesignSystem", package: "ReachuSwiftSDK"),
             ],
-            swiftSettings: [
-                .enableUpcomingFeature("BareSlashRegexLiterals"),
-                .enableUpcomingFeature("ConciseMagicFile"),
-                .enableUpcomingFeature("ForwardTrailingClosures"),
-                .enableUpcomingFeature("ImportObjcForwardDeclarations"),
-                .enableUpcomingFeature("DisableOutwardActorInference"),
-                .enableUpcomingFeature("ExistentialAny"),
-                .enableUpcomingFeature("StrictConcurrency"),
-            ]
+            path: "Sources/DemoAppLib"
         )
     ]
 )

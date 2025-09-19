@@ -2,84 +2,6 @@ import Foundation
 import SwiftUI
 import ReachuDesignSystem
 
-@main
-struct ReachuSDKDemoApp: App {
-    var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .onAppear {
-                    // Configurar el SDK para testing
-                    setupReachuSDK()
-                }
-        }
-    }
-    
-    private func setupReachuSDK() {
-        // TODO: Implementar cuando Configuration esté listo
-        print("🚀 Reachu SDK Demo iniciado")
-    }
-}
-
-struct ContentView: View {
-    var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                Text("Reachu SDK Demo")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                Text("Test your UI components here")
-                    .foregroundColor(.secondary)
-                
-                // Test Design System Components
-                VStack(spacing: 16) {
-                    Text("Design System Test")
-                        .font(.headline)
-                    
-                    // TODO: Testear RButton cuando esté implementado
-                    Button("Test Button") {
-                        print("Button tapped!")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    
-                    // TODO: Testear RCard cuando esté implementado
-                    VStack {
-                        Text("Test Card")
-                        Text("This will be a RCard component")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(12)
-                }
-                
-                Spacer()
-                
-                // Navigation to different test screens
-                VStack(spacing: 12) {
-                    NavigationLink("Test Product Components") {
-                        ProductTestView()
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    NavigationLink("Test Cart Components") {
-                        CartTestView()
-                    }
-                    .buttonStyle(.bordered)
-                    
-                    NavigationLink("Test Design System") {
-                        DesignSystemTestView()
-                    }
-                    .buttonStyle(.bordered)
-                }
-            }
-            .padding()
-            .navigationTitle("Reachu SDK")
-        }
-    }
-}
-
 // MARK: - Test Views
 
 struct ProductTestView: View {
@@ -112,7 +34,9 @@ struct ProductTestView: View {
             }
         }
         .navigationTitle("Products")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -133,7 +57,9 @@ struct CartTestView: View {
         }
         .padding()
         .navigationTitle("Cart")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -151,12 +77,12 @@ struct DesignSystemTestView: View {
                         .font(.headline)
                     
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
-                        ColorSwatch(name: "Primary", color: .blue)
-                        ColorSwatch(name: "Secondary", color: .purple)
-                        ColorSwatch(name: "Success", color: .green)
-                        ColorSwatch(name: "Warning", color: .orange)
-                        ColorSwatch(name: "Error", color: .red)
-                        ColorSwatch(name: "Surface", color: .gray.opacity(0.1))
+                        ColorSwatch(name: "Primary", color: ReachuColors.primary)
+                        ColorSwatch(name: "Secondary", color: ReachuColors.secondary)
+                        ColorSwatch(name: "Success", color: ReachuColors.success)
+                        ColorSwatch(name: "Warning", color: ReachuColors.warning)
+                        ColorSwatch(name: "Error", color: ReachuColors.error)
+                        ColorSwatch(name: "Surface", color: ReachuColors.surface)
                     }
                 }
                 
@@ -166,17 +92,57 @@ struct DesignSystemTestView: View {
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Large Title").font(.largeTitle)
-                        Text("Title 1").font(.title)
-                        Text("Title 2").font(.title2)
-                        Text("Title 3").font(.title3)
-                        Text("Headline").font(.headline)
-                        Text("Body").font(.body)
-                        Text("Callout").font(.callout)
-                        Text("Subheadline").font(.subheadline)
-                        Text("Footnote").font(.footnote)
-                        Text("Caption 1").font(.caption)
-                        Text("Caption 2").font(.caption2)
+                        Text("Large Title").font(ReachuTypography.largeTitle)
+                        Text("Title 1").font(ReachuTypography.title1)
+                        Text("Title 2").font(ReachuTypography.title2)
+                        Text("Title 3").font(ReachuTypography.title3)
+                        Text("Headline").font(ReachuTypography.headline)
+                        Text("Body").font(ReachuTypography.body)
+                        Text("Callout").font(ReachuTypography.callout)
+                        Text("Subheadline").font(ReachuTypography.subheadline)
+                        Text("Footnote").font(ReachuTypography.footnote)
+                        Text("Caption 1").font(ReachuTypography.caption1)
+                        Text("Caption 2").font(ReachuTypography.caption2)
+                    }
+                }
+                
+                // RButton Examples
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("RButton Components")
+                        .font(.headline)
+                    
+                    VStack(spacing: ReachuSpacing.sm) {
+                        RButton(title: "Primary Button", style: .primary) {
+                            print("Primary tapped")
+                        }
+                        
+                        RButton(title: "Secondary Button", style: .secondary) {
+                            print("Secondary tapped")
+                        }
+                        
+                        RButton(title: "Tertiary Button", style: .tertiary) {
+                            print("Tertiary tapped")
+                        }
+                        
+                        RButton(title: "Destructive Button", style: .destructive) {
+                            print("Destructive tapped")
+                        }
+                        
+                        RButton(title: "Ghost Button", style: .ghost) {
+                            print("Ghost tapped")
+                        }
+                        
+                        RButton(title: "With Icon", style: .primary, icon: "heart.fill") {
+                            print("Icon button tapped")
+                        }
+                        
+                        RButton(title: "Loading", style: .primary, isLoading: true) {
+                            print("Loading button tapped")
+                        }
+                        
+                        RButton(title: "Disabled", style: .primary, isDisabled: true) {
+                            print("Disabled button tapped")
+                        }
                     }
                 }
                 
@@ -186,18 +152,20 @@ struct DesignSystemTestView: View {
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        SpacingExample(name: "XS (4pt)", spacing: 4)
-                        SpacingExample(name: "SM (8pt)", spacing: 8)
-                        SpacingExample(name: "MD (16pt)", spacing: 16)
-                        SpacingExample(name: "LG (24pt)", spacing: 24)
-                        SpacingExample(name: "XL (32pt)", spacing: 32)
+                        SpacingExample(name: "XS (4pt)", spacing: ReachuSpacing.xs)
+                        SpacingExample(name: "SM (8pt)", spacing: ReachuSpacing.sm)
+                        SpacingExample(name: "MD (16pt)", spacing: ReachuSpacing.md)
+                        SpacingExample(name: "LG (24pt)", spacing: ReachuSpacing.lg)
+                        SpacingExample(name: "XL (32pt)", spacing: ReachuSpacing.xl)
                     }
                 }
             }
             .padding()
         }
         .navigationTitle("Design System")
+        #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        #endif
     }
 }
 
@@ -226,7 +194,7 @@ struct SpacingExample: View {
     var body: some View {
         HStack {
             Rectangle()
-                .fill(Color.blue)
+                .fill(ReachuColors.primary)
                 .frame(width: spacing, height: 20)
             
             Text(name)
@@ -235,8 +203,4 @@ struct SpacingExample: View {
             Spacer()
         }
     }
-}
-
-#Preview {
-    ContentView()
 }
