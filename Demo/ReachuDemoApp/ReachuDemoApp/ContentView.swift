@@ -14,7 +14,7 @@ struct ContentView: View {
             ScrollView {
                 VStack(spacing: ReachuSpacing.xl) {
                     VStack(spacing: ReachuSpacing.md) {
-                        Text("🛍️ Reachu SDK")
+                        Text("Reachu SDK")
                             .font(ReachuTypography.largeTitle)
                             .foregroundColor(ReachuColors.primary)
                         
@@ -193,7 +193,7 @@ struct ColorSwatch: View {
 struct ProductCatalogDemoView: View {
     var body: some View {
         VStack {
-            Text("📦 Product Catalog")
+            Text("Product Catalog")
                 .font(ReachuTypography.largeTitle)
             
             Text("Coming soon...")
@@ -211,7 +211,7 @@ struct ProductCatalogDemoView: View {
 struct ShoppingCartDemoView: View {
     var body: some View {
         VStack {
-            Text("🛒 Shopping Cart")
+            Text("Shopping Cart")
                 .font(ReachuTypography.largeTitle)
             
             Text("Coming soon...")
@@ -229,7 +229,7 @@ struct ShoppingCartDemoView: View {
 struct CheckoutDemoView: View {
     var body: some View {
         VStack {
-            Text("💳 Checkout")
+            Text("Checkout")
                 .font(ReachuTypography.largeTitle)
             
             Text("Coming soon...")

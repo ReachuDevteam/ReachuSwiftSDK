@@ -20,16 +20,16 @@ public struct SimpleTestView: View {
     
     public var body: some View {
         VStack(spacing: 20) {
-            Text("🚀 Reachu SDK Demo")
-                .font(.largeTitle)
-                .fontWeight(.bold)
+                   Text("Reachu SDK Demo")
+                       .font(.largeTitle)
+                       .fontWeight(.bold)
             
             Text("App funcionando correctamente")
                 .font(.title2)
                 .foregroundColor(.secondary)
             
             Button("Test Button") {
-                print("✅ Button funcionando")
+                   print("Button funcionando")
             }
             .padding()
             .background(Color.blue)
@@ -38,7 +38,7 @@ public struct SimpleTestView: View {
         }
         .padding()
         .onAppear {
-            print("✅ SimpleTestView apareció correctamente")
+               print("SimpleTestView apareció correctamente")
         }
     }
 }
