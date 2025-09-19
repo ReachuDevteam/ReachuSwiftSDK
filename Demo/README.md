@@ -1,65 +1,69 @@
-# Reachu SDK Demo App
+# 📱 Reachu SDK Demo App
 
-Esta aplicación demo te permite desarrollar y testear los componentes UI del Reachu SDK en tiempo real.
+Una aplicación iOS nativa que demuestra cómo usar el Reachu Swift SDK.
 
-## 🚀 Cómo usar durante desarrollo
+## 🚀 Instalación y Uso
 
-### 1. Abrir en Xcode
-```bash
-cd Demo/ReachuSDKDemo
-open Package.swift
+### Prerrequisitos
+- Xcode 15.0+
+- iOS 15.0+
+
+### Configuración
+
+1. **Abrir el proyecto en Xcode:**
+   ```bash
+   open Demo/ReachuDemoApp/ReachuDemoApp.xcodeproj
+   ```
+
+2. **Agregar dependencia del SDK:**
+   - En Xcode, selecciona el proyecto "ReachuDemoApp"
+   - Ve a "Package Dependencies" 
+   - Click "+" → "Add Local..."
+   - Selecciona la carpeta raíz: `/Users/angelo/ReachuSwiftSDK`
+   - Selecciona "ReachuDesignSystem"
+   - Click "Add Package"
+
+3. **Compilar y ejecutar:**
+   ```
+   Cmd+B  # Compilar
+   Cmd+R  # Ejecutar en simulador
+   ```
+
+## 🎯 Funcionalidades
+
+### ✅ Implementado
+- **Design System Demo**: Colores, tipografía, botones y spacing del SDK
+- **Navegación principal**: Con 4 secciones demo
+- **SwiftUI Previews**: Para desarrollo iterativo
+
+### 🚧 Próximamente  
+- **Product Catalog**: Catálogo de productos con filtros
+- **Shopping Cart**: Carrito funcional completo
+- **Checkout Flow**: Flujo de checkout 3-pasos
+
+## 🛠️ Desarrollo
+
+Esta demo app consume el SDK como lo haría cualquier desarrollador externo:
+
+```swift
+import ReachuDesignSystem
+
+// Usar componentes del SDK
+RButton(title: "Add to Cart", style: .primary) {
+    // Acción
+}
+
+// Usar tokens de diseño
+Text("Title")
+    .font(ReachuTypography.headline)
+    .foregroundColor(ReachuColors.primary)
 ```
 
-### 2. Ejecutar la Demo App
-- Selecciona el target `ReachuSDKDemo`
-- Elige tu simulador (iPhone o iPad)
-- Presiona `Cmd + R` para ejecutar
+## 📱 Preview en Tiempo Real
 
-### 3. Desarrollo iterativo
+Los cambios en el SDK se reflejan automáticamente en:
+- SwiftUI Previews
+- Simulador (rebuild automático)
+- Dispositivos físicos
 
-La demo app hace referencia local al SDK (`../../`), por lo que cualquier cambio que hagas en:
-- `Sources/ReachuDesignSystem/`
-- `Sources/ReachuUI/`
-- `Sources/ReachuCore/`
-
-Se reflejará automáticamente cuando recompiles la demo app.
-
-## 📱 Estructura de testing
-
-### Design System Test
-- Prueba colores, tipografía, espaciado
-- Ve cómo se ven los tokens en pantalla
-- Testea componentes base como `RButton`
-
-### Product Components Test
-- Desarrolla y prueba `ProductCardView`
-- Testea `ProductListView` con datos mock
-- Prueba `ProductDetailView`
-
-### Cart Components Test
-- Desarrolla `CartView`
-- Testea `CartItemView`
-- Prueba `MiniCartView`
-
-## 🔄 Workflow recomendado
-
-1. **Desarrolla el componente** en `Sources/ReachuUI/Views/`
-2. **Añádelo a la demo** en `Demo/ReachuSDKDemo/Sources/ReachuSDKDemo/main.swift`
-3. **Ejecuta la demo** para ver el resultado
-4. **Itera** hasta que esté perfecto
-5. **Commit** cuando esté listo
-
-## 🎨 Testing de Design System
-
-La demo incluye una sección específica para testear:
-- Paleta de colores
-- Escalas tipográficas  
-- Sistema de espaciado
-- Componentes base
-
-## 📝 Notas
-
-- Los componentes usan **SwiftUI Previews** para desarrollo rápido
-- La demo app permite testing en **contexto real**
-- Puedes testear **navegación** entre pantallas
-- Testea tanto en **iPhone como iPad**
+¡Perfecta para desarrollo iterativo del SDK! 🎨✨
