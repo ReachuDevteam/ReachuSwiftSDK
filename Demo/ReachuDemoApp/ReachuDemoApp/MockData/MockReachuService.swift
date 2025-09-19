@@ -207,8 +207,7 @@ extension MockReachuService {
         // In real implementation, this would listen to GraphQL subscriptions
         Timer.publish(every: 30, on: .main, in: .common)
             .autoconnect()
-            .compactMap { _ in try? await self.getCart() }
-            .catch { _ in Just(self.mockData.sampleCart) }
+            .map { _ in self.mockData.sampleCart }
             .eraseToAnyPublisher()
     }
 }
