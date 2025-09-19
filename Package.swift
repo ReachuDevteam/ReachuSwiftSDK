@@ -50,6 +50,13 @@ let package = Package(
         .library(
             name: "ReachuComplete",
             targets: ["ReachuCore", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
+        ),
+        
+        // MARK: - Demo & Development (Optional)
+        // Demo app - only for SDK development and testing
+        .executable(
+            name: "ReachuSDKDemo",
+            targets: ["ReachuSDKDemo"]
         )
     ],
     dependencies: [
@@ -131,6 +138,19 @@ let package = Package(
                 "ReachuNetwork",
             ],
             path: "Sources/ReachuTesting"
+        ),
+        
+        // MARK: - Demo & Development Targets (Optional)
+        .executableTarget(
+            name: "ReachuSDKDemo",
+            dependencies: [
+                "ReachuCore",
+                "ReachuUI", 
+                "ReachuDesignSystem",
+                "ReachuLiveShow",
+                "ReachuLiveUI",
+            ],
+            path: "Demo/ReachuSDKDemo/Sources/ReachuSDKDemo"
         ),
         
         // MARK: - Test Targets
