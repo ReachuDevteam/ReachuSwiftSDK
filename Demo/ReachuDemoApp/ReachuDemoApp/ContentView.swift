@@ -34,6 +34,10 @@ struct ContentView: View {
                             ProductCatalogDemoView()
                         }
                         
+                        DemoSection(icon: "rectangle.stack.fill", title: "Product Sliders", description: "Horizontal scrolling product collections") {
+                            ProductSliderDemoView()
+                        }
+                        
                         DemoSection(icon: "cart.fill", title: "Shopping Cart", description: "Manage items in your cart") {
                             ShoppingCartDemoView()
                         }
@@ -351,6 +355,186 @@ struct CheckoutDemoView: View {
         .padding()
         .navigationTitle("Checkout")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct ProductSliderDemoView: View {
+    private let products = DemoProductData.sampleProducts
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: ReachuSpacing.xl) {
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    Text("Product Sliders")
+                        .font(ReachuTypography.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.bottom, ReachuSpacing.md)
+                    
+                    Text("Horizontal scrolling components for displaying product collections")
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textSecondary)
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+                
+                // Featured Layout (Hero cards)
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    Text("Featured Products")
+                        .font(ReachuTypography.headline)
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.lg) {
+                            ForEach(Array(products.prefix(3))) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .hero,
+                                    showDescription: true,
+                                    onTap: { print("Featured: \(product.title)") },
+                                    onAddToCart: { print("Add featured: \(product.title)") }
+                                )
+                                .frame(width: 280)
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
+                // Category Layout (Grid cards)
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    HStack {
+                        Text("Electronics")
+                            .font(ReachuTypography.headline)
+                        
+                        Spacer()
+                        
+                        Button("See All") {
+                            print("See all electronics")
+                        }
+                        .font(ReachuTypography.callout)
+                        .foregroundColor(ReachuColors.primary)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.md) {
+                            ForEach(products) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .grid,
+                                    onTap: { print("Category: \(product.title)") },
+                                    onAddToCart: { print("Add category: \(product.title)") }
+                                )
+                                .frame(width: 180)
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
+                // Recommendations Layout (Compact cards)
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    HStack {
+                        Text("You Might Like")
+                            .font(ReachuTypography.headline)
+                        
+                        Spacer()
+                        
+                        Button("See All") {
+                            print("See all recommendations")
+                        }
+                        .font(ReachuTypography.callout)
+                        .foregroundColor(ReachuColors.primary)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.sm) {
+                            ForEach(products) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .minimal,
+                                    onTap: { print("Recommendation: \(product.title)") }
+                                )
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
+                // Layout Information
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    Text("Slider Layouts")
+                        .font(ReachuTypography.headline)
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    VStack(spacing: ReachuSpacing.sm) {
+                        SliderLayoutInfo(
+                            title: "Featured (Hero)",
+                            description: "Large cards for highlighting premium products",
+                            width: "280pt",
+                            useCase: "Homepage banners, promotions"
+                        )
+                        
+                        SliderLayoutInfo(
+                            title: "Category (Grid)",
+                            description: "Medium cards for browsing product collections",
+                            width: "180pt",
+                            useCase: "Category listings, search results"
+                        )
+                        
+                        SliderLayoutInfo(
+                            title: "Recommendations (Minimal)",
+                            description: "Compact cards for quick browsing",
+                            width: "120pt",
+                            useCase: "Related products, quick picks"
+                        )
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                }
+            }
+            .padding(.bottom, ReachuSpacing.xl)
+        }
+        .navigationTitle("Product Sliders")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct SliderLayoutInfo: View {
+    let title: String
+    let description: String
+    let width: String
+    let useCase: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            HStack {
+                Text(title)
+                    .font(ReachuTypography.bodyBold)
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Spacer()
+                
+                Text(width)
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(ReachuColors.background)
+                    .cornerRadius(ReachuBorderRadius.small)
+            }
+            
+            Text(description)
+                .font(ReachuTypography.body)
+                .foregroundColor(ReachuColors.textSecondary)
+            
+            Text("Use case: \(useCase)")
+                .font(ReachuTypography.caption1)
+                .foregroundColor(ReachuColors.textTertiary)
+        }
+        .padding(ReachuSpacing.md)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 
