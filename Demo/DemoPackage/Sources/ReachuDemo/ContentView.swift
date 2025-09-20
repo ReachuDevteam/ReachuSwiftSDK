@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import ReachuCore
 import ReachuDesignSystem
 import ReachuUI
 import ReachuTesting
@@ -67,15 +66,6 @@ struct ContentView: View {
         .sheet(isPresented: $cartManager.isCheckoutPresented) {
             RCheckoutOverlay()
                 .environmentObject(cartManager)
-        }
-        .overlay {
-            // Global floating cart indicator
-            RFloatingCartIndicator()
-                .environmentObject(cartManager)
-        }
-        .overlay {
-            // Global toast notifications
-            RToastOverlay()
         }
     }
 }

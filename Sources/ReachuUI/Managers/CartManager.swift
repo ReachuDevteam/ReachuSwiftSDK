@@ -68,6 +68,8 @@ public class CartManager: ObservableObject {
         isLoading = true
         errorMessage = nil
         
+        let previousCount = itemCount
+        
         // Check if product already exists in cart
         if let existingIndex = items.firstIndex(where: { $0.productId == product.id }) {
             // Update existing item quantity
@@ -86,6 +88,11 @@ public class CartManager: ObservableObject {
                 quantity: newQuantity,
                 sku: existingItem.sku
             )
+            
+            // Show update notification
+            await MainActor.run {
+                ToastManager.shared.showSuccess("Updated \(product.title) quantity in cart")
+            }
         } else {
             // Add new item to cart
             let cartItem = CartItem(
@@ -102,10 +109,23 @@ public class CartManager: ObservableObject {
             )
             
             items.append(cartItem)
+            
+            // Show add notification
+            await MainActor.run {
+                ToastManager.shared.showSuccess("Added \(product.title) to cart")
+            }
         }
         
         updateCartTotal()
         isLoading = false
+        
+        // Trigger haptic feedback for cart count change
+        #if os(iOS)
+        if itemCount > previousCount {
+            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+            impactFeedback.impactOccurred()
+        }
+        #endif
     }
     
     /// Remove an item from the cart
@@ -115,6 +135,11 @@ public class CartManager: ObservableObject {
         
         items.removeAll { $0.id == item.id }
         updateCartTotal()
+        
+        // Show removal notification
+        await MainActor.run {
+            ToastManager.shared.showInfo("Removed \(item.title) from cart")
+        }
         
         isLoading = false
     }

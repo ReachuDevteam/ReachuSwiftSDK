@@ -16,4 +16,16 @@ public struct ReachuUI {
 
 // MARK: - Public Exports
 
-// Note: Components are automatically exported when imported
+// Export cart management
+public typealias ReachuCartManager = CartManager
+
+// Export UI components
+public typealias ReachuProductCard = RProductCard
+public typealias ReachuProductSlider = RProductSlider
+public typealias ReachuCheckoutOverlay = RCheckoutOverlay
+
+// Export UX enhancement components
+public typealias ReachuFloatingCartIndicator = RFloatingCartIndicator
+public typealias ReachuToastNotification = RToastNotification
+public typealias ReachuToastOverlay = RToastOverlay
+public typealias ReachuToastManager = ToastManager

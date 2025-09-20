@@ -42,6 +42,11 @@ public struct RProductCard: View {
     private let onTap: (() -> Void)?
     private let onAddToCart: (() -> Void)?
     
+    // Animation states
+    @State private var isAddingToCart = false
+    @State private var showCheckmark = false
+    @State private var buttonScale: CGFloat = 1.0
+    
     // MARK: - Initializer
     public init(
         product: Product,
@@ -192,10 +197,18 @@ public struct RProductCard: View {
                 HStack {
                     priceView
                     Spacer()
-                    RButton(title: "Add to Cart", style: .primary, size: .large) {
-                        onAddToCart?()
+                    RButton(
+                        title: showCheckmark ? "Added!" : "Add to Cart",
+                        style: .primary,
+                        size: .large,
+                        isLoading: isAddingToCart,
+                        icon: showCheckmark ? "checkmark" : nil
+                    ) {
+                        animateAddToCart()
                     }
-                    .disabled(!isInStock)
+                    .disabled(!isInStock || isAddingToCart)
+                    .scaleEffect(buttonScale)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
                 }
             }
             .padding(ReachuSpacing.lg)
@@ -327,12 +340,17 @@ public struct RProductCard: View {
                 EmptyView()
             } else if isInStock {
                 RButton(
-                    title: variant == .list ? "Add" : "Add to Cart",
+                    title: showCheckmark ? (variant == .list ? "✓" : "Added!") : (variant == .list ? "Add" : "Add to Cart"),
                     style: .primary,
-                    size: variant == .list ? .small : .medium
+                    size: variant == .list ? .small : .medium,
+                    isLoading: isAddingToCart,
+                    icon: showCheckmark && variant != .list ? "checkmark" : nil
                 ) {
-                    onAddToCart?()
+                    animateAddToCart()
                 }
+                .disabled(isAddingToCart)
+                .scaleEffect(buttonScale)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
             } else {
                 Text("Out of Stock")
                     .font(ReachuTypography.caption1)
@@ -349,6 +367,35 @@ public struct RProductCard: View {
     
     private var isInStock: Bool {
         (product.quantity ?? 0) > 0
+    }
+    
+    // MARK: - Animation Functions
+    
+    private func animateAddToCart() {
+        // Start loading animation
+        withAnimation(.easeInOut(duration: 0.1)) {
+            buttonScale = 0.9
+            isAddingToCart = true
+        }
+        
+        // Scale back and show checkmark
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                buttonScale = 1.0
+                showCheckmark = true
+            }
+        }
+        
+        // Reset after showing checkmark
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showCheckmark = false
+                isAddingToCart = false
+            }
+        }
+        
+        // Call the actual add to cart function
+        onAddToCart?()
     }
     
     /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
