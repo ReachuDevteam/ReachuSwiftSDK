@@ -431,6 +431,72 @@ struct ProductSliderDemoView: View {
                     }
                 }
                 
+                // Wide/Detailed Layout 
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    HStack {
+                        Text("Detailed Browse")
+                            .font(ReachuTypography.headline)
+                        
+                        Spacer()
+                        
+                        Button("See All") {
+                            print("See all detailed")
+                        }
+                        .font(ReachuTypography.callout)
+                        .foregroundColor(ReachuColors.primary)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.md) {
+                            ForEach(Array(products.prefix(4))) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .list,
+                                    showDescription: true,
+                                    onTap: { print("Detailed: \(product.title)") },
+                                    onAddToCart: { print("Add detailed: \(product.title)") }
+                                )
+                                .frame(width: 320)
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
+                // Showcase Layout (Premium)
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    HStack {
+                        Text("Premium Showcase")
+                            .font(ReachuTypography.headline)
+                        
+                        Spacer()
+                        
+                        Button("See All") {
+                            print("See all premium")
+                        }
+                        .font(ReachuTypography.callout)
+                        .foregroundColor(ReachuColors.primary)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.xl) {
+                            ForEach(Array(products.prefix(3))) { product in
+                                SimpleProductCard(
+                                    product: product,
+                                    variant: .hero,
+                                    showDescription: true,
+                                    onTap: { print("Premium: \(product.title)") },
+                                    onAddToCart: { print("Add premium: \(product.title)") }
+                                )
+                                .frame(width: 360)
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
                 // Recommendations Layout (Compact cards)
                 VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                     HStack {
@@ -461,6 +527,53 @@ struct ProductSliderDemoView: View {
                     }
                 }
                 
+                // Micro Layout (Tiny dense cards)
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    Text("Related Items (Micro)")
+                        .font(ReachuTypography.headline)
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.xs) {
+                            ForEach(products) { product in
+                                VStack(spacing: ReachuSpacing.xs) {
+                                    AsyncImage(url: URL(string: product.images.first?.url ?? "")) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Rectangle()
+                                            .fill(ReachuColors.background)
+                                            .overlay(
+                                                Image(systemName: "photo")
+                                                    .foregroundColor(ReachuColors.textSecondary)
+                                            )
+                                    }
+                                    .frame(width: 60, height: 60)
+                                    .clipped()
+                                    .cornerRadius(ReachuBorderRadius.small)
+                                    
+                                    Text(product.title)
+                                        .font(ReachuTypography.caption2)
+                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Text(product.price.displayAmount)
+                                        .font(ReachuTypography.caption1)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(ReachuColors.primary)
+                                }
+                                .frame(width: 80)
+                                .onTapGesture {
+                                    print("Micro: \(product.title)")
+                                }
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
                 // Layout Information
                 VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                     Text("Slider Layouts")
@@ -468,6 +581,20 @@ struct ProductSliderDemoView: View {
                         .padding(.horizontal, ReachuSpacing.lg)
                     
                     VStack(spacing: ReachuSpacing.sm) {
+                        SliderLayoutInfo(
+                            title: "Showcase (Premium)",
+                            description: "Extra large cards for luxury/premium products",
+                            width: "360pt",
+                            useCase: "Premium collections, luxury items, special editions"
+                        )
+                        
+                        SliderLayoutInfo(
+                            title: "Detailed (Wide)",
+                            description: "Wide cards with comprehensive information",
+                            width: "320pt",
+                            useCase: "Detailed browsing, comparison, specifications"
+                        )
+                        
                         SliderLayoutInfo(
                             title: "Featured (Hero)",
                             description: "Large cards for highlighting premium products",
@@ -483,10 +610,17 @@ struct ProductSliderDemoView: View {
                         )
                         
                         SliderLayoutInfo(
-                            title: "Recommendations (Minimal)",
+                            title: "Recommendations (Compact)",
                             description: "Compact cards for quick browsing",
                             width: "120pt",
                             useCase: "Related products, quick picks"
+                        )
+                        
+                        SliderLayoutInfo(
+                            title: "Micro (Dense)",
+                            description: "Tiny cards for dense product lists",
+                            width: "80pt",
+                            useCase: "Footer recommendations, related items, accessories"
                         )
                     }
                     .padding(.horizontal, ReachuSpacing.lg)

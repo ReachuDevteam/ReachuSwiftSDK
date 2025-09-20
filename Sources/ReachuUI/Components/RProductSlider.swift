@@ -14,15 +14,21 @@ public struct RProductSlider: View {
     
     // MARK: - Layout Style
     public enum Layout {
-        case compact    // Minimal cards with fixed width
-        case cards      // Grid-style cards with flexible width
-        case featured   // Hero-style cards for highlights
+        case compact    // Minimal cards with fixed width (120pt)
+        case cards      // Grid-style cards with flexible width (180pt)
+        case featured   // Hero-style cards for highlights (280pt)
+        case wide       // Wide list-style cards for detailed browsing (320pt)
+        case showcase   // Extra large premium cards for special promotions (360pt)
+        case micro      // Tiny cards for dense recommendations (80pt)
         
         var cardVariant: RProductCard.Variant {
             switch self {
             case .compact: return .minimal
             case .cards: return .grid
             case .featured: return .hero
+            case .wide: return .list
+            case .showcase: return .hero
+            case .micro: return .minimal
             }
         }
         
@@ -31,6 +37,9 @@ public struct RProductSlider: View {
             case .compact: return 120
             case .cards: return 180
             case .featured: return 280
+            case .wide: return 320
+            case .showcase: return 360
+            case .micro: return 80
             }
         }
         
@@ -39,6 +48,30 @@ public struct RProductSlider: View {
             case .compact: return ReachuSpacing.sm
             case .cards: return ReachuSpacing.md
             case .featured: return ReachuSpacing.lg
+            case .wide: return ReachuSpacing.md
+            case .showcase: return ReachuSpacing.xl
+            case .micro: return ReachuSpacing.xs
+            }
+        }
+        
+        var showsDescription: Bool {
+            switch self {
+            case .featured, .showcase, .wide: return true
+            case .compact, .cards, .micro: return false
+            }
+        }
+        
+        var showsBrand: Bool {
+            switch self {
+            case .micro: return false
+            case .compact, .cards, .featured, .wide, .showcase: return true
+            }
+        }
+        
+        var allowsAddToCart: Bool {
+            switch self {
+            case .micro, .compact: return false
+            case .cards, .featured, .wide, .showcase: return true
             }
         }
     }
@@ -128,10 +161,10 @@ public struct RProductSlider: View {
                 RProductCard(
                     product: product,
                     variant: layout.cardVariant,
-                    showBrand: layout != .compact,
-                    showDescription: layout == .featured,
+                    showBrand: layout.showsBrand,
+                    showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout != .compact ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
                 )
                 .frame(width: cardWidth)
             } else {
@@ -139,10 +172,10 @@ public struct RProductSlider: View {
                 RProductCard(
                     product: product,
                     variant: layout.cardVariant,
-                    showBrand: layout != .compact,
-                    showDescription: layout == .featured,
+                    showBrand: layout.showsBrand,
+                    showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout != .compact ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
                 )
             }
         }
@@ -217,6 +250,67 @@ extension RProductSlider {
             maxItems: maxItems,
             onProductTap: onProductTap,
             onAddToCart: onAddToCart,
+            onSeeAllTap: onSeeAllTap
+        )
+    }
+    
+    /// Wide detailed slider for comprehensive product browsing
+    public static func detailed(
+        title: String,
+        products: [Product],
+        maxItems: Int = 4,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
+        onSeeAllTap: (() -> Void)? = nil
+    ) -> RProductSlider {
+        return RProductSlider(
+            title: title,
+            products: products,
+            layout: .wide,
+            showSeeAll: true,
+            maxItems: maxItems,
+            onProductTap: onProductTap,
+            onAddToCart: onAddToCart,
+            onSeeAllTap: onSeeAllTap
+        )
+    }
+    
+    /// Premium showcase slider for high-end products
+    public static func showcase(
+        title: String = "Premium Collection",
+        products: [Product],
+        maxItems: Int = 3,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
+        onSeeAllTap: (() -> Void)? = nil
+    ) -> RProductSlider {
+        return RProductSlider(
+            title: title,
+            products: products,
+            layout: .showcase,
+            showSeeAll: true,
+            maxItems: maxItems,
+            onProductTap: onProductTap,
+            onAddToCart: onAddToCart,
+            onSeeAllTap: onSeeAllTap
+        )
+    }
+    
+    /// Micro slider for dense product lists (footer, related items)
+    public static func micro(
+        title: String = "Related",
+        products: [Product],
+        maxItems: Int = 12,
+        onProductTap: ((Product) -> Void)? = nil,
+        onSeeAllTap: (() -> Void)? = nil
+    ) -> RProductSlider {
+        return RProductSlider(
+            title: title,
+            products: products,
+            layout: .micro,
+            showSeeAll: false,
+            maxItems: maxItems,
+            onProductTap: onProductTap,
             onSeeAllTap: onSeeAllTap
         )
     }
