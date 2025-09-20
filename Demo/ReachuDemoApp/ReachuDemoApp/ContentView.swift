@@ -7,8 +7,12 @@
 
 import SwiftUI
 import ReachuDesignSystem
+import ReachuUI
+import ReachuTesting
 
 struct ContentView: View {
+    @StateObject private var cartManager = CartManager()
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -32,18 +36,22 @@ struct ContentView: View {
                         
                         DemoSection(icon: "bag.fill", title: "Product Catalog", description: "Browse and add products to cart") {
                             ProductCatalogDemoView()
+                                .environmentObject(cartManager)
                         }
                         
                         DemoSection(icon: "rectangle.stack.fill", title: "Product Sliders", description: "Horizontal scrolling product collections") {
                             ProductSliderDemoView()
+                                .environmentObject(cartManager)
                         }
                         
                         DemoSection(icon: "cart.fill", title: "Shopping Cart", description: "Manage items in your cart") {
                             ShoppingCartDemoView()
+                                .environmentObject(cartManager)
                         }
                         
                         DemoSection(icon: "creditcard.fill", title: "Checkout Flow", description: "Simulate the checkout process") {
                             CheckoutDemoView()
+                                .environmentObject(cartManager)
                         }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
@@ -53,6 +61,11 @@ struct ContentView: View {
             }
             .navigationTitle("Reachu Demo")
             .navigationBarTitleDisplayMode(.inline)
+        }
+        .environmentObject(cartManager)
+        .sheet(isPresented: $cartManager.isCheckoutPresented) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
         }
     }
 }
@@ -195,8 +208,9 @@ struct ColorSwatch: View {
 }
 
 struct ProductCatalogDemoView: View {
-    @State private var selectedVariant: ProductCardVariant = .grid
-    private let products = DemoProductData.sampleProducts
+    @EnvironmentObject var cartManager: CartManager
+    @State private var isSelectedVariant: RProductCard.Variant = .grid
+    private let products = MockDataProvider.shared.sampleProducts
     
     var body: some View {
         VStack(spacing: 0) {
@@ -208,17 +222,17 @@ struct ProductCatalogDemoView: View {
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: ReachuSpacing.sm) {
-                        VariantButton(title: "Grid", variant: .grid, selected: selectedVariant == .grid) {
-                            selectedVariant = .grid
+                        VariantButton(title: "Grid", isSelected: isSelectedVariant == .grid) {
+                            isSelectedVariant = .grid
                         }
-                        VariantButton(title: "List", variant: .list, selected: selectedVariant == .list) {
-                            selectedVariant = .list
+                        VariantButton(title: "List", isSelected: isSelectedVariant == .list) {
+                            isSelectedVariant = .list
                         }
-                        VariantButton(title: "Hero", variant: .hero, selected: selectedVariant == .hero) {
-                            selectedVariant = .hero
+                        VariantButton(title: "Hero", isSelected: isSelectedVariant == .hero) {
+                            isSelectedVariant = .hero
                         }
-                        VariantButton(title: "Minimal", variant: .minimal, selected: selectedVariant == .minimal) {
-                            selectedVariant = .minimal
+                        VariantButton(title: "Minimal", isSelected: isSelectedVariant == .minimal) {
+                            isSelectedVariant = .minimal
                         }
                     }
                     .padding(.horizontal)
@@ -230,18 +244,22 @@ struct ProductCatalogDemoView: View {
             // Products Display
             ScrollView {
                 Group {
-                    switch selectedVariant {
+                    switch isSelectedVariant {
                     case .grid:
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: ReachuSpacing.md) {
                             ForEach(products) { product in
-                                SimpleProductCard(
+                                RProductCard(
                                     product: product,
                                     variant: .grid,
                                     onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                    onAddToCart: {
+                                        Task {
+                                            await cartManager.addProduct(product)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -250,11 +268,15 @@ struct ProductCatalogDemoView: View {
                     case .list:
                         LazyVStack(spacing: ReachuSpacing.sm) {
                             ForEach(products) { product in
-                                SimpleProductCard(
+                                RProductCard(
                                     product: product,
                                     variant: .list,
                                     onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                    onAddToCart: {
+                                        Task {
+                                            await cartManager.addProduct(product)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -263,12 +285,16 @@ struct ProductCatalogDemoView: View {
                     case .hero:
                         LazyVStack(spacing: ReachuSpacing.xl) {
                             ForEach(products) { product in
-                                SimpleProductCard(
+                                RProductCard(
                                     product: product,
                                     variant: .hero,
                                     showDescription: true,
                                     onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: { print("Add to cart: \(product.title)") }
+                                    onAddToCart: {
+                                        Task {
+                                            await cartManager.addProduct(product)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -278,7 +304,7 @@ struct ProductCatalogDemoView: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: ReachuSpacing.sm) {
                                 ForEach(products) { product in
-                                    SimpleProductCard(
+                                    RProductCard(
                                         product: product,
                                         variant: .minimal,
                                         onTap: { print("Tapped: \(product.title)") }
@@ -299,8 +325,7 @@ struct ProductCatalogDemoView: View {
 
 struct VariantButton: View {
     let title: String
-    let variant: ProductCardVariant
-    let selected: Bool
+    let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
@@ -308,10 +333,10 @@ struct VariantButton: View {
             Text(title)
                 .font(ReachuTypography.caption1)
                 .fontWeight(.medium)
-                .foregroundColor(selected ? .white : ReachuColors.primary)
+                .foregroundColor(isSelected ? .white : ReachuColors.primary)
                 .padding(.horizontal, ReachuSpacing.md)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(selected ? ReachuColors.primary : Color.clear)
+                .background(isSelected ? ReachuColors.primary : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.circle)
                         .stroke(ReachuColors.primary, lineWidth: 1)
@@ -323,38 +348,214 @@ struct VariantButton: View {
 
 
 struct ShoppingCartDemoView: View {
+    @EnvironmentObject var cartManager: CartManager
+    
     var body: some View {
-        VStack {
-            Text("Shopping Cart")
-                .font(ReachuTypography.largeTitle)
+        VStack(spacing: ReachuSpacing.lg) {
+            // Header
+            VStack(spacing: ReachuSpacing.sm) {
+                Text("Shopping Cart")
+                    .font(ReachuTypography.largeTitle)
+                    .foregroundColor(ReachuColors.primary)
+                
+                HStack {
+                    Text("\(cartManager.itemCount) items")
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Spacer()
+                    
+                    Text("Total: \(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
+                        .font(ReachuTypography.headline)
+                        .foregroundColor(ReachuColors.primary)
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+            }
+            .padding(.top, ReachuSpacing.lg)
             
-            Text("Coming soon...")
-                .font(ReachuTypography.body)
-                .foregroundColor(ReachuColors.textSecondary)
-            
-            Spacer()
+            if cartManager.items.isEmpty {
+                // Empty cart
+                VStack(spacing: ReachuSpacing.lg) {
+                    Spacer()
+                    
+                    Image(systemName: "cart")
+                        .font(.system(size: 48))
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Text("Your cart is empty")
+                        .font(ReachuTypography.headline)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Text("Add some products from the catalog")
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textTertiary)
+                    
+                    Spacer()
+                }
+            } else {
+                // Cart items
+                ScrollView {
+                    LazyVStack(spacing: ReachuSpacing.md) {
+                        ForEach(cartManager.items) { item in
+                            CartItemRowDemo(item: item, cartManager: cartManager)
+                        }
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                }
+                
+                // Checkout button
+                VStack(spacing: 0) {
+                    Divider()
+                    
+                    RButton(
+                        title: "Proceed to Checkout",
+                        style: .primary,
+                        size: .large,
+                        isLoading: cartManager.isLoading
+                    ) {
+                        cartManager.showCheckout()
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    .padding(.vertical, ReachuSpacing.md)
+                }
+                .background(ReachuColors.surface)
+            }
         }
-        .padding()
         .navigationTitle("Cart")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !cartManager.items.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Clear") {
+                        Task {
+                            await cartManager.clearCart()
+                        }
+                    }
+                    .foregroundColor(ReachuColors.error)
+                }
+            }
+        }
     }
 }
 
 struct CheckoutDemoView: View {
+    @EnvironmentObject var cartManager: CartManager
+    
     var body: some View {
-        VStack {
-            Text("Checkout")
-                .font(ReachuTypography.largeTitle)
+        VStack(spacing: ReachuSpacing.xl) {
+            VStack(spacing: ReachuSpacing.lg) {
+                Text("Checkout Demo")
+                    .font(ReachuTypography.largeTitle)
+                    .foregroundColor(ReachuColors.primary)
+                
+                Text("This demo shows the checkout system integration")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textSecondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, ReachuSpacing.xl)
             
-            Text("Coming soon...")
-                .font(ReachuTypography.body)
-                .foregroundColor(ReachuColors.textSecondary)
-            
-            Spacer()
+            VStack(spacing: ReachuSpacing.lg) {
+                // Cart Summary
+                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                    Text("Current Cart")
+                        .font(ReachuTypography.headline)
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    HStack {
+                        Text("Items:")
+                        Spacer()
+                        Text("\(cartManager.itemCount)")
+                            .fontWeight(.semibold)
+                    }
+                    
+                    HStack {
+                        Text("Total:")
+                        Spacer()
+                        Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
+                            .fontWeight(.semibold)
+                            .foregroundColor(ReachuColors.primary)
+                    }
+                }
+                .padding(ReachuSpacing.md)
+                .background(ReachuColors.surface)
+                .cornerRadius(ReachuBorderRadius.medium)
+                .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 2, x: 0, y: 1)
+                
+                // Add Sample Products
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    Text("Quick Add to Cart")
+                        .font(ReachuTypography.headline)
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    let sampleProducts = Array(MockDataProvider.shared.sampleProducts.prefix(3))
+                    ForEach(sampleProducts) { product in
+                        HStack {
+                            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                                Text(product.title)
+                                    .font(ReachuTypography.bodyBold)
+                                    .lineLimit(1)
+                                
+                                Text("\(product.price.currency_code) \(String(format: "%.2f", product.price.amount))")
+                                    .font(ReachuTypography.body)
+                                    .foregroundColor(ReachuColors.primary)
+                            }
+                            
+                            Spacer()
+                            
+                            RButton(
+                                title: "Add",
+                                style: .secondary,
+                                size: .small,
+                                isLoading: cartManager.isLoading
+                            ) {
+                                Task {
+                                    await cartManager.addProduct(product)
+                                }
+                            }
+                        }
+                        .padding(ReachuSpacing.sm)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.small)
+                    }
+                }
+                
+                // Checkout Button
+                VStack(spacing: ReachuSpacing.sm) {
+                    RButton(
+                        title: "Open Checkout Overlay",
+                        style: .primary,
+                        size: .large,
+                        isDisabled: cartManager.items.isEmpty
+                    ) {
+                        cartManager.showCheckout()
+                    }
+                    
+                    if cartManager.items.isEmpty {
+                        Text("Add items to enable checkout")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, ReachuSpacing.lg)
         }
-        .padding()
         .navigationTitle("Checkout")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if !cartManager.items.isEmpty {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Clear Cart") {
+                        Task {
+                            await cartManager.clearCart()
+                        }
+                    }
+                    .foregroundColor(ReachuColors.error)
+                }
+            }
+        }
     }
 }
 
@@ -369,7 +570,7 @@ enum ProductSliderLayout: String, CaseIterable {
 }
 
 struct ProductSliderDemoView: View {
-    @State private var selectedLayout: ProductSliderLayout = .featured
+    @State private var isSelectedLayout: ProductSliderLayout = .featured
     private let products = DemoProductData.sampleProducts
     
     var body: some View {
@@ -386,9 +587,9 @@ struct ProductSliderDemoView: View {
                             SliderLayoutButton(
                                 title: layout.rawValue,
                                 layout: layout,
-                                selected: selectedLayout == layout
+                                isSelected: isSelectedLayout == layout
                             ) {
-                                selectedLayout = layout
+                                isSelectedLayout = layout
                             }
                         }
                     }
@@ -409,7 +610,7 @@ struct ProductSliderDemoView: View {
             // Selected Layout Display
             ScrollView {
                 VStack(spacing: ReachuSpacing.xl) {
-                    selectedSliderView
+                    isSelectedSliderView
                 }
                 .padding(.vertical, ReachuSpacing.lg)
             }
@@ -419,8 +620,8 @@ struct ProductSliderDemoView: View {
     }
     
     @ViewBuilder
-    private var selectedSliderView: some View {
-        switch selectedLayout {
+    private var isSelectedSliderView: some View {
+        switch isSelectedLayout {
         case .showcase:
             showcaseSlider
         case .wide:
@@ -643,7 +844,7 @@ struct ProductSliderDemoView: View {
     
     @ViewBuilder
     private var layoutInfo: some View {
-        switch selectedLayout {
+        switch isSelectedLayout {
         case .showcase:
             LayoutInfoCard(
                 title: "Showcase Layout",
@@ -693,7 +894,7 @@ struct ProductSliderDemoView: View {
 struct SliderLayoutButton: View {
     let title: String
     let layout: ProductSliderLayout
-    let selected: Bool
+    let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
@@ -701,10 +902,10 @@ struct SliderLayoutButton: View {
             Text(title)
                 .font(ReachuTypography.caption1)
                 .fontWeight(.medium)
-                .foregroundColor(selected ? .white : ReachuColors.primary)
+                .foregroundColor(isSelected ? .white : ReachuColors.primary)
                 .padding(.horizontal, ReachuSpacing.md)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(selected ? ReachuColors.primary : Color.clear)
+                .background(isSelected ? ReachuColors.primary : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.circle)
                         .stroke(ReachuColors.primary, lineWidth: 1)
@@ -1232,6 +1433,93 @@ struct SimpleProductCard: View {
     
     private var isInStock: Bool {
         (product.quantity ?? 0) > 0
+    }
+}
+
+// MARK: - Cart Item Row for Demo
+
+struct CartItemRowDemo: View {
+    let item: CartManager.CartItem
+    let cartManager: CartManager
+    
+    var body: some View {
+        HStack(spacing: ReachuSpacing.md) {
+            // Product Image
+            AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(ReachuColors.background)
+                    .overlay {
+                        Image(systemName: "photo")
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+            }
+            .frame(width: 60, height: 60)
+            .cornerRadius(ReachuBorderRadius.medium)
+            
+            // Product Info
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text(item.title)
+                    .font(ReachuTypography.bodyBold)
+                    .lineLimit(2)
+                
+                if let brand = item.brand {
+                    Text(brand)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                }
+                
+                Text("\(item.currency) \(String(format: "%.2f", item.price))")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.primary)
+            }
+            
+            Spacer()
+            
+            // Quantity Controls
+            VStack(spacing: ReachuSpacing.xs) {
+                HStack(spacing: ReachuSpacing.xs) {
+                    Button("-") {
+                        if item.quantity > 1 {
+                            Task {
+                                await cartManager.updateQuantity(for: item, to: item.quantity - 1)
+                            }
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+                    .background(ReachuColors.background)
+                    .cornerRadius(ReachuBorderRadius.small)
+                    
+                    Text("\(item.quantity)")
+                        .font(ReachuTypography.bodyBold)
+                        .frame(minWidth: 24)
+                    
+                    Button("+") {
+                        Task {
+                            await cartManager.updateQuantity(for: item, to: item.quantity + 1)
+                        }
+                    }
+                    .frame(width: 32, height: 32)
+                    .background(ReachuColors.background)
+                    .cornerRadius(ReachuBorderRadius.small)
+                }
+                
+                Button("Remove") {
+                    Task {
+                        await cartManager.removeItem(item)
+                    }
+                }
+                .font(ReachuTypography.caption1)
+                .foregroundColor(ReachuColors.error)
+            }
+        }
+        .padding(ReachuSpacing.md)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 

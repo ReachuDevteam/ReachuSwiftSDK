@@ -12,10 +12,6 @@ public struct RCheckoutOverlay: View {
     @State private var checkoutStep: CheckoutStep = .cart
     @State private var isLoading = false
     @State private var errorMessage: String?
-    @State private var currentCheckout: CreateCheckoutDto?
-    
-    // MARK: - Private Properties
-    private let sdkClient: SdkClient
     
     // MARK: - Checkout Steps
     public enum CheckoutStep {
@@ -26,8 +22,8 @@ public struct RCheckoutOverlay: View {
     }
     
     // MARK: - Initialization
-    public init(sdkClient: SdkClient) {
-        self.sdkClient = sdkClient
+    public init() {
+        // Initialize checkout overlay
     }
     
     // MARK: - Body
@@ -55,9 +51,8 @@ public struct RCheckoutOverlay: View {
                 bottomActionButton
             }
             .navigationTitle(navigationTitle)
-            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
                         cartManager.hideCheckout()
                     }

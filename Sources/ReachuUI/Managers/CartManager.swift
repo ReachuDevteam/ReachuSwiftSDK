@@ -15,19 +15,19 @@ public class CartManager: ObservableObject {
     @Published public var errorMessage: String?
     
     // MARK: - Private Properties
-    private let sdkClient: SdkClient
     private var currentCartId: String?
     
     // MARK: - Initialization
-    public init(sdkClient: SdkClient) {
-        self.sdkClient = sdkClient
+    public init() {
+        // Initialize with empty cart
+        self.currentCartId = UUID().uuidString
     }
     
     // MARK: - Cart Item Model
     public struct CartItem: Identifiable, Equatable {
         public let id: String
         public let productId: Int
-        public let variantId: Int?
+        public let variantId: String?
         public let title: String
         public let brand: String?
         public let imageUrl: String?
@@ -39,7 +39,7 @@ public class CartManager: ObservableObject {
         public init(
             id: String,
             productId: Int,
-            variantId: Int? = nil,
+            variantId: String? = nil,
             title: String,
             brand: String? = nil,
             imageUrl: String? = nil,
@@ -65,96 +65,85 @@ public class CartManager: ObservableObject {
     
     /// Add a product to the cart
     public func addProduct(_ product: Product, quantity: Int = 1) async {
-        do {
-            isLoading = true
-            errorMessage = nil
+        isLoading = true
+        errorMessage = nil
+        
+        // Check if product already exists in cart
+        if let existingIndex = items.firstIndex(where: { $0.productId == product.id }) {
+            // Update existing item quantity
+            let existingItem = items[existingIndex]
+            let newQuantity = existingItem.quantity + quantity
             
-            // Ensure we have a cart
-            try await ensureCartExists()
-            
-            guard let cartId = currentCartId else {
-                throw CartError.noCartId
-                return
-            }
-            
-            // Create line item input
-            let lineItem = LineItemInput(
+            items[existingIndex] = CartItem(
+                id: existingItem.id,
+                productId: existingItem.productId,
+                variantId: existingItem.variantId,
+                title: existingItem.title,
+                brand: existingItem.brand,
+                imageUrl: existingItem.imageUrl,
+                price: existingItem.price,
+                currency: existingItem.currency,
+                quantity: newQuantity,
+                sku: existingItem.sku
+            )
+        } else {
+            // Add new item to cart
+            let cartItem = CartItem(
+                id: UUID().uuidString,
                 productId: product.id,
                 variantId: product.variants.first?.id,
+                title: product.title,
+                brand: product.brand,
+                imageUrl: product.images.first?.url,
+                price: Double(product.price.amount),
+                currency: product.price.currency_code,
                 quantity: quantity,
-                priceData: nil
+                sku: product.sku
             )
             
-            // Add to backend cart using Miguel Angel's module
-            let updatedCart = try await sdkClient.cart.addItem(
-                cart_id: cartId,
-                line_items: [lineItem]
-            )
-            
-            // Update local state
-            await updateLocalCart(from: updatedCart)
-            
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ Error adding product to cart: \(error)")
+            items.append(cartItem)
         }
         
+        updateCartTotal()
         isLoading = false
     }
     
     /// Remove an item from the cart
     public func removeItem(_ item: CartItem) async {
-        do {
-            isLoading = true
-            errorMessage = nil
-            
-            guard let cartId = currentCartId else {
-                throw CartError.noCartId
-            }
-            
-            // Remove from backend using Miguel Angel's module
-            let updatedCart = try await sdkClient.cart.removeItem(
-                cart_id: cartId,
-                cart_item_id: item.id
-            )
-            
-            // Update local state
-            await updateLocalCart(from: updatedCart)
-            
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ Error removing item from cart: \(error)")
-        }
+        isLoading = true
+        errorMessage = nil
+        
+        items.removeAll { $0.id == item.id }
+        updateCartTotal()
         
         isLoading = false
     }
     
     /// Update item quantity
     public func updateQuantity(for item: CartItem, to newQuantity: Int) async {
-        do {
-            isLoading = true
-            errorMessage = nil
-            
-            guard let cartId = currentCartId else {
-                throw CartError.noCartId
+        isLoading = true
+        errorMessage = nil
+        
+        if let index = items.firstIndex(where: { $0.id == item.id }) {
+            if newQuantity <= 0 {
+                items.remove(at: index)
+            } else {
+                items[index] = CartItem(
+                    id: item.id,
+                    productId: item.productId,
+                    variantId: item.variantId,
+                    title: item.title,
+                    brand: item.brand,
+                    imageUrl: item.imageUrl,
+                    price: item.price,
+                    currency: item.currency,
+                    quantity: newQuantity,
+                    sku: item.sku
+                )
             }
-            
-            // Update in backend using Miguel Angel's module
-            let updatedCart = try await sdkClient.cart.updateItem(
-                cart_id: cartId,
-                cart_item_id: item.id,
-                shipping_id: nil,
-                quantity: newQuantity
-            )
-            
-            // Update local state
-            await updateLocalCart(from: updatedCart)
-            
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ Error updating item quantity: \(error)")
         }
         
+        updateCartTotal()
         isLoading = false
     }
     
@@ -170,26 +159,11 @@ public class CartManager: ObservableObject {
     
     /// Clear the entire cart
     public func clearCart() async {
-        do {
-            isLoading = true
-            errorMessage = nil
-            
-            guard let cartId = currentCartId else {
-                throw CartError.noCartId
-            }
-            
-            // Delete cart using Miguel Angel's module
-            _ = try await sdkClient.cart.delete(cart_id: cartId)
-            
-            // Reset local state
-            items = []
-            cartTotal = 0.0
-            currentCartId = nil
-            
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ Error clearing cart: \(error)")
-        }
+        isLoading = true
+        errorMessage = nil
+        
+        items = []
+        cartTotal = 0.0
         
         isLoading = false
     }
@@ -201,39 +175,14 @@ public class CartManager: ObservableObject {
     
     // MARK: - Private Methods
     
-    /// Ensure a cart exists, create one if necessary
-    private func ensureCartExists() async throws {
-        if currentCartId == nil {
-            let newCart = try await sdkClient.cart.create()
-            currentCartId = newCart.cartId
-            await updateLocalCart(from: newCart)
-        }
-    }
-    
-    /// Update local cart state from backend cart data
-    private func updateLocalCart(from cartDto: CartDto) async {
-        // Convert CartDto line items to local CartItem objects
-        let cartItems = cartDto.lineItems.compactMap { lineItem -> CartItem? in
-            guard let title = lineItem.title else { return nil }
-            
-            return CartItem(
-                id: lineItem.id,
-                productId: lineItem.productId,
-                variantId: lineItem.variantId,
-                title: title,
-                brand: lineItem.brand,
-                imageUrl: lineItem.image?.first?.url,
-                price: lineItem.price.amount,
-                currency: lineItem.price.currencyCode,
-                quantity: lineItem.quantity,
-                sku: lineItem.sku
-            )
+    /// Update the cart total and currency
+    private func updateCartTotal() {
+        cartTotal = items.reduce(0) { total, item in
+            total + (item.price * Double(item.quantity))
         }
         
-        // Update published properties
-        items = cartItems
-        cartTotal = cartDto.subtotal + cartDto.shipping
-        currency = cartDto.currency
+        // Use currency from first item, default to USD
+        currency = items.first?.currency ?? "USD"
     }
 }
 
