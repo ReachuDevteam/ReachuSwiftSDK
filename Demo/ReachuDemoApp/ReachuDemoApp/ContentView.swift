@@ -580,8 +580,9 @@ enum ProductSliderLayout: String, CaseIterable {
 }
 
 struct ProductSliderDemoView: View {
+    @EnvironmentObject var cartManager: CartManager
     @State private var isSelectedLayout: ProductSliderLayout = .featured
-    private let products = DemoProductData.sampleProducts
+    private let products = MockDataProvider.shared.sampleProducts
     
     var body: some View {
         VStack(spacing: 0) {
@@ -620,7 +621,7 @@ struct ProductSliderDemoView: View {
             // Selected Layout Display
             ScrollView {
                 VStack(spacing: ReachuSpacing.xl) {
-                    isSelectedSliderView
+                    selectedSliderView
                 }
                 .padding(.vertical, ReachuSpacing.lg)
             }
@@ -630,48 +631,115 @@ struct ProductSliderDemoView: View {
     }
     
     @ViewBuilder
-    private var isSelectedSliderView: some View {
+    private var selectedSliderView: some View {
         switch isSelectedLayout {
         case .showcase:
-            showcaseSlider
-        case .wide:
-            wideSlider
-        case .featured:
-            featuredSlider
-        case .cards:
-            cardsSlider
-        case .compact:
-            compactSlider
-        case .micro:
-            microSlider
-        }
-    }
-    
-    private var showcaseSlider: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            Text("Premium Collection")
-                .font(ReachuTypography.headline)
-                .padding(.horizontal, ReachuSpacing.lg)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ReachuSpacing.xl) {
-                    ForEach(Array(products.prefix(3))) { product in
-                        SimpleProductCard(
-                            product: product,
-                            variant: .hero,
-                            showDescription: true,
-                            onTap: { print("Showcase: \(product.title)") },
-                            onAddToCart: { print("Add showcase: \(product.title)") }
-                        )
-                        .frame(width: 360)
+            RProductSlider(
+                title: "Premium Collection",
+                products: Array(products.prefix(3)),
+                layout: .showcase,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Showcase tapped: \(product.title)")
+                },
+                onAddToCart: { product in
+                    Task {
+                        await cartManager.addProduct(product)
                     }
+                },
+                onSeeAllTap: {
+                    print("See all showcase")
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
-            }
+            )
+            
+        case .wide:
+            RProductSlider(
+                title: "Detailed Browse",
+                products: Array(products.prefix(4)),
+                layout: .wide,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Wide tapped: \(product.title)")
+                },
+                onAddToCart: { product in
+                    Task {
+                        await cartManager.addProduct(product)
+                    }
+                },
+                onSeeAllTap: {
+                    print("See all wide")
+                }
+            )
+            
+        case .featured:
+            RProductSlider(
+                title: "Featured Products",
+                products: Array(products.prefix(5)),
+                layout: .featured,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Featured tapped: \(product.title)")
+                },
+                onAddToCart: { product in
+                    Task {
+                        await cartManager.addProduct(product)
+                    }
+                },
+                onSeeAllTap: {
+                    print("See all featured")
+                }
+            )
+            
+        case .cards:
+            RProductSlider(
+                title: "Electronics",
+                products: Array(products.prefix(6)),
+                layout: .cards,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Cards tapped: \(product.title)")
+                },
+                onAddToCart: { product in
+                    Task {
+                        await cartManager.addProduct(product)
+                    }
+                },
+                onSeeAllTap: {
+                    print("See all cards")
+                }
+            )
+            
+        case .compact:
+            RProductSlider(
+                title: "You Might Like",
+                products: Array(products.prefix(8)),
+                layout: .compact,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Compact tapped: \(product.title)")
+                },
+                onSeeAllTap: {
+                    print("See all recommendations")
+                }
+            )
+            
+        case .micro:
+            RProductSlider(
+                title: "Related Items",
+                products: Array(products.prefix(12)),
+                layout: .micro,
+                showSeeAll: true,
+                onProductTap: { product in
+                    print("Micro tapped: \(product.title)")
+                },
+                onSeeAllTap: {
+                    print("See all related")
+                }
+            )
         }
     }
     
-    private var wideSlider: some View {
+    @ViewBuilder
         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
             HStack {
                 Text("Detailed Browse")

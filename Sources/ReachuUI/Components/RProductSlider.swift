@@ -86,6 +86,10 @@ public struct RProductSlider: View {
     private let onAddToCart: ((Product) -> Void)?
     private let onSeeAllTap: (() -> Void)?
     
+    // Animation states
+    @State private var addedProductId: Int?
+    @State private var sliderScale: CGFloat = 1.0
+    
     // MARK: - Initializer
     public init(
         title: String? = nil,
@@ -124,6 +128,8 @@ public struct RProductSlider: View {
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
             }
+            .scaleEffect(sliderScale)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
         }
     }
     
@@ -153,6 +159,41 @@ public struct RProductSlider: View {
         .padding(.horizontal, ReachuSpacing.lg)
     }
     
+    // MARK: - Animation Functions
+    
+    private func animateAddToCart(for product: Product) {
+        // Haptic feedback
+        #if os(iOS)
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        #endif
+        
+        // Store the added product ID for visual feedback
+        addedProductId = product.id
+        
+        // Slight scale animation for the entire slider
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            sliderScale = 1.02
+        }
+        
+        // Return to normal scale
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                sliderScale = 1.0
+            }
+        }
+        
+        // Reset added product highlight after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                addedProductId = nil
+            }
+        }
+        
+        // Call the original callback
+        onAddToCart?(product)
+    }
+    
     // MARK: - Product Card View
     private func productCardView(product: Product) -> some View {
         Group {
@@ -164,9 +205,15 @@ public struct RProductSlider: View {
                     showBrand: layout.showsBrand,
                     showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { animateAddToCart(for: product) } : nil
                 )
                 .frame(width: cardWidth)
+                .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        .stroke(ReachuColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: addedProductId)
+                )
             } else {
                 // Flexible width cards
                 RProductCard(
@@ -175,7 +222,13 @@ public struct RProductSlider: View {
                     showBrand: layout.showsBrand,
                     showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { animateAddToCart(for: product) } : nil
+                )
+                .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        .stroke(ReachuColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: addedProductId)
                 )
             }
         }
