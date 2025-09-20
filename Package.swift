@@ -135,21 +135,7 @@ let package = Package(
         ),
         
         
-        // MARK: - Test Targets
-        .testTarget(
-            name: "ReachuCoreTests",
-            dependencies: ["ReachuCore", "ReachuTesting"],
-            path: "Tests/ReachuCoreTests"
-        ),
-        .testTarget(
-            name: "ReachuUITests",
-            dependencies: ["ReachuUI", "ReachuTesting"],
-            path: "Tests/ReachuUITests"
-        ),
-        .testTarget(
-            name: "ReachuLiveShowTests",
-            dependencies: ["ReachuLiveShow", "ReachuTesting"],
-            path: "Tests/ReachuLiveShowTests"
-        ),
+        // MARK: - Test Targets (TODO: Create test directories)
+        // Tests temporarily removed until directories are created
     ]
 )

@@ -1,6 +1,6 @@
 import Foundation
 
-private func decodeLossyDouble(_ container: KeyedDecodingContainer<CodingKeys>, key: CodingKeys)
+private func decodeLossyDouble<K>(_ container: KeyedDecodingContainer<K>, key: K)
     -> Double?
 {
     if let v = try? container.decodeIfPresent(Double.self, forKey: key) { return v }
@@ -8,7 +8,7 @@ private func decodeLossyDouble(_ container: KeyedDecodingContainer<CodingKeys>, 
     if let i = try? container.decodeIfPresent(Int.self, forKey: key) { return Double(i) }
     return nil
 }
-private func decodeLossyInt(_ container: KeyedDecodingContainer<CodingKeys>, key: CodingKeys)
+private func decodeLossyInt<K>(_ container: KeyedDecodingContainer<K>, key: K)
     -> Int?
 {
     if let v = try? container.decodeIfPresent(Int.self, forKey: key) { return v }
@@ -108,29 +108,7 @@ public struct ShippingDto: Codable, Equatable {
     public let price: ShippingPriceDto
 }
 
-public struct ProductImageDto: Codable, Equatable {
-    public let id: String
-    public let url: String
-    public let width: Int?
-    public let height: Int?
-
-    enum CodingKeys: String, CodingKey { case id, url, width, height }
-
-    public init(id: String, url: String, width: Int?, height: Int?) {
-        self.id = id
-        self.url = url
-        self.width = width
-        self.height = height
-    }
-
-    public init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try c.decode(String.self, forKey: .id)
-        self.url = try c.decode(String.self, forKey: .url)
-        self.width = decodeLossyInt(c, key: .width)
-        self.height = decodeLossyInt(c, key: .height)
-    }
-}
+// ProductImageDto is defined in ProductModels.swift to avoid duplication
 
 public struct VariantOptionDto: Codable, Equatable {
     public let option: String

@@ -19,20 +19,20 @@ private enum Lossy {
     }
 }
 
-private func decodeLossyDouble(_ c: KeyedDecodingContainer<CodingKeys>, _ k: CodingKeys) -> Double?
+private func decodeLossyDouble<K>(_ c: KeyedDecodingContainer<K>, key k: K) -> Double?
 {
     if let v = try? c.decodeIfPresent(Double.self, forKey: k) { return v }
     if let s = try? c.decodeIfPresent(String.self, forKey: k) { return Double(s) }
     if let i = try? c.decodeIfPresent(Int.self, forKey: k) { return Double(i) }
     return nil
 }
-private func decodeLossyInt(_ c: KeyedDecodingContainer<CodingKeys>, _ k: CodingKeys) -> Int? {
+private func decodeLossyInt<K>(_ c: KeyedDecodingContainer<K>, key k: K) -> Int? {
     if let v = try? c.decodeIfPresent(Int.self, forKey: k) { return v }
     if let s = try? c.decodeIfPresent(String.self, forKey: k) { return Int(s) }
     if let d = try? c.decodeIfPresent(Double.self, forKey: k) { return Int(d) }
     return nil
 }
-private func decodeLossyBool(_ c: KeyedDecodingContainer<CodingKeys>, _ k: CodingKeys) -> Bool? {
+private func decodeLossyBool<K>(_ c: KeyedDecodingContainer<K>, key k: K) -> Bool? {
     if let v = try? c.decodeIfPresent(Bool.self, forKey: k) { return v }
     return nil
 }
@@ -56,15 +56,33 @@ public struct PriceDto: Codable, Equatable {
         case taxRate = "tax_rate"
     }
 
+    public init(
+        amount: Double,
+        currencyCode: String,
+        compareAt: Double? = nil,
+        amountInclTaxes: Double? = nil,
+        compareAtInclTaxes: Double? = nil,
+        taxAmount: Double? = nil,
+        taxRate: Double? = nil
+    ) {
+        self.amount = amount
+        self.currencyCode = currencyCode
+        self.compareAt = compareAt
+        self.amountInclTaxes = amountInclTaxes
+        self.compareAtInclTaxes = compareAtInclTaxes
+        self.taxAmount = taxAmount
+        self.taxRate = taxRate
+    }
+
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.amount = decodeLossyDouble(c, .amount) ?? 0.0
+        self.amount = decodeLossyDouble(c, key: .amount) ?? 0.0
         self.currencyCode = (try? c.decode(String.self, forKey: .currencyCode)) ?? ""
-        self.compareAt = decodeLossyDouble(c, .compareAt)
-        self.amountInclTaxes = decodeLossyDouble(c, .amountInclTaxes)
-        self.compareAtInclTaxes = decodeLossyDouble(c, .compareAtInclTaxes)
-        self.taxAmount = decodeLossyDouble(c, .taxAmount)
-        self.taxRate = decodeLossyDouble(c, .taxRate)
+        self.compareAt = decodeLossyDouble(c, key: .compareAt)
+        self.amountInclTaxes = decodeLossyDouble(c, key: .amountInclTaxes)
+        self.compareAtInclTaxes = decodeLossyDouble(c, key: .compareAtInclTaxes)
+        self.taxAmount = decodeLossyDouble(c, key: .taxAmount)
+        self.taxRate = decodeLossyDouble(c, key: .taxRate)
     }
 }
 
@@ -81,9 +99,9 @@ public struct ProductImageDto: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.id = (try? c.decode(String.self, forKey: .id)) ?? ""
         self.url = (try? c.decode(String.self, forKey: .url)) ?? ""
-        self.width = decodeLossyInt(c, .width)
-        self.height = decodeLossyInt(c, .height)
-        self.order = decodeLossyInt(c, .order)
+        self.width = decodeLossyInt(c, key: .width)
+        self.height = decodeLossyInt(c, key: .height)
+        self.order = decodeLossyInt(c, key: .order)
     }
 }
 
@@ -99,7 +117,7 @@ public struct OptionDto: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.id = (try? c.decode(String.self, forKey: .id)) ?? ""
         self.name = (try? c.decode(String.self, forKey: .name)) ?? ""
-        self.order = decodeLossyInt(c, .order) ?? 0
+        self.order = decodeLossyInt(c, key: .order) ?? 0
         self.values = (try? c.decode(String.self, forKey: .values)) ?? ""
     }
 }
@@ -112,7 +130,7 @@ public struct CategoryDto: Codable, Equatable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = decodeLossyInt(c, .id) ?? 0
+        self.id = decodeLossyInt(c, key: .id) ?? 0
         self.name = (try? c.decode(String.self, forKey: .name)) ?? ""
     }
 }
@@ -134,7 +152,7 @@ public struct VariantDto: Codable, Equatable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         self.id = (try? c.decode(String.self, forKey: .id)) ?? ""
         self.barcode = try? c.decodeIfPresent(String.self, forKey: .barcode)
-        self.quantity = decodeLossyInt(c, .quantity)
+        self.quantity = decodeLossyInt(c, key: .quantity)
         self.sku = (try? c.decode(String.self, forKey: .sku)) ?? ""
         self.title = (try? c.decode(String.self, forKey: .title)) ?? ""
         self.price =
@@ -257,7 +275,7 @@ public struct ProductDto: Codable, Equatable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = decodeLossyInt(c, .id) ?? 0
+        self.id = decodeLossyInt(c, key: .id) ?? 0
         self.title = (try? c.decode(String.self, forKey: .title)) ?? ""
         self.sku = (try? c.decode(String.self, forKey: .sku)) ?? ""
         self.supplier = (try? c.decode(String.self, forKey: .supplier)) ?? ""
@@ -265,17 +283,17 @@ public struct ProductDto: Codable, Equatable {
         self.barcode = try? c.decodeIfPresent(String.self, forKey: .barcode)
         self.origin = (try? c.decode(String.self, forKey: .origin)) ?? ""
         self.description = try? c.decodeIfPresent(String.self, forKey: .description)
-        self.digital = decodeLossyBool(c, .digital) ?? false
-        self.optionsEnabled = decodeLossyBool(c, .optionsEnabled) ?? false
-        self.quantity = decodeLossyInt(c, .quantity)
-        self.referralFee = decodeLossyInt(c, .referralFee)
-        self.importedProduct = decodeLossyBool(c, .importedProduct)
+        self.digital = decodeLossyBool(c, key: .digital) ?? false
+        self.optionsEnabled = decodeLossyBool(c, key: .optionsEnabled) ?? false
+        self.quantity = decodeLossyInt(c, key: .quantity)
+        self.referralFee = decodeLossyInt(c, key: .referralFee)
+        self.importedProduct = decodeLossyBool(c, key: .importedProduct)
         self.tags = try? c.decodeIfPresent(String.self, forKey: .tags)
-        self.supplierId = decodeLossyInt(c, .supplierId)
+        self.supplierId = decodeLossyInt(c, key: .supplierId)
 
-        self.images = (try? c.decodeIfPresent([ProductImageDto].self, forKey: .images)) ?? []
-        self.variants = (try? c.decodeIfPresent([VariantDto].self, forKey: .variants)) ?? []
-        self.options = (try? c.decodeIfPresent([OptionDto].self, forKey: .options)) ?? []
+        self.images = (try? c.decodeIfPresent([ProductImageDto].self, forKey: .images)) ?? [ProductImageDto]()
+        self.variants = (try? c.decodeIfPresent([VariantDto].self, forKey: .variants)) ?? [VariantDto]()
+        self.options = (try? c.decodeIfPresent([OptionDto].self, forKey: .options)) ?? [OptionDto]()
 
         if let raw = try? c.decodeIfPresent([CategoryDto].self, forKey: .categories) {
             var seen = Set<Int>()

@@ -13,7 +13,7 @@ public class SdkException: Error, CustomStringConvertible {
     ) {
         self.message = message
         self.code = code
-        this.status = status
+        self.status = status
         self.details = details
         self.stack = stack
     }
