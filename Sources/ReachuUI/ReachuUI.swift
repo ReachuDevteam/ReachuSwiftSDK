@@ -23,6 +23,7 @@ public typealias ReachuCartManager = CartManager
 public typealias ReachuProductCard = RProductCard
 public typealias ReachuProductSlider = RProductSlider
 public typealias ReachuCheckoutOverlay = RCheckoutOverlay
+public typealias ReachuProductDetailOverlay = RProductDetailOverlay
 
 // Export UX enhancement components
 public typealias ReachuFloatingCartIndicator = RFloatingCartIndicator

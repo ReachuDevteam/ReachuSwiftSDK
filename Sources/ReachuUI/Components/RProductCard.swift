@@ -39,6 +39,7 @@ public struct RProductCard: View {
     private let variant: Variant
     private let showBrand: Bool
     private let showDescription: Bool
+    private let showProductDetail: Bool
     private let onTap: (() -> Void)?
     private let onAddToCart: (() -> Void)?
     
@@ -46,6 +47,7 @@ public struct RProductCard: View {
     @State private var isAddingToCart = false
     @State private var showCheckmark = false
     @State private var buttonScale: CGFloat = 1.0
+    @State private var showingProductDetail = false
     
     // MARK: - Initializer
     public init(
@@ -53,6 +55,7 @@ public struct RProductCard: View {
         variant: Variant = .grid,
         showBrand: Bool = true,
         showDescription: Bool = false,
+        showProductDetail: Bool = true,
         onTap: (() -> Void)? = nil,
         onAddToCart: (() -> Void)? = nil
     ) {
@@ -60,13 +63,14 @@ public struct RProductCard: View {
         self.variant = variant
         self.showBrand = showBrand
         self.showDescription = showDescription
+        self.showProductDetail = showProductDetail
         self.onTap = onTap
         self.onAddToCart = onAddToCart
     }
     
     // MARK: - Body
     public var body: some View {
-        Button(action: { onTap?() }) {
+        Button(action: handleTap) {
             switch variant {
             case .grid:
                 gridLayout
@@ -79,6 +83,14 @@ public struct RProductCard: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .sheet(isPresented: $showingProductDetail) {
+            RProductDetailOverlay(
+                product: product,
+                onDismiss: {
+                    showingProductDetail = false
+                }
+            )
+        }
     }
     
     // MARK: - Layout Variants
@@ -396,6 +408,15 @@ public struct RProductCard: View {
         
         // Call the actual add to cart function
         onAddToCart?()
+    }
+    
+    /// Handle tap on product card
+    private func handleTap() {
+        if showProductDetail {
+            showingProductDetail = true
+        } else {
+            onTap?()
+        }
     }
     
     /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
