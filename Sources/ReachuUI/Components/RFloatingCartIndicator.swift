@@ -65,7 +65,6 @@ public struct RFloatingCartIndicator: View {
                             // Checkout arrow
                             Image(systemName: "chevron.right")
                                 .font(.caption)
-                                .fontWeight(.semibold)
                                 .foregroundColor(.white.opacity(0.8))
                         }
                         .padding(.horizontal, ReachuSpacing.lg)
@@ -101,18 +100,16 @@ public struct RFloatingCartIndicator: View {
                 .padding(.horizontal, ReachuSpacing.lg)
             }
             .animation(.spring(response: 0.6, dampingFraction: 0.8), value: cartManager.itemCount)
-            .onReceive(cartManager.$itemCount) { newCount in
-                if newCount > 0 {
-                    // Trigger bounce animation when items are added
+            .onChange(of: cartManager.itemCount) { newCount in
+                // Trigger bounce animation when items are added
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    bounceAnimation = true
+                }
+                
+                // Reset bounce animation after delay
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                        bounceAnimation = true
-                    }
-                    
-                    // Reset bounce animation after delay
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            bounceAnimation = false
-                        }
+                        bounceAnimation = false
                     }
                 }
             }
