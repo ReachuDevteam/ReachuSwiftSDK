@@ -17,7 +17,6 @@ private func decodeLossyInt(_ container: KeyedDecodingContainer<CodingKeys>, key
     return nil
 }
 
-// MARK: - PriceDataDto
 public struct PriceDataDto: Codable, Equatable {
     public let amount: Double
     public let currencyCode: String
@@ -66,7 +65,6 @@ public struct PriceDataDto: Codable, Equatable {
     }
 }
 
-// MARK: - ShippingPriceDto
 public struct ShippingPriceDto: Codable, Equatable {
     public let amount: Double
     public let currencyCode: String
@@ -103,7 +101,6 @@ public struct ShippingPriceDto: Codable, Equatable {
     }
 }
 
-// MARK: - ShippingDto
 public struct ShippingDto: Codable, Equatable {
     public let id: String
     public let name: String
@@ -111,7 +108,6 @@ public struct ShippingDto: Codable, Equatable {
     public let price: ShippingPriceDto
 }
 
-// MARK: - ProductImageDto
 public struct ProductImageDto: Codable, Equatable {
     public let id: String
     public let url: String
@@ -136,13 +132,11 @@ public struct ProductImageDto: Codable, Equatable {
     }
 }
 
-// MARK: - VariantOptionDto
 public struct VariantOptionDto: Codable, Equatable {
     public let option: String
     public let value: String
 }
 
-// MARK: - PriceLineItemAvailableShippingDto
 public struct PriceLineItemAvailableShippingDto: Codable, Equatable {
     public let amount: Double?
     public let currencyCode: String?
@@ -179,7 +173,6 @@ public struct PriceLineItemAvailableShippingDto: Codable, Equatable {
     }
 }
 
-// MARK: - LineItemAvailableShippingDto
 public struct LineItemAvailableShippingDto: Codable, Equatable {
     public let id: String?
     public let name: String?
@@ -194,7 +187,6 @@ public struct LineItemAvailableShippingDto: Codable, Equatable {
     }
 }
 
-// MARK: - LineItemDto
 public struct LineItemDto: Codable, Equatable {
     public let id: String
     public let supplier: String
@@ -264,7 +256,6 @@ public struct LineItemDto: Codable, Equatable {
     }
 }
 
-// MARK: - CartDto
 public struct CartDto: Codable, Equatable {
     public let availableShippingCountries: [String]
     public let cartId: String
@@ -315,13 +306,11 @@ public struct CartDto: Codable, Equatable {
     }
 }
 
-// MARK: - RemoveCartDto
 public struct RemoveCartDto: Codable, Equatable {
     public let success: Bool
     public let message: String
 }
 
-// MARK: - SupplierLineItemsBySupplierDto
 public struct SupplierLineItemsBySupplierDto: Codable, Equatable {
     public let id: Int?
     public let name: String?
@@ -335,7 +324,6 @@ public struct SupplierLineItemsBySupplierDto: Codable, Equatable {
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        // En Flutter aceptas int o string convertible a int
         if let i = try? c.decodeIfPresent(Int.self, forKey: .id) {
             self.id = i
         } else if let s = try? c.decodeIfPresent(String.self, forKey: .id), let i = Int(s) {
@@ -349,7 +337,6 @@ public struct SupplierLineItemsBySupplierDto: Codable, Equatable {
     }
 }
 
-// MARK: - GetLineItemsBySupplierDto
 public struct GetLineItemsBySupplierDto: Codable, Equatable {
     public let supplier: SupplierLineItemsBySupplierDto?
     public let availableShippings: [LineItemAvailableShippingDto]?
@@ -362,7 +349,6 @@ public struct GetLineItemsBySupplierDto: Codable, Equatable {
     }
 }
 
-// MARK: - Inputs (para mutations)
 public struct PriceDataInput {
     public let currency: String
     public let tax: Double?
@@ -406,7 +392,6 @@ public struct LineItemInput {
     }
 }
 
-// typealias como en Dart
 public typealias GetCartDto = CartDto
 public typealias CreateCartDto = CartDto
 public typealias UpdateCartDto = CartDto

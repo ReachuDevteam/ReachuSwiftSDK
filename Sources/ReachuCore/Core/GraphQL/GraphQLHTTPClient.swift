@@ -48,12 +48,10 @@ public final class GraphQLHTTPClient {
             let (data, resp) = try await session.data(for: req)
             let status = (resp as? HTTPURLResponse)?.statusCode ?? -1
 
-            // Parse JSON { data, errors }
             let root = (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? [:]
             let errors = root["errors"] as? [[String: Any]]
             let dataObj = root["data"] as? [String: Any]
 
-            // GraphQL errors mapeados por extensions.code
             if let errs = errors, !errs.isEmpty {
                 let first = errs[0]
                 let message = (first["message"] as? String) ?? "GraphQL error"
@@ -67,7 +65,6 @@ public final class GraphQLHTTPClient {
                 }
             }
 
-            // HTTP error sin GraphQL errors
             if !(200..<300).contains(status) {
                 let body = String(data: data, encoding: .utf8)
                 throw GraphQLErrorMapper.fromStatus(
