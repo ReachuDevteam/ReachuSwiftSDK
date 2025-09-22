@@ -138,27 +138,27 @@ public struct RProductCard: View {
     
     /// List Layout - Horizontal card for search results
     private var listLayout: some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Product Image (single image for list)
-            productImageView(height: 80, width: 80)
+        HStack(spacing: ReachuSpacing.sm) {
+            // Product Image (smaller for list)
+            productImageView(height: 70, width: 70)
             
             // Product Info
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 if showBrand, let brand = product.brand {
                     Text(brand)
-                        .font(ReachuTypography.caption1)
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(ReachuColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(ReachuColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
-                        .font(ReachuTypography.caption1)
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(ReachuColors.textSecondary)
                         .lineLimit(1)
                 }
@@ -174,10 +174,10 @@ public struct RProductCard: View {
             
             Spacer()
         }
-        .padding(ReachuSpacing.md)
+        .padding(ReachuSpacing.sm)
         .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+        .cornerRadius(ReachuBorderRadius.small)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 1, x: 0, y: 1)
     }
     
     /// Hero Layout - Large featured product
@@ -233,23 +233,23 @@ public struct RProductCard: View {
     /// Minimal Layout - Compact for carousels
     private var minimalLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            // Compact Product Image (single image only)
-            productImageView(height: 100, width: 120)
+            // Compact Product Image (smaller)
+            productImageView(height: 80, width: 100)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
-                    .font(ReachuTypography.caption1)
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(ReachuColors.textPrimary)
                     .lineLimit(2)
                 
                 priceView
             }
-            .padding(ReachuSpacing.sm)
+            .padding(ReachuSpacing.xs)
         }
-        .frame(width: 120)
+        .frame(width: 100, height: 140)
         .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
+        .cornerRadius(ReachuBorderRadius.small)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.06), radius: 1, x: 0, y: 1)
     }
     
     // MARK: - Image Components
@@ -332,13 +332,22 @@ public struct RProductCard: View {
     private var priceView: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(product.price.displayAmount)
-                .font(variant == .hero ? ReachuTypography.title3 : ReachuTypography.body)
+                .font(
+                    variant == .hero ? ReachuTypography.title3 : 
+                    variant == .minimal ? .system(size: 11, weight: .semibold) :
+                    variant == .list ? .system(size: 14, weight: .semibold) :
+                    ReachuTypography.body
+                )
                 .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.primary)
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)
-                    .font(ReachuTypography.caption1)
+                    .font(
+                        variant == .minimal ? .system(size: 10, weight: .regular) :
+                        variant == .list ? .system(size: 11, weight: .regular) :
+                        ReachuTypography.caption1
+                    )
                     .foregroundColor(ReachuColors.textSecondary)
                     .strikethrough()
             }
@@ -352,9 +361,9 @@ public struct RProductCard: View {
                 EmptyView()
             } else if isInStock {
                 RButton(
-                    title: showCheckmark ? (variant == .list ? "✓" : "Added!") : (variant == .list ? "Add" : "Add to Cart"),
+                    title: showCheckmark ? (variant == .list ? "✓" : "Added!") : (variant == .list ? "Add" : variant == .grid ? "Add" : "Add to Cart"),
                     style: .primary,
-                    size: variant == .list ? .small : .medium,
+                    size: variant == .list ? .small : variant == .grid ? .small : .medium,
                     isLoading: isAddingToCart,
                     icon: showCheckmark && variant != .list ? "checkmark" : nil
                 ) {
