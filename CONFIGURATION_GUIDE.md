@@ -1,11 +1,10 @@
-# Reachu SDK Configuration Guide
+# 📋 Reachu SDK Configuration Guide
 
-This guide explains how to configure the Reachu Swift SDK for seamless integration across all modules (Core, UI, LiveShow) without repeated setup.
+This comprehensive guide explains how to configure the Reachu Swift SDK to match your app's branding and requirements. Configure once and use everywhere - no repeated setup needed!
 
 ## 🚀 Quick Start
 
-### 1. Basic Configuration (API Key Only)
-
+### Option 1: Simple Setup (API Key Only)
 ```swift
 import ReachuCore
 
@@ -17,43 +16,41 @@ RProductCard(product: product) // Automatically configured
 RCheckoutOverlay() // Uses global settings
 ```
 
-### 2. Advanced Configuration (Programmatic)
+### Option 2: Configuration File (Recommended)
+
+**Step 1:** Download the configuration template
+
+**Step 2:** Add it to your Xcode project
+
+**Step 3:** Load in your app startup
 
 ```swift
 import ReachuCore
 
-ReachuConfiguration.configure(
-    apiKey: "your-api-key-here",
-    environment: .production,
-    theme: .custom(
-        primary: Color.blue,
-        secondary: Color.purple
-    ),
-    cartConfig: CartConfiguration(
-        floatingCartPosition: .bottomRight,
-        showCartNotifications: true,
-        enableGuestCheckout: true
-    ),
-    uiConfig: UIConfiguration(
-        enableAnimations: true,
-        showProductBrands: true,
-        enableHapticFeedback: true
-    )
-)
+// In your AppDelegate or App.swift
+do {
+    try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
+} catch {
+    print("Failed to load configuration: \(error)")
+    // Fallback to basic configuration
+    ReachuConfiguration.configure(apiKey: "your-api-key")
+}
 ```
 
-## 📁 Configuration from File
+## 📁 Configuration File Setup
 
-### JSON Configuration
+### 📥 Step 1: Download Template
 
-Create a `reachu-config.json` file in your app bundle:
+Copy this complete configuration file to get started:
+
+**File Name:** `reachu-config.json`
 
 ```json
 {
-  "apiKey": "your-reachu-api-key-here",
+  "apiKey": "YOUR_REACHU_API_KEY_HERE",
   "environment": "production",
   "theme": {
-    "name": "Mi Tienda Theme",
+    "name": "My Store Theme",
     "colors": {
       "primary": "#007AFF",
       "secondary": "#5856D6"
@@ -157,335 +154,437 @@ Create a `reachu-config.json` file in your app bundle:
 }
 ```
 
-Load the configuration:
+### 📂 Step 2: Add to Xcode Project
+
+1. **Create the file:**
+   - Right-click your project in Xcode
+   - Select "New File" → "Other" → "Empty"
+   - Name it `reachu-config.json`
+
+2. **Add to bundle:**
+   - Make sure "Add to target" is checked for your main app target
+   - The file should appear in your project navigator
+
+3. **Verify bundle inclusion:**
+   - Select your project → Build Phases → Copy Bundle Resources
+   - Ensure `reachu-config.json` is listed
+
+### 📱 Step 3: Load Configuration
+
+Add this code to your app startup (AppDelegate.swift or App.swift):
 
 ```swift
-// In your app startup
-do {
-    try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
-} catch {
-    print("Failed to load configuration: \(error)")
-    // Fallback to manual configuration
-    ReachuConfiguration.configure(apiKey: "your-api-key")
+import ReachuCore
+
+class AppDelegate: UIResponder, UIApplicationDelegate {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        
+        // Load Reachu configuration
+        do {
+            try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
+            print("✅ Reachu SDK configured successfully")
+        } catch {
+            print("❌ Failed to load Reachu configuration: \(error)")
+            
+            // Fallback to basic configuration
+            ReachuConfiguration.configure(apiKey: "YOUR_API_KEY_HERE")
+        }
+        
+        return true
+    }
 }
 ```
 
-### Plist Configuration
-
-Add to your `Info.plist`:
-
-```xml
-<key>ReachuAPIKey</key>
-<string>your-api-key-here</string>
-<key>ReachuEnvironment</key>
-<string>production</string>
-```
-
-Load the configuration:
-
-```swift
-try ConfigurationLoader.loadFromPlist(fileName: "Info")
-```
-
-### Environment Variables
-
-Set environment variables for CI/CD:
-
-```bash
-export REACHU_API_KEY="your-api-key"
-export REACHU_ENVIRONMENT="production"
-```
-
-Load in your app:
-
-```swift
-ConfigurationLoader.loadFromEnvironment()
-```
-
-## 🎨 Theme Customization
-
-### Predefined Themes
-
-```swift
-ReachuConfiguration.configure(
-    apiKey: "your-key",
-    theme: .default  // Reachu brand colors
-)
-
-ReachuConfiguration.configure(
-    apiKey: "your-key", 
-    theme: .light    // Light theme
-)
-
-ReachuConfiguration.configure(
-    apiKey: "your-key",
-    theme: .dark     // Dark theme
-)
-
-ReachuConfiguration.configure(
-    apiKey: "your-key",
-    theme: .minimal  // Minimal theme
-)
-```
-
-### Custom Theme
-
-```swift
-let customTheme = ReachuTheme(
-    name: "Brand Theme",
-    colors: ColorScheme(
-        primary: Color(hex: "#FF6B35"),
-        secondary: Color(hex: "#004E89"),
-        success: Color(hex: "#2ECC71"),
-        error: Color(hex: "#E74C3C")
-    )
-)
-
-ReachuConfiguration.configure(
-    apiKey: "your-key",
-    theme: customTheme
-)
-```
-
-## 🛒 Cart Configuration
-
-```swift
-let cartConfig = CartConfiguration(
-    floatingCartPosition: .bottomRight,     // Cart position
-    floatingCartDisplayMode: .full,         // Display mode
-    floatingCartSize: .medium,              // Size
-    autoSaveCart: true,                     // Auto-save to device
-    maxQuantityPerItem: 99,                 // Max quantity
-    showCartNotifications: true,            // Show add notifications
-    enableGuestCheckout: true,              // Allow guest checkout
-    requirePhoneNumber: true,               // Require phone in checkout
-    defaultShippingCountry: "US",           // Default country
-    supportedPaymentMethods: [              // Available payment methods
-        "stripe", "klarna", "paypal"
-    ]
-)
-
-ReachuConfiguration.configure(
-    apiKey: "your-key",
-    cartConfig: cartConfig
-)
-```
-
-### Cart Position Options
-
-```swift
-.topLeft        .topCenter        .topRight
-.centerLeft                      .centerRight  
-.bottomLeft     .bottomCenter     .bottomRight
-```
-
-### Display Modes
-
-- `.full` - Shows icon, count, and total
-- `.compact` - Shows icon and count only  
-- `.minimal` - Shows icon with small badge
-- `.iconOnly` - Shows only cart icon
-
-## 🖼️ UI Configuration
-
-```swift
-let uiConfig = UIConfiguration(
-    defaultProductCardVariant: .grid,       // Default card style
-    enableProductCardAnimations: true,      // Card animations
-    showProductBrands: true,                // Show brand names
-    showProductDescriptions: false,         // Show descriptions
-    defaultSliderLayout: .cards,            // Default slider style
-    imageQuality: .medium,                  // Image quality
-    enableAnimations: true,                 // Global animations
-    enableHapticFeedback: true              // Haptic feedback
-)
-```
-
-## 📺 LiveShow Configuration
-
-```swift
-let liveShowConfig = LiveShowConfiguration(
-    autoJoinChat: true,                     // Auto-join chat
-    enableChatModeration: true,             // Moderate chat
-    maxChatMessageLength: 200,              // Max message length
-    enableShoppingDuringStream: true,       // Allow shopping
-    showProductOverlays: true,              // Show product overlays
-    enableQuickBuy: true,                   // Quick buy buttons
-    videoQuality: .auto,                    // Video quality
-    enableAutoplay: false,                  // Auto-play videos
-    enablePictureInPicture: true            // PiP support
-)
-```
-
-## 🌐 Network Configuration
-
-```swift
-let networkConfig = NetworkConfiguration(
-    timeout: 30.0,                          // Request timeout
-    retryAttempts: 3,                       // Retry failed requests
-    enableCaching: true,                    // Enable caching
-    cacheDuration: 300,                     // Cache duration (seconds)
-    enableLogging: false,                   // Network logging
-    customHeaders: [                        // Custom headers
-        "X-App-Version": "1.0.0"
-    ]
-)
-```
-
-## 🔧 Runtime Configuration Updates
-
-```swift
-// Update theme after initial configuration
-ReachuConfiguration.updateTheme(.dark)
-
-// Update cart configuration
-let newCartConfig = CartConfiguration(
-    floatingCartPosition: .topRight
-)
-ReachuConfiguration.updateCartConfiguration(newCartConfig)
-```
-
-## ✅ Configuration Validation
-
-```swift
-// Check if SDK is properly configured
-if ReachuConfiguration.shared.isValidConfiguration {
-    // SDK is ready to use
-} else {
-    // Configuration is incomplete
-}
-
-// Validate configuration and handle errors
-do {
-    try ReachuConfiguration.shared.validateConfiguration()
-} catch {
-    print("Configuration error: \(error)")
-}
-```
-
-## 🌍 Multi-Environment Setup
-
-### Development
-
-```swift
-#if DEBUG
-ReachuConfiguration.configure(
-    apiKey: "dev-api-key",
-    environment: .sandbox,
-    networkConfig: NetworkConfiguration(enableLogging: true)
-)
-#else
-ReachuConfiguration.configure(
-    apiKey: "prod-api-key",
-    environment: .production
-)
-#endif
-```
-
-### Using Build Configurations
-
-```swift
-#if STAGING
-let environment = Environment.sandbox
-let apiKey = "staging-key"
-#else
-let environment = Environment.production  
-let apiKey = "production-key"
-#endif
-
-ReachuConfiguration.configure(
-    apiKey: apiKey,
-    environment: environment
-)
-```
-
-## 📱 Complete Integration Example
-
+**For SwiftUI Apps (App.swift):**
 ```swift
 import SwiftUI
 import ReachuCore
-import ReachuUI
 
 @main
 struct MyApp: App {
-    
     init() {
-        configureReachuSDK()
+        configureReachu()
     }
     
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .environmentObject(CartManager())
         }
     }
     
-    private func configureReachuSDK() {
-        // Option 1: Load from JSON file
+    private func configureReachu() {
         do {
             try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
+            print("✅ Reachu SDK configured successfully")
         } catch {
-            // Option 2: Fallback to manual configuration
-            ReachuConfiguration.configure(
-                apiKey: "your-api-key",
-                environment: .production,
-                theme: .default,
-                cartConfig: CartConfiguration(
-                    floatingCartPosition: .bottomRight,
-                    showCartNotifications: true
-                ),
-                uiConfig: UIConfiguration(
-                    enableAnimations: true,
-                    enableHapticFeedback: true
-                )
-            )
-        }
-    }
-}
-
-struct ContentView: View {
-    var body: some View {
-        VStack {
-            // These components automatically use global configuration
-            RProductCard(product: sampleProduct)
-            RProductSlider(products: sampleProducts)
-            
-            // Global floating cart (uses configured position/style)
-            RFloatingCartIndicator()
-        }
-        .sheet(isPresented: $showCheckout) {
-            // Checkout uses global theme and cart configuration
-            RCheckoutOverlay()
+            print("❌ Failed to load Reachu configuration: \(error)")
+            ReachuConfiguration.configure(apiKey: "YOUR_API_KEY_HERE")
         }
     }
 }
 ```
 
-## 🔍 Configuration Reference
+## 🔧 Configuration Sections Explained
 
-### All Available Options
+### 🔑 API & Environment
+```json
+{
+  "apiKey": "YOUR_REACHU_API_KEY_HERE",    // ✅ REQUIRED: Your Reachu API key
+  "environment": "production"              // production | sandbox
+}
+```
 
+**Effect:** Determines which Reachu servers to connect to and authenticates your app.
+
+### 🎨 Theme & Colors
+```json
+{
+  "theme": {
+    "name": "My Store Theme",
+    "colors": {
+      "primary": "#007AFF",      // Main brand color (buttons, links, emphasis)
+      "secondary": "#5856D6"     // Secondary brand color (accents, highlights)
+    }
+  }
+}
+```
+
+**Effect:** All Reachu UI components will use these colors automatically. Changes the appearance of buttons, product cards, checkout flow, etc.
+
+### 🛒 Shopping Cart
+```json
+{
+  "cart": {
+    "floatingCartPosition": "bottomRight",           // Where cart appears on screen
+    "floatingCartDisplayMode": "full",               // How much info to show
+    "floatingCartSize": "medium",                    // Size of floating cart
+    "autoSaveCart": true,                           // Save cart between app sessions
+    "showCartNotifications": true,                   // Show "Added to cart" messages
+    "enableGuestCheckout": true,                     // Allow checkout without account
+    "requirePhoneNumber": true,                      // Require phone in checkout
+    "defaultShippingCountry": "US",                  // Default country for shipping
+    "supportedPaymentMethods": ["stripe", "klarna", "paypal"]  // Available payment options
+  }
+}
+```
+
+**Effect:** Controls how users interact with the shopping cart throughout your app.
+
+#### Cart Position Options:
+```
+topLeft        topCenter        topRight
+centerLeft                      centerRight  
+bottomLeft     bottomCenter     bottomRight
+```
+
+#### Display Mode Options:
+- `full` - Shows cart icon, item count, and total price
+- `compact` - Shows cart icon and item count only
+- `minimal` - Shows cart icon with small badge
+- `iconOnly` - Shows only the cart icon
+
+### 🖼️ UI Components
+```json
+{
+  "ui": {
+    "defaultProductCardVariant": "grid",       // Default product card style
+    "enableProductCardAnimations": true,       // Enable card animations
+    "showProductBrands": true,                 // Show brand names on products
+    "showProductDescriptions": false,          // Show product descriptions
+    "imageQuality": "medium",                  // Image quality (low/medium/high)
+    "enableImageCaching": true,                // Cache images for performance
+    
+    "typography": {
+      "fontFamily": null,                      // Custom font family (null = system)
+      "enableCustomFonts": false,              // Enable custom font loading
+      "supportDynamicType": true,              // Support iOS Dynamic Type
+      "lineHeightMultiplier": 1.2,             // Line height multiplier
+      "letterSpacing": 0.0                     // Letter spacing adjustment
+    },
+    
+    "shadows": {
+      "cardShadowRadius": 4,                   // Shadow blur radius for cards
+      "cardShadowOpacity": 0.1,                // Shadow opacity (0.0 - 1.0)
+      "buttonShadowEnabled": true,             // Enable shadows on buttons
+      "enableBlurEffects": true,               // Enable blur effects
+      "blurIntensity": 0.3                     // Blur intensity (0.0 - 1.0)
+    },
+    
+    "animations": {
+      "defaultDuration": 0.3,                  // Default animation duration (seconds)
+      "springResponse": 0.4,                   // Spring animation response
+      "springDamping": 0.8,                    // Spring animation damping
+      "enableSpringAnimations": true,          // Use spring animations
+      "enableMicroInteractions": true,         // Small interaction animations
+      "respectReduceMotion": true,             // Respect accessibility settings
+      "animationQuality": "high"               // Animation quality (low/medium/high)
+    },
+    
+    "layout": {
+      "gridColumns": 2,                        // Columns in product grids
+      "gridSpacing": 16,                       // Space between grid items
+      "respectSafeAreas": true,                // Respect device safe areas
+      "enableResponsiveLayout": true,          // Adapt to screen sizes
+      "screenMargins": 16,                     // Screen edge margins
+      "sectionSpacing": 24                     // Space between sections
+    },
+    
+    "accessibility": {
+      "enableVoiceOverOptimizations": true,    // Optimize for VoiceOver
+      "enableDynamicTypeSupport": true,        // Support Dynamic Type
+      "respectHighContrastMode": true,         // Respect high contrast mode
+      "respectReduceMotion": true,             // Respect reduce motion
+      "minimumTouchTargetSize": 44,            // Minimum touch target size
+      "enableHapticFeedback": true,            // Enable haptic feedback
+      "hapticIntensity": "medium"              // Haptic intensity (light/medium/heavy)
+    }
+  }
+}
+```
+
+**Effect:** Controls the look, feel, and behavior of all UI components in the SDK.
+
+### 🌐 Network & Performance
+```json
+{
+  "network": {
+    "timeout": 30.0,                          // Request timeout (seconds)
+    "retryAttempts": 3,                       // Number of retry attempts
+    "enableCaching": true,                    // Enable response caching
+    "cacheDuration": 300,                     // Cache duration (seconds)
+    "enableQueryBatching": true,              // Batch GraphQL queries
+    "maxConcurrentRequests": 6,               // Max concurrent requests
+    "requestPriority": "normal",              // Request priority (low/normal/high)
+    "enableCompression": true,                // Enable request compression
+    "enableSSLPinning": false,                // Enable SSL certificate pinning
+    "enableCertificateValidation": true,      // Validate SSL certificates
+    "enableLogging": false,                   // Enable network logging
+    "logLevel": "info",                       // Log level (debug/info/warning/error)
+    "enableNetworkInspector": false,          // Enable network debugging
+    "enableOfflineMode": false,               // Enable offline functionality
+    "offlineCacheDuration": 86400,            // Offline cache duration (seconds)
+    "syncStrategy": "automatic"               // Sync strategy (manual/automatic)
+  }
+}
+```
+
+**Effect:** Optimizes network performance and handles connectivity issues.
+
+### 📺 LiveShow Features
+```json
+{
+  "liveShow": {
+    "autoJoinChat": true,                     // Auto-join chat when viewing
+    "enableChatModeration": true,             // Enable chat moderation
+    "maxChatMessageLength": 200,              // Max characters per message
+    "enableEmojis": true,                     // Allow emoji reactions
+    "enableShoppingDuringStream": true,       // Allow shopping during stream
+    "showProductOverlays": true,              // Show product overlays
+    "enableQuickBuy": true,                   // Enable quick buy buttons
+    "enableStreamNotifications": true,        // Stream event notifications
+    "enableProductNotifications": true,       // Product-related notifications
+    "enableChatNotifications": false,         // Chat message notifications
+    "videoQuality": "auto",                   // Video quality (auto/low/medium/high)
+    "enableAutoplay": false,                  // Auto-play live streams
+    "enablePictureInPicture": true            // Picture-in-picture support
+  }
+}
+```
+
+**Effect:** Controls livestream functionality and user interaction during live shows.
+
+## 🔄 Updating Configuration
+
+### Method 1: Edit the JSON File
+1. Open `reachu-config.json` in Xcode
+2. Modify the values you want to change
+3. Save the file
+4. Restart your app to see changes
+
+### Method 2: Runtime Updates
 ```swift
-ReachuConfiguration.configure(
-    apiKey: String,                         // Required: Your API key
-    environment: Environment,               // .sandbox or .production
-    theme: ReachuTheme,                     // Visual theme
-    cartConfig: CartConfiguration,          // Cart behavior
-    networkConfig: NetworkConfiguration,    // Network settings  
-    uiConfig: UIConfiguration,              // UI preferences
-    liveShowConfig: LiveShowConfiguration   // LiveShow settings
+// Update theme at runtime
+ReachuConfiguration.updateTheme(
+    ReachuTheme(
+        name: "Dark Theme",
+        colors: ColorScheme(
+            primary: Color.orange,
+            secondary: Color.red
+        )
+    )
+)
+
+// Update cart configuration
+ReachuConfiguration.updateCartConfiguration(
+    CartConfiguration(
+        floatingCartPosition: .topRight,
+        showCartNotifications: false
+    )
 )
 ```
 
-### Benefits of Centralized Configuration
+## 🎯 Common Configuration Examples
 
-✅ **One-time setup** - Configure once, use everywhere  
-✅ **Consistent styling** - All components use same theme  
-✅ **Easy customization** - Change appearance globally  
-✅ **Environment management** - Easy dev/staging/prod switching  
-✅ **Type-safe configuration** - Compile-time validation  
-✅ **Multiple loading sources** - JSON, Plist, Environment, Remote  
-✅ **Runtime updates** - Change settings without restart  
-✅ **Validation** - Built-in configuration validation  
+### E-commerce Store
+```json
+{
+  "theme": {
+    "colors": {
+      "primary": "#FF6B35",     // Vibrant orange
+      "secondary": "#004E89"     // Deep blue
+    }
+  },
+  "cart": {
+    "floatingCartPosition": "bottomRight",
+    "showCartNotifications": true,
+    "enableGuestCheckout": true
+  },
+  "ui": {
+    "showProductBrands": true,
+    "showProductDescriptions": true,
+    "enableProductCardAnimations": true
+  }
+}
+```
 
-This configuration system ensures that once you set up the Reachu SDK, all components (product cards, checkout, livestreaming, etc.) work seamlessly together with consistent styling and behavior.
+### Fashion Brand
+```json
+{
+  "theme": {
+    "colors": {
+      "primary": "#000000",     // Black
+      "secondary": "#C4A484"     // Gold
+    }
+  },
+  "ui": {
+    "defaultProductCardVariant": "hero",
+    "showProductBrands": true,
+    "showProductDescriptions": false,
+    "shadows": {
+      "cardShadowRadius": 8,
+      "cardShadowOpacity": 0.15
+    }
+  }
+}
+```
+
+### Tech Store
+```json
+{
+  "theme": {
+    "colors": {
+      "primary": "#007AFF",     // Apple Blue
+      "secondary": "#5856D6"     // Purple
+    }
+  },
+  "ui": {
+    "enableProductCardAnimations": true,
+    "animations": {
+      "enableMicroInteractions": true,
+      "animationQuality": "high"
+    },
+    "showProductDescriptions": true
+  }
+}
+```
+
+## 🔍 Troubleshooting
+
+### Configuration Not Loading
+1. **Check file location:** Ensure `reachu-config.json` is in your app bundle
+2. **Verify JSON syntax:** Use a JSON validator to check for syntax errors
+3. **Check target membership:** File must be added to your app target
+4. **Review error messages:** Check console for specific error details
+
+### Common JSON Errors
+```json
+// ❌ WRONG - Missing quotes around keys
+{
+  apiKey: "your-key"
+}
+
+// ✅ CORRECT - Keys must be quoted
+{
+  "apiKey": "your-key"
+}
+
+// ❌ WRONG - Trailing comma
+{
+  "apiKey": "your-key",
+}
+
+// ✅ CORRECT - No trailing comma
+{
+  "apiKey": "your-key"
+}
+```
+
+### Testing Configuration
+```swift
+// Add this to test your configuration
+print("Current API Key: \(ReachuConfiguration.shared.apiKey)")
+print("Current Environment: \(ReachuConfiguration.shared.environment)")
+print("Current Theme: \(ReachuConfiguration.shared.theme.name)")
+```
+
+## 🚀 Advanced Usage
+
+### Environment-Specific Configurations
+```swift
+#if DEBUG
+    try ConfigurationLoader.loadFromJSON(fileName: "reachu-config-dev")
+#else
+    try ConfigurationLoader.loadFromJSON(fileName: "reachu-config-prod")
+#endif
+```
+
+### Remote Configuration
+```swift
+try await ConfigurationLoader.loadFromRemoteURL(
+    url: URL(string: "https://yourserver.com/reachu-config.json")!
+)
+```
+
+### Environment Variables (for CI/CD)
+```swift
+try ConfigurationLoader.loadFromEnvironmentVariables()
+```
+
+Set these environment variables:
+```bash
+export REACHU_API_KEY="your-api-key"
+export REACHU_ENVIRONMENT="production"
+export REACHU_THEME_PRIMARY_COLOR="#007AFF"
+```
+
+## 💡 Best Practices
+
+1. **Start Simple:** Begin with basic configuration and add complexity as needed
+2. **Version Control:** Keep configuration files in version control
+3. **Environment Separation:** Use different configs for development/production
+4. **Error Handling:** Always provide fallback configuration
+5. **Testing:** Test configuration changes thoroughly
+6. **Documentation:** Document custom configuration choices for your team
+
+## 🎉 Ready to Use!
+
+Once configured, all Reachu components automatically use your settings:
+
+```swift
+import ReachuUI
+
+// All of these use your global configuration automatically!
+RProductCard(product: product)          // Uses your theme colors and animations
+RProductSlider(products: products)      // Uses your layout and UI settings
+RCheckoutOverlay()                      // Uses your cart and payment configuration
+RFloatingCartIndicator()               // Uses your cart position and display mode
+```
+
+Your app is now ready with a fully customized Reachu shopping experience! 🛍️✨
+
+---
+
+📖 **Next Steps:**
+- [View Component Documentation](./ui-components.md)
+- [Explore Example Implementations](./examples/)
+- [Set Up LiveShow Features](./livestream.md)
