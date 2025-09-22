@@ -13,6 +13,7 @@ public struct RCheckoutOverlay: View {
     @State private var checkoutStep: CheckoutStep = .address
     @State private var isLoading = false
     @State private var errorMessage: String?
+    @State private var isEditingAddress = false
     
     // Address Information
     @State private var firstName = ""
@@ -26,6 +27,9 @@ public struct RCheckoutOverlay: View {
     @State private var province = ""
     @State private var country = "United States"
     @State private var zip = ""
+    
+    // Shipping Information
+    @State private var selectedShippingOption: ShippingOption = .standard
     
     // Payment Information
     @State private var selectedPaymentMethod: PaymentMethod = .stripe
@@ -49,45 +53,106 @@ public struct RCheckoutOverlay: View {
         }
     }
     
-    // MARK: - Payment Methods
-    public enum PaymentMethod: String, CaseIterable {
-        case paypal = "paypal"
-        case bankTransfer = "bank_transfer"
-        case interestFree = "4x_interest_free"
-        case stripe = "stripe"
-        case klarna = "klarna"
-        case vipps = "vipps"
+    // MARK: - Shipping Options
+    public enum ShippingOption: String, CaseIterable {
+        case standard = "standard"
+        case express = "express"
+        case overnight = "overnight"
+        case pickup = "pickup"
         
         var displayName: String {
             switch self {
-            case .paypal: return "Pay with Paypal"
-            case .bankTransfer: return "Pay with Bank Transfer"
-            case .interestFree: return "Pay with 4x interest- free"
-            case .stripe: return "Credit Card"
-            case .klarna: return "Klarna"
-            case .vipps: return "Vipps"
+            case .standard: return "Free - Standard"
+            case .express: return "Express Shipping"
+            case .overnight: return "Overnight Delivery"
+            case .pickup: return "Store Pickup"
+            }
+        }
+        
+        var description: String {
+            switch self {
+            case .standard: return "Delivery by Jun 28"
+            case .express: return "Delivery by Jun 25"
+            case .overnight: return "Delivery by Jun 23"
+            case .pickup: return "Available today at store"
+            }
+        }
+        
+        var price: Double {
+            switch self {
+            case .standard: return 0.0
+            case .express: return 9.99
+            case .overnight: return 19.99
+            case .pickup: return 0.0
             }
         }
         
         var icon: String {
             switch self {
-            case .paypal: return "p.square.fill"
-            case .bankTransfer: return "building.columns.fill"
-            case .interestFree: return "x.square.fill"
+            case .standard: return "shippingbox"
+            case .express: return "airplane"
+            case .overnight: return "clock.badge.checkmark"
+            case .pickup: return "building.2"
+            }
+        }
+    }
+    
+    // MARK: - Payment Methods (Real Reachu Methods)
+    public enum PaymentMethod: String, CaseIterable {
+        case stripe = "stripe"
+        case paypal = "paypal"
+        case klarna = "klarna"
+        case afterpay = "afterpay"
+        case applePay = "apple_pay"
+        case googlePay = "google_pay"
+        case interestFree = "4x_interest_free"
+        case bankTransfer = "bank_transfer"
+        
+        var displayName: String {
+            switch self {
+            case .stripe: return "Credit Card"
+            case .paypal: return "Pay with PayPal"
+            case .klarna: return "Pay with Klarna"
+            case .afterpay: return "Pay with Afterpay"
+            case .applePay: return "Apple Pay"
+            case .googlePay: return "Google Pay"
+            case .interestFree: return "Pay with 4x interest-free"
+            case .bankTransfer: return "Bank Transfer"
+            }
+        }
+        
+        var icon: String {
+            switch self {
             case .stripe: return "creditcard.fill"
+            case .paypal: return "p.square.fill"
             case .klarna: return "k.square.fill"
-            case .vipps: return "v.square.fill"
+            case .afterpay: return "a.square.fill"
+            case .applePay: return "apple.logo"
+            case .googlePay: return "g.square.fill"
+            case .interestFree: return "x.square.fill"
+            case .bankTransfer: return "building.columns.fill"
             }
         }
         
         var iconColor: Color {
             switch self {
+            case .stripe: return .purple
             case .paypal: return .blue
-            case .bankTransfer: return .orange
+            case .klarna: return Color(hex: "#FFB3C7")
+            case .afterpay: return Color(hex: "#B2FCE4")
+            case .applePay: return .black
+            case .googlePay: return Color(hex: "#4285F4")
             case .interestFree: return ReachuColors.primary
-            case .stripe: return .black
-            case .klarna: return .pink
-            case .vipps: return .orange
+            case .bankTransfer: return .orange
+            }
+        }
+        
+        var supportsInstallments: Bool {
+            switch self {
+            case .klarna, .afterpay, .interestFree:
+                return true
+            default:
+                return false
             }
         }
     }
@@ -147,162 +212,47 @@ public struct RCheckoutOverlay: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                    // Address Header
+                    // Shipping Address Header
                     HStack {
-                        Text("Address")
+                        Text("Shipping Address")
                             .font(ReachuTypography.title2)
                             .foregroundColor(ReachuColors.textPrimary)
                         
                         Spacer()
                         
-                        Button(action: {}) {
-                            Image(systemName: "pencil")
-                                .foregroundColor(ReachuColors.textSecondary)
+                        Button(action: {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                isEditingAddress.toggle()
+                            }
+                        }) {
+                            Image(systemName: isEditingAddress ? "checkmark" : "pencil")
+                                .foregroundColor(ReachuColors.primary)
+                                .font(.title3)
                         }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
                     
-                    // Pre-filled Address Display
-                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                        Text("\(firstName) \(lastName)")
-                            .font(ReachuTypography.bodyBold)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        Text(address1)
-                            .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        Text("\(city), \(province), \(country)")
-                            .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        Text(zip)
-                            .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        HStack {
-                            Text("Phone :")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                            
-                            Text("\(phoneCountryCode) \(phone)")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
+                    // Address Display or Edit Form
+                    Group {
+                        if isEditingAddress {
+                            addressEditForm
+                                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+                        } else {
+                            addressDisplayView
+                                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
                         }
                     }
-                    .padding(.horizontal, ReachuSpacing.lg)
+                    .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
                     
-                    // Product Summary
-                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        ForEach(cartManager.items.prefix(1)) { item in
-                            HStack(spacing: ReachuSpacing.md) {
-                                // Product Image Placeholder
-                                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                    .fill(ReachuColors.surfaceSecondary)
-                                    .frame(width: 80, height: 80)
-                                    .overlay {
-                                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
-                                            image
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fit)
-                                        } placeholder: {
-                                            Image(systemName: "photo")
-                                                .foregroundColor(ReachuColors.textSecondary)
-                                        }
-                                    }
-                                    .cornerRadius(ReachuBorderRadius.medium)
-                                
-                                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                                    Text(item.brand ?? "")
-                                        .font(ReachuTypography.caption1)
-                                        .foregroundColor(ReachuColors.textSecondary)
-                                    
-                                    Text(item.title)
-                                        .font(ReachuTypography.bodyBold)
-                                        .foregroundColor(ReachuColors.textPrimary)
-                                        .lineLimit(2)
-                                    
-                                    Text("Order ID: BD23672983")
-                                        .font(ReachuTypography.caption1)
-                                        .foregroundColor(ReachuColors.textSecondary)
-                                    
-                                    Text("Colors: Like Water")
-                                        .font(ReachuTypography.caption1)
-                                        .foregroundColor(ReachuColors.textSecondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Text("\(item.currency) \(String(format: "%.2f", item.price))")
-                                    .font(ReachuTypography.title3)
-                                    .foregroundColor(ReachuColors.textPrimary)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, ReachuSpacing.lg)
+                    // Product Summary with Cart Integration
+                    productSummaryView
                     
-                    // Quantity Section
-                    HStack {
-                        Text("Quantity")
-                            .font(ReachuTypography.bodyBold)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        Spacer()
-                        
-                        HStack(spacing: ReachuSpacing.sm) {
-                            Button(action: {}) {
-                                Image(systemName: "minus")
-                                    .font(.body)
-                                    .foregroundColor(ReachuColors.textSecondary)
-                                    .frame(width: 30, height: 30)
-                                    .background(ReachuColors.surfaceSecondary)
-                                    .cornerRadius(ReachuBorderRadius.small)
-                            }
-                            
-                            Text("\(cartManager.itemCount)")
-                                .font(ReachuTypography.bodyBold)
-                                .foregroundColor(ReachuColors.textPrimary)
-                                .frame(width: 30)
-                            
-                            Button(action: {}) {
-                                Image(systemName: "plus")
-                                    .font(.body)
-                                    .foregroundColor(ReachuColors.textSecondary)
-                                    .frame(width: 30, height: 30)
-                                    .background(ReachuColors.surfaceSecondary)
-                                    .cornerRadius(ReachuBorderRadius.small)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, ReachuSpacing.lg)
+                    // Quantity Section with Cart Integration
+                    quantityControlView
                     
-                    // Shipping Section
-                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                        HStack {
-                            Text("Shipping")
-                                .font(ReachuTypography.bodyBold)
-                                .foregroundColor(ReachuColors.textPrimary)
-                            
-                            Spacer()
-                            
-                            Button(action: {}) {
-                                Image(systemName: "pencil")
-                                    .foregroundColor(ReachuColors.textSecondary)
-                            }
-                        }
-                        
-                        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                            Text("Free - Standard")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                            
-                            Text("Delivery by Jun 28")
-                                .font(ReachuTypography.caption1)
-                                .foregroundColor(ReachuColors.textSecondary)
-                        }
-                    }
-                    .padding(.horizontal, ReachuSpacing.lg)
+                    // Shipping Options Section
+                    shippingOptionsView
                     
                     // Payment Method Section
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
@@ -819,6 +769,430 @@ struct PaymentScheduleDetailed: View {
         .padding(ReachuSpacing.lg)
         .background(ReachuColors.surfaceSecondary)
         .cornerRadius(ReachuBorderRadius.medium)
+    }
+}
+
+// MARK: - RCheckoutOverlay Helper Views Extension
+extension RCheckoutOverlay {
+    
+    private var addressDisplayView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            Text("\(firstName) \(lastName)")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            Text(address1)
+                .font(ReachuTypography.body)
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            if !address2.isEmpty {
+                Text(address2)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+            }
+            
+            Text("\(city), \(province), \(country)")
+                .font(ReachuTypography.body)
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            Text(zip)
+                .font(ReachuTypography.body)
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            HStack {
+                Text("Phone :")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Text("\(phoneCountryCode) \(phone)")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private var addressEditForm: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            // Name fields
+            HStack(spacing: ReachuSpacing.md) {
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("First Name")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    TextField("John", text: $firstName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("Last Name")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    TextField("Doe", text: $lastName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+            }
+            
+            // Email
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text("Email")
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                TextField("your@email.com", text: $email)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    #if os(iOS) || os(tvOS) || os(watchOS)
+                    .keyboardType(.emailAddress)
+                    .autocapitalization(.none)
+                    #endif
+            }
+            
+            // Phone with country code
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text("Phone")
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                
+                HStack(spacing: ReachuSpacing.sm) {
+                    CountryCodePicker(selectedCode: $phoneCountryCode)
+                        .frame(width: 80)
+                    
+                    TextField("(555) 123-4456", text: $phone)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+            }
+            
+            // Address
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text("Address")
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                TextField("Street address", text: $address1)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                TextField("Apt, suite, etc. (optional)", text: $address2)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+            }
+            
+            // City, State, ZIP
+            HStack(spacing: ReachuSpacing.md) {
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("City")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    TextField("City", text: $city)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("State")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    TextField("State", text: $province)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                }
+                
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("ZIP")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    TextField("ZIP", text: $zip)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        #if os(iOS) || os(tvOS) || os(watchOS)
+                        .keyboardType(.numberPad)
+                        #endif
+                }
+            }
+            
+            // Country
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text("Country")
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(ReachuColors.textSecondary)
+                CountryPicker(selectedCountry: $country)
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private var productSummaryView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            ForEach(cartManager.items) { item in
+                HStack(spacing: ReachuSpacing.md) {
+                    // Product Image
+                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(ReachuColors.surfaceSecondary)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundColor(ReachuColors.textSecondary)
+                            }
+                    }
+                    .frame(width: 80, height: 80)
+                    .cornerRadius(ReachuBorderRadius.medium)
+                    
+                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                        Text(item.brand ?? "Adidas Store")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Text(item.title)
+                            .font(ReachuTypography.bodyBold)
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .lineLimit(2)
+                        
+                        Text("Order ID: BD23672983")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Text("Colors: Like Water")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing, spacing: ReachuSpacing.xs) {
+                        Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                            .font(ReachuTypography.title3)
+                            .foregroundColor(ReachuColors.textPrimary)
+                        
+                        Text("Qty: \(item.quantity)")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+            }
+        }
+    }
+    
+    private var quantityControlView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            HStack {
+                Text("Quantity")
+                    .font(ReachuTypography.bodyBold)
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Spacer()
+                
+                HStack(spacing: ReachuSpacing.sm) {
+                    Button(action: {
+                        if let firstItem = cartManager.items.first, firstItem.quantity > 1 {
+                            Task {
+                                await cartManager.updateQuantity(for: firstItem, to: firstItem.quantity - 1)
+                            }
+                        }
+                    }) {
+                        Image(systemName: "minus")
+                            .font(.body)
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .frame(width: 32, height: 32)
+                            .background(ReachuColors.surfaceSecondary)
+                            .cornerRadius(ReachuBorderRadius.small)
+                    }
+                    .disabled(cartManager.items.first?.quantity ?? 0 <= 1)
+                    
+                    Text("\(cartManager.itemCount)")
+                        .font(ReachuTypography.bodyBold)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .frame(width: 40)
+                        .animation(.spring(), value: cartManager.itemCount)
+                    
+                    Button(action: {
+                        if let firstItem = cartManager.items.first {
+                            Task {
+                                await cartManager.updateQuantity(for: firstItem, to: firstItem.quantity + 1)
+                            }
+                        }
+                    }) {
+                        Image(systemName: "plus")
+                            .font(.body)
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .frame(width: 32, height: 32)
+                            .background(ReachuColors.surfaceSecondary)
+                            .cornerRadius(ReachuBorderRadius.small)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private var shippingOptionsView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            Text("Shipping")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            ForEach(ShippingOption.allCases, id: \.self) { option in
+                ShippingOptionRow(
+                    option: option,
+                    isSelected: selectedShippingOption == option
+                ) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedShippingOption = option
+                    }
+                }
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+}
+
+// MARK: - Supporting Components
+
+struct CountryCodePicker: View {
+    @Binding var selectedCode: String
+    
+    private let countryCodes = [
+        ("+1", "🇺🇸"), ("+44", "🇬🇧"), ("+49", "🇩🇪"), ("+33", "🇫🇷"),
+        ("+39", "🇮🇹"), ("+34", "🇪🇸"), ("+31", "🇳🇱"), ("+46", "🇸🇪"),
+        ("+47", "🇳🇴"), ("+45", "🇩🇰"), ("+41", "🇨🇭"), ("+43", "🇦🇹"),
+        ("+32", "🇧🇪"), ("+351", "🇵🇹"), ("+52", "🇲🇽"), ("+54", "🇦🇷"),
+        ("+55", "🇧🇷"), ("+86", "🇨🇳"), ("+81", "🇯🇵"), ("+82", "🇰🇷"),
+        ("+91", "🇮🇳"), ("+61", "🇦🇺"), ("+64", "🇳🇿")
+    ]
+    
+    var body: some View {
+        Menu {
+            ForEach(countryCodes, id: \.0) { code, flag in
+                Button(action: { selectedCode = code }) {
+                    HStack {
+                        Text(flag)
+                        Text(code)
+                        Spacer()
+                        if selectedCode == code {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(ReachuColors.primary)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: ReachuSpacing.xs) {
+                Text(countryCodes.first(where: { $0.0 == selectedCode })?.1 ?? "🇺🇸")
+                Text(selectedCode)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(ReachuColors.textSecondary)
+            }
+            .padding(ReachuSpacing.sm)
+            .background(ReachuColors.surfaceSecondary)
+            .cornerRadius(ReachuBorderRadius.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .stroke(ReachuColors.border, lineWidth: 1)
+            )
+        }
+    }
+}
+
+struct CountryPicker: View {
+    @Binding var selectedCountry: String
+    
+    private let countries = [
+        "United States", "Canada", "United Kingdom", "Germany", "France",
+        "Italy", "Spain", "Netherlands", "Sweden", "Norway", "Denmark",
+        "Switzerland", "Austria", "Belgium", "Portugal", "Mexico",
+        "Argentina", "Brazil", "China", "Japan", "South Korea",
+        "India", "Australia", "New Zealand"
+    ]
+    
+    var body: some View {
+        Menu {
+            ForEach(countries, id: \.self) { country in
+                Button(action: { selectedCountry = country }) {
+                    HStack {
+                        Text(country)
+                        Spacer()
+                        if selectedCountry == country {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(ReachuColors.primary)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack {
+                Text(selectedCountry.isEmpty ? "Select Country" : selectedCountry)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(selectedCountry.isEmpty ? ReachuColors.textSecondary : ReachuColors.textPrimary)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(ReachuColors.textSecondary)
+            }
+            .padding(ReachuSpacing.md)
+            .background(ReachuColors.surfaceSecondary)
+            .cornerRadius(ReachuBorderRadius.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .stroke(ReachuColors.border, lineWidth: 1)
+            )
+        }
+    }
+}
+
+struct ShippingOptionRow: View {
+    let option: RCheckoutOverlay.ShippingOption
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: ReachuSpacing.md) {
+                // Selection Circle
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: 2)
+                        .frame(width: 20, height: 20)
+                    
+                    if isSelected {
+                        Circle()
+                            .fill(ReachuColors.primary)
+                            .frame(width: 12, height: 12)
+                    }
+                }
+                
+                // Shipping Icon
+                Image(systemName: option.icon)
+                    .font(.title3)
+                    .foregroundColor(ReachuColors.primary)
+                    .frame(width: 25)
+                
+                // Shipping Details
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    HStack {
+                        Text(option.displayName)
+                            .font(ReachuTypography.body)
+                            .foregroundColor(ReachuColors.textPrimary)
+                        
+                        Spacer()
+                        
+                        if option.price > 0 {
+                            Text("$\(String(format: "%.2f", option.price))")
+                                .font(ReachuTypography.bodyBold)
+                                .foregroundColor(ReachuColors.textPrimary)
+                        }
+                    }
+                    
+                    Text(option.description)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                }
+            }
+            .padding(.vertical, ReachuSpacing.sm)
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 
