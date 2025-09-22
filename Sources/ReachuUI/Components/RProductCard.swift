@@ -35,19 +35,31 @@ public struct RProductCard: View {
     }
     
     // MARK: - Properties
-    private let product: ProductDto
+    private let product: Product
     private let variant: Variant
     private let showBrand: Bool
     private let showDescription: Bool
+    private let showProductDetail: Bool
     private let onTap: (() -> Void)?
     private let onAddToCart: (() -> Void)?
     
+    // Environment for adaptive colors
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.reachuAdaptiveColors) private var adaptiveColors
+    
+    // Animation states
+    @State private var isAddingToCart = false
+    @State private var showCheckmark = false
+    @State private var buttonScale: CGFloat = 1.0
+    @State private var showingProductDetail = false
+    
     // MARK: - Initializer
     public init(
-        product: ProductDto,
+        product: Product,
         variant: Variant = .grid,
         showBrand: Bool = true,
         showDescription: Bool = false,
+        showProductDetail: Bool = true,
         onTap: (() -> Void)? = nil,
         onAddToCart: (() -> Void)? = nil
     ) {
@@ -55,13 +67,14 @@ public struct RProductCard: View {
         self.variant = variant
         self.showBrand = showBrand
         self.showDescription = showDescription
+        self.showProductDetail = showProductDetail
         self.onTap = onTap
         self.onAddToCart = onAddToCart
     }
     
     // MARK: - Body
     public var body: some View {
-        Button(action: { onTap?() }) {
+        Button(action: handleTap) {
             switch variant {
             case .grid:
                 gridLayout
@@ -74,6 +87,16 @@ public struct RProductCard: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+        .adaptiveReachuColors()
+        .sheet(isPresented: $showingProductDetail) {
+            RProductDetailOverlay(
+                product: product,
+                onDismiss: {
+                    showingProductDetail = false
+                }
+            )
+            .adaptiveReachuColors()
+        }
     }
     
     // MARK: - Layout Variants
@@ -89,19 +112,19 @@ public struct RProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
-                    .font(ReachuTypography.headline)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(2)
                 }
                 
@@ -114,35 +137,35 @@ public struct RProductCard: View {
             }
             .padding(ReachuSpacing.md)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
     /// List Layout - Horizontal card for search results
     private var listLayout: some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Product Image (single image for list)
-            productImageView(height: 80, width: 80)
+        HStack(spacing: ReachuSpacing.sm) {
+            // Product Image (smaller for list)
+            productImageView(height: 70, width: 70)
             
             // Product Info
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 if showBrand, let brand = product.brand {
                     Text(brand)
-                        .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
-                    .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
-                        .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
@@ -157,10 +180,10 @@ public struct RProductCard: View {
             
             Spacer()
         }
-        .padding(ReachuSpacing.md)
-        .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+        .padding(ReachuSpacing.sm)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.small)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 1, x: 0, y: 1)
     }
     
     /// Hero Layout - Large featured product
@@ -173,58 +196,66 @@ public struct RProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .textCase(.uppercase)
                 }
                 
                 Text(product.title)
                     .font(ReachuTypography.title2)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(3)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(3)
                 }
                 
                 HStack {
                     priceView
                     Spacer()
-                    RButton(title: "Add to Cart", style: .primary, size: .large) {
-                        onAddToCart?()
+                    RButton(
+                        title: showCheckmark ? "Added!" : "Add to Cart",
+                        style: .primary,
+                        size: .large,
+                        isLoading: isAddingToCart,
+                        icon: showCheckmark ? "checkmark" : nil
+                    ) {
+                        animateAddToCart()
                     }
-                    .disabled(!isInStock)
+                    .disabled(!isInStock || isAddingToCart)
+                    .scaleEffect(buttonScale)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
                 }
             }
             .padding(ReachuSpacing.lg)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.xl)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
     }
     
     /// Minimal Layout - Compact for carousels
     private var minimalLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            // Compact Product Image (single image only)
-            productImageView(height: 100, width: 120)
+            // Compact Product Image (smaller)
+            productImageView(height: 80, width: 100)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 priceView
             }
-            .padding(ReachuSpacing.sm)
+            .padding(ReachuSpacing.xs)
         }
-        .frame(width: 120)
-        .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
+        .frame(width: 100, height: 140)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.small)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.06), radius: 1, x: 0, y: 1)
     }
     
     // MARK: - Image Components
@@ -268,13 +299,13 @@ public struct RProductCard: View {
                     .aspectRatio(contentMode: .fill)
             case .failure(_):
                 // Imagen rota - mostrar placeholder con ícono de error
-                placeholderView(systemImage: "exclamationmark.triangle", color: ReachuColors.error)
+                placeholderView(systemImage: "exclamationmark.triangle", color: adaptiveColors.error)
             case .empty:
                 // Cargando - mostrar placeholder con ícono de carga
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
             @unknown default:
                 // Fallback - mostrar placeholder genérico
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
             }
         }
         .frame(width: width, height: height)
@@ -285,7 +316,7 @@ public struct RProductCard: View {
     /// Placeholder view for loading/error states
     private func placeholderView(systemImage: String, color: Color) -> some View {
         Rectangle()
-            .fill(ReachuColors.background)
+            .fill(adaptiveColors.background)
             .overlay(
                 VStack(spacing: ReachuSpacing.xs) {
                     Image(systemName: systemImage)
@@ -307,14 +338,25 @@ public struct RProductCard: View {
     private var priceView: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(product.price.displayAmount)
-                .font(variant == .hero ? ReachuTypography.title3 : ReachuTypography.body)
+                .font(
+                    variant == .hero ? ReachuTypography.title3 : 
+                    variant == .minimal ? .system(size: 11, weight: .semibold) :
+                    variant == .list ? .system(size: 14, weight: .semibold) :
+                    variant == .grid ? .system(size: 14, weight: .semibold) :
+                    ReachuTypography.body
+                )
                 .fontWeight(.semibold)
-                .foregroundColor(ReachuColors.primary)
+                .foregroundColor(adaptiveColors.primary)
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .font(
+                        variant == .minimal ? .system(size: 10, weight: .regular) :
+                        variant == .list ? .system(size: 11, weight: .regular) :
+                        variant == .grid ? .system(size: 12, weight: .regular) :
+                        ReachuTypography.caption1
+                    )
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .strikethrough()
             }
         }
@@ -327,19 +369,24 @@ public struct RProductCard: View {
                 EmptyView()
             } else if isInStock {
                 RButton(
-                    title: variant == .list ? "Add" : "Add to Cart",
+                    title: showCheckmark ? (variant == .list ? "✓" : variant == .grid ? "" : "Added!") : (variant == .list ? "Add" : variant == .grid ? "" : "Add to Cart"),
                     style: .primary,
-                    size: variant == .list ? .small : .medium
+                    size: variant == .list ? .small : variant == .grid ? .small : .medium,
+                    isLoading: isAddingToCart,
+                    icon: variant == .grid ? (showCheckmark ? "checkmark" : "plus") : showCheckmark && variant != .list ? "checkmark" : nil
                 ) {
-                    onAddToCart?()
+                    animateAddToCart()
                 }
+                .disabled(isAddingToCart)
+                .scaleEffect(buttonScale)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
             } else {
                 Text("Out of Stock")
                     .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.error)
+                    .foregroundColor(adaptiveColors.error)
                     .padding(.horizontal, ReachuSpacing.sm)
                     .padding(.vertical, ReachuSpacing.xs)
-                    .background(ReachuColors.error.opacity(0.1))
+                    .background(adaptiveColors.error.opacity(0.1))
                     .cornerRadius(ReachuBorderRadius.small)
             }
         }
@@ -349,6 +396,44 @@ public struct RProductCard: View {
     
     private var isInStock: Bool {
         (product.quantity ?? 0) > 0
+    }
+    
+    // MARK: - Animation Functions
+    
+    private func animateAddToCart() {
+        // Start loading animation
+        withAnimation(.easeInOut(duration: 0.1)) {
+            buttonScale = 0.9
+            isAddingToCart = true
+        }
+        
+        // Scale back and show checkmark
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                buttonScale = 1.0
+                showCheckmark = true
+            }
+        }
+        
+        // Reset after showing checkmark
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            withAnimation(.easeInOut(duration: 0.3)) {
+                showCheckmark = false
+                isAddingToCart = false
+            }
+        }
+        
+        // Call the actual add to cart function
+        onAddToCart?()
+    }
+    
+    /// Handle tap on product card
+    private func handleTap() {
+        if showProductDetail {
+            showingProductDetail = true
+        } else {
+            onTap?()
+        }
     }
     
     /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
@@ -392,7 +477,7 @@ public struct RProductCard: View {
         )
     }
     .padding()
-    .background(ReachuColors.background)
+    .background(adaptiveColors.background)
 }
 
 #Preview("List Variant") {
@@ -407,7 +492,7 @@ public struct RProductCard: View {
         }
     }
     .padding()
-    .background(ReachuColors.background)
+    .background(adaptiveColors.background)
 }
 
 #Preview("Hero Variant") {
@@ -419,7 +504,7 @@ public struct RProductCard: View {
         onAddToCart: { print("Hero add to cart") }
     )
     .padding()
-    .background(ReachuColors.background)
+    .background(adaptiveColors.background)
 }
 
 #Preview("Minimal Variant") {
@@ -435,7 +520,7 @@ public struct RProductCard: View {
         }
         .padding(.horizontal)
     }
-    .background(ReachuColors.background)
+    .background(adaptiveColors.background)
 }
 
 #Preview("All Variants Comparison") {
@@ -497,6 +582,6 @@ public struct RProductCard: View {
         }
         .padding(.vertical)
     }
-    .background(ReachuColors.background)
+    .background(adaptiveColors.background)
 }
 #endif

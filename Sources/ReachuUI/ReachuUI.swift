@@ -9,8 +9,8 @@ import ReachuCore
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct ReachuUI {
     
-    public static func placeholder() {
-        print("ReachuUI components available")
+    public static func configure() {
+        print("🎨 Reachu UI components initialized")
     }
 }
 
@@ -23,3 +23,7 @@ public typealias ReachuCartManager = CartManager
 public typealias ReachuProductCard = RProductCard
 public typealias ReachuProductSlider = RProductSlider
 public typealias ReachuCheckoutOverlay = RCheckoutOverlay
+public typealias ReachuProductDetailOverlay = RProductDetailOverlay
+
+// Export UX enhancement components
+public typealias ReachuFloatingCartIndicator = RFloatingCartIndicator

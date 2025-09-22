@@ -1,31 +1,106 @@
 import SwiftUI
+import ReachuCore
 
 /// Reachu Design System Color Tokens
+/// 
+/// Provides adaptive colors that automatically respond to theme changes
+/// and dark/light mode switching.
 public struct ReachuColors {
     
     // MARK: - Brand Colors
-    public static let primary = Color(hex: "#007AFF")
-    public static let secondary = Color(hex: "#5856D6")
+    
+    /// Primary brand color - adapts to current theme
+    public static var primary: Color {
+        currentColorScheme.primary
+    }
+    
+    /// Secondary brand color - adapts to current theme
+    public static var secondary: Color {
+        currentColorScheme.secondary
+    }
     
     // MARK: - Semantic Colors
-    public static let success = Color(hex: "#34C759")
-    public static let warning = Color(hex: "#FF9500")
-    public static let error = Color(hex: "#FF3B30")
-    public static let info = Color(hex: "#007AFF")
+    
+    /// Success color - adapts to current theme
+    public static var success: Color {
+        currentColorScheme.success
+    }
+    
+    /// Warning color - adapts to current theme
+    public static var warning: Color {
+        currentColorScheme.warning
+    }
+    
+    /// Error color - adapts to current theme
+    public static var error: Color {
+        currentColorScheme.error
+    }
+    
+    /// Info color - adapts to current theme
+    public static var info: Color {
+        currentColorScheme.info
+    }
     
     // MARK: - Background Colors
-    public static let background = Color(hex: "#F2F2F7")
-    public static let surface = Color.white
-    public static let surfaceSecondary = Color(hex: "#F9F9F9")
+    
+    /// Background color - adapts to current theme
+    public static var background: Color {
+        currentColorScheme.background
+    }
+    
+    /// Surface color - adapts to current theme
+    public static var surface: Color {
+        currentColorScheme.surface
+    }
+    
+    /// Secondary surface color - adapts to current theme
+    public static var surfaceSecondary: Color {
+        currentColorScheme.surfaceSecondary
+    }
     
     // MARK: - Text Colors
-    public static let textPrimary = Color.black
-    public static let textSecondary = Color(hex: "#8E8E93")
-    public static let textTertiary = Color(hex: "#C7C7CC")
+    
+    /// Primary text color - adapts to current theme
+    public static var textPrimary: Color {
+        currentColorScheme.textPrimary
+    }
+    
+    /// Secondary text color - adapts to current theme
+    public static var textSecondary: Color {
+        currentColorScheme.textSecondary
+    }
+    
+    /// Tertiary text color - adapts to current theme
+    public static var textTertiary: Color {
+        currentColorScheme.textTertiary
+    }
     
     // MARK: - Border Colors
-    public static let border = Color(hex: "#E5E5EA")
-    public static let borderSecondary = Color(hex: "#D1D1D6")
+    
+    /// Border color - adapts to current theme
+    public static var border: Color {
+        currentColorScheme.border
+    }
+    
+    /// Secondary border color - adapts to current theme
+    public static var borderSecondary: Color {
+        currentColorScheme.borderSecondary
+    }
+    
+    // MARK: - Private Helpers
+    
+    /// Returns the current color scheme based on configuration
+    /// Note: For better theme adaptation, use AdaptiveReachuColors in SwiftUI views
+    private static var currentColorScheme: ReachuCore.ColorScheme {
+        ReachuConfiguration.shared.theme.lightColors
+    }
+    
+    // MARK: - Adaptive Color Access
+    
+    /// Get colors for a specific color scheme (useful for manual adaptation)
+    public static func colors(for colorScheme: SwiftUI.ColorScheme) -> ReachuCore.ColorScheme {
+        ReachuConfiguration.shared.theme.colors(for: colorScheme)
+    }
 }
 
 // MARK: - Color Extensions

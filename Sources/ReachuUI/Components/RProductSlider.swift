@@ -78,23 +78,31 @@ public struct RProductSlider: View {
     
     // MARK: - Properties
     private let title: String?
-    private let products: [ProductDto]
+    private let products: [Product]
     private let layout: Layout
     private let showSeeAll: Bool
     private let maxItems: Int?
-    private let onProductTap: ((ProductDto) -> Void)?
-    private let onAddToCart: ((ProductDto) -> Void)?
+    private let onProductTap: ((Product) -> Void)?
+    private let onAddToCart: ((Product) -> Void)?
     private let onSeeAllTap: (() -> Void)?
+    
+    // Environment for adaptive colors
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.reachuAdaptiveColors) private var adaptiveColors
+    
+    // Animation states
+    @State private var addedProductId: Int?
+    @State private var sliderScale: CGFloat = 1.0
     
     // MARK: - Initializer
     public init(
         title: String? = nil,
-        products: [ProductDto],
+        products: [Product],
         layout: Layout = .cards,
         showSeeAll: Bool = false,
         maxItems: Int? = nil,
-        onProductTap: ((ProductDto) -> Void)? = nil,
-        onAddToCart: ((ProductDto) -> Void)? = nil,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
     ) {
         self.title = title
@@ -124,7 +132,10 @@ public struct RProductSlider: View {
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
             }
+            .scaleEffect(sliderScale)
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
         }
+        .adaptiveReachuColors()
     }
     
     // MARK: - Header View
@@ -132,7 +143,7 @@ public struct RProductSlider: View {
         HStack {
             Text(title)
                 .font(ReachuTypography.headline)
-                .foregroundColor(ReachuColors.textPrimary)
+                .foregroundColor(adaptiveColors.textPrimary)
             
             Spacer()
             
@@ -141,16 +152,51 @@ public struct RProductSlider: View {
                     HStack(spacing: ReachuSpacing.xs) {
                         Text("See All")
                             .font(ReachuTypography.callout)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                         
                         Image(systemName: "arrow.right")
                             .font(.caption)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                     }
                 }
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    // MARK: - Animation Functions
+    
+    private func animateAddToCart(for product: Product) {
+        // Haptic feedback
+        #if os(iOS)
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        #endif
+        
+        // Store the added product ID for visual feedback
+        addedProductId = product.id
+        
+        // Slight scale animation for the entire slider
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            sliderScale = 1.02
+        }
+        
+        // Return to normal scale
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                sliderScale = 1.0
+            }
+        }
+        
+        // Reset added product highlight after animation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                addedProductId = nil
+            }
+        }
+        
+        // Call the original callback
+        onAddToCart?(product)
     }
     
     // MARK: - Product Card View
@@ -164,9 +210,15 @@ public struct RProductSlider: View {
                     showBrand: layout.showsBrand,
                     showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { animateAddToCart(for: product) } : nil
                 )
                 .frame(width: cardWidth)
+                .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        .stroke(adaptiveColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: addedProductId)
+                )
             } else {
                 // Flexible width cards
                 RProductCard(
@@ -175,7 +227,13 @@ public struct RProductSlider: View {
                     showBrand: layout.showsBrand,
                     showDescription: layout.showsDescription,
                     onTap: { onProductTap?(product) },
-                    onAddToCart: layout.allowsAddToCart ? { onAddToCart?(product) } : nil
+                    onAddToCart: layout.allowsAddToCart ? { animateAddToCart(for: product) } : nil
+                )
+                .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        .stroke(adaptiveColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: addedProductId)
                 )
             }
         }
@@ -196,10 +254,10 @@ extension RProductSlider {
     /// Featured products slider with hero layout
     public static func featured(
         title: String = "Featured Products",
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 5,
-        onProductTap: ((ProductDto) -> Void)? = nil,
-        onAddToCart: ((ProductDto) -> Void)? = nil,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
     ) -> RProductSlider {
         return RProductSlider(
@@ -217,7 +275,7 @@ extension RProductSlider {
     /// Recommendations slider with compact layout
     public static func recommendations(
         title: String = "You Might Like",
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 8,
         onProductTap: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
@@ -236,10 +294,10 @@ extension RProductSlider {
     /// Category products slider with card layout
     public static func category(
         title: String,
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 6,
-        onProductTap: ((ProductDto) -> Void)? = nil,
-        onAddToCart: ((ProductDto) -> Void)? = nil,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
     ) -> RProductSlider {
         return RProductSlider(
@@ -257,10 +315,10 @@ extension RProductSlider {
     /// Wide detailed slider for comprehensive product browsing
     public static func detailed(
         title: String,
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 4,
-        onProductTap: ((ProductDto) -> Void)? = nil,
-        onAddToCart: ((ProductDto) -> Void)? = nil,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
     ) -> RProductSlider {
         return RProductSlider(
@@ -278,10 +336,10 @@ extension RProductSlider {
     /// Premium showcase slider for high-end products
     public static func showcase(
         title: String = "Premium Collection",
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 3,
-        onProductTap: ((ProductDto) -> Void)? = nil,
-        onAddToCart: ((ProductDto) -> Void)? = nil,
+        onProductTap: ((Product) -> Void)? = nil,
+        onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
     ) -> RProductSlider {
         return RProductSlider(
@@ -299,7 +357,7 @@ extension RProductSlider {
     /// Micro slider for dense product lists (footer, related items)
     public static func micro(
         title: String = "Related",
-        products: [ProductDto],
+        products: [Product],
         maxItems: Int = 12,
         onProductTap: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil
