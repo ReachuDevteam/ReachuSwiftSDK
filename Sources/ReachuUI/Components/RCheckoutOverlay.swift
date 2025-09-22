@@ -59,107 +59,73 @@ public struct RCheckoutOverlay: View {
     }
     
     // MARK: - Shipping Options
-    public enum ShippingOption: String, CaseIterable {
-        case standard = "standard"
-        case express = "express"
-        case overnight = "overnight"
-        case pickup = "pickup"
+           public enum ShippingOption: String, CaseIterable {
+               case standard = "standard"
+               case express = "express"
         
-        var displayName: String {
-            switch self {
-            case .standard: return "Free - Standard"
-            case .express: return "Express Shipping"
-            case .overnight: return "Overnight Delivery"
-            case .pickup: return "Store Pickup"
-            }
-        }
-        
-        var description: String {
-            switch self {
-            case .standard: return "Delivery by Jun 28"
-            case .express: return "Delivery by Jun 25"
-            case .overnight: return "Delivery by Jun 23"
-            case .pickup: return "Available today at store"
-            }
-        }
-        
-        var price: Double {
-            switch self {
-            case .standard: return 0.0
-            case .express: return 9.99
-            case .overnight: return 19.99
-            case .pickup: return 0.0
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .standard: return "shippingbox"
-            case .express: return "airplane"
-            case .overnight: return "clock.badge.checkmark"
-            case .pickup: return "building.2"
-            }
-        }
+                var displayName: String {
+                    switch self {
+                    case .standard: return "Free - Standard"
+                    case .express: return "Express Shipping"
+                    }
+                }
+                
+                var description: String {
+                    switch self {
+                    case .standard: return "Delivery by Jun 28"
+                    case .express: return "Delivery by Jun 25"
+                    }
+                }
+                
+                var price: Double {
+                    switch self {
+                    case .standard: return 0.0
+                    case .express: return 9.99
+                    }
+                }
+                
+                var icon: String {
+                    switch self {
+                    case .standard: return "shippingbox"
+                    case .express: return "airplane"
+                    }
+                }
     }
     
     // MARK: - Payment Methods (Real Reachu Methods)
-    public enum PaymentMethod: String, CaseIterable {
-        case stripe = "stripe"
-        case paypal = "paypal"
-        case klarna = "klarna"
-        case afterpay = "afterpay"
-        case applePay = "apple_pay"
-        case googlePay = "google_pay"
-        case interestFree = "4x_interest_free"
-        case bankTransfer = "bank_transfer"
+           public enum PaymentMethod: String, CaseIterable {
+               case stripe = "stripe"
+               case klarna = "klarna"
         
-        var displayName: String {
-            switch self {
-            case .stripe: return "Credit Card"
-            case .paypal: return "Pay with PayPal"
-            case .klarna: return "Pay with Klarna"
-            case .afterpay: return "Pay with Afterpay"
-            case .applePay: return "Apple Pay"
-            case .googlePay: return "Google Pay"
-            case .interestFree: return "Pay with 4x interest-free"
-            case .bankTransfer: return "Bank Transfer"
-            }
-        }
-        
-        var icon: String {
-            switch self {
-            case .stripe: return "creditcard.fill"
-            case .paypal: return "p.square.fill"
-            case .klarna: return "k.square.fill"
-            case .afterpay: return "a.square.fill"
-            case .applePay: return "apple.logo"
-            case .googlePay: return "g.square.fill"
-            case .interestFree: return "x.square.fill"
-            case .bankTransfer: return "building.columns.fill"
-            }
-        }
-        
-        var iconColor: Color {
-            switch self {
-            case .stripe: return .purple
-            case .paypal: return .blue
-            case .klarna: return Color(hex: "#FFB3C7")
-            case .afterpay: return Color(hex: "#B2FCE4")
-            case .applePay: return .black
-            case .googlePay: return Color(hex: "#4285F4")
-            case .interestFree: return ReachuColors.primary
-            case .bankTransfer: return .orange
-            }
-        }
-        
-        var supportsInstallments: Bool {
-            switch self {
-            case .klarna, .afterpay, .interestFree:
-                return true
-            default:
-                return false
-            }
-        }
+                var displayName: String {
+                    switch self {
+                    case .stripe: return "Credit Card"
+                    case .klarna: return "Pay with Klarna"
+                    }
+                }
+                
+                var icon: String {
+                    switch self {
+                    case .stripe: return "creditcard.fill"
+                    case .klarna: return "k.square.fill"
+                    }
+                }
+                
+                var iconColor: Color {
+                    switch self {
+                    case .stripe: return .purple
+                    case .klarna: return Color(hex: "#FFB3C7")
+                    }
+                }
+                
+                var supportsInstallments: Bool {
+                    switch self {
+                    case .klarna:
+                        return true
+                    default:
+                        return false
+                    }
+                }
     }
     
     // MARK: - Initialization
@@ -250,11 +216,8 @@ public struct RCheckoutOverlay: View {
                     }
                     .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
                     
-                    // Simple Product List
-                    simpleProductListView
-                    
-                    // Global Quantity Section (like image 1)
-                    globalQuantityControlView
+                    // Individual Products with Quantity (like the image)
+                    individualProductsWithQuantityView
                     
                     // Shipping Options Section
                     shippingOptionsView
@@ -276,8 +239,8 @@ public struct RCheckoutOverlay: View {
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     
-                    // 4x Interest-Free Details
-                    if selectedPaymentMethod == .interestFree {
+                    // Klarna installments Details
+                    if selectedPaymentMethod == .klarna {
                         PaymentScheduleCompact(total: cartManager.cartTotal, currency: cartManager.currency)
                             .padding(.horizontal, ReachuSpacing.lg)
                     }
@@ -392,7 +355,7 @@ public struct RCheckoutOverlay: View {
                                     }
                                 }
                                 
-                                // Individual Quantity Controls for this product
+                                // Read-only Quantity Display (NO controls in payment step)
                                 HStack {
                                     Text("Quantity")
                                         .font(.system(size: 16, weight: .semibold))
@@ -400,44 +363,9 @@ public struct RCheckoutOverlay: View {
                                     
                                     Spacer()
                                     
-                                    HStack(spacing: ReachuSpacing.md) {
-                                        Button(action: {
-                                            // Decrease this product's quantity
-                                            if item.quantity > 1 {
-                                                Task {
-                                                    await cartManager.updateQuantity(for: item, to: item.quantity - 1)
-                                                }
-                                            }
-                                        }) {
-                                            Image(systemName: "minus")
-                                                .font(.system(size: 16, weight: .medium))
-                                                .foregroundColor(ReachuColors.textPrimary)
-                                                .frame(width: 32, height: 32)
-                                                .background(ReachuColors.surfaceSecondary)
-                                                .cornerRadius(6)
-                                        }
-                                        .disabled(item.quantity <= 1)
-                                        
-                                        Text("\(item.quantity)")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundColor(ReachuColors.textPrimary)
-                                            .frame(width: 40)
-                                            .animation(.spring(), value: item.quantity)
-                                        
-                                        Button(action: {
-                                            // Increase this product's quantity
-                                            Task {
-                                                await cartManager.updateQuantity(for: item, to: item.quantity + 1)
-                                            }
-                                        }) {
-                                            Image(systemName: "plus")
-                                                .font(.system(size: 16, weight: .medium))
-                                                .foregroundColor(ReachuColors.textPrimary)
-                                                .frame(width: 32, height: 32)
-                                                .background(ReachuColors.surfaceSecondary)
-                                                .cornerRadius(6)
-                                        }
-                                    }
+                                    Text("\(item.quantity)")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(ReachuColors.textPrimary)
                                 }
                                 
                                 // Show total for this product
@@ -460,8 +388,8 @@ public struct RCheckoutOverlay: View {
                     // Complete Order Summary (totals, taxes, etc.)
                     completeOrderSummaryView
                     
-                    // Payment Schedule (if 4x selected)
-                    if selectedPaymentMethod == .interestFree {
+                    // Payment Schedule (if Klarna installments selected)
+                    if selectedPaymentMethod == .klarna {
                         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                             Text("Payment Schedule")
                                 .font(ReachuTypography.bodyBold)
@@ -986,54 +914,134 @@ extension RCheckoutOverlay {
         .padding(.horizontal, ReachuSpacing.lg)
     }
     
-    private var simpleProductListView: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            ForEach(cartManager.items) { item in
-                HStack(spacing: ReachuSpacing.md) {
-                    // Simple Product Image
-                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(ReachuColors.surfaceSecondary)
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundColor(ReachuColors.textSecondary)
-                            }
-                    }
-                    .frame(width: 80, height: 80)
-                    .cornerRadius(ReachuBorderRadius.medium)
-                    
-                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                        Text(item.brand ?? "Adidas Store")
-                            .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
+    // Individual products with quantity controls for address step (like the image)
+    private var individualProductsWithQuantityView: some View {
+        VStack(spacing: ReachuSpacing.xl) {
+            ForEach(Array(cartManager.items.enumerated()), id: \.offset) { index, item in
+                VStack(spacing: ReachuSpacing.md) {
+                    // Product header with image and details
+                    HStack(spacing: ReachuSpacing.md) {
+                        // Product image
+                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color.yellow) // Placeholder like in image
+                        }
+                        .frame(width: 60, height: 60)
+                        .cornerRadius(8)
                         
-                        Text(item.title)
-                            .font(ReachuTypography.bodyBold)
+                        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                            Text(item.brand ?? "Reachu Audio")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                            
+                            Text(item.title)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .lineLimit(2)
+                        }
+                        
+                        Spacer()
+                        
+                        Text("\(item.currency) \(String(format: "%.2f", item.price))")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(ReachuColors.textPrimary)
-                            .lineLimit(2)
-                        
-                        Text("Order ID: BD23672983")
-                            .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
-                        
-                        Text("Colors: Like Water")
-                            .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
                     }
                     
-                    Spacer()
+                    // Product details
+                    VStack(spacing: ReachuSpacing.xs) {
+                        HStack {
+                            Text("Order ID:")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                            
+                            Spacer()
+                            
+                            Text("BD23672983")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                        }
+                        
+                        HStack {
+                            Text("Colors:")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                            
+                            Spacer()
+                            
+                            Text("Like Water")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                        }
+                    }
                     
-                    Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
-                        .font(ReachuTypography.title3)
-                        .foregroundColor(ReachuColors.textPrimary)
+                    // Individual Quantity Controls for this product
+                    HStack {
+                        Text("Quantity")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(ReachuColors.textPrimary)
+                        
+                        Spacer()
+                        
+                        HStack(spacing: ReachuSpacing.md) {
+                            Button(action: {
+                                // Decrease this product's quantity
+                                if item.quantity > 1 {
+                                    Task {
+                                        await cartManager.updateQuantity(for: item, to: item.quantity - 1)
+                                    }
+                                }
+                            }) {
+                                Image(systemName: "minus")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(ReachuColors.textPrimary)
+                                    .frame(width: 32, height: 32)
+                                    .background(ReachuColors.surfaceSecondary)
+                                    .cornerRadius(6)
+                            }
+                            .disabled(item.quantity <= 1)
+                            
+                            Text("\(item.quantity)")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .frame(width: 40)
+                                .animation(.spring(), value: item.quantity)
+                            
+                            Button(action: {
+                                // Increase this product's quantity
+                                Task {
+                                    await cartManager.updateQuantity(for: item, to: item.quantity + 1)
+                                }
+                            }) {
+                                Image(systemName: "plus")
+                                    .font(.system(size: 16, weight: .medium))
+                                    .foregroundColor(ReachuColors.textPrimary)
+                                    .frame(width: 32, height: 32)
+                                    .background(ReachuColors.surfaceSecondary)
+                                    .cornerRadius(6)
+                            }
+                        }
+                    }
+                    
+                    // Show total for this product
+                    HStack {
+                        Text("Total for this item:")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Spacer()
+                        
+                        Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(ReachuColors.primary)
+                    }
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
             }
         }
+        .padding(.horizontal, ReachuSpacing.lg)
     }
     
     private func sexyProductCard(for item: CartManager.CartItem) -> some View {
