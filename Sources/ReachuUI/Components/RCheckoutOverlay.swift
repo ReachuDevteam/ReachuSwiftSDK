@@ -329,10 +329,10 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
                     
-                    // Products List - Each product separately like in image
+                    // Products List - Each product with individual quantity controls
                     VStack(spacing: ReachuSpacing.xl) {
                         ForEach(Array(cartManager.items.enumerated()), id: \.offset) { index, item in
-                            VStack(spacing: ReachuSpacing.sm) {
+                            VStack(spacing: ReachuSpacing.md) {
                                 // Product header with image and details
                                 HStack(spacing: ReachuSpacing.md) {
                                     // Product image
@@ -353,7 +353,7 @@ public struct RCheckoutOverlay: View {
                                             .foregroundColor(ReachuColors.textSecondary)
                                         
                                         Text(item.title)
-                                            .font(.system(size: 18, weight: .semibold))
+                                            .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(ReachuColors.textPrimary)
                                             .lineLimit(2)
                                     }
@@ -361,7 +361,7 @@ public struct RCheckoutOverlay: View {
                                     Spacer()
                                     
                                     Text("\(item.currency) \(String(format: "%.2f", item.price))")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(ReachuColors.textPrimary)
                                 }
                                 
@@ -391,61 +391,66 @@ public struct RCheckoutOverlay: View {
                                             .foregroundColor(ReachuColors.textSecondary)
                                     }
                                 }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, ReachuSpacing.lg)
-                    
-                    // Global Quantity Section - for entire order
-                    VStack(spacing: ReachuSpacing.md) {
-                        HStack {
-                            Text("Quantity")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(ReachuColors.textPrimary)
-                            
-                            Spacer()
-                            
-                            HStack(spacing: ReachuSpacing.lg) {
-                                Button(action: {
-                                    // Decrease entire order quantity
-                                    if cartManager.itemCount > 1 {
-                                        Task {
-                                            for item in cartManager.items {
-                                                if item.quantity > 1 {
+                                
+                                // Individual Quantity Controls for this product
+                                HStack {
+                                    Text("Quantity")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(ReachuColors.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    HStack(spacing: ReachuSpacing.md) {
+                                        Button(action: {
+                                            // Decrease this product's quantity
+                                            if item.quantity > 1 {
+                                                Task {
                                                     await cartManager.updateQuantity(for: item, to: item.quantity - 1)
                                                 }
                                             }
+                                        }) {
+                                            Image(systemName: "minus")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(ReachuColors.textPrimary)
+                                                .frame(width: 32, height: 32)
+                                                .background(ReachuColors.surfaceSecondary)
+                                                .cornerRadius(6)
+                                        }
+                                        .disabled(item.quantity <= 1)
+                                        
+                                        Text("\(item.quantity)")
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(ReachuColors.textPrimary)
+                                            .frame(width: 40)
+                                            .animation(.spring(), value: item.quantity)
+                                        
+                                        Button(action: {
+                                            // Increase this product's quantity
+                                            Task {
+                                                await cartManager.updateQuantity(for: item, to: item.quantity + 1)
+                                            }
+                                        }) {
+                                            Image(systemName: "plus")
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(ReachuColors.textPrimary)
+                                                .frame(width: 32, height: 32)
+                                                .background(ReachuColors.surfaceSecondary)
+                                                .cornerRadius(6)
                                         }
                                     }
-                                }) {
-                                    Image(systemName: "minus")
-                                        .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(ReachuColors.textPrimary)
-                                        .frame(width: 44, height: 44)
-                                        .background(ReachuColors.surfaceSecondary)
-                                        .cornerRadius(8)
                                 }
                                 
-                                Text("\(cartManager.itemCount)")
-                                    .font(.system(size: 24, weight: .semibold))
-                                    .foregroundColor(ReachuColors.textPrimary)
-                                    .frame(width: 60)
-                                    .animation(.spring(), value: cartManager.itemCount)
-                                
-                                Button(action: {
-                                    // Increase entire order quantity
-                                    Task {
-                                        for item in cartManager.items {
-                                            await cartManager.updateQuantity(for: item, to: item.quantity + 1)
-                                        }
-                                    }
-                                }) {
-                                    Image(systemName: "plus")
-                                        .font(.system(size: 18, weight: .medium))
-                                        .foregroundColor(ReachuColors.textPrimary)
-                                        .frame(width: 44, height: 44)
-                                        .background(ReachuColors.surfaceSecondary)
-                                        .cornerRadius(8)
+                                // Show total for this product
+                                HStack {
+                                    Text("Total for this item:")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(ReachuColors.textSecondary)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(ReachuColors.primary)
                                 }
                             }
                         }
