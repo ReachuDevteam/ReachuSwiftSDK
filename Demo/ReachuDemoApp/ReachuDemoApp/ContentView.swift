@@ -50,6 +50,11 @@ struct ContentView: View {
                             CheckoutDemoView()
                                 .environmentObject(cartManager)
                         }
+                        
+                        DemoSection(title: "Floating Cart Options", description: "Test different positions and styles") {
+                            FloatingCartDemoView()
+                                .environmentObject(cartManager)
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
@@ -1309,6 +1314,237 @@ struct CartItemRowDemo: View {
         .background(ReachuColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
         .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Floating Cart Demo View
+struct FloatingCartDemoView: View {
+    @EnvironmentObject var cartManager: CartManager
+    @State private var selectedPosition: RFloatingCartIndicator.Position = .bottomRight
+    @State private var selectedDisplayMode: RFloatingCartIndicator.DisplayMode = .full
+    @State private var selectedSize: RFloatingCartIndicator.Size = .medium
+    @State private var showConfiguredIndicator = false
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Configuration Section
+            VStack(spacing: ReachuSpacing.lg) {
+                Text("Configure Floating Cart")
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                // Position Selection
+                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                    Text("Position")
+                        .font(ReachuTypography.bodyBold)
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    VStack(spacing: ReachuSpacing.sm) {
+                        // Top row
+                        HStack(spacing: ReachuSpacing.sm) {
+                            PositionButton(position: .topLeft, isSelected: selectedPosition == .topLeft) { selectedPosition = .topLeft }
+                            PositionButton(position: .topCenter, isSelected: selectedPosition == .topCenter) { selectedPosition = .topCenter }
+                            PositionButton(position: .topRight, isSelected: selectedPosition == .topRight) { selectedPosition = .topRight }
+                        }
+                        
+                        // Center row
+                        HStack(spacing: ReachuSpacing.sm) {
+                            PositionButton(position: .centerLeft, isSelected: selectedPosition == .centerLeft) { selectedPosition = .centerLeft }
+                            Spacer().frame(width: 80) // Empty space for center
+                            PositionButton(position: .centerRight, isSelected: selectedPosition == .centerRight) { selectedPosition = .centerRight }
+                        }
+                        
+                        // Bottom row
+                        HStack(spacing: ReachuSpacing.sm) {
+                            PositionButton(position: .bottomLeft, isSelected: selectedPosition == .bottomLeft) { selectedPosition = .bottomLeft }
+                            PositionButton(position: .bottomCenter, isSelected: selectedPosition == .bottomCenter) { selectedPosition = .bottomCenter }
+                            PositionButton(position: .bottomRight, isSelected: selectedPosition == .bottomRight) { selectedPosition = .bottomRight }
+                        }
+                    }
+                }
+                
+                // Display Mode Selection
+                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                    Text("Display Mode")
+                        .font(ReachuTypography.bodyBold)
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    HStack(spacing: ReachuSpacing.sm) {
+                        ForEach([
+                            RFloatingCartIndicator.DisplayMode.full,
+                            .compact,
+                            .minimal,
+                            .iconOnly
+                        ], id: \.self) { mode in
+                            ModeButton(
+                                mode: mode,
+                                isSelected: selectedDisplayMode == mode
+                            ) {
+                                selectedDisplayMode = mode
+                            }
+                        }
+                    }
+                }
+                
+                // Size Selection
+                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                    Text("Size")
+                        .font(ReachuTypography.bodyBold)
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    HStack(spacing: ReachuSpacing.sm) {
+                        ForEach([
+                            RFloatingCartIndicator.Size.small,
+                            .medium,
+                            .large
+                        ], id: \.self) { size in
+                            SizeButton(
+                                size: size,
+                                isSelected: selectedSize == size
+                            ) {
+                                selectedSize = size
+                            }
+                        }
+                    }
+                }
+                
+                // Preview Button
+                RButton(
+                    title: showConfiguredIndicator ? "Hide Preview" : "Show Preview",
+                    style: showConfiguredIndicator ? .secondary : .primary,
+                    icon: showConfiguredIndicator ? "eye.slash" : "eye"
+                ) {
+                    showConfiguredIndicator.toggle()
+                }
+            }
+            .padding(ReachuSpacing.lg)
+            .background(ReachuColors.surface)
+            .cornerRadius(ReachuBorderRadius.large)
+            .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+            .padding(.horizontal, ReachuSpacing.lg)
+            
+            Spacer()
+            
+            if !showConfiguredIndicator {
+                Text("Add items to cart to see the floating cart indicator")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(ReachuSpacing.lg)
+            }
+        }
+        .navigationTitle("Floating Cart")
+        .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if showConfiguredIndicator {
+                RFloatingCartIndicator(
+                    position: selectedPosition,
+                    displayMode: selectedDisplayMode,
+                    size: selectedSize
+                )
+                .environmentObject(cartManager)
+            }
+        }
+        .onAppear {
+            // Add a sample product if cart is empty
+            if cartManager.itemCount == 0 {
+                Task {
+                    await cartManager.addProduct(MockDataProvider.shared.sampleProducts[0])
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Helper Buttons
+struct PositionButton: View {
+    let position: RFloatingCartIndicator.Position
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(position.displayName)
+                .font(ReachuTypography.caption1)
+                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .padding(.horizontal, ReachuSpacing.sm)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .cornerRadius(ReachuBorderRadius.small)
+        }
+    }
+}
+
+struct ModeButton: View {
+    let mode: RFloatingCartIndicator.DisplayMode
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(mode.displayName)
+                .font(ReachuTypography.caption1)
+                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .padding(.horizontal, ReachuSpacing.sm)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .cornerRadius(ReachuBorderRadius.small)
+        }
+    }
+}
+
+struct SizeButton: View {
+    let size: RFloatingCartIndicator.Size
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Text(size.displayName)
+                .font(ReachuTypography.caption1)
+                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .padding(.horizontal, ReachuSpacing.sm)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .cornerRadius(ReachuBorderRadius.small)
+        }
+    }
+}
+
+// MARK: - Display Name Extensions
+extension RFloatingCartIndicator.Position {
+    var displayName: String {
+        switch self {
+        case .topLeft: return "Top Left"
+        case .topCenter: return "Top Center"
+        case .topRight: return "Top Right"
+        case .centerLeft: return "Center Left"
+        case .centerRight: return "Center Right"
+        case .bottomLeft: return "Bottom Left"
+        case .bottomCenter: return "Bottom Center"
+        case .bottomRight: return "Bottom Right"
+        }
+    }
+}
+
+extension RFloatingCartIndicator.DisplayMode {
+    var displayName: String {
+        switch self {
+        case .full: return "Full"
+        case .compact: return "Compact"
+        case .minimal: return "Minimal"
+        case .iconOnly: return "Icon Only"
+        }
+    }
+}
+
+extension RFloatingCartIndicator.Size {
+    var displayName: String {
+        switch self {
+        case .small: return "Small"
+        case .medium: return "Medium"
+        case .large: return "Large"
+        }
     }
 }
 
