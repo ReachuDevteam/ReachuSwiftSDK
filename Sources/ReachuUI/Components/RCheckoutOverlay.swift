@@ -19,6 +19,7 @@ public struct RCheckoutOverlay: View {
     @State private var lastName = ""
     @State private var email = ""
     @State private var phone = ""
+    @State private var phoneCountryCode = "+1"
     @State private var address1 = ""
     @State private var address2 = ""
     @State private var city = ""
@@ -141,7 +142,6 @@ public struct RCheckoutOverlay: View {
                             .padding(.horizontal, ReachuSpacing.lg)
                             .padding(.vertical, ReachuSpacing.md)
                             .background(ReachuColors.surface)
-                            .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: -2)
                     }
                 }
             }
@@ -175,42 +175,43 @@ public struct RCheckoutOverlay: View {
     
     // MARK: - Progress Indicator
     private var progressIndicatorView: some View {
-        HStack(spacing: 0) {
-            ForEach(Array(CheckoutStep.allCases.dropLast().enumerated()), id: \.offset) { index, step in
-                HStack(spacing: 0) {
-                    // Step Circle
-                    ZStack {
-                        Circle()
-                            .fill(stepColor(for: step))
-                            .frame(width: 32, height: 32)
-                        
-                        if step.stepNumber <= checkoutStep.stepNumber {
-                            Image(systemName: step == checkoutStep ? "circle.fill" : "checkmark")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                        } else {
-                            Text("\(step.stepNumber)")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(ReachuColors.textSecondary)
+        VStack(spacing: ReachuSpacing.sm) {
+            // Step circles with connecting lines
+            HStack(spacing: ReachuSpacing.sm) {
+                ForEach(Array(CheckoutStep.allCases.dropLast().enumerated()), id: \.offset) { index, step in
+                    HStack(spacing: ReachuSpacing.xs) {
+                        // Step Circle
+                        ZStack {
+                            Circle()
+                                .fill(stepColor(for: step))
+                                .frame(width: 28, height: 28)
+                            
+                            if step.stepNumber <= checkoutStep.stepNumber {
+                                Image(systemName: step == checkoutStep ? "circle.fill" : "checkmark")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(.white)
+                            } else {
+                                Text("\(step.stepNumber)")
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(ReachuColors.textSecondary)
+                            }
                         }
-                    }
-                    
-                    // Step Label
-                    VStack(spacing: 2) {
-                        Text(step.title)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(step.stepNumber <= checkoutStep.stepNumber ? ReachuColors.primary : ReachuColors.textSecondary)
-                    }
-                    
-                    // Connecting Line
-                    if index < CheckoutStep.allCases.count - 2 {
-                        Rectangle()
-                            .fill(step.stepNumber < checkoutStep.stepNumber ? ReachuColors.primary : ReachuColors.border)
-                            .frame(height: 2)
-                            .frame(maxWidth: .infinity)
+                        
+                        // Connecting Line
+                        if index < CheckoutStep.allCases.count - 2 {
+                            Rectangle()
+                                .fill(step.stepNumber < checkoutStep.stepNumber ? ReachuColors.primary : ReachuColors.border)
+                                .frame(height: 2)
+                                .frame(maxWidth: .infinity)
+                        }
                     }
                 }
             }
+            
+            // Current step label only
+            Text(checkoutStep.title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(ReachuColors.primary)
         }
         .padding(.horizontal, ReachuSpacing.lg)
     }
@@ -238,7 +239,30 @@ public struct RCheckoutOverlay: View {
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     CustomTextField(title: "Email", text: $email, placeholder: "your@email.com")
-                    CustomTextField(title: "Phone", text: $phone, placeholder: "+1 (555) 123-4456")
+                    
+                    // Phone with country code selector
+                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                        Text("Phone")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        HStack(spacing: ReachuSpacing.sm) {
+                            // Country code picker
+                            CountryCodePicker(selectedCode: $phoneCountryCode)
+                                .frame(width: 80)
+                            
+                            // Phone number field
+                            TextField("(555) 123-4456", text: $phone)
+                                .textFieldStyle(PlainTextFieldStyle())
+                                .padding(ReachuSpacing.md)
+                                .background(ReachuColors.surfaceSecondary)
+                                .cornerRadius(ReachuBorderRadius.medium)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                        .stroke(ReachuColors.border, lineWidth: 1)
+                                )
+                        }
+                    }
                 }
                 
                 // Name
@@ -260,7 +284,14 @@ public struct RCheckoutOverlay: View {
                     CustomTextField(title: "ZIP", text: $zip, placeholder: "10001")
                 }
                 
-                CustomTextField(title: "Country", text: $country, placeholder: "United States")
+                // Country selector
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text("Country")
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    CountryPicker(selectedCountry: $country)
+                }
             }
         }
     }
@@ -549,7 +580,16 @@ public struct RCheckoutOverlay: View {
     private var canProceedToNext: Bool {
         switch checkoutStep {
         case .address:
-            return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && !address1.isEmpty && !city.isEmpty && !zip.isEmpty
+            return !firstName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !lastName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   email.contains("@") &&
+                   !phone.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !address1.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !province.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !zip.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+                   !country.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         case .payment:
             return acceptsTerms && acceptsPurchaseConditions
         case .review:
@@ -613,7 +653,8 @@ public struct RCheckoutOverlay: View {
         firstName = "John"
         lastName = "Doe"
         email = "john.doe@example.com"
-        phone = "+1 (555) 123-4456"
+        phone = "(555) 123-4456"
+        phoneCountryCode = "+1"
         address1 = "82 Melora Street"
         city = "Westbridge"
         province = "CA"
@@ -792,6 +833,144 @@ struct CheckboxRow: View {
             }
         }
         .buttonStyle(PlainButtonStyle())
+    }
+}
+
+// MARK: - Country and Phone Code Pickers
+
+struct CountryCodePicker: View {
+    @Binding var selectedCode: String
+    
+    private let countryCodes = [
+        ("+1", "🇺🇸"),
+        ("+44", "🇬🇧"),
+        ("+49", "🇩🇪"),
+        ("+33", "🇫🇷"),
+        ("+39", "🇮🇹"),
+        ("+34", "🇪🇸"),
+        ("+31", "🇳🇱"),
+        ("+46", "🇸🇪"),
+        ("+47", "🇳🇴"),
+        ("+45", "🇩🇰"),
+        ("+41", "🇨🇭"),
+        ("+43", "🇦🇹"),
+        ("+32", "🇧🇪"),
+        ("+351", "🇵🇹"),
+        ("+52", "🇲🇽"),
+        ("+54", "🇦🇷"),
+        ("+55", "🇧🇷"),
+        ("+86", "🇨🇳"),
+        ("+81", "🇯🇵"),
+        ("+82", "🇰🇷"),
+        ("+91", "🇮🇳"),
+        ("+61", "🇦🇺"),
+        ("+64", "🇳🇿")
+    ]
+    
+    var body: some View {
+        Menu {
+            ForEach(countryCodes, id: \.0) { code, flag in
+                Button(action: {
+                    selectedCode = code
+                }) {
+                    HStack {
+                        Text(flag)
+                        Text(code)
+                        Spacer()
+                        if selectedCode == code {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(ReachuColors.primary)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: ReachuSpacing.xs) {
+                Text(countryCodes.first(where: { $0.0 == selectedCode })?.1 ?? "🇺🇸")
+                Text(selectedCode)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(ReachuColors.textSecondary)
+            }
+            .padding(ReachuSpacing.md)
+            .background(ReachuColors.surfaceSecondary)
+            .cornerRadius(ReachuBorderRadius.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .stroke(ReachuColors.border, lineWidth: 1)
+            )
+        }
+    }
+}
+
+struct CountryPicker: View {
+    @Binding var selectedCountry: String
+    
+    private let countries = [
+        "United States",
+        "Canada",
+        "United Kingdom",
+        "Germany",
+        "France",
+        "Italy",
+        "Spain",
+        "Netherlands",
+        "Sweden",
+        "Norway",
+        "Denmark",
+        "Switzerland",
+        "Austria",
+        "Belgium",
+        "Portugal",
+        "Mexico",
+        "Argentina",
+        "Brazil",
+        "China",
+        "Japan",
+        "South Korea",
+        "India",
+        "Australia",
+        "New Zealand"
+    ]
+    
+    var body: some View {
+        Menu {
+            ForEach(countries, id: \.self) { country in
+                Button(action: {
+                    selectedCountry = country
+                }) {
+                    HStack {
+                        Text(country)
+                        Spacer()
+                        if selectedCountry == country {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(ReachuColors.primary)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack {
+                Text(selectedCountry.isEmpty ? "Select Country" : selectedCountry)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(selectedCountry.isEmpty ? ReachuColors.textSecondary : ReachuColors.textPrimary)
+                
+                Spacer()
+                
+                Image(systemName: "chevron.down")
+                    .font(.caption)
+                    .foregroundColor(ReachuColors.textSecondary)
+            }
+            .padding(ReachuSpacing.md)
+            .background(ReachuColors.surfaceSecondary)
+            .cornerRadius(ReachuBorderRadius.medium)
+            .overlay(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .stroke(ReachuColors.border, lineWidth: 1)
+            )
+        }
     }
 }
 
