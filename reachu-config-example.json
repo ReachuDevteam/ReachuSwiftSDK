@@ -2,7 +2,7 @@
   "apiKey": "your-reachu-api-key-here",
   "environment": "production",
   "theme": {
-    "name": "Custom Theme",
+    "name": "Mi Tienda Theme",
     "colors": {
       "primary": "#007AFF",
       "secondary": "#5856D6"
@@ -16,16 +16,16 @@
     "showCartNotifications": true,
     "enableGuestCheckout": true
   },
+  "ui": {
+    "enableAnimations": true,
+    "showProductBrands": true,
+    "enableHapticFeedback": true
+  },
   "network": {
     "timeout": 30.0,
     "retryAttempts": 3,
     "enableCaching": true,
     "enableLogging": false
-  },
-  "ui": {
-    "enableAnimations": true,
-    "showProductBrands": true,
-    "enableHapticFeedback": true
   },
   "liveShow": {
     "autoJoinChat": true,
