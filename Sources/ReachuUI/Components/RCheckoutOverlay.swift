@@ -251,16 +251,17 @@ public struct RCheckoutOverlay: View {
                 }
             }
             
-            // Bottom Button
+            // Bottom Button - Full Width
             VStack {
                 RButton(
-                    title: "Checkout",
+                    title: "Proceed to Checkout",
                     style: .primary,
                     size: .large,
                     isDisabled: !canProceedToNext
                 ) {
                     proceedToNext()
                 }
+                .frame(maxWidth: .infinity) // Full width
                 .padding(.horizontal, ReachuSpacing.lg)
                 .padding(.vertical, ReachuSpacing.md)
             }
@@ -273,6 +274,17 @@ public struct RCheckoutOverlay: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xl) {
+                    // Cart Section (smaller, readonly)
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        Text("Cart")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Compact readonly products
+                        compactReadonlyCartView
+                    }
+                    
                     // Payment Method Selection
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         Text("Payment Method")
@@ -309,16 +321,17 @@ public struct RCheckoutOverlay: View {
                 .padding(.top, ReachuSpacing.lg)
             }
             
-            // Bottom Button
+            // Bottom Button - Full Width
             VStack {
                 RButton(
-                    title: "Continue to Review",
+                    title: "Initiate Payment",
                     style: .primary,
                     size: .large,
                     isDisabled: !canProceedToNext
                 ) {
                     proceedToNext()
                 }
+                .frame(maxWidth: .infinity) // Full width
                 .padding(.horizontal, ReachuSpacing.lg)
                 .padding(.vertical, ReachuSpacing.md)
             }
@@ -921,34 +934,34 @@ extension RCheckoutOverlay {
     private var addressDisplayView: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("\(firstName) \(lastName)")
-                .font(ReachuTypography.bodyBold)
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(ReachuColors.textPrimary)
             
             Text(address1)
-                .font(ReachuTypography.body)
+                .font(.system(size: 14, weight: .regular))
                 .foregroundColor(ReachuColors.textPrimary)
             
             if !address2.isEmpty {
                 Text(address2)
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
             }
             
             Text("\(city), \(province), \(country)")
-                .font(ReachuTypography.body)
+                .font(.system(size: 14, weight: .regular))
                 .foregroundColor(ReachuColors.textPrimary)
             
             Text(zip)
-                .font(ReachuTypography.body)
+                .font(.system(size: 14, weight: .regular))
                 .foregroundColor(ReachuColors.textPrimary)
             
             HStack {
                 Text("Phone :")
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
                 
                 Text("\(phoneCountryCode) \(phone)")
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
             }
         }
@@ -1589,6 +1602,47 @@ extension RCheckoutOverlay {
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    // Compact readonly cart for order summary step
+    private var compactReadonlyCartView: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            ForEach(cartManager.items) { item in
+                HStack(spacing: ReachuSpacing.sm) {
+                    // Small product image
+                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.yellow)
+                    }
+                    .frame(width: 40, height: 40)
+                    .cornerRadius(6)
+                    
+                    // Product info (compact)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(item.title)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .lineLimit(1)
+                        
+                        Text("Qty: \(item.quantity)")
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Price
+                    Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+            }
+        }
     }
     
     // Complete order summary for payment step
