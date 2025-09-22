@@ -186,45 +186,66 @@ public struct RCheckoutOverlay: View {
     private var addressStepView: some View {
         VStack(spacing: 0) {
             ScrollView {
-                VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                    // Shipping Address Header
-                    HStack {
-                        Text("Shipping Address")
-                            .font(ReachuTypography.title2)
+                VStack(alignment: .leading, spacing: ReachuSpacing.xl) {
+                    // 1. CART SECTION (Products first)
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        Text("Cart")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
+                            .padding(.horizontal, ReachuSpacing.lg)
                         
-                        Spacer()
-                        
-                        Button(action: {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                isEditingAddress.toggle()
-                            }
-                        }) {
-                            Image(systemName: isEditingAddress ? "checkmark" : "pencil")
-                                .foregroundColor(ReachuColors.primary)
-                                .font(.title3)
-                        }
+                        // Individual Products with Quantity
+                        individualProductsWithQuantityView
                     }
-                    .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
                     
-                    // Address Display or Edit Form
-                    Group {
-                        if isEditingAddress {
-                            addressEditForm
-                                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
-                        } else {
-                            addressDisplayView
-                                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+                    // 2. SHIPPING ADDRESS SECTION (consistent sizing)
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        HStack {
+                            Text("Shipping Address")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                            
+                            Spacer()
+                            
+                            Button(action: {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    isEditingAddress.toggle()
+                                }
+                            }) {
+                                Image(systemName: isEditingAddress ? "checkmark" : "pencil")
+                                    .foregroundColor(ReachuColors.primary)
+                                    .font(.system(size: 16))
+                            }
                         }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Address Display or Edit Form
+                        Group {
+                            if isEditingAddress {
+                                addressEditForm
+                                    .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+                            } else {
+                                addressDisplayView
+                                    .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+                            }
+                        }
+                        .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
+                        
+                        // Shipping Options (smaller)
+                        compactShippingOptionsView
                     }
-                    .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
                     
-                    // Individual Products with Quantity (like the image)
-                    individualProductsWithQuantityView
-                    
-                    // Shipping Options Section
-                    shippingOptionsView
+                    // 3. ORDER SUMMARY SECTION (at bottom)
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        Text("Order Summary")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Order totals with shipping
+                        addressOrderSummaryView
+                    }
                     
                     Spacer(minLength: 100)
                 }
@@ -1461,6 +1482,110 @@ extension RCheckoutOverlay {
                         selectedShippingOption = option
                     }
                 }
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    // Compact shipping options for address step
+    private var compactShippingOptionsView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            Text("Shipping")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(ReachuColors.textPrimary)
+                .padding(.horizontal, ReachuSpacing.lg)
+            
+            VStack(spacing: ReachuSpacing.xs) {
+                ForEach(ShippingOption.allCases, id: \.self) { option in
+                    Button(action: {
+                        selectedShippingOption = option
+                    }) {
+                        HStack(spacing: ReachuSpacing.sm) {
+                            // Selection indicator
+                            Image(systemName: selectedShippingOption == option ? "checkmark.circle.fill" : "circle")
+                                .foregroundColor(selectedShippingOption == option ? ReachuColors.primary : ReachuColors.textSecondary)
+                                .font(.system(size: 16))
+                            
+                            // Shipping icon (smaller)
+                            Image(systemName: option.icon)
+                                .foregroundColor(ReachuColors.primary)
+                                .font(.system(size: 14))
+                                .frame(width: 20)
+                            
+                            // Shipping details
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(option.displayName)
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(ReachuColors.textPrimary)
+                                
+                                Text(option.description)
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundColor(ReachuColors.textSecondary)
+                            }
+                            
+                            Spacer()
+                            
+                            // Price
+                            Text(option.price > 0 ? "$\(String(format: "%.2f", option.price))" : "")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(selectedShippingOption == option ? ReachuColors.primary.opacity(0.1) : Color.clear)
+                        .cornerRadius(ReachuBorderRadius.small)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+    }
+    
+    // Order summary for address step (with shipping)
+    private var addressOrderSummaryView: some View {
+        VStack(spacing: ReachuSpacing.sm) {
+            // Subtotal
+            HStack {
+                Text("Subtotal")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textSecondary)
+                
+                Spacer()
+                
+                Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textPrimary)
+            }
+            
+            // Shipping
+            HStack {
+                Text("Shipping")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textSecondary)
+                
+                Spacer()
+                
+                Text(selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textPrimary)
+            }
+            
+            // Divider
+            Rectangle()
+                .fill(ReachuColors.border)
+                .frame(height: 1)
+            
+            // Total
+            HStack {
+                Text("Total")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Spacer()
+                
+                Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal + selectedShippingOption.price))")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(ReachuColors.primary)
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
