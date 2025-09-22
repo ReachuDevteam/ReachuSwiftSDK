@@ -36,6 +36,11 @@ public struct RCheckoutOverlay: View {
     @State private var acceptsTerms = false
     @State private var acceptsPurchaseConditions = false
     
+    // Discount Code
+    @State private var discountCode = ""
+    @State private var appliedDiscount: Double = 0.0
+    @State private var discountMessage = ""
+    
     // MARK: - Checkout Steps
     public enum CheckoutStep: CaseIterable {
         case address
@@ -914,58 +919,290 @@ extension RCheckoutOverlay {
     }
     
     private var productSummaryView: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        VStack(spacing: ReachuSpacing.lg) {
             ForEach(cartManager.items) { item in
-                HStack(spacing: ReachuSpacing.md) {
-                    // Product Image
+                sexyProductCard(for: item)
+            }
+            
+            // Discount Code Section
+            discountCodeSection
+            
+            // Order Summary
+            orderSummarySection
+        }
+    }
+    
+    private func sexyProductCard(for item: CartManager.CartItem) -> some View {
+        VStack(spacing: 0) {
+            // Product Card with Shadow and Modern Design
+            HStack(spacing: ReachuSpacing.md) {
+                // Sexy Product Image with Gradient Overlay
+                ZStack {
                     AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 90, height: 90)
+                            .clipped()
                     } placeholder: {
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(ReachuColors.surfaceSecondary)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                            .fill(
+                                LinearGradient(
+                                    colors: [ReachuColors.surfaceSecondary, ReachuColors.background],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
                             .overlay {
                                 Image(systemName: "photo")
-                                    .foregroundColor(ReachuColors.textSecondary)
+                                    .font(.title2)
+                                    .foregroundColor(ReachuColors.textSecondary.opacity(0.6))
                             }
                     }
-                    .frame(width: 80, height: 80)
-                    .cornerRadius(ReachuBorderRadius.medium)
                     
-                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                        Text(item.brand ?? "Adidas Store")
-                            .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
+                    // Subtle gradient overlay for depth
+                    LinearGradient(
+                        colors: [Color.clear, Color.black.opacity(0.1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                }
+                .frame(width: 90, height: 90)
+                .cornerRadius(ReachuBorderRadius.large)
+                .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 8, x: 0, y: 4)
+                
+                // Product Details with Elegant Typography
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    // Brand with subtle styling
+                    Text(item.brand ?? "Adidas Store")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .textCase(.uppercase)
+                    
+                    // Product name with emphasis
+                    Text(item.title)
+                        .font(.system(size: 16, weight: .bold, design: .default))
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    // Order ID with modern styling
+                    HStack(spacing: ReachuSpacing.xs) {
+                        Image(systemName: "number.circle.fill")
+                            .font(.caption2)
+                            .foregroundColor(ReachuColors.primary.opacity(0.7))
                         
-                        Text(item.title)
-                            .font(ReachuTypography.bodyBold)
-                            .foregroundColor(ReachuColors.textPrimary)
-                            .lineLimit(2)
-                        
-                        Text("Order ID: BD23672983")
-                            .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
-                        
-                        Text("Colors: Like Water")
-                            .font(ReachuTypography.caption1)
+                        Text("BD23672983")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                             .foregroundColor(ReachuColors.textSecondary)
                     }
                     
-                    Spacer()
-                    
-                    VStack(alignment: .trailing, spacing: ReachuSpacing.xs) {
-                        Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
-                            .font(ReachuTypography.title3)
-                            .foregroundColor(ReachuColors.textPrimary)
+                    // Colors with stylish presentation
+                    HStack(spacing: ReachuSpacing.xs) {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 12, height: 12)
                         
-                        Text("Qty: \(item.quantity)")
-                            .font(ReachuTypography.caption1)
+                        Text("Like Water")
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundColor(ReachuColors.textSecondary)
                     }
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
+                
+                Spacer()
+                
+                // Price Section with Modern Layout
+                VStack(alignment: .trailing, spacing: ReachuSpacing.xs) {
+                    // Main price with bold styling
+                    Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    // Quantity with subtle background
+                    HStack(spacing: ReachuSpacing.xs) {
+                        Text("×")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Text("\(item.quantity)")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundColor(ReachuColors.primary)
+                    }
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(ReachuColors.primary.opacity(0.1))
+                    .cornerRadius(ReachuBorderRadius.small)
+                }
             }
+            .padding(ReachuSpacing.lg)
+            .background(ReachuColors.surface)
+            .cornerRadius(ReachuBorderRadius.large)
+            .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 12, x: 0, y: 6)
+        }
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private var discountCodeSection: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            HStack {
+                Image(systemName: "tag.fill")
+                    .font(.title3)
+                    .foregroundColor(ReachuColors.primary)
+                
+                Text("Discount Code")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Spacer()
+            }
+            
+            HStack(spacing: ReachuSpacing.md) {
+                // Discount code input field
+                HStack {
+                    Image(systemName: "percent")
+                        .font(.body)
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    TextField("Enter discount code", text: $discountCode)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                .padding(.horizontal, ReachuSpacing.md)
+                .padding(.vertical, ReachuSpacing.sm)
+                .background(ReachuColors.surfaceSecondary)
+                .cornerRadius(ReachuBorderRadius.medium)
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .stroke(ReachuColors.border, lineWidth: 1)
+                )
+                
+                // Apply button
+                Button(action: {
+                    applyDiscountCode()
+                }) {
+                    Text("Apply")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(
+                            LinearGradient(
+                                colors: [ReachuColors.primary, ReachuColors.primary.opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .cornerRadius(ReachuBorderRadius.medium)
+                        .shadow(color: ReachuColors.primary.opacity(0.3), radius: 4, x: 0, y: 2)
+                }
+            }
+            
+            // Discount message
+            if !discountMessage.isEmpty {
+                HStack {
+                    Image(systemName: appliedDiscount > 0 ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                        .font(.body)
+                        .foregroundColor(appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
+                    
+                    Text(discountMessage)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
+                    
+                    Spacer()
+                }
+                .padding(.horizontal, ReachuSpacing.sm)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background((appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error).opacity(0.1))
+                .cornerRadius(ReachuBorderRadius.small)
+                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+            }
+        }
+        .padding(ReachuSpacing.lg)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private var orderSummarySection: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            // Summary Header
+            HStack {
+                Image(systemName: "doc.text.fill")
+                    .font(.title3)
+                    .foregroundColor(ReachuColors.primary)
+                
+                Text("Order Summary")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(ReachuColors.textPrimary)
+                
+                Spacer()
+            }
+            
+            // Summary Details
+            VStack(spacing: ReachuSpacing.sm) {
+                summaryRow("Subtotal", "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
+                summaryRow("Shipping", selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
+                
+                // Show discount if applied
+                if appliedDiscount > 0 {
+                    HStack {
+                        Text("Discount")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundColor(ReachuColors.success)
+                        
+                        Spacer()
+                        
+                        Text("-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(ReachuColors.success)
+                    }
+                }
+                
+                summaryRow("Tax", "\(cartManager.currency) 0.00")
+                
+                Divider()
+                    .background(ReachuColors.border)
+                
+                // Total with emphasis
+                HStack {
+                    Text("Total")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    Spacer()
+                    
+                    Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .foregroundColor(ReachuColors.primary)
+                }
+                .padding(.top, ReachuSpacing.xs)
+            }
+        }
+        .padding(ReachuSpacing.lg)
+        .background(ReachuColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 8, x: 0, y: 4)
+        .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    private func summaryRow(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(ReachuColors.textSecondary)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(ReachuColors.textPrimary)
         }
     }
     
@@ -1039,6 +1276,75 @@ extension RCheckoutOverlay {
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    // MARK: - Helper Functions
+    
+    private var finalTotal: Double {
+        return cartManager.cartTotal + selectedShippingOption.price - appliedDiscount
+    }
+    
+    private func applyDiscountCode() {
+        let trimmedCode = discountCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            switch trimmedCode {
+            case "SAVE10":
+                appliedDiscount = cartManager.cartTotal * 0.10
+                discountMessage = "10% discount applied!"
+                
+                // Haptic feedback for success
+                #if os(iOS)
+                let successFeedback = UINotificationFeedbackGenerator()
+                successFeedback.notificationOccurred(.success)
+                #endif
+                
+            case "SAVE20":
+                appliedDiscount = cartManager.cartTotal * 0.20
+                discountMessage = "20% discount applied!"
+                
+                #if os(iOS)
+                let successFeedback = UINotificationFeedbackGenerator()
+                successFeedback.notificationOccurred(.success)
+                #endif
+                
+            case "FREE10":
+                appliedDiscount = 10.0
+                discountMessage = "$10 off applied!"
+                
+                #if os(iOS)
+                let successFeedback = UINotificationFeedbackGenerator()
+                successFeedback.notificationOccurred(.success)
+                #endif
+                
+            case "WELCOME":
+                appliedDiscount = 15.0
+                discountMessage = "Welcome discount applied!"
+                
+                #if os(iOS)
+                let successFeedback = UINotificationFeedbackGenerator()
+                successFeedback.notificationOccurred(.success)
+                #endif
+                
+            default:
+                appliedDiscount = 0.0
+                discountMessage = "Invalid discount code"
+                
+                #if os(iOS)
+                let errorFeedback = UINotificationFeedbackGenerator()
+                errorFeedback.notificationOccurred(.error)
+                #endif
+            }
+        }
+        
+        // Clear message after 3 seconds
+        if !discountMessage.isEmpty && appliedDiscount > 0 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    discountMessage = ""
+                }
+            }
+        }
     }
 }
 
