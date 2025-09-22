@@ -740,7 +740,7 @@ struct LayoutInfoCard: View {
             Text("Use case: \(useCase)")
                 .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textTertiary)
-     scre   }
+        }
         .padding(ReachuSpacing.md)
         .background(ReachuColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
