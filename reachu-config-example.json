@@ -3,9 +3,14 @@
   "environment": "production",
   "theme": {
     "name": "Mi Tienda Theme",
-    "colors": {
+    "mode": "automatic",
+    "lightColors": {
       "primary": "#007AFF",
       "secondary": "#5856D6"
+    },
+    "darkColors": {
+      "primary": "#0A84FF",
+      "secondary": "#5E5CE6"
     }
   },
   "cart": {

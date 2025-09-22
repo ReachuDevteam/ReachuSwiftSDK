@@ -86,6 +86,10 @@ public struct RProductSlider: View {
     private let onAddToCart: ((Product) -> Void)?
     private let onSeeAllTap: (() -> Void)?
     
+    // Environment for adaptive colors
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.reachuAdaptiveColors) private var adaptiveColors
+    
     // Animation states
     @State private var addedProductId: Int?
     @State private var sliderScale: CGFloat = 1.0
@@ -131,6 +135,7 @@ public struct RProductSlider: View {
             .scaleEffect(sliderScale)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
         }
+        .adaptiveReachuColors()
     }
     
     // MARK: - Header View
@@ -138,7 +143,7 @@ public struct RProductSlider: View {
         HStack {
             Text(title)
                 .font(ReachuTypography.headline)
-                .foregroundColor(ReachuColors.textPrimary)
+                .foregroundColor(adaptiveColors.textPrimary)
             
             Spacer()
             
@@ -147,11 +152,11 @@ public struct RProductSlider: View {
                     HStack(spacing: ReachuSpacing.xs) {
                         Text("See All")
                             .font(ReachuTypography.callout)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                         
                         Image(systemName: "arrow.right")
                             .font(.caption)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                     }
                 }
             }
@@ -211,7 +216,7 @@ public struct RProductSlider: View {
                 .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                        .stroke(ReachuColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .stroke(adaptiveColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
                         .animation(.easeInOut(duration: 0.3), value: addedProductId)
                 )
             } else {
@@ -227,7 +232,7 @@ public struct RProductSlider: View {
                 .scaleEffect(addedProductId == product.id ? 1.05 : 1.0)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                        .stroke(ReachuColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
+                        .stroke(adaptiveColors.success, lineWidth: addedProductId == product.id ? 2 : 0)
                         .animation(.easeInOut(duration: 0.3), value: addedProductId)
                 )
             }

@@ -68,6 +68,8 @@ public struct RFloatingCartIndicator: View {
     
     // MARK: - Properties
     @EnvironmentObject private var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.reachuAdaptiveColors) private var adaptiveColors
     @State private var isPressed = false
     @State private var bounceAnimation = false
     
@@ -116,6 +118,7 @@ public struct RFloatingCartIndicator: View {
                 triggerBounceAnimation()
             }
         }
+        .adaptiveReachuColors()
     }
     
     // MARK: - Cart Indicator Button
@@ -179,7 +182,7 @@ public struct RFloatingCartIndicator: View {
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .shadow(color: adaptiveColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -197,7 +200,7 @@ public struct RFloatingCartIndicator: View {
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .shadow(color: adaptiveColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -215,7 +218,7 @@ public struct RFloatingCartIndicator: View {
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .shadow(color: adaptiveColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -225,7 +228,7 @@ public struct RFloatingCartIndicator: View {
             .padding(size.verticalPadding)
             .background(cartBackground)
             .clipShape(Circle())
-            .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+            .shadow(color: adaptiveColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -241,7 +244,7 @@ public struct RFloatingCartIndicator: View {
             Text("\(cartManager.itemCount)")
                 .font(.caption2)
                 .fontWeight(.bold)
-                .foregroundColor(ReachuColors.primary)
+                .foregroundColor(adaptiveColors.primary)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(.white)
@@ -256,8 +259,8 @@ public struct RFloatingCartIndicator: View {
     private var cartBackground: some View {
         LinearGradient(
             gradient: Gradient(colors: [
-                ReachuColors.primary,
-                ReachuColors.primary.opacity(0.8)
+                adaptiveColors.primary,
+                adaptiveColors.primary.opacity(0.8)
             ]),
             startPoint: .leading,
             endPoint: .trailing

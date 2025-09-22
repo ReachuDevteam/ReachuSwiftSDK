@@ -113,12 +113,31 @@ public class ConfigurationLoader {
     private static func createTheme(from themeConfig: JSONThemeConfiguration?) -> ReachuTheme {
         guard let config = themeConfig else { return .default }
         
-        let colors = ColorScheme(
-            primary: hexToColor(config.colors.primary),
-            secondary: hexToColor(config.colors.secondary)
+        let mode = ThemeMode(rawValue: config.mode ?? "automatic") ?? .automatic
+        
+        // Parse light colors
+        let lightColors = ColorScheme(
+            primary: hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF"),
+            secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6")
         )
         
-        return ReachuTheme(name: config.name, colors: colors)
+        // Parse dark colors (fallback to auto-generated if not specified)
+        let darkColors: ReachuCore.ColorScheme
+        if let darkColorsConfig = config.darkColors {
+            darkColors = ColorScheme(
+                primary: hexToColor(darkColorsConfig.primary),
+                secondary: hexToColor(darkColorsConfig.secondary)
+            )
+        } else {
+            darkColors = .autoDark(from: lightColors)
+        }
+        
+        return ReachuTheme(
+            name: config.name,
+            mode: mode,
+            lightColors: lightColors,
+            darkColors: darkColors
+        )
     }
     
     // MARK: - Helper Functions
@@ -210,7 +229,10 @@ private struct JSONConfiguration: Codable {
 
 private struct JSONThemeConfiguration: Codable {
     let name: String
-    let colors: JSONColorConfiguration
+    let mode: String?
+    let colors: JSONColorConfiguration? // Legacy support
+    let lightColors: JSONColorConfiguration?
+    let darkColors: JSONColorConfiguration?
 }
 
 private struct JSONColorConfiguration: Codable {

@@ -237,19 +237,45 @@ struct MyApp: App {
 **Effect:** Determines which Reachu servers to connect to and authenticates your app.
 
 ### 🎨 Theme & Colors
+
+#### 🌓 Automatic Dark/Light Mode Support (Recommended)
 ```json
 {
   "theme": {
     "name": "My Store Theme",
-    "colors": {
-      "primary": "#007AFF",      // Main brand color (buttons, links, emphasis)
-      "secondary": "#5856D6"     // Secondary brand color (accents, highlights)
+    "mode": "automatic",                    // automatic | light | dark
+    "lightColors": {
+      "primary": "#007AFF",                 // Light mode brand color
+      "secondary": "#5856D6"                // Light mode accent color
+    },
+    "darkColors": {
+      "primary": "#0A84FF",                 // Dark mode brand color (brighter)
+      "secondary": "#5E5CE6"                // Dark mode accent color (brighter)
     }
   }
 }
 ```
 
-**Effect:** All Reachu UI components will use these colors automatically. Changes the appearance of buttons, product cards, checkout flow, etc.
+#### 🔆 Single Theme Mode (Legacy)
+```json
+{
+  "theme": {
+    "name": "My Store Theme",
+    "mode": "light",                        // Force light mode
+    "colors": {
+      "primary": "#007AFF",                 // Main brand color
+      "secondary": "#5856D6"                // Secondary brand color
+    }
+  }
+}
+```
+
+#### Theme Mode Options:
+- **`automatic`** - 🌓 Automatically adapts to system light/dark mode
+- **`light`** - ☀️ Forces light theme regardless of system setting
+- **`dark`** - 🌙 Forces dark theme regardless of system setting
+
+**Effect:** All Reachu UI components automatically adapt to light/dark modes. Colors, backgrounds, and text contrast adjust seamlessly based on the user's system preferences or your override setting.
 
 ### 🛒 Shopping Cart
 ```json
@@ -486,6 +512,97 @@ ReachuConfiguration.updateCartConfiguration(
     "showProductDescriptions": true
   }
 }
+```
+
+## 🌓 Dark/Light Mode Examples
+
+### Automatic Theme Adaptation
+```json
+{
+  "theme": {
+    "name": "Adaptive Brand Theme",
+    "mode": "automatic",
+    "lightColors": {
+      "primary": "#FF6B35",     // Vibrant orange for light mode
+      "secondary": "#004E89"     // Deep blue for light mode
+    },
+    "darkColors": {
+      "primary": "#FF8A5B",     // Softer orange for dark mode
+      "secondary": "#0074D9"     // Brighter blue for dark mode
+    }
+  }
+}
+```
+
+### Force Dark Mode
+```json
+{
+  "theme": {
+    "name": "Always Dark Theme",
+    "mode": "dark",
+    "lightColors": {
+      "primary": "#000000",
+      "secondary": "#333333"
+    },
+    "darkColors": {
+      "primary": "#FFFFFF",
+      "secondary": "#CCCCCC"
+    }
+  }
+}
+```
+
+### Premium Brand with Auto Dark Generation
+```json
+{
+  "theme": {
+    "name": "Luxury Brand",
+    "mode": "automatic",
+    "lightColors": {
+      "primary": "#D4AF37",     // Gold
+      "secondary": "#8B4513"     // Brown
+    }
+    // darkColors will be auto-generated if not specified
+  }
+}
+```
+
+### Programmatic Theme Updates
+```swift
+// Switch to dark mode programmatically
+ReachuConfiguration.updateTheme(
+    ReachuTheme(
+        name: "Dark Override",
+        mode: .dark,
+        lightColors: .reachu,
+        darkColors: .reachuDark
+    )
+)
+
+// Return to automatic mode
+ReachuConfiguration.updateTheme(
+    ReachuTheme(
+        name: "Auto Theme",
+        mode: .automatic,
+        lightColors: .reachu,
+        darkColors: .reachuDark
+    )
+)
+```
+
+### Testing Dark/Light Modes
+```swift
+// Preview colors for both modes
+let theme = ReachuConfiguration.shared.theme
+
+// Get light mode colors
+let lightPrimary = theme.colors(for: .light).primary
+
+// Get dark mode colors  
+let darkPrimary = theme.colors(for: .dark).primary
+
+print("Light Primary: \(lightPrimary)")
+print("Dark Primary: \(darkPrimary)")
 ```
 
 ## 🔍 Troubleshooting
