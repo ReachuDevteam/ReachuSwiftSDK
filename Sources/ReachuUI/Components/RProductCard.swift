@@ -111,7 +111,7 @@ public struct RProductCard: View {
                 }
                 
                 Text(product.title)
-                    .font(ReachuTypography.headline)
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(ReachuColors.textPrimary)
                     .lineLimit(2)
                 
@@ -336,6 +336,7 @@ public struct RProductCard: View {
                     variant == .hero ? ReachuTypography.title3 : 
                     variant == .minimal ? .system(size: 11, weight: .semibold) :
                     variant == .list ? .system(size: 14, weight: .semibold) :
+                    variant == .grid ? .system(size: 14, weight: .semibold) :
                     ReachuTypography.body
                 )
                 .fontWeight(.semibold)
@@ -346,6 +347,7 @@ public struct RProductCard: View {
                     .font(
                         variant == .minimal ? .system(size: 10, weight: .regular) :
                         variant == .list ? .system(size: 11, weight: .regular) :
+                        variant == .grid ? .system(size: 12, weight: .regular) :
                         ReachuTypography.caption1
                     )
                     .foregroundColor(ReachuColors.textSecondary)
@@ -361,11 +363,11 @@ public struct RProductCard: View {
                 EmptyView()
             } else if isInStock {
                 RButton(
-                    title: showCheckmark ? (variant == .list ? "✓" : "Added!") : (variant == .list ? "Add" : variant == .grid ? "Add" : "Add to Cart"),
+                    title: showCheckmark ? (variant == .list ? "✓" : variant == .grid ? "" : "Added!") : (variant == .list ? "Add" : variant == .grid ? "" : "Add to Cart"),
                     style: .primary,
                     size: variant == .list ? .small : variant == .grid ? .small : .medium,
                     isLoading: isAddingToCart,
-                    icon: showCheckmark && variant != .list ? "checkmark" : nil
+                    icon: variant == .grid ? (showCheckmark ? "checkmark" : "plus") : showCheckmark && variant != .list ? "checkmark" : nil
                 ) {
                     animateAddToCart()
                 }
