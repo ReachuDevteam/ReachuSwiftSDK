@@ -1,0 +1,35 @@
+{
+  "apiKey": "your-reachu-api-key-here",
+  "environment": "production",
+  "theme": {
+    "name": "Custom Theme",
+    "colors": {
+      "primary": "#007AFF",
+      "secondary": "#5856D6"
+    }
+  },
+  "cart": {
+    "floatingCartPosition": "bottomRight",
+    "floatingCartDisplayMode": "full",
+    "floatingCartSize": "medium",
+    "autoSaveCart": true,
+    "showCartNotifications": true,
+    "enableGuestCheckout": true
+  },
+  "network": {
+    "timeout": 30.0,
+    "retryAttempts": 3,
+    "enableCaching": true,
+    "enableLogging": false
+  },
+  "ui": {
+    "enableAnimations": true,
+    "showProductBrands": true,
+    "enableHapticFeedback": true
+  },
+  "liveShow": {
+    "autoJoinChat": true,
+    "enableShopping": true,
+    "enableAutoplay": false
+  }
+}
