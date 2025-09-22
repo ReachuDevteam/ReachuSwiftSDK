@@ -250,8 +250,8 @@ public struct RCheckoutOverlay: View {
                     }
                     .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
                     
-                    // Product Summary with Cart Integration
-                    productSummaryView
+                    // Simple Product List
+                    simpleProductListView
                     
                     // Quantity Section with Cart Integration
                     quantityControlView
@@ -282,6 +282,12 @@ public struct RCheckoutOverlay: View {
                             .padding(.horizontal, ReachuSpacing.lg)
                     }
                     
+                    // Discount Code Section
+                    discountCodeSection
+                    
+                    // Order Summary
+                    orderSummarySection
+                    
                     Spacer(minLength: 100)
                 }
             }
@@ -308,102 +314,38 @@ public struct RCheckoutOverlay: View {
         VStack(spacing: 0) {
             ScrollView {
                 VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                    // Product Summary Header
+                    // Product Summary Header - EXACTLY like the image
                     HStack {
                         Text("Product Summary")
-                            .font(ReachuTypography.title2)
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(ReachuColors.textPrimary)
                         
                         Spacer()
                         
-                        Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
-                            .font(ReachuTypography.title2)
+                        Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(ReachuColors.textPrimary)
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
                     
-                    // Order Details
-                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                        HStack {
-                            Text("Order ID")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("BD23672983")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
+                    // Simple Order Details List - EXACTLY like the image
+                    VStack(spacing: ReachuSpacing.md) {
+                        ForEach(cartManager.items) { item in
+                            // Each product details
+                            VStack(spacing: ReachuSpacing.sm) {
+                                summaryDetailRow("Order ID", "BD23672983")
+                                summaryDetailRow("Store", item.brand ?? "Adidas")
+                                summaryDetailRow("Category", "Basketball")
+                                summaryDetailRow("Product", item.title)
+                                summaryDetailRow("Colors", "Like Water")
+                                summaryDetailRow("Quantity", "\(item.quantity) item\(item.quantity > 1 ? "s" : "")")
+                                summaryDetailRow("Price", "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                            }
                         }
                         
-                        HStack {
-                            Text("Store")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("Adidas")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Category")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("Basketball")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Product")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("D.O.N ISSUE #6")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Colors")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("Like Water")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Quantity")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("1 item")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Price")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        
-                        HStack {
-                            Text("Shipping")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textSecondary)
-                            Spacer()
-                            Text("Free")
-                                .font(ReachuTypography.body)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
+                        // Shipping - part of the simple list
+                        summaryDetailRow("Shipping", selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     
@@ -415,7 +357,7 @@ public struct RCheckoutOverlay: View {
                                 .foregroundColor(ReachuColors.textPrimary)
                                 .padding(.horizontal, ReachuSpacing.lg)
                             
-                            PaymentScheduleDetailed(total: cartManager.cartTotal, currency: cartManager.currency)
+                            PaymentScheduleDetailed(total: finalTotal, currency: cartManager.currency)
                                 .padding(.horizontal, ReachuSpacing.lg)
                         }
                     }
@@ -437,6 +379,21 @@ public struct RCheckoutOverlay: View {
                 .padding(.vertical, ReachuSpacing.md)
             }
             .background(ReachuColors.surface)
+        }
+    }
+    
+    // Helper function for the simple summary rows
+    private func summaryDetailRow(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(ReachuColors.textSecondary)
+            
+            Spacer()
+            
+            Text(value)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(ReachuColors.textPrimary)
         }
     }
     
@@ -918,17 +875,53 @@ extension RCheckoutOverlay {
         .padding(.horizontal, ReachuSpacing.lg)
     }
     
-    private var productSummaryView: some View {
-        VStack(spacing: ReachuSpacing.lg) {
+    private var simpleProductListView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
             ForEach(cartManager.items) { item in
-                sexyProductCard(for: item)
+                HStack(spacing: ReachuSpacing.md) {
+                    // Simple Product Image
+                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: {
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(ReachuColors.surfaceSecondary)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundColor(ReachuColors.textSecondary)
+                            }
+                    }
+                    .frame(width: 80, height: 80)
+                    .cornerRadius(ReachuBorderRadius.medium)
+                    
+                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                        Text(item.brand ?? "Adidas Store")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Text(item.title)
+                            .font(ReachuTypography.bodyBold)
+                            .foregroundColor(ReachuColors.textPrimary)
+                            .lineLimit(2)
+                        
+                        Text("Order ID: BD23672983")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Text("Colors: Like Water")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                    }
+                    
+                    Spacer()
+                    
+                    Text("\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                        .font(ReachuTypography.title3)
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
             }
-            
-            // Discount Code Section
-            discountCodeSection
-            
-            // Order Summary
-            orderSummarySection
         }
     }
     
@@ -1050,56 +1043,29 @@ extension RCheckoutOverlay {
     
     private var discountCodeSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            HStack {
-                Image(systemName: "tag.fill")
-                    .font(.title3)
-                    .foregroundColor(ReachuColors.primary)
-                
-                Text("Discount Code")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(ReachuColors.textPrimary)
-                
-                Spacer()
-            }
+            Text("Discount Code")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(ReachuColors.textPrimary)
             
             HStack(spacing: ReachuSpacing.md) {
-                // Discount code input field
-                HStack {
-                    Image(systemName: "percent")
-                        .font(.body)
-                        .foregroundColor(ReachuColors.textSecondary)
-                    
-                    TextField("Enter discount code", text: $discountCode)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(ReachuColors.textPrimary)
-                }
-                .padding(.horizontal, ReachuSpacing.md)
-                .padding(.vertical, ReachuSpacing.sm)
-                .background(ReachuColors.surfaceSecondary)
-                .cornerRadius(ReachuBorderRadius.medium)
-                .overlay(
-                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                        .stroke(ReachuColors.border, lineWidth: 1)
-                )
+                TextField("Enter discount code", text: $discountCode)
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .padding(.horizontal, ReachuSpacing.md)
+                    .padding(.vertical, ReachuSpacing.sm)
+                    .background(ReachuColors.surfaceSecondary)
+                    .cornerRadius(ReachuBorderRadius.medium)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(ReachuColors.border, lineWidth: 1)
+                    )
                 
-                // Apply button
-                Button(action: {
+                RButton(
+                    title: "Apply",
+                    style: .primary,
+                    size: .medium
+                ) {
                     applyDiscountCode()
-                }) {
-                    Text("Apply")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.vertical, ReachuSpacing.sm)
-                        .background(
-                            LinearGradient(
-                                colors: [ReachuColors.primary, ReachuColors.primary.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(ReachuBorderRadius.medium)
-                        .shadow(color: ReachuColors.primary.opacity(0.3), radius: 4, x: 0, y: 2)
                 }
             }
             
@@ -1111,41 +1077,22 @@ extension RCheckoutOverlay {
                         .foregroundColor(appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
                     
                     Text(discountMessage)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(ReachuTypography.caption1)
                         .foregroundColor(appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
-                    
-                    Spacer()
                 }
-                .padding(.horizontal, ReachuSpacing.sm)
-                .padding(.vertical, ReachuSpacing.xs)
-                .background((appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error).opacity(0.1))
-                .cornerRadius(ReachuBorderRadius.small)
                 .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
             }
         }
-        .padding(ReachuSpacing.lg)
-        .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 8, x: 0, y: 4)
         .padding(.horizontal, ReachuSpacing.lg)
     }
     
     private var orderSummarySection: some View {
         VStack(spacing: ReachuSpacing.md) {
-            // Summary Header
-            HStack {
-                Image(systemName: "doc.text.fill")
-                    .font(.title3)
-                    .foregroundColor(ReachuColors.primary)
-                
-                Text("Order Summary")
-                    .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(ReachuColors.textPrimary)
-                
-                Spacer()
-            }
+            Text("Order Summary")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(ReachuColors.textPrimary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            // Summary Details
             VStack(spacing: ReachuSpacing.sm) {
                 summaryRow("Subtotal", "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
                 summaryRow("Shipping", selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
@@ -1154,13 +1101,13 @@ extension RCheckoutOverlay {
                 if appliedDiscount > 0 {
                     HStack {
                         Text("Discount")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(ReachuTypography.body)
                             .foregroundColor(ReachuColors.success)
                         
                         Spacer()
                         
                         Text("-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))")
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(ReachuTypography.body)
                             .foregroundColor(ReachuColors.success)
                     }
                 }
@@ -1173,22 +1120,18 @@ extension RCheckoutOverlay {
                 // Total with emphasis
                 HStack {
                     Text("Total")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .font(ReachuTypography.title3)
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     Spacer()
                     
                     Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
+                        .font(ReachuTypography.title2)
                         .foregroundColor(ReachuColors.primary)
                 }
                 .padding(.top, ReachuSpacing.xs)
             }
         }
-        .padding(ReachuSpacing.lg)
-        .background(ReachuColors.surface)
-        .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 8, x: 0, y: 4)
         .padding(.horizontal, ReachuSpacing.lg)
     }
     
