@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 176858B72E7D89B300110C55 /* ReachuDesignSystem */; };
+		176858ED2E7F372400110C55 /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EC2E7F372400110C55 /* ReachuUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				176858ED2E7F372400110C55 /* ReachuUI in Frameworks */,
 				176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -118,6 +120,7 @@
 			name = ReachuDemoApp;
 			packageProductDependencies = (
 				176858B72E7D89B300110C55 /* ReachuDesignSystem */,
+				176858EC2E7F372400110C55 /* ReachuUI */,
 			);
 			productName = ReachuDemoApp;
 			productReference = 176858862E7D876500110C55 /* ReachuDemoApp.app */;
@@ -599,6 +602,10 @@
 		176858B72E7D89B300110C55 /* ReachuDesignSystem */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ReachuDesignSystem;
+		};
+		176858EC2E7F372400110C55 /* ReachuUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
