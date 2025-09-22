@@ -44,16 +44,18 @@ public struct RCheckoutOverlay: View {
     // MARK: - Checkout Steps
     public enum CheckoutStep: CaseIterable {
         case address
-        case payment
+        case orderSummary
         case review
         case success
+        case error
         
         var title: String {
             switch self {
             case .address: return "Address"
-            case .payment: return "Payment"
+            case .orderSummary: return "Order Summary"
             case .review: return "Review"
             case .success: return "Complete"
+            case .error: return "Error"
             }
         }
     }
@@ -139,12 +141,14 @@ public struct RCheckoutOverlay: View {
                 switch checkoutStep {
                 case .address:
                     addressStepView
-                case .payment:
-                    paymentStepView
+                case .orderSummary:
+                    orderSummaryStepView
                 case .review:
                     reviewStepView
                 case .success:
                     successStepView
+                case .error:
+                    errorStepView
                 }
             }
             .navigationTitle("Checkout")
@@ -222,35 +226,6 @@ public struct RCheckoutOverlay: View {
                     // Shipping Options Section
                     shippingOptionsView
                     
-                    // Payment Method Section
-                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        Text("Payment Method")
-                            .font(ReachuTypography.bodyBold)
-                            .foregroundColor(ReachuColors.textPrimary)
-                        
-                        ForEach(PaymentMethod.allCases, id: \.self) { method in
-                            PaymentMethodRowCompact(
-                                method: method,
-                                isSelected: selectedPaymentMethod == method
-                            ) {
-                                selectedPaymentMethod = method
-                            }
-                        }
-                    }
-                    .padding(.horizontal, ReachuSpacing.lg)
-                    
-                    // Klarna installments Details
-                    if selectedPaymentMethod == .klarna {
-                        PaymentScheduleCompact(total: cartManager.cartTotal, currency: cartManager.currency)
-                            .padding(.horizontal, ReachuSpacing.lg)
-                    }
-                    
-                    // Discount Code Section
-                    discountCodeSection
-                    
-                    // Order Summary
-                    orderSummarySection
-                    
                     Spacer(minLength: 100)
                 }
             }
@@ -272,7 +247,65 @@ public struct RCheckoutOverlay: View {
         }
     }
     
-    // MARK: - Payment Step View
+    // MARK: - Order Summary Step View (Payment + Discount + Summary)
+    private var orderSummaryStepView: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: ReachuSpacing.xl) {
+                    // Payment Method Selection
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        Text("Payment Method")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(ReachuColors.textPrimary)
+                        
+                        VStack(spacing: ReachuSpacing.sm) {
+                            ForEach(PaymentMethod.allCases, id: \.self) { method in
+                                PaymentMethodRowCompact(
+                                    method: method,
+                                    isSelected: selectedPaymentMethod == method
+                                ) {
+                                    selectedPaymentMethod = method
+                                }
+                            }
+                        }
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    // Klarna installments Details
+                    if selectedPaymentMethod == .klarna {
+                        PaymentScheduleCompact(total: finalTotal, currency: cartManager.currency)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                    
+                    // Discount Code Section
+                    discountCodeSection
+                    
+                    // Order Summary
+                    orderSummarySection
+                    
+                    Spacer(minLength: 100)
+                }
+                .padding(.top, ReachuSpacing.lg)
+            }
+            
+            // Bottom Button
+            VStack {
+                RButton(
+                    title: "Continue to Review",
+                    style: .primary,
+                    size: .large,
+                    isDisabled: !canProceedToNext
+                ) {
+                    proceedToNext()
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.vertical, ReachuSpacing.md)
+            }
+            .background(ReachuColors.surface)
+        }
+    }
+    
+    // MARK: - Payment Step View (now Review Step)
     private var paymentStepView: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -473,50 +506,135 @@ public struct RCheckoutOverlay: View {
     
     // MARK: - Success Step View
     private var successStepView: some View {
-        VStack(spacing: ReachuSpacing.xl) {
+        VStack(spacing: 0) {
             Spacer()
             
-            // Success Icon
-            ZStack {
-                Circle()
-                    .fill(ReachuColors.success)
-                    .frame(width: 80, height: 80)
+            VStack(spacing: ReachuSpacing.lg) {
+                // Animated Success Icon
+                ZStack {
+                    Circle()
+                        .fill(ReachuColors.success)
+                        .frame(width: 100, height: 100)
+                        .scaleEffect(checkoutStep == .success ? 1.0 : 0.5)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.2), value: checkoutStep)
+                    
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 45, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(checkoutStep == .success ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(0.4), value: checkoutStep)
+                }
                 
-                Image(systemName: "checkmark")
-                    .font(.system(size: 40, weight: .bold))
-                    .foregroundColor(.white)
-            }
-            
-            // Success Message
-            VStack(spacing: ReachuSpacing.sm) {
-                Text("Purchase Complete!")
-                    .font(ReachuTypography.largeTitle)
-                    .foregroundColor(ReachuColors.textPrimary)
-                    .multilineTextAlignment(.center)
-                
-                Text("You'll pay in 4x interest-free. We'll send you a reminder a few days before each payment.")
-                    .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, ReachuSpacing.lg)
-            }
-            
-            Spacer()
-            
-            // Back to Home Button
-            RButton(
-                title: "Back to home",
-                style: .primary,
-                size: .large
-            ) {
-                cartManager.hideCheckout()
-                Task {
-                    await cartManager.clearCart()
+                // Success Message (smaller and more compact)
+                VStack(spacing: ReachuSpacing.sm) {
+                    Text("Purchase Complete!")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .opacity(checkoutStep == .success ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(0.6), value: checkoutStep)
+                    
+                    Text(selectedPaymentMethod == .klarna ? 
+                         "You'll pay in 4x interest-free. We'll send you a reminder a few days before each payment." :
+                         "Your order has been confirmed. You'll receive an email confirmation shortly.")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, ReachuSpacing.xl)
+                        .opacity(checkoutStep == .success ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(0.8), value: checkoutStep)
                 }
             }
-            .padding(.horizontal, ReachuSpacing.lg)
             
             Spacer()
+            
+            // Bottom Close Button
+            VStack {
+                RButton(
+                    title: "Close",
+                    style: .primary,
+                    size: .large
+                ) {
+                    cartManager.hideCheckout()
+                    Task {
+                        await cartManager.clearCart()
+                    }
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.bottom, ReachuSpacing.xl)
+                .opacity(checkoutStep == .success ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.5).delay(1.0), value: checkoutStep)
+            }
+        }
+    }
+    
+    // MARK: - Error Step View
+    private var errorStepView: some View {
+        VStack(spacing: 0) {
+            Spacer()
+            
+            VStack(spacing: ReachuSpacing.lg) {
+                // Animated Error Icon
+                ZStack {
+                    Circle()
+                        .fill(ReachuColors.error)
+                        .frame(width: 100, height: 100)
+                        .scaleEffect(checkoutStep == .error ? 1.0 : 0.5)
+                        .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.2), value: checkoutStep)
+                    
+                    Image(systemName: "xmark")
+                        .font(.system(size: 45, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(checkoutStep == .error ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(0.4), value: checkoutStep)
+                }
+                
+                // Error Message
+                VStack(spacing: ReachuSpacing.sm) {
+                    Text("Payment Failed")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .multilineTextAlignment(.center)
+                        .opacity(checkoutStep == .error ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(0.6), value: checkoutStep)
+                    
+                    Text("There was an issue processing your payment. Please check your payment information and try again.")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, ReachuSpacing.xl)
+                        .opacity(checkoutStep == .error ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(0.8), value: checkoutStep)
+                }
+            }
+            
+            Spacer()
+            
+            // Bottom Action Buttons
+            VStack(spacing: ReachuSpacing.md) {
+                RButton(
+                    title: "Try Again",
+                    style: .primary,
+                    size: .large
+                ) {
+                    // Go back to order summary to retry
+                    checkoutStep = .orderSummary
+                }
+                .opacity(checkoutStep == .error ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.5).delay(1.0), value: checkoutStep)
+                
+                RButton(
+                    title: "Go Back",
+                    style: .secondary,
+                    size: .large
+                ) {
+                    cartManager.hideCheckout()
+                }
+                .opacity(checkoutStep == .error ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.5).delay(1.1), value: checkoutStep)
+            }
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.bottom, ReachuSpacing.xl)
         }
     }
     
@@ -544,11 +662,11 @@ public struct RCheckoutOverlay: View {
         switch checkoutStep {
         case .address:
             return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && !phone.isEmpty && !address1.isEmpty && !city.isEmpty && !zip.isEmpty
-        case .payment:
+        case .orderSummary:
             return true
         case .review:
             return true
-        case .success:
+        case .success, .error:
             return false
         }
     }
@@ -556,10 +674,10 @@ public struct RCheckoutOverlay: View {
     private func goToPreviousStep() {
         withAnimation(.easeInOut(duration: 0.3)) {
             switch checkoutStep {
-            case .payment:
+            case .orderSummary:
                 checkoutStep = .address
             case .review:
-                checkoutStep = .payment
+                checkoutStep = .orderSummary
             default:
                 break
             }
@@ -570,12 +688,12 @@ public struct RCheckoutOverlay: View {
         withAnimation(.easeInOut(duration: 0.3)) {
             switch checkoutStep {
             case .address:
-                checkoutStep = .payment
-            case .payment:
+                checkoutStep = .orderSummary
+            case .orderSummary:
                 checkoutStep = .review
             case .review:
                 simulatePayment()
-            case .success:
+            case .success, .error:
                 break
             }
         }
@@ -587,12 +705,15 @@ public struct RCheckoutOverlay: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             isLoading = false
             
+            // Simulate payment success/failure (90% success rate for demo)
+            let isSuccess = Double.random(in: 0...1) > 0.1
+            
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                checkoutStep = .success
+                checkoutStep = isSuccess ? .success : .error
             }
             
             #if os(iOS)
-            let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
+            let impactFeedback = UIImpactFeedbackGenerator(style: isSuccess ? .heavy : .rigid)
             impactFeedback.impactOccurred()
             #endif
         }
