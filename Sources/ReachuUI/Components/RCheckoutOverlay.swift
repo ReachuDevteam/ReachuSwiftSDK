@@ -253,8 +253,8 @@ public struct RCheckoutOverlay: View {
                     // Simple Product List
                     simpleProductListView
                     
-                    // Quantity Section with Cart Integration
-                    quantityControlView
+                    // Global Quantity Section (like image 1)
+                    globalQuantityControlView
                     
                     // Shipping Options Section
                     shippingOptionsView
@@ -456,6 +456,9 @@ public struct RCheckoutOverlay: View {
                         }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    // Complete Order Summary (totals, taxes, etc.)
+                    completeOrderSummaryView
                     
                     // Payment Schedule (if 4x selected)
                     if selectedPaymentMethod == .interestFree {
@@ -1257,52 +1260,57 @@ extension RCheckoutOverlay {
         }
     }
     
-    private var quantityControlView: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            HStack {
-                Text("Quantity")
-                    .font(ReachuTypography.bodyBold)
-                    .foregroundColor(ReachuColors.textPrimary)
-                
-                Spacer()
-                
-                HStack(spacing: ReachuSpacing.sm) {
-                    Button(action: {
-                        if let firstItem = cartManager.items.first, firstItem.quantity > 1 {
-                            Task {
-                                await cartManager.updateQuantity(for: firstItem, to: firstItem.quantity - 1)
+    // Global quantity control for address step (like image 1)
+    private var globalQuantityControlView: some View {
+        HStack {
+            Text("Quantity")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(ReachuColors.textPrimary)
+            
+            Spacer()
+            
+            HStack(spacing: ReachuSpacing.lg) {
+                Button(action: {
+                    // Decrease entire order quantity
+                    if cartManager.itemCount > 1 {
+                        Task {
+                            for item in cartManager.items {
+                                if item.quantity > 1 {
+                                    await cartManager.updateQuantity(for: item, to: item.quantity - 1)
+                                }
                             }
                         }
-                    }) {
-                        Image(systemName: "minus")
-                            .font(.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-                            .frame(width: 32, height: 32)
-                            .background(ReachuColors.surfaceSecondary)
-                            .cornerRadius(ReachuBorderRadius.small)
                     }
-                    .disabled(cartManager.items.first?.quantity ?? 0 <= 1)
-                    
-                    Text("\(cartManager.itemCount)")
-                        .font(ReachuTypography.bodyBold)
+                }) {
+                    Image(systemName: "minus")
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundColor(ReachuColors.textPrimary)
-                        .frame(width: 40)
-                        .animation(.spring(), value: cartManager.itemCount)
-                    
-                    Button(action: {
-                        if let firstItem = cartManager.items.first {
-                            Task {
-                                await cartManager.updateQuantity(for: firstItem, to: firstItem.quantity + 1)
-                            }
+                        .frame(width: 44, height: 44)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(8)
+                }
+                .disabled(cartManager.itemCount <= cartManager.items.count) // Can't go below 1 per item
+                
+                Text("\(cartManager.itemCount)")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .frame(width: 60)
+                    .animation(.spring(), value: cartManager.itemCount)
+                
+                Button(action: {
+                    // Increase entire order quantity
+                    Task {
+                        for item in cartManager.items {
+                            await cartManager.updateQuantity(for: item, to: item.quantity + 1)
                         }
-                    }) {
-                        Image(systemName: "plus")
-                            .font(.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-                            .frame(width: 32, height: 32)
-                            .background(ReachuColors.surfaceSecondary)
-                            .cornerRadius(ReachuBorderRadius.small)
                     }
+                }) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .frame(width: 44, height: 44)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(8)
                 }
             }
         }
@@ -1327,6 +1335,93 @@ extension RCheckoutOverlay {
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
+    }
+    
+    // Complete order summary for payment step
+    private var completeOrderSummaryView: some View {
+        VStack(spacing: ReachuSpacing.lg) {
+            // Divider
+            Rectangle()
+                .fill(ReachuColors.border)
+                .frame(height: 1)
+                .padding(.horizontal, ReachuSpacing.lg)
+            
+            // Order Summary Section
+            VStack(spacing: ReachuSpacing.md) {
+                // Subtotal
+                HStack {
+                    Text("Subtotal")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Spacer()
+                    
+                    Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                
+                // Shipping
+                HStack {
+                    Text("Shipping")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Spacer()
+                    
+                    Text(selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                
+                // Discount (if applied)
+                if appliedDiscount > 0 {
+                    HStack {
+                        Text("Discount")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(ReachuColors.success)
+                        
+                        Spacer()
+                        
+                        Text("-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(ReachuColors.success)
+                    }
+                }
+                
+                // Tax
+                HStack {
+                    Text("Tax")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textSecondary)
+                    
+                    Spacer()
+                    
+                    Text("\(cartManager.currency) 0.00")
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                
+                // Divider
+                Rectangle()
+                    .fill(ReachuColors.border)
+                    .frame(height: 1)
+                
+                // Total
+                HStack {
+                    Text("Total")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    Spacer()
+                    
+                    Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(ReachuColors.primary)
+                }
+            }
+            .padding(.horizontal, ReachuSpacing.lg)
+        }
     }
     
     // MARK: - Helper Functions
