@@ -1,5 +1,6 @@
 import SwiftUI
 import ReachuCore
+import ReachuDesignSystem
 import Foundation
 
 /// Global cart manager that handles cart state and checkout flow

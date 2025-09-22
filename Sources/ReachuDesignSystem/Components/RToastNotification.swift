@@ -1,5 +1,4 @@
 import SwiftUI
-import ReachuDesignSystem
 
 /// Toast notification system for cart actions and other feedback
 /// 

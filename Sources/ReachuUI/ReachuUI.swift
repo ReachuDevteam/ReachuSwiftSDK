@@ -27,6 +27,3 @@ public typealias ReachuProductDetailOverlay = RProductDetailOverlay
 
 // Export UX enhancement components
 public typealias ReachuFloatingCartIndicator = RFloatingCartIndicator
-public typealias ReachuToastNotification = RToastNotification
-public typealias ReachuToastOverlay = RToastOverlay
-public typealias ReachuToastManager = ToastManager

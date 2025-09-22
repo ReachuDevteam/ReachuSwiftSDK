@@ -15,3 +15,11 @@ public struct ReachuDesignSystem {
         print("🎨 Reachu Design System initialized")
     }
 }
+
+// MARK: - Public Exports
+
+// Export base components
+public typealias ReachuButton = RButton
+public typealias ReachuToastNotification = RToastNotification
+public typealias ReachuToastOverlay = RToastOverlay
+public typealias ReachuToastManager = ToastManager
