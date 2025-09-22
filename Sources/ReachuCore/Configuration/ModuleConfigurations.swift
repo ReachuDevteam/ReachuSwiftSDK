@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+#if canImport(UIKit)
+import UIKit
+#endif
+
 // MARK: - Cart Configuration
 
 /// Configuration for cart behavior and appearance
@@ -93,12 +97,28 @@ public struct NetworkConfiguration {
     public let enableQueryBatching: Bool
     public let enableSubscriptions: Bool
     
+    // Performance Configuration
+    public let maxConcurrentRequests: Int
+    public let requestPriority: RequestPriority
+    public let enableCompression: Bool
+    
+    // Security Configuration
+    public let enableSSLPinning: Bool
+    public let trustedHosts: [String]
+    public let enableCertificateValidation: Bool
+    
     // Debug Configuration
     public let enableLogging: Bool
     public let logLevel: LogLevel
+    public let enableNetworkInspector: Bool
     
     // Custom Headers
     public let customHeaders: [String: String]
+    
+    // Offline Configuration
+    public let enableOfflineMode: Bool
+    public let offlineCacheDuration: TimeInterval
+    public let syncStrategy: SyncStrategy
     
     public init(
         timeout: TimeInterval = 30.0,
@@ -107,9 +127,19 @@ public struct NetworkConfiguration {
         cacheDuration: TimeInterval = 300, // 5 minutes
         enableQueryBatching: Bool = true,
         enableSubscriptions: Bool = false,
+        maxConcurrentRequests: Int = 6,
+        requestPriority: RequestPriority = .normal,
+        enableCompression: Bool = true,
+        enableSSLPinning: Bool = false,
+        trustedHosts: [String] = [],
+        enableCertificateValidation: Bool = true,
         enableLogging: Bool = false,
         logLevel: LogLevel = .info,
-        customHeaders: [String: String] = [:]
+        enableNetworkInspector: Bool = false,
+        customHeaders: [String: String] = [:],
+        enableOfflineMode: Bool = false,
+        offlineCacheDuration: TimeInterval = 86400, // 24 hours
+        syncStrategy: SyncStrategy = .automatic
     ) {
         self.timeout = timeout
         self.retryAttempts = retryAttempts
@@ -117,9 +147,19 @@ public struct NetworkConfiguration {
         self.cacheDuration = cacheDuration
         self.enableQueryBatching = enableQueryBatching
         self.enableSubscriptions = enableSubscriptions
+        self.maxConcurrentRequests = maxConcurrentRequests
+        self.requestPriority = requestPriority
+        self.enableCompression = enableCompression
+        self.enableSSLPinning = enableSSLPinning
+        self.trustedHosts = trustedHosts
+        self.enableCertificateValidation = enableCertificateValidation
         self.enableLogging = enableLogging
         self.logLevel = logLevel
+        self.enableNetworkInspector = enableNetworkInspector
         self.customHeaders = customHeaders
+        self.enableOfflineMode = enableOfflineMode
+        self.offlineCacheDuration = offlineCacheDuration
+        self.syncStrategy = syncStrategy
     }
     
     public static let `default` = NetworkConfiguration()
@@ -153,7 +193,22 @@ public struct UIConfiguration {
     public let enableImageCaching: Bool
     public let placeholderImageType: PlaceholderImageType
     
+    // Typography
+    public let typographyConfig: TypographyConfiguration
+    
+    // Shadows & Effects
+    public let shadowConfig: ShadowConfiguration
+    
     // Animations
+    public let animationConfig: AnimationConfiguration
+    
+    // Layout & Spacing
+    public let layoutConfig: LayoutConfiguration
+    
+    // Accessibility
+    public let accessibilityConfig: AccessibilityConfiguration
+    
+    // Legacy (for backward compatibility)
     public let enableAnimations: Bool
     public let animationDuration: TimeInterval
     public let enableHapticFeedback: Bool
@@ -169,6 +224,12 @@ public struct UIConfiguration {
         imageQuality: ImageQuality = .medium,
         enableImageCaching: Bool = true,
         placeholderImageType: PlaceholderImageType = .shimmer,
+        typographyConfig: TypographyConfiguration = .default,
+        shadowConfig: ShadowConfiguration = .default,
+        animationConfig: AnimationConfiguration = .default,
+        layoutConfig: LayoutConfiguration = .default,
+        accessibilityConfig: AccessibilityConfiguration = .default,
+        // Legacy parameters for backward compatibility
         enableAnimations: Bool = true,
         animationDuration: TimeInterval = 0.3,
         enableHapticFeedback: Bool = true
@@ -183,6 +244,12 @@ public struct UIConfiguration {
         self.imageQuality = imageQuality
         self.enableImageCaching = enableImageCaching
         self.placeholderImageType = placeholderImageType
+        self.typographyConfig = typographyConfig
+        self.shadowConfig = shadowConfig
+        self.animationConfig = animationConfig
+        self.layoutConfig = layoutConfig
+        self.accessibilityConfig = accessibilityConfig
+        // Legacy properties
         self.enableAnimations = enableAnimations
         self.animationDuration = animationDuration
         self.enableHapticFeedback = enableHapticFeedback
@@ -287,4 +354,373 @@ public enum VideoQuality: String, CaseIterable {
     case high = "720p"
     case hd = "1080p"
     case auto = "auto"
+}
+
+// MARK: - Advanced UI Configurations
+
+/// Typography configuration for custom fonts and text styling
+public struct TypographyConfiguration {
+    // Custom Fonts
+    public let fontFamily: String?
+    public let enableCustomFonts: Bool
+    public let fontWeightMapping: FontWeightMapping
+    
+    // Dynamic Type Support
+    public let supportDynamicType: Bool
+    public let minFontScale: CGFloat
+    public let maxFontScale: CGFloat
+    
+    // Text Styling
+    public let lineHeightMultiplier: CGFloat
+    public let letterSpacing: CGFloat
+    public let textAlignment: TextAlignment
+    
+    public init(
+        fontFamily: String? = nil,
+        enableCustomFonts: Bool = false,
+        fontWeightMapping: FontWeightMapping = .default,
+        supportDynamicType: Bool = true,
+        minFontScale: CGFloat = 0.8,
+        maxFontScale: CGFloat = 1.4,
+        lineHeightMultiplier: CGFloat = 1.2,
+        letterSpacing: CGFloat = 0.0,
+        textAlignment: TextAlignment = .natural
+    ) {
+        self.fontFamily = fontFamily
+        self.enableCustomFonts = enableCustomFonts
+        self.fontWeightMapping = fontWeightMapping
+        self.supportDynamicType = supportDynamicType
+        self.minFontScale = minFontScale
+        self.maxFontScale = maxFontScale
+        self.lineHeightMultiplier = lineHeightMultiplier
+        self.letterSpacing = letterSpacing
+        self.textAlignment = textAlignment
+    }
+    
+    public static let `default` = TypographyConfiguration()
+}
+
+/// Font weight mapping for custom fonts
+public struct FontWeightMapping {
+    public let light: String
+    public let regular: String
+    public let medium: String
+    public let semibold: String
+    public let bold: String
+    
+    public init(
+        light: String = "Light",
+        regular: String = "Regular",
+        medium: String = "Medium",
+        semibold: String = "Semibold",
+        bold: String = "Bold"
+    ) {
+        self.light = light
+        self.regular = regular
+        self.medium = medium
+        self.semibold = semibold
+        self.bold = bold
+    }
+    
+    public static let `default` = FontWeightMapping()
+}
+
+/// Shadow and visual effects configuration
+public struct ShadowConfiguration {
+    // Card Shadows
+    public let cardShadowRadius: CGFloat
+    public let cardShadowOpacity: Double
+    public let cardShadowOffset: CGSize
+    public let cardShadowColor: ShadowColor
+    
+    // Button Shadows
+    public let buttonShadowEnabled: Bool
+    public let buttonShadowRadius: CGFloat
+    public let buttonShadowOpacity: Double
+    
+    // Modal Shadows
+    public let modalShadowRadius: CGFloat
+    public let modalShadowOpacity: Double
+    
+    // Blur Effects
+    public let enableBlurEffects: Bool
+    public let blurIntensity: Double
+    public let blurStyle: BlurStyle
+    
+    public init(
+        cardShadowRadius: CGFloat = 4,
+        cardShadowOpacity: Double = 0.1,
+        cardShadowOffset: CGSize = CGSize(width: 0, height: 2),
+        cardShadowColor: ShadowColor = .adaptive,
+        buttonShadowEnabled: Bool = true,
+        buttonShadowRadius: CGFloat = 2,
+        buttonShadowOpacity: Double = 0.15,
+        modalShadowRadius: CGFloat = 20,
+        modalShadowOpacity: Double = 0.3,
+        enableBlurEffects: Bool = true,
+        blurIntensity: Double = 0.3,
+        blurStyle: BlurStyle = .systemMaterial
+    ) {
+        self.cardShadowRadius = cardShadowRadius
+        self.cardShadowOpacity = cardShadowOpacity
+        self.cardShadowOffset = cardShadowOffset
+        self.cardShadowColor = cardShadowColor
+        self.buttonShadowEnabled = buttonShadowEnabled
+        self.buttonShadowRadius = buttonShadowRadius
+        self.buttonShadowOpacity = buttonShadowOpacity
+        self.modalShadowRadius = modalShadowRadius
+        self.modalShadowOpacity = modalShadowOpacity
+        self.enableBlurEffects = enableBlurEffects
+        self.blurIntensity = blurIntensity
+        self.blurStyle = blurStyle
+    }
+    
+    public static let `default` = ShadowConfiguration()
+}
+
+/// Animation configuration for motion and transitions
+public struct AnimationConfiguration {
+    // Timing
+    public let defaultDuration: TimeInterval
+    public let springResponse: Double
+    public let springDamping: Double
+    
+    // Animation Types
+    public let enableSpringAnimations: Bool
+    public let enableMicroInteractions: Bool
+    public let enablePageTransitions: Bool
+    public let enableSharedElementTransitions: Bool
+    
+    // Easing
+    public let defaultEasing: AnimationEasing
+    public let customTimingCurve: (Double, Double, Double, Double)?
+    
+    // Performance
+    public let respectReduceMotion: Bool
+    public let animationQuality: AnimationQuality
+    public let enableHardwareAcceleration: Bool
+    
+    public init(
+        defaultDuration: TimeInterval = 0.3,
+        springResponse: Double = 0.4,
+        springDamping: Double = 0.8,
+        enableSpringAnimations: Bool = true,
+        enableMicroInteractions: Bool = true,
+        enablePageTransitions: Bool = true,
+        enableSharedElementTransitions: Bool = false,
+        defaultEasing: AnimationEasing = .easeInOut,
+        customTimingCurve: (Double, Double, Double, Double)? = nil,
+        respectReduceMotion: Bool = true,
+        animationQuality: AnimationQuality = .high,
+        enableHardwareAcceleration: Bool = true
+    ) {
+        self.defaultDuration = defaultDuration
+        self.springResponse = springResponse
+        self.springDamping = springDamping
+        self.enableSpringAnimations = enableSpringAnimations
+        self.enableMicroInteractions = enableMicroInteractions
+        self.enablePageTransitions = enablePageTransitions
+        self.enableSharedElementTransitions = enableSharedElementTransitions
+        self.defaultEasing = defaultEasing
+        self.customTimingCurve = customTimingCurve
+        self.respectReduceMotion = respectReduceMotion
+        self.animationQuality = animationQuality
+        self.enableHardwareAcceleration = enableHardwareAcceleration
+    }
+    
+    public static let `default` = AnimationConfiguration()
+}
+
+/// Layout and spacing configuration
+public struct LayoutConfiguration {
+    // Grid System
+    public let gridColumns: Int
+    public let gridSpacing: CGFloat
+    public let gridMinItemWidth: CGFloat
+    public let gridMaxItemWidth: CGFloat?
+    
+    // Safe Areas
+    public let respectSafeAreas: Bool
+    public let customSafeAreaInsets: EdgeInsets?
+    public let extendThroughSafeArea: Bool
+    
+    // Responsive Design
+    public let compactWidthThreshold: CGFloat
+    public let regularWidthThreshold: CGFloat
+    public let enableResponsiveLayout: Bool
+    
+    // Margins and Padding
+    public let screenMargins: CGFloat
+    public let sectionSpacing: CGFloat
+    public let componentSpacing: CGFloat
+    
+    public init(
+        gridColumns: Int = 2,
+        gridSpacing: CGFloat = 16,
+        gridMinItemWidth: CGFloat = 150,
+        gridMaxItemWidth: CGFloat? = nil,
+        respectSafeAreas: Bool = true,
+        customSafeAreaInsets: EdgeInsets? = nil,
+        extendThroughSafeArea: Bool = false,
+        compactWidthThreshold: CGFloat = 768,
+        regularWidthThreshold: CGFloat = 1024,
+        enableResponsiveLayout: Bool = true,
+        screenMargins: CGFloat = 16,
+        sectionSpacing: CGFloat = 24,
+        componentSpacing: CGFloat = 16
+    ) {
+        self.gridColumns = gridColumns
+        self.gridSpacing = gridSpacing
+        self.gridMinItemWidth = gridMinItemWidth
+        self.gridMaxItemWidth = gridMaxItemWidth
+        self.respectSafeAreas = respectSafeAreas
+        self.customSafeAreaInsets = customSafeAreaInsets
+        self.extendThroughSafeArea = extendThroughSafeArea
+        self.compactWidthThreshold = compactWidthThreshold
+        self.regularWidthThreshold = regularWidthThreshold
+        self.enableResponsiveLayout = enableResponsiveLayout
+        self.screenMargins = screenMargins
+        self.sectionSpacing = sectionSpacing
+        self.componentSpacing = componentSpacing
+    }
+    
+    public static let `default` = LayoutConfiguration()
+}
+
+/// Accessibility configuration
+public struct AccessibilityConfiguration {
+    // Voice Over
+    public let enableVoiceOverOptimizations: Bool
+    public let customVoiceOverLabels: [String: String]
+    
+    // Dynamic Type
+    public let enableDynamicTypeSupport: Bool
+    public let maxDynamicTypeSize: DynamicTypeSize
+    
+    // Contrast & Colors
+    public let respectHighContrastMode: Bool
+    public let enableColorBlindnessSupport: Bool
+    public let contrastRatio: ContrastRatio
+    
+    // Motion & Animations
+    public let respectReduceMotion: Bool
+    public let alternativeToAnimations: Bool
+    
+    // Touch & Interaction
+    public let minimumTouchTargetSize: CGFloat
+    public let enableHapticFeedback: Bool
+    public let hapticIntensity: HapticIntensity
+    
+    public init(
+        enableVoiceOverOptimizations: Bool = true,
+        customVoiceOverLabels: [String: String] = [:],
+        enableDynamicTypeSupport: Bool = true,
+        maxDynamicTypeSize: DynamicTypeSize = .accessibility3,
+        respectHighContrastMode: Bool = true,
+        enableColorBlindnessSupport: Bool = false,
+        contrastRatio: ContrastRatio = .aa,
+        respectReduceMotion: Bool = true,
+        alternativeToAnimations: Bool = true,
+        minimumTouchTargetSize: CGFloat = 44,
+        enableHapticFeedback: Bool = true,
+        hapticIntensity: HapticIntensity = .medium
+    ) {
+        self.enableVoiceOverOptimizations = enableVoiceOverOptimizations
+        self.customVoiceOverLabels = customVoiceOverLabels
+        self.enableDynamicTypeSupport = enableDynamicTypeSupport
+        self.maxDynamicTypeSize = maxDynamicTypeSize
+        self.respectHighContrastMode = respectHighContrastMode
+        self.enableColorBlindnessSupport = enableColorBlindnessSupport
+        self.contrastRatio = contrastRatio
+        self.respectReduceMotion = respectReduceMotion
+        self.alternativeToAnimations = alternativeToAnimations
+        self.minimumTouchTargetSize = minimumTouchTargetSize
+        self.enableHapticFeedback = enableHapticFeedback
+        self.hapticIntensity = hapticIntensity
+    }
+    
+    public static let `default` = AccessibilityConfiguration()
+}
+
+// MARK: - Supporting Enums
+
+public enum TextAlignment: String, CaseIterable {
+    case leading = "leading"
+    case center = "center"
+    case trailing = "trailing"
+    case natural = "natural"
+}
+
+public enum ShadowColor: String, CaseIterable {
+    case black = "black"
+    case gray = "gray"
+    case adaptive = "adaptive"
+    case custom = "custom"
+}
+
+public enum BlurStyle: String, CaseIterable {
+    case systemMaterial = "systemMaterial"
+    case regularMaterial = "regularMaterial"
+    case thickMaterial = "thickMaterial"
+    case thinMaterial = "thinMaterial"
+    case ultraThinMaterial = "ultraThinMaterial"
+}
+
+public enum AnimationEasing: String, CaseIterable {
+    case linear = "linear"
+    case easeIn = "easeIn"
+    case easeOut = "easeOut"
+    case easeInOut = "easeInOut"
+    case spring = "spring"
+    case custom = "custom"
+}
+
+public enum AnimationQuality: String, CaseIterable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case ultra = "ultra"
+}
+
+public enum DynamicTypeSize: String, CaseIterable {
+    case xSmall = "xSmall"
+    case small = "small"
+    case medium = "medium"
+    case large = "large"
+    case xLarge = "xLarge"
+    case xxLarge = "xxLarge"
+    case xxxLarge = "xxxLarge"
+    case accessibility1 = "accessibility1"
+    case accessibility2 = "accessibility2"
+    case accessibility3 = "accessibility3"
+    case accessibility4 = "accessibility4"
+    case accessibility5 = "accessibility5"
+}
+
+public enum ContrastRatio: String, CaseIterable {
+    case aa = "aa"           // 4.5:1
+    case aaa = "aaa"         // 7:1
+    case custom = "custom"
+}
+
+public enum HapticIntensity: String, CaseIterable {
+    case light = "light"
+    case medium = "medium"
+    case heavy = "heavy"
+}
+
+// MARK: - Network Enums
+
+public enum RequestPriority: String, CaseIterable {
+    case low = "low"
+    case normal = "normal"
+    case high = "high"
+    case critical = "critical"
+}
+
+public enum SyncStrategy: String, CaseIterable {
+    case automatic = "automatic"
+    case manual = "manual"
+    case background = "background"
+    case realtime = "realtime"
 }
