@@ -329,23 +329,126 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
                     
-                    // Simple Order Details List - EXACTLY like the image
-                    VStack(spacing: ReachuSpacing.md) {
-                        ForEach(cartManager.items) { item in
-                            // Each product details
+                    // Products List - Each product separately like in image
+                    VStack(spacing: ReachuSpacing.xl) {
+                        ForEach(Array(cartManager.items.enumerated()), id: \.offset) { index, item in
                             VStack(spacing: ReachuSpacing.sm) {
-                                summaryDetailRow("Order ID", "BD23672983")
-                                summaryDetailRow("Store", item.brand ?? "Adidas")
-                                summaryDetailRow("Category", "Basketball")
-                                summaryDetailRow("Product", item.title)
-                                summaryDetailRow("Colors", "Like Water")
-                                summaryDetailRow("Quantity", "\(item.quantity) item\(item.quantity > 1 ? "s" : "")")
-                                summaryDetailRow("Price", "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))")
+                                // Product header with image and details
+                                HStack(spacing: ReachuSpacing.md) {
+                                    // Product image
+                                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                    } placeholder: {
+                                        Rectangle()
+                                            .fill(Color.yellow) // Placeholder like in image
+                                    }
+                                    .frame(width: 60, height: 60)
+                                    .cornerRadius(8)
+                                    
+                                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                                        Text(item.brand ?? "Reachu Audio")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                        
+                                        Text(item.title)
+                                            .font(.system(size: 18, weight: .semibold))
+                                            .foregroundColor(ReachuColors.textPrimary)
+                                            .lineLimit(2)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(item.currency) \(String(format: "%.2f", item.price))")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundColor(ReachuColors.textPrimary)
+                                }
+                                
+                                // Product details
+                                VStack(spacing: ReachuSpacing.xs) {
+                                    HStack {
+                                        Text("Order ID:")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                        
+                                        Spacer()
+                                        
+                                        Text("BD23672983")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                    }
+                                    
+                                    HStack {
+                                        Text("Colors:")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                        
+                                        Spacer()
+                                        
+                                        Text("Like Water")
+                                            .font(.system(size: 14, weight: .regular))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                    }
+                                }
                             }
                         }
-                        
-                        // Shipping - part of the simple list
-                        summaryDetailRow("Shipping", selectedShippingOption.price > 0 ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))" : "Free")
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    
+                    // Global Quantity Section - for entire order
+                    VStack(spacing: ReachuSpacing.md) {
+                        HStack {
+                            Text("Quantity")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                            
+                            Spacer()
+                            
+                            HStack(spacing: ReachuSpacing.lg) {
+                                Button(action: {
+                                    // Decrease entire order quantity
+                                    if cartManager.itemCount > 1 {
+                                        Task {
+                                            for item in cartManager.items {
+                                                if item.quantity > 1 {
+                                                    await cartManager.updateQuantity(for: item, to: item.quantity - 1)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "minus")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .frame(width: 44, height: 44)
+                                        .background(ReachuColors.surfaceSecondary)
+                                        .cornerRadius(8)
+                                }
+                                
+                                Text("\(cartManager.itemCount)")
+                                    .font(.system(size: 24, weight: .semibold))
+                                    .foregroundColor(ReachuColors.textPrimary)
+                                    .frame(width: 60)
+                                    .animation(.spring(), value: cartManager.itemCount)
+                                
+                                Button(action: {
+                                    // Increase entire order quantity
+                                    Task {
+                                        for item in cartManager.items {
+                                            await cartManager.updateQuantity(for: item, to: item.quantity + 1)
+                                        }
+                                    }
+                                }) {
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 18, weight: .medium))
+                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .frame(width: 44, height: 44)
+                                        .background(ReachuColors.surfaceSecondary)
+                                        .cornerRadius(8)
+                                }
+                            }
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     
