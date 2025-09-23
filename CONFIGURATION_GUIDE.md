@@ -702,6 +702,7 @@ Your app is now ready with a fully customized Reachu shopping experience! 🛍�
 ---
 
 📖 **Next Steps:**
+- 🌓 [**Dark/Light Mode Guide**](./DARK_LIGHT_MODE_GUIDE.md) - Complete theming guide
 - [View Component Documentation](./ui-components.md)
 - [Explore Example Implementations](./examples/)
 - [Set Up LiveShow Features](./livestream.md)
