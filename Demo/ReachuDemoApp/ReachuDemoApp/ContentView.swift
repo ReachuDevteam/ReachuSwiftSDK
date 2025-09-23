@@ -10,6 +10,7 @@ import ReachuCore
 import ReachuDesignSystem
 import ReachuUI
 import ReachuTesting
+import ReachuLiveShow
 
 struct ContentView: View {
     @StateObject private var cartManager = CartManager()
@@ -54,6 +55,10 @@ struct ContentView: View {
                         DemoSection(title: "Floating Cart Options", description: "Test different positions and styles") {
                             FloatingCartDemoView()
                                 .environmentObject(cartManager)
+                        }
+
+                        DemoSection(title: "Live Show Player", description: "Simple HLS player demo (Vimeo URL fallback)") {
+                            LiveShowDemoView()
                         }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
@@ -752,6 +757,33 @@ struct LayoutInfoCard: View {
 
 enum ProductCardVariant {
     case grid, list, hero, minimal
+}
+
+// MARK: - Live Show Demo View
+import AVKit
+
+struct LiveShowDemoView: View {
+    private let fallback = URL(string: "https://vimeo.com/1029631656")
+    private let endpoint = URL(string: "https://example.com/refresh-hls")! // Reemplazar con tu API real
+    var body: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            Text("Live Show Player Demo")
+                .font(ReachuTypography.headline)
+                .foregroundColor(ReachuColors.textPrimary)
+            ReachuLiveShowPlayer.playerView(
+                liveStreamId: "test", // simula que no hay streamId => usa fallback
+                fallbackURL: fallback,
+                config: ReachuLiveShowPlayer.Configuration(refreshHLSEndpoint: endpoint, apiKey: ""),
+                isMuted: true,
+                autoplay: true
+            )
+            .frame(height: 240)
+            .cornerRadius(12)
+        }
+        .padding()
+        .navigationTitle("Live Show")
+        .navigationBarTitleDisplayMode(.inline)
+    }
 }
 
 struct DemoProduct: Identifiable, Codable {

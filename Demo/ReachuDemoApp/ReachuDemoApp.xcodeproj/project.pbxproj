@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 176858B72E7D89B300110C55 /* ReachuDesignSystem */; };
 		176858ED2E7F372400110C55 /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EC2E7F372400110C55 /* ReachuUI */; };
+		176858EE2E7F900000110C55 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EF2E7F900000110C55 /* ReachuLiveShow */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				176858EE2E7F900000110C55 /* ReachuLiveShow in Frameworks */,
 				176858ED2E7F372400110C55 /* ReachuUI in Frameworks */,
 				176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */,
 			);
@@ -121,6 +123,7 @@
 			packageProductDependencies = (
 				176858B72E7D89B300110C55 /* ReachuDesignSystem */,
 				176858EC2E7F372400110C55 /* ReachuUI */,
+				176858EF2E7F900000110C55 /* ReachuLiveShow */,
 			);
 			productName = ReachuDemoApp;
 			productReference = 176858862E7D876500110C55 /* ReachuDemoApp.app */;
@@ -409,7 +412,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = U4R2B2U7E6;
+				DEVELOPMENT_TEAM = T453J46X7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -441,7 +444,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = U4R2B2U7E6;
+				DEVELOPMENT_TEAM = T453J46X7D;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -606,6 +609,10 @@
 		176858EC2E7F372400110C55 /* ReachuUI */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ReachuUI;
+		};
+		176858EF2E7F900000110C55 /* ReachuLiveShow */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuLiveShow;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
