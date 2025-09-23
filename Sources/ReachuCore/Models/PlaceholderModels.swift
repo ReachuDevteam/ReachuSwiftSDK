@@ -42,16 +42,6 @@ public struct CartCost: Codable {
     }
 }
 
-/// Channel model placeholder
-public struct Channel: Codable, Identifiable {
-    public let id: String
-    public let name: String
-    
-    public init(id: String, name: String) {
-        self.id = id
-        self.name = name
-    }
-}
 
 /// Checkout model placeholder
 public struct Checkout: Codable, Identifiable {

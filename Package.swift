@@ -86,6 +86,7 @@ let package = Package(
         .target(
             name: "ReachuDesignSystem",
             dependencies: [
+                "ReachuCore",
                 .product(name: "Nuke", package: "Nuke"),
             ],
             path: "Sources/ReachuDesignSystem"

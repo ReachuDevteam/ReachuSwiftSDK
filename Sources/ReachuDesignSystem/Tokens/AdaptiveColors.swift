@@ -95,15 +95,7 @@ public struct AdaptiveColorsModifier: ViewModifier {
     }
     
     private var preferredColorScheme: SwiftUI.ColorScheme? {
-        let theme = ReachuConfiguration.shared.theme
-        switch theme.mode {
-        case .automatic:
-            return nil // Use system preference
-        case .light:
-            return .light
-        case .dark:
-            return .dark
-        }
+        return nil // Use system preference
     }
 }
 
