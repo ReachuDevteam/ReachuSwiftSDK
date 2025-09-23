@@ -763,7 +763,10 @@ enum ProductCardVariant {
 import AVKit
 
 struct LiveShowDemoView: View {
-    private let fallback = URL(string: "https://vimeo.com/1029631656")
+    //let fallback = URL(string: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8")
+    //private let fallback = URL(string: "https://player.vimeo.com/video/1029631656?h=0ff2313a99")
+    private let fallback = URL(string: "https://live-ak2.vimeocdn.com/c24948a1-8510-47b9-a65f-a5ba4ccce999/hls.m3u8?hdnts=exp%3D1758656274~acl%3D%252Fc24948a1-8510-47b9-a65f-a5ba4ccce999%252Fhls.m3u8%252A~hmac%3Dd5c00e0a1c814c6b2190f71c27a567ce658ed4248e81955c2a5b2a10ef4e480a")
+    //private let fallback = URL(string: "https://vimeo.com/event/5342050")
     private let endpoint = URL(string: "https://example.com/refresh-hls")! // Reemplazar con tu API real
     var body: some View {
         VStack(spacing: ReachuSpacing.md) {
@@ -777,7 +780,7 @@ struct LiveShowDemoView: View {
                 isMuted: true,
                 autoplay: true
             )
-            .frame(height: 240)
+            .frame(height: UIScreen.main.bounds.height * 0.7)
             .cornerRadius(12)
         }
         .padding()

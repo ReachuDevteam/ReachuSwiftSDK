@@ -7,6 +7,7 @@ public final class LiveShowService {
 
     public struct RequestBody: Encodable {
         public let streamId: String?
+        public let referer: String?
     }
 
     private let configuration: ReachuLiveShowPlayer.Configuration
@@ -17,6 +18,10 @@ public final class LiveShowService {
         self.session = session
     }
 
+    public func configurationHeaders() -> [String: String]? {
+        configuration.mediaRequestHeaders
+    }
+
     public func refreshHLS(streamId: String?) async throws -> URL? {
         var request = URLRequest(url: configuration.refreshHLSEndpoint)
         request.httpMethod = "POST"
@@ -24,7 +29,8 @@ public final class LiveShowService {
         if let apiKey = configuration.apiKey, !apiKey.isEmpty {
             request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
         }
-        request.httpBody = try JSONEncoder().encode(RequestBody(streamId: streamId))
+        let referer = configuration.mediaRequestHeaders?["Referer"]
+        request.httpBody = try JSONEncoder().encode(RequestBody(streamId: streamId, referer: referer))
 
         let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse else { return nil }

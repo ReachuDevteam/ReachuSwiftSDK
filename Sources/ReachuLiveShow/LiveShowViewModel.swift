@@ -8,6 +8,7 @@ public final class LiveShowViewModel: ObservableObject {
     @Published public private(set) var isBuffering: Bool = false
     @Published public private(set) var isPlaying: Bool = false
     @Published public private(set) var errorMessage: String?
+    @Published public private(set) var webURL: URL?
 
     private let service: LiveShowService
     private let liveStreamId: String?
@@ -47,22 +48,39 @@ public final class LiveShowViewModel: ObservableObject {
     private func setupInitialSource(autoplay: Bool) async {
         do {
             if let url = try await service.refreshHLS(streamId: liveStreamId) {
-                setPlayerItem(url: url)
+                if isHLS(url) {
+                    setPlayerItem(url: url)
+                } else {
+                    webURL = url
+                }
             } else if let fallback = fallbackURL {
-                setPlayerItem(url: fallback)
+                if isHLS(fallback) {
+                    setPlayerItem(url: fallback)
+                } else {
+                    webURL = fallback
+                }
             }
             if autoplay { player.play(); isPlaying = true }
         } catch {
             errorMessage = (error as NSError).localizedDescription
             if let fallback = fallbackURL {
-                setPlayerItem(url: fallback)
-                if autoplay { player.play(); isPlaying = true }
+                if isHLS(fallback) {
+                    setPlayerItem(url: fallback)
+                    if autoplay { player.play(); isPlaying = true }
+                } else {
+                    webURL = fallback
+                }
             }
         }
     }
 
     private func setPlayerItem(url: URL) {
-        let item = AVPlayerItem(url: url)
+        var options: [String: Any] = [:]
+        if let headers = service.configurationHeaders() {
+            options["AVURLAssetHTTPHeaderFieldsKey"] = headers
+        }
+        let asset = AVURLAsset(url: url, options: options)
+        let item = AVPlayerItem(asset: asset)
         player.replaceCurrentItem(with: item)
     }
 
@@ -74,9 +92,14 @@ public final class LiveShowViewModel: ObservableObject {
     public func refreshStream() async {
         do {
             if let url = try await service.refreshHLS(streamId: liveStreamId) {
-                setPlayerItem(url: url)
-                player.play()
-                isPlaying = true
+                if isHLS(url) {
+                    setPlayerItem(url: url)
+                    player.play()
+                    isPlaying = true
+                    webURL = nil
+                } else {
+                    webURL = url
+                }
             }
         } catch {
             errorMessage = (error as NSError).localizedDescription
@@ -88,6 +111,10 @@ public final class LiveShowViewModel: ObservableObject {
             guard let self = self else { return }
             self.isBuffering = self.player.timeControlStatus == .waitingToPlayAtSpecifiedRate
         }
+    }
+
+    private func isHLS(_ url: URL) -> Bool {
+        url.absoluteString.lowercased().contains(".m3u8")
     }
 }
 

@@ -10,9 +10,11 @@ public struct ReachuLiveShowPlayer {
     public struct Configuration {
         public let refreshHLSEndpoint: URL
         public let apiKey: String?
-        public init(refreshHLSEndpoint: URL, apiKey: String? = nil) {
+        public let mediaRequestHeaders: [String: String]?
+        public init(refreshHLSEndpoint: URL, apiKey: String? = nil, mediaRequestHeaders: [String: String]? = nil) {
             self.refreshHLSEndpoint = refreshHLSEndpoint
             self.apiKey = apiKey
+            self.mediaRequestHeaders = mediaRequestHeaders
         }
     }
 

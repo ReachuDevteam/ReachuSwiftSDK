@@ -1,5 +1,6 @@
 import SwiftUI
 import AVKit
+import WebKit
 
 public struct LiveShowView: View {
     @StateObject private var viewModel: LiveShowViewModel
@@ -10,8 +11,14 @@ public struct LiveShowView: View {
 
     public var body: some View {
         ZStack {
-            VideoPlayer(player: viewModel.player)
-                .ignoresSafeArea()
+            Group {
+                if let webURL = viewModel.webURL {
+                    WebPlayerView(url: webURL)
+                } else {
+                    VideoPlayer(player: viewModel.player)
+                }
+            }
+            .ignoresSafeArea()
 
             if viewModel.isBuffering {
                 ProgressView().progressViewStyle(.circular)
@@ -26,6 +33,24 @@ public struct LiveShowView: View {
                 }
             }
         }
+    }
+}
+
+private struct WebPlayerView: UIViewRepresentable {
+    let url: URL
+    func makeUIView(context: Context) -> WKWebView {
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+        let web = WKWebView(frame: .zero, configuration: config)
+        web.scrollView.isScrollEnabled = false
+        web.isOpaque = false
+        web.backgroundColor = .black
+        return web
+    }
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        let request = URLRequest(url: url)
+        webView.load(request)
     }
 }
 
