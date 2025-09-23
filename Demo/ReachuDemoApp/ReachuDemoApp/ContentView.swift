@@ -9,6 +9,8 @@ import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
 import ReachuUI
+import ReachuLiveShow
+import ReachuLiveUI
 import ReachuTesting
 
 struct ContentView: View {
@@ -55,6 +57,11 @@ struct ContentView: View {
                             FloatingCartDemoView()
                                 .environmentObject(cartManager)
                         }
+                        
+                        DemoSection(title: "Live Show Experience", description: "Interactive live streaming with shopping") {
+                            LiveShowDemoView()
+                                .environmentObject(cartManager)
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
@@ -77,6 +84,10 @@ struct ContentView: View {
         .overlay {
             // Global toast notifications
             RToastOverlay()
+        }
+        .overlay {
+            // Global live stream overlay
+            RLiveStreamOverlay()
         }
     }
 }
