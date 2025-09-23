@@ -6,10 +6,11 @@ A modular Swift SDK for the Reachu ecommerce platform. Add shopping cart, checko
 
 This SDK is designed with a modular architecture that allows you to import only the features you need:
 
-- **ReachuCore** (Required) - Core ecommerce functionality
-- **ReachuUI** (Optional) - SwiftUI components
-- **ReachuLiveShow** (Optional) - Livestream shopping features
-- **ReachuLiveUI** (Optional) - Livestream UI components
+- **ReachuCore** (Required) - Core ecommerce functionality, models, and configuration
+- **ReachuUI** (Optional) - SwiftUI ecommerce components (Product Cards, Sliders, Cart, Checkout)
+- **ReachuLiveShow** (Optional) - Livestream shopping logic and data models
+- **ReachuLiveUI** (Optional) - Livestream UI components (Video player, Chat, Shopping overlays)
+- **ReachuComplete** (All-in-One) - All modules included
 
 ## 📦 Installation
 
@@ -26,16 +27,19 @@ dependencies: [
 Import only what you need:
 
 ```swift
-// Core functionality only
+// Core functionality only (models, configuration, business logic)
 .product(name: "ReachuCore", package: "ReachuSwiftSDK")
 
-// Core + UI Components
+// Core + UI Components (ecommerce: cards, sliders, cart, checkout)
 .product(name: "ReachuUI", package: "ReachuSwiftSDK")
 
-// Core + LiveShow
+// Core + LiveShow Logic (livestream data models and manager)
 .product(name: "ReachuLiveShow", package: "ReachuSwiftSDK")
 
-// Everything
+// Core + LiveShow + UI Components (full livestream experience)
+.product(name: "ReachuLiveUI", package: "ReachuSwiftSDK")
+
+// Everything (complete SDK with all features)
 .product(name: "ReachuComplete", package: "ReachuSwiftSDK")
 ```
 
@@ -49,13 +53,37 @@ Flexible product card with 4 variants:
 - **Minimal**: Small cards for recommendations
 
 ### RProductSlider
-Horizontal scrolling component with 3 layouts:
+Horizontal scrolling component with 6 layouts:
 - **Featured**: Hero cards for promotions (280pt)
 - **Cards**: Grid cards for categories (180pt)
 - **Compact**: Minimal cards for recommendations (120pt)
+- **Wide**: Extended cards for detailed view (320pt)
+- **Showcase**: Premium cards for special collections (240pt)
+- **Micro**: Ultra-compact for space-constrained areas (100pt)
+
+## 🎬 LiveShow Components
+
+### RLiveStreamOverlay
+Global livestream system with 3 layout options:
+- **Full Screen**: TikTok/Instagram-style immersive experience
+- **Bottom Sheet**: Compact overlay with expandable controls
+- **Modal**: Traditional video player with organized tabs
+
+### RLiveMiniPlayer
+Draggable mini-player for multitasking:
+- **Draggable**: Position anywhere on screen
+- **Snap to edges**: Automatic edge snapping
+- **Expandable**: Tap to return to full experience
+
+### RLiveShowFloatingIndicator
+Removable floating indicator for active streams:
+- **Auto-show**: Appears when streams are active
+- **Dismissable**: User can hide/show manually
+- **Configurable position**: 4 corner options
 
 ## 🚀 Quick Start
 
+### Ecommerce Components
 ```swift
 import SwiftUI
 import ReachuUI
@@ -92,7 +120,36 @@ struct ProductView: View {
                 }
             }
         }
+        // Add global cart and checkout overlay
+        .overlay {
+            RFloatingCartIndicator()
+        }
+        .sheet(isPresented: $showCheckout) {
+            RCheckoutOverlay()
+        }
     }
+}
+```
+
+### LiveShow Integration
+```swift
+import SwiftUI
+import ReachuLiveShow
+import ReachuLiveUI
+
+struct MainAppView: View {
+    var body: some View {
+        YourMainContent()
+            // Add global livestream overlay
+            .overlay {
+                RLiveStreamOverlay()
+            }
+    }
+}
+
+// Show a livestream from anywhere in your app
+Button("Join Live Show") {
+    LiveShowManager.shared.showLiveStream(stream, layout: .fullScreenOverlay)
 }
 ```
 
@@ -107,9 +164,12 @@ open ReachuDemoApp.xcodeproj
 
 The demo app includes:
 - Design System showcase
-- Product Card variants
-- Product Slider layouts
+- Product Card variants (4 styles)
+- Product Slider layouts (6 styles)
+- Shopping Cart and Checkout flow
+- LiveShow Experience (3 layouts)
 - Interactive examples with real data
+- Dark/Light mode support
 
 ## 📚 Documentation
 
@@ -119,17 +179,26 @@ The demo app includes:
 ## 🔧 Development
 
 ### Current Status
-- ✅ **ReachuCore**: Core models and business logic
-- ✅ **ReachuUI**: 2 main components (RProductCard, RProductSlider)
-- ✅ **ReachuDesignSystem**: Complete design tokens and base components
-- ✅ **Demo App**: Fully functional iOS app
+- ✅ **ReachuCore**: Core models, business logic, and configuration system
+- ✅ **ReachuUI**: Complete ecommerce components (Cards, Sliders, Cart, Checkout)
+- ✅ **ReachuLiveShow**: Livestream logic and data models
+- ✅ **ReachuLiveUI**: Livestream UI components (3 layouts, mini-player, indicators)
+- ✅ **ReachuDesignSystem**: Complete design tokens and base components  
+- ✅ **Demo App**: Fully functional iOS app with all features
 - ✅ **Documentation**: Professional docs integrated with Docusaurus
+- ✅ **Dark/Light Mode**: Complete theme system
 
 ### Build and Test
 
 ```bash
-# Build the SDK
-swift build --target ReachuUI
+# Build individual modules
+swift build --target ReachuCore
+swift build --target ReachuUI  
+swift build --target ReachuLiveShow
+swift build --target ReachuLiveUI
+
+# Build complete SDK
+swift build --product ReachuComplete
 
 # Test demo app
 cd Demo/ReachuDemoApp

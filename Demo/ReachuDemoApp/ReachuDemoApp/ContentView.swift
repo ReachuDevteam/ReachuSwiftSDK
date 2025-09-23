@@ -9,7 +9,9 @@ import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
 import ReachuUI
+import ReachuLiveShow
 import ReachuTesting
+import AVKit
 
 struct ContentView: View {
     @StateObject private var cartManager = CartManager()
@@ -55,6 +57,11 @@ struct ContentView: View {
                             FloatingCartDemoView()
                                 .environmentObject(cartManager)
                         }
+                        
+                        DemoSection(title: "Live Show Experience", description: "Interactive live streaming with shopping") {
+                            LiveShowDemoView()
+                                .environmentObject(cartManager)
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
@@ -77,6 +84,11 @@ struct ContentView: View {
         .overlay {
             // Global toast notifications
             RToastOverlay()
+        }
+        .overlay {
+            // Global live stream overlay
+            LiveStreamGlobalOverlay()
+                .environmentObject(cartManager)
         }
     }
 }
@@ -1550,4 +1562,317 @@ extension RFloatingCartIndicator.Size {
 
 #Preview {
     ContentView()
+}
+
+// MARK: - Live Stream Overlay
+
+struct LiveStreamGlobalOverlay: View {
+    @ObservedObject private var liveShowManager = LiveShowManager.shared
+    @EnvironmentObject private var cartManager: CartManager
+    @State private var player: AVPlayer?
+    @State private var videoStatus: String = "Not loaded"
+    
+    var body: some View {
+        ZStack {
+            // Video background overlay
+            if liveShowManager.isLiveShowVisible,
+               let stream = liveShowManager.currentStream {
+                
+                // Video Player Background
+                if let player = player {
+                    VideoPlayer(player: player)
+                        .ignoresSafeArea()
+                        .onAppear {
+                            player.play()
+                        }
+                        .onDisappear {
+                            player.pause()
+                        }
+                } else {
+                    // Fallback gradient background
+                    LinearGradient(
+                        colors: [
+                            Color.purple.opacity(0.8),
+                            Color.blue.opacity(0.6),
+                            Color.indigo.opacity(0.9)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .ignoresSafeArea()
+                }
+                
+                // Dark overlay for UI readability
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                
+                VStack(spacing: 0) {
+                    
+                    // Top section with LIVE indicator on the right
+                    HStack {
+                        Spacer()
+                        
+                        // Live indicator (moved to right)
+                        HStack(spacing: 6) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 8, height: 8)
+                            Text("LIVE")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(15)
+                    }
+                    .padding(.top, 50)
+                    .padding(.horizontal, 20)
+                    
+                    Spacer()
+                    
+                    // Stream info (centered)
+                    VStack(spacing: 12) {
+                        Text(stream.title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .multilineTextAlignment(.center)
+                        
+                        Text("by \(stream.streamer.name)")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        Text("Layout: \(liveShowManager.layout.displayName)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.yellow)
+                        
+                        Text("Video Status: \(videoStatus)")
+                            .font(.system(size: 12))
+                            .foregroundColor(.orange)
+                    }
+                    
+                    Spacer()
+                    
+                    // Controls (bottom)
+                    HStack(spacing: 20) {
+                        Button("Mini Player") {
+                            liveShowManager.showMiniPlayer()
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.blue)
+                        .cornerRadius(15)
+                        
+                        Button("Close") {
+                            liveShowManager.hideLiveStream()
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.red)
+                        .cornerRadius(15)
+                    }
+                    .padding(.bottom, 80)
+                }
+                .padding()
+                .onAppear {
+                    setupVideoPlayer()
+                }
+                .onDisappear {
+                    player?.pause()
+                    player = nil
+                }
+            }
+            
+            // Mini player indicator
+            if liveShowManager.isMiniPlayerVisible,
+               let stream = liveShowManager.currentStream {
+                
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        
+                        // Simple mini player
+                        VStack(spacing: 4) {
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 4, height: 4)
+                                Text("LIVE")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            
+                            Text(stream.streamer.name)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            
+                            Button("Expand") {
+                                liveShowManager.expandFromMiniPlayer()
+                            }
+                            .font(.system(size: 8))
+                            .foregroundColor(.white)
+                        }
+                        .padding(8)
+                        .background(Color.black.opacity(0.8))
+                        .cornerRadius(8)
+                        .onTapGesture {
+                            liveShowManager.hideLiveStream()
+                        }
+                    }
+                    .padding()
+                }
+            }
+            
+            // Floating indicator
+            if liveShowManager.hasActiveLiveStreams && 
+               liveShowManager.isIndicatorVisible && 
+               !liveShowManager.isWatchingLiveStream {
+                
+                VStack {
+                    HStack {
+                        Spacer()
+                        
+                        Button(action: {
+                            if let stream = liveShowManager.featuredLiveStream {
+                                liveShowManager.showLiveStream(stream, layout: .fullScreenOverlay)
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 6, height: 6)
+                                
+                                Text("LIVE")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundColor(.white)
+                                
+                                if let stream = liveShowManager.featuredLiveStream {
+                                    Text(stream.streamer.name)
+                                        .font(.system(size: 10))
+                                        .foregroundColor(.white)
+                                }
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(Color.black.opacity(0.8))
+                            .cornerRadius(15)
+                        }
+                    }
+                    .padding()
+                    
+                    Spacer()
+                }
+            }
+        }
+    }
+    
+    // MARK: - Video Setup
+    private func setupVideoPlayer() {
+        print("🎬 [LiveShow] Iniciando setup del video...")
+        
+        // Para video público de Vimeo necesitamos usar la API o embed
+        // Por ahora usamos videos que funcionan directamente
+        let workingUrls = [
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+            "https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4"
+        ]
+        
+        print("📝 [LiveShow] NOTA: Tu video de Vimeo (1029631656) requiere autenticación API")
+        print("📝 [LiveShow] Usando video de demostración mientras tanto")
+        
+        tryVideoUrls(workingUrls, index: 0)
+    }
+    
+    private func tryVideoUrls(_ urls: [String], index: Int) {
+        guard index < urls.count else {
+            print("❌ [LiveShow] No se pudo cargar ninguna URL de video")
+            return
+        }
+        
+        let urlString = urls[index]
+        print("🔄 [LiveShow] Intentando URL [\(index + 1)/\(urls.count)]: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            print("❌ [LiveShow] URL inválida: \(urlString)")
+            tryVideoUrls(urls, index: index + 1)
+            return
+        }
+        
+        setupPlayerWithURL(url, isLastAttempt: index == urls.count - 1)
+    }
+    
+    private func setupPlayerWithURL(_ url: URL, isLastAttempt: Bool = false) {
+        print("📹 [LiveShow] Configurando player con URL: \(url.absoluteString)")
+        videoStatus = "Loading..."
+        
+        player = AVPlayer(url: url)
+        player?.isMuted = true
+        player?.actionAtItemEnd = .none
+        
+        // Intentar reproducir
+        player?.play()
+        print("▶️ [LiveShow] Iniciando reproducción...")
+        
+        // Verificar después de 3 segundos si está funcionando
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            if let currentItem = self.player?.currentItem {
+                switch currentItem.status {
+                case .readyToPlay:
+                    print("✅ [LiveShow] Video cargado correctamente")
+                    self.videoStatus = "Playing"
+                    self.setupVideoLoop()
+                case .failed:
+                    print("❌ [LiveShow] Error al cargar video: \(currentItem.error?.localizedDescription ?? "Unknown error")")
+                    self.videoStatus = "Failed: \(currentItem.error?.localizedDescription ?? "Unknown")"
+                    if !isLastAttempt {
+                        // Intentar siguiente URL
+                        let currentIndex = self.getCurrentUrlIndex(url)
+                        self.tryVideoUrls(self.getVimeoUrls(), index: currentIndex + 1)
+                    }
+                case .unknown:
+                    print("⚠️ [LiveShow] Estado del video desconocido")
+                    self.videoStatus = "Unknown"
+                default:
+                    print("🔄 [LiveShow] Video aún cargando...")
+                    self.videoStatus = "Still loading..."
+                }
+            }
+        }
+    }
+    
+    private func getVimeoUrls() -> [String] {
+        return [
+            "https://player.vimeo.com/video/1029631656",
+            "https://vimeo.com/1029631656/download",
+            "https://player.vimeo.com/external/1029631656.m3u8",
+            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        ]
+    }
+    
+    private func getCurrentUrlIndex(_ url: URL) -> Int {
+        let urls = getVimeoUrls()
+        return urls.firstIndex(of: url.absoluteString) ?? 0
+    }
+    
+    private func setupVideoLoop() {
+        // Loop del video
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player?.currentItem,
+            queue: .main
+        ) { _ in
+            print("🔄 [LiveShow] Video terminó, reiniciando loop...")
+            self.player?.seek(to: .zero)
+            self.player?.play()
+        }
+    }
+    
 }

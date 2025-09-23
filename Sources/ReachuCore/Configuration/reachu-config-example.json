@@ -57,8 +57,52 @@
     "enableHapticFeedback": true
   },
   "liveShow": {
-    "autoJoinChat": true,
-    "enableShopping": true,
-    "enableAutoplay": false
+    "vimeo": {
+      "apiKey": "your-vimeo-api-key",
+      "accessToken": "your-vimeo-access-token",
+      "baseUrl": "https://api.vimeo.com",
+      "enableEmbedPlayer": true
+    },
+    "streaming": {
+      "autoJoinChat": true,
+      "enableAutoplay": false,
+      "videoQuality": "auto",
+      "enablePictureInPicture": true,
+      "enableFullscreen": true,
+      "showStreamControls": true
+    },
+    "chat": {
+      "enableChatModeration": true,
+      "maxChatMessageLength": 200,
+      "enableEmojis": true,
+      "enableChatNotifications": false,
+      "chatRefreshInterval": 2.0,
+      "enableUserMentions": true,
+      "enableChatHistory": true
+    },
+    "shopping": {
+      "enableShoppingDuringStream": true,
+      "showProductOverlays": true,
+      "enableQuickBuy": true,
+      "productOverlayDuration": 10.0,
+      "enableProductNotifications": true,
+      "integrateLiveCart": true
+    },
+    "ui": {
+      "playerAspectRatio": "16:9",
+      "enableLiveIndicator": true,
+      "showViewerCount": true,
+      "enableShareButton": true,
+      "customBrandingColors": {
+        "liveIndicator": "#FF0000",
+        "chatBackground": "#1C1C1E",
+        "overlayBackground": "#000000"
+      }
+    },
+    "notifications": {
+      "enableStreamNotifications": true,
+      "enableProductNotifications": true,
+      "notificationSound": true
+    }
   }
 }
