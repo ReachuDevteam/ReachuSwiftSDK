@@ -57,8 +57,8 @@ public struct RProductCard: View {
     public init(
         product: Product,
         variant: Variant = .grid,
-        showBrand: Bool = true,
-        showDescription: Bool = false,
+        showBrand: Bool = ReachuConfiguration.shared.uiConfiguration.showProductBrands,
+        showDescription: Bool = ReachuConfiguration.shared.uiConfiguration.showProductDescriptions,
         showProductDetail: Bool = true,
         onTap: (() -> Void)? = nil,
         onAddToCart: (() -> Void)? = nil

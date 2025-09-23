@@ -89,28 +89,18 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
-    /// Returns default color scheme
-    private static var currentColorScheme: DefaultColorScheme {
-        DefaultColorScheme()
+    /// Returns the current color scheme based on configuration
+    /// Note: For better theme adaptation, use AdaptiveReachuColors in SwiftUI views
+    private static var currentColorScheme: ReachuCore.ColorScheme {
+        ReachuConfiguration.shared.theme.lightColors
     }
-}
-
-// MARK: - Default Color Scheme
-private struct DefaultColorScheme {
-    let primary = Color(.sRGB, red: 0.0, green: 0.478, blue: 1.0, opacity: 1.0) // #007AFF
-    let secondary = Color(.sRGB, red: 0.345, green: 0.337, blue: 0.839, opacity: 1.0) // #5856D6
-    let success = Color(.sRGB, red: 0.204, green: 0.780, blue: 0.349, opacity: 1.0) // #34C759
-    let warning = Color(.sRGB, red: 1.0, green: 0.584, blue: 0.0, opacity: 1.0) // #FF9500
-    let error = Color(.sRGB, red: 1.0, green: 0.231, blue: 0.188, opacity: 1.0) // #FF3B30
-    let info = Color(.sRGB, red: 0.0, green: 0.478, blue: 1.0, opacity: 1.0) // #007AFF
-    let background = Color(.sRGB, red: 0.949, green: 0.949, blue: 0.969, opacity: 1.0) // #F2F2F7
-    let surface = Color.white
-    let surfaceSecondary = Color(.sRGB, red: 0.976, green: 0.976, blue: 0.976, opacity: 1.0) // #F9F9F9
-    let textPrimary = Color.black
-    let textSecondary = Color(.sRGB, red: 0.557, green: 0.557, blue: 0.576, opacity: 1.0) // #8E8E93
-    let textTertiary = Color(.sRGB, red: 0.780, green: 0.780, blue: 0.800, opacity: 1.0) // #C7C7CC
-    let border = Color(.sRGB, red: 0.898, green: 0.898, blue: 0.918, opacity: 1.0) // #E5E5EA
-    let borderSecondary = Color(.sRGB, red: 0.820, green: 0.820, blue: 0.839, opacity: 1.0) // #D1D1D6
+    
+    // MARK: - Adaptive Color Access
+    
+    /// Get colors for a specific color scheme (useful for manual adaptation)
+    public static func colors(for colorScheme: SwiftUI.ColorScheme) -> ReachuCore.ColorScheme {
+        ReachuConfiguration.shared.theme.colors(for: colorScheme)
+    }
 }
 
 // MARK: - Color Extensions
