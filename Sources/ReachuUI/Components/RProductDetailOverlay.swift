@@ -32,8 +32,8 @@ public struct RProductDetailOverlay: View {
     // MARK: - Environment
     @EnvironmentObject private var cartManager: CartManager
     @SwiftUI.Environment(\.dismiss) private var dismiss: DismissAction
-    @Environment(\.colorScheme) private var colorScheme
-    @Environment(\.reachuAdaptiveColors) private var adaptiveColors
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    
     
     // MARK: - State
     @State private var selectedImageIndex = 0
@@ -107,7 +107,7 @@ public struct RProductDetailOverlay: View {
                 bottomActionBar
             }
         }
-        .adaptiveReachuColors()
+        
         .onAppear {
             // Select first variant by default
             selectedVariant = product.variants.first
@@ -120,16 +120,16 @@ public struct RProductDetailOverlay: View {
             if displayImages.isEmpty {
                 // Placeholder when no images
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                    .fill(adaptiveColors.background)
+                    .fill(ReachuColors.background)
                     .frame(height: 300)
                     .overlay {
                         VStack(spacing: ReachuSpacing.sm) {
                             Image(systemName: "photo")
                                 .font(.system(size: 48))
-                                .foregroundColor(adaptiveColors.textSecondary)
+                                .foregroundColor(ReachuColors.textSecondary)
                             Text("No Image Available")
                                 .font(ReachuTypography.body)
-                                .foregroundColor(adaptiveColors.textSecondary)
+                                .foregroundColor(ReachuColors.textSecondary)
                         }
                     }
             } else if displayImages.count == 1 {
@@ -142,14 +142,14 @@ public struct RProductDetailOverlay: View {
                             .aspectRatio(contentMode: .fit)
                     case .failure(_):
                         RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                            .fill(adaptiveColors.background)
+                            .fill(ReachuColors.background)
                             .overlay {
                                 Image(systemName: "exclamationmark.triangle")
-                                    .foregroundColor(adaptiveColors.error)
+                                    .foregroundColor(ReachuColors.error)
                             }
                     case .empty:
                         RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                            .fill(adaptiveColors.background)
+                            .fill(ReachuColors.background)
                             .overlay {
                                 ProgressView()
                             }
@@ -173,14 +173,14 @@ public struct RProductDetailOverlay: View {
                                         .aspectRatio(contentMode: .fit)
                                 case .failure(_):
                                     RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                                        .fill(adaptiveColors.background)
+                                        .fill(ReachuColors.background)
                                         .overlay {
                                             Image(systemName: "exclamationmark.triangle")
-                                                .foregroundColor(adaptiveColors.error)
+                                                .foregroundColor(ReachuColors.error)
                                         }
                                 case .empty:
                                     RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                                        .fill(adaptiveColors.background)
+                                        .fill(ReachuColors.background)
                                         .overlay {
                                             ProgressView()
                                         }
@@ -208,15 +208,15 @@ public struct RProductDetailOverlay: View {
                                             .aspectRatio(contentMode: .fill)
                                     case .failure(_):
                                         RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                            .fill(adaptiveColors.background)
+                                            .fill(ReachuColors.background)
                                             .overlay {
                                                 Image(systemName: "exclamationmark.triangle")
                                                     .font(.caption)
-                                                    .foregroundColor(adaptiveColors.error)
+                                                    .foregroundColor(ReachuColors.error)
                                             }
                                     case .empty:
                                         RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                            .fill(adaptiveColors.background)
+                                            .fill(ReachuColors.background)
                                             .overlay {
                                                 ProgressView()
                                                     .scaleEffect(0.5)
@@ -230,7 +230,7 @@ public struct RProductDetailOverlay: View {
                                 .overlay {
                                     RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                         .stroke(
-                                            selectedImageIndex == index ? adaptiveColors.primary : adaptiveColors.border,
+                                            selectedImageIndex == index ? ReachuColors.primary : ReachuColors.border,
                                             lineWidth: selectedImageIndex == index ? 2 : 1
                                         )
                                 }
@@ -256,12 +256,12 @@ public struct RProductDetailOverlay: View {
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 Text(product.title)
                     .font(ReachuTypography.title2)
-                    .foregroundColor(adaptiveColors.textPrimary)
+                    .foregroundColor(ReachuColors.textPrimary)
                 
                 if let brand = product.brand, !brand.isEmpty {
                     Text(brand)
                         .font(ReachuTypography.subheadline)
-                        .foregroundColor(adaptiveColors.textSecondary)
+                        .foregroundColor(ReachuColors.textSecondary)
                 }
             }
             
@@ -271,13 +271,13 @@ public struct RProductDetailOverlay: View {
                     // Current price
                     Text("$\(String(format: "%.2f", currentPrice.amount))")
                         .font(ReachuTypography.title3)
-                        .foregroundColor(adaptiveColors.textPrimary)
+                        .foregroundColor(ReachuColors.textPrimary)
                     
                     // Compare at price (if available)
                     if let compareAt = currentPrice.compare_at, compareAt > currentPrice.amount {
                         Text("$\(String(format: "%.2f", compareAt))")
                             .font(ReachuTypography.body)
-                            .foregroundColor(adaptiveColors.textSecondary)
+                            .foregroundColor(ReachuColors.textSecondary)
                             .strikethrough()
                     }
                 }
@@ -297,7 +297,7 @@ public struct RProductDetailOverlay: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                     Text("Options")
                         .font(ReachuTypography.headline)
-                        .foregroundColor(adaptiveColors.textPrimary)
+                        .foregroundColor(ReachuColors.textPrimary)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: ReachuSpacing.sm) {
@@ -311,16 +311,16 @@ public struct RProductDetailOverlay: View {
                                         .padding(.vertical, ReachuSpacing.sm)
                                         .background(
                                             selectedVariant?.id == variant.id ? 
-                                            adaptiveColors.primary : adaptiveColors.surface
+                                            ReachuColors.primary : ReachuColors.surface
                                         )
                                         .foregroundColor(
                                             selectedVariant?.id == variant.id ? 
-                                            .white : adaptiveColors.textPrimary
+                                            .white : ReachuColors.textPrimary
                                         )
                                         .cornerRadius(ReachuBorderRadius.medium)
                                         .overlay {
                                             RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                                .stroke(adaptiveColors.border, lineWidth: 1)
+                                                .stroke(ReachuColors.border, lineWidth: 1)
                                         }
                                 }
                                 .disabled((variant.quantity ?? 0) <= 0)
@@ -339,7 +339,7 @@ public struct RProductDetailOverlay: View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             Text("Quantity")
                 .font(ReachuTypography.headline)
-                .foregroundColor(adaptiveColors.textPrimary)
+                .foregroundColor(ReachuColors.textPrimary)
             
             HStack(spacing: ReachuSpacing.md) {
                 // Decrease button
@@ -350,13 +350,13 @@ public struct RProductDetailOverlay: View {
                 } label: {
                     Image(systemName: "minus")
                         .font(.body)
-                        .foregroundColor(quantity > 1 ? adaptiveColors.textPrimary : adaptiveColors.textSecondary)
+                        .foregroundColor(quantity > 1 ? ReachuColors.textPrimary : ReachuColors.textSecondary)
                         .frame(width: 44, height: 44)
-                        .background(adaptiveColors.surface)
+                        .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
                             RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                .stroke(adaptiveColors.border, lineWidth: 1)
+                                .stroke(ReachuColors.border, lineWidth: 1)
                         }
                 }
                 .disabled(quantity <= 1)
@@ -364,7 +364,7 @@ public struct RProductDetailOverlay: View {
                 // Current quantity
                 Text("\(quantity)")
                     .font(ReachuTypography.headline)
-                    .foregroundColor(adaptiveColors.textPrimary)
+                    .foregroundColor(ReachuColors.textPrimary)
                     .frame(minWidth: 40)
                 
                 // Increase button
@@ -378,14 +378,14 @@ public struct RProductDetailOverlay: View {
                         .font(.body)
                         .foregroundColor(
                             quantity < (selectedVariant?.quantity ?? product.quantity ?? 0) ? 
-                            adaptiveColors.textPrimary : adaptiveColors.textSecondary
+                            ReachuColors.textPrimary : ReachuColors.textSecondary
                         )
                         .frame(width: 44, height: 44)
-                        .background(adaptiveColors.surface)
+                        .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
                             RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                .stroke(adaptiveColors.border, lineWidth: 1)
+                                .stroke(ReachuColors.border, lineWidth: 1)
                         }
                 }
                 .disabled(quantity >= (selectedVariant?.quantity ?? product.quantity ?? 0))
@@ -396,10 +396,10 @@ public struct RProductDetailOverlay: View {
                 VStack(alignment: .trailing) {
                     Text("Total")
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(adaptiveColors.textSecondary)
+                        .foregroundColor(ReachuColors.textSecondary)
                     Text("$\(String(format: "%.2f", Double(currentPrice.amount) * Double(quantity)))")
                         .font(ReachuTypography.title3)
-                        .foregroundColor(adaptiveColors.textPrimary)
+                        .foregroundColor(ReachuColors.textPrimary)
                 }
             }
         }
@@ -411,11 +411,11 @@ public struct RProductDetailOverlay: View {
             if let description = product.description, !description.isEmpty {
                 Text("Description")
                     .font(ReachuTypography.headline)
-                    .foregroundColor(adaptiveColors.textPrimary)
+                    .foregroundColor(ReachuColors.textPrimary)
                 
                 Text(description)
                     .font(ReachuTypography.body)
-                    .foregroundColor(adaptiveColors.textSecondary)
+                    .foregroundColor(ReachuColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -426,7 +426,7 @@ public struct RProductDetailOverlay: View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             Text("Details")
                 .font(ReachuTypography.headline)
-                .foregroundColor(adaptiveColors.textPrimary)
+                .foregroundColor(ReachuColors.textPrimary)
             
             VStack(spacing: ReachuSpacing.xs) {
                 if !product.sku.isEmpty {
@@ -454,13 +454,13 @@ public struct RProductDetailOverlay: View {
         HStack {
             Text(title)
                 .font(ReachuTypography.body)
-                .foregroundColor(adaptiveColors.textSecondary)
+                .foregroundColor(ReachuColors.textSecondary)
             
             Spacer()
             
             Text(value)
                 .font(ReachuTypography.body)
-                .foregroundColor(adaptiveColors.textPrimary)
+                .foregroundColor(ReachuColors.textPrimary)
                 .multilineTextAlignment(.trailing)
         }
         .padding(.vertical, ReachuSpacing.xs)
@@ -469,17 +469,17 @@ public struct RProductDetailOverlay: View {
     private var stockStatusBadge: some View {
         HStack(spacing: ReachuSpacing.xs) {
             Circle()
-                .fill(isInStock ? adaptiveColors.success : adaptiveColors.error)
+                .fill(isInStock ? ReachuColors.success : ReachuColors.error)
                 .frame(width: 8, height: 8)
             
             Text(isInStock ? "In Stock" : "Out of Stock")
                 .font(ReachuTypography.caption1)
-                .foregroundColor(isInStock ? adaptiveColors.success : adaptiveColors.error)
+                .foregroundColor(isInStock ? ReachuColors.success : ReachuColors.error)
         }
         .padding(.horizontal, ReachuSpacing.sm)
         .padding(.vertical, ReachuSpacing.xs)
         .background(
-            (isInStock ? adaptiveColors.success : adaptiveColors.error).opacity(0.1)
+            (isInStock ? ReachuColors.success : ReachuColors.error).opacity(0.1)
         )
         .cornerRadius(ReachuBorderRadius.small)
     }
