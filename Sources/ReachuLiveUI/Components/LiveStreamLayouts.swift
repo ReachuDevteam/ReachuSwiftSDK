@@ -11,6 +11,7 @@ public struct RLiveStreamFullScreenOverlay: View {
     
     @ObservedObject private var liveShowManager = LiveShowManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var cartManager: CartManager
     
     let stream: LiveStream
     let onDismiss: () -> Void
@@ -337,8 +338,7 @@ public struct RLiveStreamFullScreenOverlay: View {
                 // Action buttons
                 VStack(spacing: 8) {
                     Button(action: {
-                        // Note: This will be handled by environment object in the actual app
-                        ToastManager.shared.showSuccess("Quick buy feature - connect with CartManager")
+                        LiveShowManager.shared.quickBuyProduct(product, cartManager: cartManager)
                     }) {
                         Text("Order now")
                             .font(.system(size: 12, weight: .semibold))
@@ -350,8 +350,7 @@ public struct RLiveStreamFullScreenOverlay: View {
                     }
                     
                     Button(action: {
-                        // Note: This will be handled by environment object in the actual app
-                        ToastManager.shared.showSuccess("Added \(product.title) to cart")
+                        LiveShowManager.shared.addProductToCart(product, cartManager: cartManager)
                     }) {
                         Text("Add to cart")
                             .font(.system(size: 12))
@@ -405,6 +404,7 @@ public struct RLiveStreamBottomSheet: View {
     let onDismiss: () -> Void
     
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var cartManager: CartManager
     
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
@@ -586,7 +586,7 @@ public struct RLiveStreamBottomSheet: View {
         }
         .frame(width: 100)
         .onTapGesture {
-            ToastManager.shared.showSuccess("Added \(product.title) to cart")
+            LiveShowManager.shared.addProductToCart(product, cartManager: cartManager)
         }
     }
     
@@ -625,6 +625,7 @@ public struct RLiveStreamModal: View {
     let onDismiss: () -> Void
     
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var cartManager: CartManager
     
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)

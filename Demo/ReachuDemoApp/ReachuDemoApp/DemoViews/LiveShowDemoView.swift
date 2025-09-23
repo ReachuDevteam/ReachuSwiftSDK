@@ -1,8 +1,8 @@
 import SwiftUI
 import ReachuCore
 import ReachuLiveShow
-import ReachuLiveUI
 import ReachuDesignSystem
+import ReachuUI
 import ReachuTesting
 
 struct LiveShowDemoView: View {
@@ -55,7 +55,7 @@ struct LiveShowDemoView: View {
     private var headerSection: some View {
         VStack(spacing: ReachuSpacing.sm) {
             Text("🎬 Live Show Experience")
-                .font(ReachuTypography.title)
+                .font(ReachuTypography.title1)
                 .foregroundColor(adaptiveColors.textPrimary)
                 .multilineTextAlignment(.center)
             

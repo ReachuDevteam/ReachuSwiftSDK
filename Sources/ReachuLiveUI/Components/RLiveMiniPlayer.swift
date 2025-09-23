@@ -2,12 +2,15 @@ import SwiftUI
 import ReachuCore
 import ReachuLiveShow
 import ReachuDesignSystem
+import ReachuUI
+import ReachuLiveShow
 
 /// Mini player for live streams - Draggable and expandable
 public struct RLiveMiniPlayer: View {
     
     @ObservedObject private var liveShowManager = LiveShowManager.shared
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var cartManager: CartManager
     
     let stream: LiveStream
     let onDismiss: () -> Void
@@ -203,7 +206,7 @@ public struct RLiveMiniPlayer: View {
             Spacer()
             
             Button(action: {
-                ToastManager.shared.showSuccess("Added \(product.title) to cart")
+                LiveShowManager.shared.addProductToCart(product, cartManager: cartManager)
             }) {
                 Image(systemName: "plus")
                     .font(.system(size: 8, weight: .bold))

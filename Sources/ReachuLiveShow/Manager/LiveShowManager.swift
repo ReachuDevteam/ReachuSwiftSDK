@@ -2,8 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import ReachuCore
-import ReachuUI
-import ReachuDesignSystem
+import struct Foundation.Date
 
 /// Global manager for LiveShow functionality - Similar to CartManager
 @MainActor
@@ -84,19 +83,16 @@ public class LiveShowManager: ObservableObject {
     }
     
     /// Add product to cart from live stream
-    /// Note: This requires CartManager to be available in the environment
-    public func addProductToCart(_ liveProduct: LiveProduct, cartManager: CartManager) {
+    /// Note: This requires `CartManager` to be provided by the host app (no UI dependencies here)
+    public func addProductToCart(_ liveProduct: LiveProduct, cartManager: LiveShowCartManaging) {
         let product = liveProduct.asProduct
         Task {
             await cartManager.addProduct(product, quantity: 1)
         }
-        
-        // Show toast notification
-        ToastManager.shared.showSuccess("Added \(product.title) to cart")
     }
     
     /// Quick buy product
-    public func quickBuyProduct(_ liveProduct: LiveProduct, cartManager: CartManager) {
+    public func quickBuyProduct(_ liveProduct: LiveProduct, cartManager: LiveShowCartManaging) {
         addProductToCart(liveProduct, cartManager: cartManager)
         // Could trigger immediate checkout
         cartManager.showCheckout()
@@ -168,11 +164,11 @@ public class LiveShowManager: ObservableObject {
         // Create demo streams
         let stream1 = LiveStream(
             id: "stream-1",
-            title: "Spring Fashion Collection Launch",
+            title: "Spring Fashion Collection Launch", 
             description: "Discover the latest spring trends with exclusive live offers!",
             streamer: streamer1,
-            videoUrl: "https://player.vimeo.com/video/sample", // Demo URL
-            thumbnailUrl: "https://picsum.photos/800/600?random=20",
+            videoUrl: "https://vimeo.com/1029631656", // Tu video de Vimeo
+            thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
             viewerCount: 1247,
             isLive: true,
             featuredProducts: [product1, product2],
@@ -183,8 +179,8 @@ public class LiveShowManager: ObservableObject {
             id: "stream-2",
             title: "Weekend Casual Styling",
             streamer: streamer2,
-            videoUrl: "https://player.vimeo.com/video/sample2",
-            thumbnailUrl: "https://picsum.photos/800/600?random=21",
+            videoUrl: "https://vimeo.com/1029631656", // Tu video de Vimeo
+            thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
             viewerCount: 892,
             isLive: true,
             featuredProducts: [product2],
