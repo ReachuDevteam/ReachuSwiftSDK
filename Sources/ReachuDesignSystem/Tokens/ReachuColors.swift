@@ -7,7 +7,15 @@ import ReachuCore
 /// and dark/light mode switching.
 public struct ReachuColors {
     
-    // MARK: - Brand Colors
+    // MARK: - Dynamic Color Access (for SwiftUI views)
+    
+    /// Get adaptive colors for the current color scheme
+    /// Use this in SwiftUI views with @Environment(\.colorScheme)
+    public static func adaptive(for colorScheme: SwiftUI.ColorScheme) -> AdaptiveColors {
+        AdaptiveColors(colorScheme: colorScheme)
+    }
+    
+    // MARK: - Static Colors (fallback)
     
     /// Primary brand color - adapts to current theme
     public static var primary: Color {
@@ -89,9 +97,10 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
-    /// Returns the current color scheme based on configuration
-    /// Note: For better theme adaptation, use AdaptiveReachuColors in SwiftUI views
+    /// Returns the current color scheme based on configuration and system appearance
+    /// Note: This uses light colors by default - for SwiftUI views, use @Environment(\.colorScheme)
     private static var currentColorScheme: ReachuCore.ColorScheme {
+        // For SwiftUI views that need dynamic colors, they should use colors(for:) method
         ReachuConfiguration.shared.theme.lightColors
     }
     
@@ -101,6 +110,43 @@ public struct ReachuColors {
     public static func colors(for colorScheme: SwiftUI.ColorScheme) -> ReachuCore.ColorScheme {
         ReachuConfiguration.shared.theme.colors(for: colorScheme)
     }
+}
+
+// MARK: - Adaptive Colors Helper
+
+/// Helper struct for accessing colors that adapt to color scheme
+public struct AdaptiveColors {
+    private let colorScheme: SwiftUI.ColorScheme
+    private let themeColors: ReachuCore.ColorScheme
+    
+    internal init(colorScheme: SwiftUI.ColorScheme) {
+        self.colorScheme = colorScheme
+        self.themeColors = ReachuConfiguration.shared.theme.colors(for: colorScheme)
+    }
+    
+    // MARK: - Brand Colors
+    public var primary: Color { themeColors.primary }
+    public var secondary: Color { themeColors.secondary }
+    
+    // MARK: - Semantic Colors
+    public var success: Color { themeColors.success }
+    public var warning: Color { themeColors.warning }
+    public var error: Color { themeColors.error }
+    public var info: Color { themeColors.info }
+    
+    // MARK: - Background Colors
+    public var background: Color { themeColors.background }
+    public var surface: Color { themeColors.surface }
+    public var surfaceSecondary: Color { themeColors.surfaceSecondary }
+    
+    // MARK: - Text Colors
+    public var textPrimary: Color { themeColors.textPrimary }
+    public var textSecondary: Color { themeColors.textSecondary }
+    public var textTertiary: Color { themeColors.textTertiary }
+    
+    // MARK: - Border Colors
+    public var border: Color { themeColors.border }
+    public var borderSecondary: Color { themeColors.borderSecondary }
 }
 
 // MARK: - Color Extensions

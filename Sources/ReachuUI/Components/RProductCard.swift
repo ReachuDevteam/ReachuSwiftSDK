@@ -46,6 +46,11 @@ public struct RProductCard: View {
     // Environment for adaptive colors
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
+    // Computed colors based on current color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     
     // Animation states
     @State private var isAddingToCart = false
@@ -112,19 +117,19 @@ public struct RProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(2)
                 }
                 
@@ -137,9 +142,9 @@ public struct RProductCard: View {
             }
             .padding(ReachuSpacing.md)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
     /// List Layout - Horizontal card for search results
@@ -153,19 +158,19 @@ public struct RProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
@@ -181,9 +186,9 @@ public struct RProductCard: View {
             Spacer()
         }
         .padding(ReachuSpacing.sm)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.small)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 1, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 1, x: 0, y: 1)
     }
     
     /// Hero Layout - Large featured product
@@ -196,19 +201,19 @@ public struct RProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .textCase(.uppercase)
                 }
                 
                 Text(product.title)
                     .font(ReachuTypography.title2)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(3)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(3)
                 }
                 
@@ -231,9 +236,9 @@ public struct RProductCard: View {
             }
             .padding(ReachuSpacing.lg)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.xl)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
     }
     
     /// Minimal Layout - Compact for carousels
@@ -245,7 +250,7 @@ public struct RProductCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 priceView
@@ -253,9 +258,9 @@ public struct RProductCard: View {
             .padding(ReachuSpacing.xs)
         }
         .frame(width: 100, height: 140)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.small)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.06), radius: 1, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.06), radius: 1, x: 0, y: 1)
     }
     
     // MARK: - Image Components
@@ -299,13 +304,13 @@ public struct RProductCard: View {
                     .aspectRatio(contentMode: .fill)
             case .failure(_):
                 // Imagen rota - mostrar placeholder con ícono de error
-                placeholderView(systemImage: "exclamationmark.triangle", color: ReachuColors.error)
+                placeholderView(systemImage: "exclamationmark.triangle", color: adaptiveColors.error)
             case .empty:
                 // Cargando - mostrar placeholder con ícono de carga
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
             @unknown default:
                 // Fallback - mostrar placeholder genérico
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
             }
         }
         .frame(width: width, height: height)
@@ -316,7 +321,7 @@ public struct RProductCard: View {
     /// Placeholder view for loading/error states
     private func placeholderView(systemImage: String, color: Color) -> some View {
         Rectangle()
-            .fill(ReachuColors.background)
+            .fill(adaptiveColors.background)
             .overlay(
                 VStack(spacing: ReachuSpacing.xs) {
                     Image(systemName: systemImage)
@@ -356,7 +361,7 @@ public struct RProductCard: View {
                         variant == .grid ? .system(size: 12, weight: .regular) :
                         ReachuTypography.caption1
                     )
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .strikethrough()
             }
         }
@@ -383,10 +388,10 @@ public struct RProductCard: View {
             } else {
                 Text("Out of Stock")
                     .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.error)
+                    .foregroundColor(adaptiveColors.error)
                     .padding(.horizontal, ReachuSpacing.sm)
                     .padding(.vertical, ReachuSpacing.xs)
-                    .background(ReachuColors.error.opacity(0.1))
+                    .background(adaptiveColors.error.opacity(0.1))
                     .cornerRadius(ReachuBorderRadius.small)
             }
         }
