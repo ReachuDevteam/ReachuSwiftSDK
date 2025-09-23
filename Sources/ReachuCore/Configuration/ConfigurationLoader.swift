@@ -115,18 +115,42 @@ public class ConfigurationLoader {
         
         let mode = ThemeMode(rawValue: config.mode ?? "automatic") ?? .automatic
         
-        // Parse light colors
+        // Parse light colors (complete set)
         let lightColors = ColorScheme(
             primary: hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF"),
-            secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6")
+            secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6"),
+            success: hexToColor(config.lightColors?.success ?? "#34C759"),
+            warning: hexToColor(config.lightColors?.warning ?? "#FF9500"),
+            error: hexToColor(config.lightColors?.error ?? "#FF3B30"),
+            info: hexToColor(config.lightColors?.info ?? "#007AFF"),
+            background: hexToColor(config.lightColors?.background ?? "#F2F2F7"),
+            surface: hexToColor(config.lightColors?.surface ?? "#FFFFFF"),
+            surfaceSecondary: hexToColor(config.lightColors?.surfaceSecondary ?? "#F9F9F9"),
+            textPrimary: hexToColor(config.lightColors?.textPrimary ?? "#000000"),
+            textSecondary: hexToColor(config.lightColors?.textSecondary ?? "#8E8E93"),
+            textTertiary: hexToColor(config.lightColors?.textTertiary ?? "#C7C7CC"),
+            border: hexToColor(config.lightColors?.border ?? "#E5E5EA"),
+            borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6")
         )
         
-        // Parse dark colors (fallback to auto-generated if not specified)
+        // Parse dark colors (complete set, fallback to auto-generated if not specified)
         let darkColors: ReachuCore.ColorScheme
         if let darkColorsConfig = config.darkColors {
             darkColors = ColorScheme(
-                primary: hexToColor(darkColorsConfig.primary),
-                secondary: hexToColor(darkColorsConfig.secondary)
+                primary: hexToColor(darkColorsConfig.primary ?? "#0A84FF"),
+                secondary: hexToColor(darkColorsConfig.secondary ?? "#5E5CE6"),
+                success: hexToColor(darkColorsConfig.success ?? "#32D74B"),
+                warning: hexToColor(darkColorsConfig.warning ?? "#FF9F0A"),
+                error: hexToColor(darkColorsConfig.error ?? "#FF453A"),
+                info: hexToColor(darkColorsConfig.info ?? "#0A84FF"),
+                background: hexToColor(darkColorsConfig.background ?? "#000000"),
+                surface: hexToColor(darkColorsConfig.surface ?? "#1C1C1E"),
+                surfaceSecondary: hexToColor(darkColorsConfig.surfaceSecondary ?? "#2C2C2E"),
+                textPrimary: hexToColor(darkColorsConfig.textPrimary ?? "#FFFFFF"),
+                textSecondary: hexToColor(darkColorsConfig.textSecondary ?? "#8E8E93"),
+                textTertiary: hexToColor(darkColorsConfig.textTertiary ?? "#48484A"),
+                border: hexToColor(darkColorsConfig.border ?? "#38383A"),
+                borderSecondary: hexToColor(darkColorsConfig.borderSecondary ?? "#48484A")
             )
         } else {
             darkColors = .autoDark(from: lightColors)
@@ -236,8 +260,20 @@ private struct JSONThemeConfiguration: Codable {
 }
 
 private struct JSONColorConfiguration: Codable {
-    let primary: String
-    let secondary: String
+    let primary: String?
+    let secondary: String?
+    let success: String?
+    let warning: String?
+    let error: String?
+    let info: String?
+    let background: String?
+    let surface: String?
+    let surfaceSecondary: String?
+    let textPrimary: String?
+    let textSecondary: String?
+    let textTertiary: String?
+    let border: String?
+    let borderSecondary: String?
 }
 
 private struct JSONCartConfiguration: Codable {

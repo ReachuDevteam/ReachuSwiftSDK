@@ -606,3 +606,306 @@ ReachuConfiguration.configure(
 - **Escalabilidad** para diferentes mercados
 
 ¡El sistema de configuración ahora es **enterprise-grade** y listo para cualquier caso de uso! 🚀✨
+
+---
+
+## 🌓 **Dark/Light Mode Complete Guide**
+
+### **📱 What is Dark/Light Mode Support?**
+
+Reachu SDK provides **complete dark/light mode support** that automatically adapts to system settings or can be manually controlled. All UI components respond to color scheme changes dynamically.
+
+### **🎯 Features:**
+- ✅ **Automatic system following** - Respects iOS dark/light mode
+- ✅ **Manual override** - Force light or dark mode
+- ✅ **Complete color customization** - Separate colors for light and dark
+- ✅ **Component adaptation** - All UI components adapt automatically
+- ✅ **Professional appearance** - iOS-standard dark mode colors
+
+---
+
+## 🎨 **Theme Configuration Options**
+
+### **1. Automatic Mode (Recommended)**
+Follows system dark/light mode with custom colors:
+
+```json
+{
+  "theme": {
+    "name": "My App Theme",
+    "mode": "automatic",
+    "lightColors": {
+      "primary": "#007AFF",
+      "secondary": "#5856D6",
+      "surface": "#FFFFFF",
+      "background": "#F2F2F7",
+      "textPrimary": "#000000",
+      "textSecondary": "#8E8E93"
+    },
+    "darkColors": {
+      "primary": "#0A84FF",
+      "secondary": "#5E5CE6", 
+      "surface": "#1C1C1E",
+      "background": "#000000",
+      "textPrimary": "#FFFFFF",
+      "textSecondary": "#8E8E93"
+    }
+  }
+}
+```
+
+### **2. Force Light Mode**
+Always use light mode regardless of system setting:
+
+```json
+{
+  "theme": {
+    "mode": "light",
+    "lightColors": {
+      "primary": "#FF6B6B",
+      "surface": "#FFFFFF"
+    }
+  }
+}
+```
+
+### **3. Force Dark Mode**
+Always use dark mode regardless of system setting:
+
+```json
+{
+  "theme": {
+    "mode": "dark", 
+    "darkColors": {
+      "primary": "#00D4AA",
+      "surface": "#1A1A1A"
+    }
+  }
+}
+```
+
+---
+
+## 🔧 **Available Color Properties**
+
+### **Complete Color Scheme:**
+```json
+{
+  "lightColors": {
+    // Brand Colors
+    "primary": "#007AFF",
+    "secondary": "#5856D6",
+    
+    // Semantic Colors  
+    "success": "#34C759",
+    "warning": "#FF9500",
+    "error": "#FF3B30",
+    "info": "#007AFF",
+    
+    // Background Colors
+    "background": "#F2F2F7",
+    "surface": "#FFFFFF", 
+    "surfaceSecondary": "#F9F9F9",
+    
+    // Text Colors
+    "textPrimary": "#000000",
+    "textSecondary": "#8E8E93",
+    "textTertiary": "#C7C7CC",
+    
+    // Border Colors
+    "border": "#E5E5EA",
+    "borderSecondary": "#D1D1D6"
+  },
+  "darkColors": {
+    // Same properties with dark mode values
+    "primary": "#0A84FF",
+    "secondary": "#5E5CE6",
+    "surface": "#1C1C1E",
+    "background": "#000000",
+    "textPrimary": "#FFFFFF",
+    // ... etc
+  }
+}
+```
+
+---
+
+## 💻 **Implementation in Components**
+
+### **For SwiftUI Components:**
+```swift
+import SwiftUI
+import ReachuDesignSystem
+
+struct MyComponent: View {
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Get adaptive colors
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
+    var body: some View {
+        VStack {
+            Text("Hello")
+                .foregroundColor(adaptiveColors.textPrimary)
+                .background(adaptiveColors.surface)
+            
+            Button("Action") { }
+                .foregroundColor(adaptiveColors.primary)
+        }
+        .background(adaptiveColors.background)
+    }
+}
+```
+
+### **For Static Usage:**
+```swift
+// Use static colors (fallback)
+Text("Hello")
+    .foregroundColor(ReachuColors.textPrimary)
+    .background(ReachuColors.surface)
+
+// Get colors for specific scheme
+let lightColors = ReachuColors.colors(for: .light)
+let darkColors = ReachuColors.colors(for: .dark)
+```
+
+---
+
+## 🎯 **Theme Mode Options**
+
+| Mode | Behavior | Use Case |
+|------|----------|----------|
+| `"automatic"` | Follows system dark/light | **Recommended** - Best UX |
+| `"light"` | Always light mode | Brand requirements, accessibility |
+| `"dark"` | Always dark mode | Gaming apps, developer tools |
+
+---
+
+## 🌈 **Color Scheme Examples**
+
+### **Professional Blue Theme:**
+```json
+{
+  "lightColors": {
+    "primary": "#0066CC",
+    "surface": "#FFFFFF",
+    "background": "#F8F9FA"
+  },
+  "darkColors": {
+    "primary": "#4A9EFF", 
+    "surface": "#1E1E1E",
+    "background": "#121212"
+  }
+}
+```
+
+### **Green E-commerce Theme:**
+```json
+{
+  "lightColors": {
+    "primary": "#00A86B",
+    "secondary": "#FF6B35"
+  },
+  "darkColors": {
+    "primary": "#00D084",
+    "secondary": "#FF8A5B"  
+  }
+}
+```
+
+### **Minimal Monochrome Theme:**
+```json
+{
+  "lightColors": {
+    "primary": "#333333",
+    "surface": "#FFFFFF"
+  },
+  "darkColors": {
+    "primary": "#CCCCCC",
+    "surface": "#222222"
+  }
+}
+```
+
+---
+
+## 🔧 **Advanced Configuration**
+
+### **Override Theme Mode Programmatically:**
+```swift
+// Force dark mode
+ReachuConfiguration.shared.updateTheme(
+    ReachuTheme(
+        name: "Override",
+        mode: .dark,
+        lightColors: .reachu,
+        darkColors: .reachuDark
+    )
+)
+```
+
+### **Create Custom Theme:**
+```swift
+let customTheme = ReachuTheme(
+    name: "My Custom Theme",
+    mode: .automatic,
+    lightColors: ColorScheme(
+        primary: Color(.sRGB, red: 1.0, green: 0.4, blue: 0.4),
+        secondary: Color(.sRGB, red: 0.2, green: 0.6, blue: 1.0)
+    ),
+    darkColors: .autoDark(from: lightColors)
+)
+```
+
+---
+
+## ✅ **Best Practices**
+
+### **✅ DO:**
+- Use `"automatic"` mode for best user experience
+- Provide both light and dark colors for complete themes
+- Test your app in both light and dark modes
+- Use semantic colors (success, warning, error) consistently
+- Follow iOS Human Interface Guidelines for dark mode
+
+### **❌ DON'T:**
+- Force light mode unless brand requirements demand it
+- Use low contrast colors in dark mode
+- Ignore system preferences without good reason
+- Hardcode colors in components - use the theme system
+
+---
+
+## 🧪 **Testing Dark/Light Mode**
+
+### **iOS Simulator:**
+1. Settings > Developer > Dark Appearance
+2. Or Device Settings > Display & Brightness > Appearance
+
+### **Xcode Previews:**
+```swift
+#Preview("Light Mode") {
+    MyComponent()
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark Mode") {
+    MyComponent() 
+        .preferredColorScheme(.dark)
+}
+```
+
+---
+
+## 🎉 **Result**
+
+With this configuration system, your app will have:
+- ✅ **Professional dark mode** that matches iOS standards
+- ✅ **Automatic adaptation** to system settings
+- ✅ **Complete customization** of all colors
+- ✅ **Consistent theming** across all components
+- ✅ **Easy maintenance** with centralized configuration
+
+**Your users will love the polished, professional appearance! 🌟**

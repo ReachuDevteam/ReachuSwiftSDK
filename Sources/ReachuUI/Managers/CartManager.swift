@@ -1,11 +1,12 @@
 import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
+import ReachuLiveShow
 import Foundation
 
 /// Global cart manager that handles cart state and checkout flow
 @MainActor
-public class CartManager: ObservableObject {
+public class CartManager: ObservableObject, LiveShowCartManaging {
     
     // MARK: - Published Properties
     @Published public var items: [CartItem] = []

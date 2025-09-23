@@ -46,6 +46,12 @@ let package = Package(
             targets: ["ReachuTesting"]
         ),
         
+        // LiveShow UI Components - optional target (FASE 3)
+        .library(
+            name: "ReachuLiveUI",
+            targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
+        ),
+        
         // Complete SDK - everything included
         .library(
             name: "ReachuComplete",
