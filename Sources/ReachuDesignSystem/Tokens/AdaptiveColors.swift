@@ -7,7 +7,7 @@ import ReachuCore
 /// and respect the configured theme settings.
 public struct AdaptiveReachuColors {
     
-    @Environment(\.colorScheme) private var colorScheme
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
     private let theme: ReachuTheme
     
@@ -86,7 +86,7 @@ public struct AdaptiveReachuColors {
 
 public struct AdaptiveColorsModifier: ViewModifier {
     
-    @Environment(\.colorScheme) private var colorScheme
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
     public func body(content: Content) -> some View {
         content
@@ -94,7 +94,7 @@ public struct AdaptiveColorsModifier: ViewModifier {
             .preferredColorScheme(preferredColorScheme)
     }
     
-    private var preferredColorScheme: ColorScheme? {
+    private var preferredColorScheme: SwiftUI.ColorScheme? {
         let theme = ReachuConfiguration.shared.theme
         switch theme.mode {
         case .automatic:
@@ -114,7 +114,7 @@ private struct ReachuAdaptiveColorsKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    var reachuAdaptiveColors: AdaptiveReachuColors {
+    public var reachuAdaptiveColors: AdaptiveReachuColors {
         get { self[ReachuAdaptiveColorsKey.self] }
         set { self[ReachuAdaptiveColorsKey.self] = newValue }
     }
