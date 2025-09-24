@@ -91,7 +91,8 @@ public struct RLiveShowFullScreenOverlay: View {
         }
         .onAppear {
             setupPlayer()
-            startControlsTimer()
+            // Don't start timer - keep controls always visible
+            showControls = true
             if let stream = currentStream {
                 configurePlayer(with: stream)
             }
@@ -103,10 +104,8 @@ public struct RLiveShowFullScreenOverlay: View {
             // Double tap to play/pause
             togglePlayPause()
         }
-        .onTapGesture {
-            // Single tap to show/hide controls
-            toggleControls()
-        }
+        // Remove single tap to hide controls - keep them always visible
+        // .onTapGesture { toggleControls() }
         .gesture(
             DragGesture(minimumDistance: 100)
                 .onEnded { value in
@@ -148,8 +147,8 @@ public struct RLiveShowFullScreenOverlay: View {
             // Bottom overlay (chat, shopping, controls)
             bottomOverlay(stream: stream)
         }
-        .opacity(showControls ? 1 : 0)
-        .animation(.easeInOut(duration: 0.3), value: showControls)
+        // Always show controls - no fade in/out
+        .opacity(1)
     }
     
     // MARK: - Top Overlay
@@ -538,7 +537,13 @@ public struct RLiveShowFullScreenOverlay: View {
     // MARK: - Helper Methods
     
     private func setupPlayer() {
-        guard let stream = currentStream else { return }
+        guard let stream = currentStream else { 
+            print("❌ [LiveShow] No current stream for setup")
+            return 
+        }
+        
+        print("🎬 [LiveShow] Setting up player for stream: \(stream.title)")
+        print("🎬 [LiveShow] Stream URL: \(stream.videoUrl)")
         
         // Use working demo URLs for testing
         let workingUrls = [
@@ -560,22 +565,106 @@ public struct RLiveShowFullScreenOverlay: View {
             print("🎬 [LiveShow] Using demo video URL: \(videoUrl)")
         }
         
-        if let url = URL(string: videoUrl) {
-            player = AVPlayer(url: url)
-            
-            // Configure for better streaming experience
-            player?.automaticallyWaitsToMinimizeStalling = false
-            player?.isMuted = true // Start muted for better UX
-            
-            // Auto-play
-            player?.play()
-            isPlaying = true
-            
+        print("🔗 [LiveShow] Final video URL: \(videoUrl)")
+        
+        guard let url = URL(string: videoUrl) else {
+            print("❌ [LiveShow] Failed to create URL from: \(videoUrl)")
             isLoading = false
-            print("✅ [LiveShow] Player setup complete")
-        } else {
+            return
+        }
+        
+        print("📱 [LiveShow] Creating AVPlayer with URL...")
+        player = AVPlayer(url: url)
+        
+        guard let player = player else {
+            print("❌ [LiveShow] Failed to create AVPlayer")
             isLoading = false
-            print("❌ [LiveShow] Failed to create URL")
+            return
+        }
+        
+        print("⚙️ [LiveShow] Configuring player settings...")
+        
+        // Configure for better streaming experience
+        player.automaticallyWaitsToMinimizeStalling = false
+        player.isMuted = true // Start muted for better UX
+        player.allowsExternalPlayback = false // Prevent fullscreen takeover
+        
+        // Monitor player status
+        player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1), queue: .main) { time in
+            let currentTime = CMTimeGetSeconds(time)
+            print("⏱️ [LiveShow] Video time: \(currentTime)s")
+        }
+        
+        // Monitor player item status
+        if let currentItem = player.currentItem {
+            print("📋 [LiveShow] Player item status: \(currentItem.status)")
+            
+            // Monitor status changes without KVO
+            monitorPlayerStatus(currentItem)
+        }
+        
+        print("▶️ [LiveShow] Starting playback...")
+        
+        // Auto-play
+        player.play()
+        isPlaying = true
+        
+        isLoading = false
+        print("✅ [LiveShow] Player setup complete")
+        
+        // Check status after a delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+            if let item = self.player?.currentItem {
+                print("🔍 [LiveShow] Status check after 3s:")
+                print("   - Player item status: \(item.status)")
+                print("   - Is playing: \(self.player?.rate != 0)")
+                print("   - Error: \(item.error?.localizedDescription ?? "None")")
+                
+                if item.status == .failed {
+                    print("❌ [LiveShow] Player failed, trying fallback URL...")
+                    self.setupPlayerWithFallback()
+                }
+            }
+        }
+    }
+    
+    private func setupPlayerWithFallback() {
+        print("🔄 [LiveShow] Setting up player with fallback URL...")
+        
+        let fallbackUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        
+        guard let url = URL(string: fallbackUrl) else {
+            print("❌ [LiveShow] Failed to create fallback URL")
+            return
+        }
+        
+        player = AVPlayer(url: url)
+        player?.automaticallyWaitsToMinimizeStalling = false
+        player?.isMuted = true
+        player?.allowsExternalPlayback = false
+        player?.play()
+        isPlaying = true
+        
+        print("✅ [LiveShow] Fallback player setup complete with: \(fallbackUrl)")
+    }
+    
+    private func monitorPlayerStatus(_ item: AVPlayerItem) {
+        // Check status periodically instead of using KVO
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            print("📊 [LiveShow] Player status: \(item.status.description)")
+            
+            if item.status == .readyToPlay {
+                print("✅ [LiveShow] Player is ready to play")
+                timer.invalidate()
+            } else if item.status == .failed {
+                print("❌ [LiveShow] Player failed: \(item.error?.localizedDescription ?? "Unknown error")")
+                timer.invalidate()
+                
+                // Try fallback
+                DispatchQueue.main.async {
+                    self.setupPlayerWithFallback()
+                }
+            }
         }
     }
     
@@ -739,4 +828,28 @@ struct CustomVideoPlayer: View {
 #Preview {
     RLiveShowFullScreenOverlay()
         .environmentObject(CartManager())
+}
+
+// MARK: - Extensions for Debugging
+
+extension AVPlayer.Status: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .unknown: return "unknown"
+        case .readyToPlay: return "readyToPlay"
+        case .failed: return "failed"
+        @unknown default: return "unknown default"
+        }
+    }
+}
+
+extension AVPlayerItem.Status: CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case .unknown: return "unknown"
+        case .readyToPlay: return "readyToPlay"  
+        case .failed: return "failed"
+        @unknown default: return "unknown default"
+        }
+    }
 }
