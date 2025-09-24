@@ -90,11 +90,16 @@ public struct RLiveShowFullScreenOverlay: View {
             }
         }
         .onAppear {
-            setupPlayer()
-            // Don't start timer - keep controls always visible
+            print("🎬 [LiveShow] Overlay appeared - starting setup")
+            isLoading = true // Start with loading immediately
             showControls = true
-            if let stream = currentStream {
-                configurePlayer(with: stream)
+            
+            // Delay player setup slightly to show loading first
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                self.setupPlayer()
+                if let stream = self.currentStream {
+                    self.configurePlayer(with: stream)
+                }
             }
         }
         .onDisappear {
@@ -119,10 +124,16 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func videoPlayerSection(stream: LiveStream) -> some View {
         if let stream = currentStream {
-            // Use WebView for Vimeo URLs, AVPlayer for direct video URLs
-            if stream.videoUrl.contains("player.vimeo.com") {
-                VimeoWebPlayer(videoUrl: stream.videoUrl)
-            } else if let player = player {
+        // Use WebView for Vimeo URLs, AVPlayer for direct video URLs
+        if stream.videoUrl.contains("player.vimeo.com") {
+            VimeoWebPlayer(videoUrl: stream.videoUrl)
+                .onAppear {
+                    // Hide loading after WebView appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        isLoading = false
+                    }
+                }
+        } else if let player = player {
                 CustomVideoPlayer(player: player)
             } else {
                 // Loading placeholder
@@ -528,18 +539,39 @@ public struct RLiveShowFullScreenOverlay: View {
     
     @ViewBuilder
     private var loadingIndicator: some View {
-        VStack(spacing: ReachuSpacing.md) {
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                .scaleEffect(1.5)
+        VStack(spacing: ReachuSpacing.lg) {
+            // Animated loading indicator
+            ZStack {
+                Circle()
+                    .stroke(Color.white.opacity(0.3), lineWidth: 4)
+                    .frame(width: 60, height: 60)
+                
+                Circle()
+                    .trim(from: 0, to: 0.7)
+                    .stroke(Color.white, lineWidth: 4)
+                    .frame(width: 60, height: 60)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isLoading)
+            }
             
-            Text("Loading stream...")
-                .font(ReachuTypography.body)
-                .foregroundColor(.white)
+            VStack(spacing: ReachuSpacing.sm) {
+                Text("Loading Vimeo Stream...")
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(.white)
+                
+                Text("Please wait while the video loads")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(ReachuSpacing.xl)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(ReachuBorderRadius.medium)
+        .background(
+            RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                .fill(Color.black.opacity(0.85))
+                .shadow(radius: 20)
+        )
+        .frame(maxWidth: 280)
     }
     
     // MARK: - Helper Methods
@@ -556,8 +588,8 @@ public struct RLiveShowFullScreenOverlay: View {
         // Check if it's a Vimeo player URL
         if stream.videoUrl.contains("player.vimeo.com") {
             print("🎬 [LiveShow] Detected Vimeo player URL - using WebView")
-            isLoading = false
-            return // WebView will handle this
+            // Keep loading = true until WebView finishes loading
+            return // WebView will handle loading state
         }
         
         // For HLS and direct video URLs, use AVPlayer
@@ -842,14 +874,17 @@ struct VimeoWebPlayer: UIViewRepresentable {
                     position: relative;
                     width: 100%;
                     height: 100vh;
+                    overflow: hidden;
                 }
                 iframe {
                     position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
+                    top: 50%;
+                    left: 50%;
+                    width: 120%;
+                    height: 120%;
+                    transform: translate(-50%, -50%);
                     border: none;
+                    object-fit: cover;
                 }
             </style>
         </head>
