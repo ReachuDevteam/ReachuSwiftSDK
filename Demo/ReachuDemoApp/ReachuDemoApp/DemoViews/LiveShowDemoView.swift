@@ -26,6 +26,12 @@ struct LiveShowDemoView: View {
                 // Header
                 headerSection
                 
+                // Tipio connection status
+                tipioConnectionSection
+                
+                // Tipio demo actions
+                tipioActionsSection
+                
                 // Live streams available
                 activeStreamsSection
                 
@@ -451,6 +457,126 @@ struct LiveShowDemoView: View {
 }
 
 // MARK: - Previews
+
+    // MARK: - Tipio Sections
+    
+    @ViewBuilder
+    private var tipioConnectionSection: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            Text("Tipio.no Integration")
+                .font(ReachuTypography.title1)
+                .foregroundColor(adaptiveColors.textPrimary)
+            
+            HStack {
+                Circle()
+                    .fill(liveShowManager.isConnectedToTipio ? .green : .red)
+                    .frame(width: 12, height: 12)
+                
+                Text("Status: \(liveShowManager.connectionStatus)")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(adaptiveColors.textSecondary)
+                
+                Spacer()
+                
+                if liveShowManager.currentViewerCount > 0 {
+                    Text("👥 \(liveShowManager.currentViewerCount)")
+                        .font(ReachuTypography.caption)
+                        .foregroundColor(adaptiveColors.textSecondary)
+                }
+            }
+        }
+        .padding(ReachuSpacing.lg)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+    }
+    
+    @ViewBuilder
+    private var tipioActionsSection: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            Text("Tipio Actions")
+                .font(ReachuTypography.headline)
+                .foregroundColor(adaptiveColors.textPrimary)
+            
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: ReachuSpacing.md) {
+                
+                // Connect/Disconnect
+                RButton(
+                    title: liveShowManager.isConnectedToTipio ? "Disconnect" : "Connect",
+                    style: liveShowManager.isConnectedToTipio ? .destructive : .primary,
+                    size: .medium
+                ) {
+                    if liveShowManager.isConnectedToTipio {
+                        liveShowManager.disconnectFromTipio()
+                    } else {
+                        liveShowManager.connectToTipio()
+                    }
+                }
+                
+                // Fetch Active Streams
+                RButton(
+                    title: "Fetch Streams",
+                    style: .secondary,
+                    size: .medium
+                ) {
+                    Task {
+                        await liveShowManager.fetchActiveTipioStreams()
+                    }
+                }
+                
+                // Fetch Specific Stream (Demo ID: 381)
+                RButton(
+                    title: "Fetch Stream 381",
+                    style: .secondary,
+                    size: .medium
+                ) {
+                    Task {
+                        await liveShowManager.fetchTipioLiveStream(id: 381)
+                    }
+                }
+                
+                // Start Stream (Demo)
+                RButton(
+                    title: "Start Demo Stream",
+                    style: .primary,
+                    size: .medium
+                ) {
+                    Task {
+                        await liveShowManager.startTipioLiveStream(id: 381)
+                    }
+                }
+            }
+            
+            // API Response Example
+            VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                Text("Example Tipio Response:")
+                    .font(ReachuTypography.caption)
+                    .foregroundColor(adaptiveColors.textSecondary)
+                
+                Text("""
+                {
+                  "id": 381,
+                  "title": "test offline-asdasdasdad",
+                  "liveStreamId": "5404404",
+                  "hls": "https://live-ak2.vimeocdn.com/...",
+                  "broadcasting": false,
+                  "date": "2025-09-03T16:45:00.000Z"
+                }
+                """)
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundColor(adaptiveColors.textTertiary)
+                    .padding(ReachuSpacing.sm)
+                    .background(adaptiveColors.surfaceSecondary)
+                    .cornerRadius(ReachuBorderRadius.small)
+            }
+        }
+        .padding(ReachuSpacing.lg)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+    }
+}
 
 #Preview("Live Show Demo") {
     NavigationView {

@@ -4,7 +4,7 @@ import Combine
 import ReachuCore
 import struct Foundation.Date
 
-/// Global manager for LiveShow functionality - Similar to CartManager
+/// Global manager for LiveShow functionality with Tipio.no integration
 @MainActor
 public class LiveShowManager: ObservableObject {
     
@@ -20,13 +20,26 @@ public class LiveShowManager: ObservableObject {
     @Published public private(set) var isIndicatorVisible: Bool = true
     @Published public private(set) var activeStreams: [LiveStream] = []
     
+    // Tipio integration
+    @Published public private(set) var isConnectedToTipio: Bool = false
+    @Published public private(set) var connectionStatus: String = "Disconnected"
+    @Published public private(set) var currentViewerCount: Int = 0
+    
     // MARK: - Private Properties
     private var cancellables = Set<AnyCancellable>()
     private let configuration: LiveShowConfiguration
     
+    // Tipio clients
+    private lazy var tipioApiClient = TipioApiClient()
+    private lazy var tipioWebSocketClient = TipioWebSocketClient(
+        baseUrl: "wss://ws.tipio.no", // TODO: Get from configuration
+        apiKey: "your-tipio-api-key" // TODO: Get from configuration
+    )
+    
     // MARK: - Initialization
     private init() {
         self.configuration = ReachuConfiguration.shared.liveShowConfiguration
+        setupTipioIntegration()
         setupDemoData()
     }
     
@@ -115,7 +128,268 @@ public class LiveShowManager: ObservableObject {
         isLiveShowVisible || isMiniPlayerVisible
     }
     
+    // MARK: - Tipio Integration Methods
+    
+    /// Connect to Tipio services
+    public func connectToTipio() {
+        print("🔌 [LiveShow] Connecting to Tipio...")
+        tipioWebSocketClient.connect()
+    }
+    
+    /// Disconnect from Tipio services
+    public func disconnectFromTipio() {
+        print("🔌 [LiveShow] Disconnecting from Tipio...")
+        tipioWebSocketClient.disconnect()
+    }
+    
+    /// Fetch livestream from Tipio by ID
+    public func fetchTipioLiveStream(id: Int) async {
+        do {
+            print("📡 [LiveShow] Fetching Tipio livestream: \(id)")
+            let tipioStream = try await tipioApiClient.getLiveStream(id: id)
+            
+            // Convert to Reachu LiveStream
+            let liveStream = tipioStream.toLiveStream()
+            
+            // Update active streams
+            if let index = activeStreams.firstIndex(where: { $0.id == liveStream.id }) {
+                activeStreams[index] = liveStream
+            } else {
+                activeStreams.append(liveStream)
+            }
+            
+            print("✅ [LiveShow] Successfully fetched and converted Tipio stream: \(tipioStream.title)")
+            
+            // Subscribe to real-time events for this stream
+            tipioWebSocketClient.subscribeToStream(id)
+            
+        } catch {
+            print("❌ [LiveShow] Failed to fetch Tipio livestream: \(error)")
+        }
+    }
+    
+    /// Fetch all active livestreams from Tipio
+    public func fetchActiveTipioStreams() async {
+        do {
+            print("📡 [LiveShow] Fetching active Tipio livestreams")
+            let tipioStreams = try await tipioApiClient.getActiveLiveStreams()
+            
+            // Convert all to Reachu LiveStreams
+            let liveStreams = tipioStreams.map { $0.toLiveStream() }
+            
+            // Update active streams
+            activeStreams = liveStreams
+            
+            print("✅ [LiveShow] Successfully fetched \(liveStreams.count) active streams from Tipio")
+            
+            // Subscribe to real-time events for all active streams
+            for tipioStream in tipioStreams {
+                tipioWebSocketClient.subscribeToStream(tipioStream.id)
+            }
+            
+        } catch {
+            print("❌ [LiveShow] Failed to fetch active Tipio livestreams: \(error)")
+        }
+    }
+    
+    /// Start a livestream via Tipio
+    public func startTipioLiveStream(id: Int) async {
+        do {
+            print("🚀 [LiveShow] Starting Tipio livestream: \(id)")
+            let status = try await tipioApiClient.startLiveStream(id: id)
+            print("✅ [LiveShow] Successfully started livestream: \(status)")
+            
+            // Refresh the stream data
+            await fetchTipioLiveStream(id: id)
+            
+        } catch {
+            print("❌ [LiveShow] Failed to start Tipio livestream: \(error)")
+        }
+    }
+    
+    /// Stop a livestream via Tipio
+    public func stopTipioLiveStream(id: Int) async {
+        do {
+            print("⏹️ [LiveShow] Stopping Tipio livestream: \(id)")
+            let status = try await tipioApiClient.stopLiveStream(id: id)
+            print("✅ [LiveShow] Successfully stopped livestream: \(status)")
+            
+            // Refresh the stream data
+            await fetchTipioLiveStream(id: id)
+            
+        } catch {
+            print("❌ [LiveShow] Failed to stop Tipio livestream: \(error)")
+        }
+    }
+    
     // MARK: - Private Methods
+    
+    /// Setup Tipio integration and event handling
+    private func setupTipioIntegration() {
+        // Monitor WebSocket connection status
+        tipioWebSocketClient.connectionPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] status in
+                self?.isConnectedToTipio = (status == .connected)
+                self?.connectionStatus = status.displayName
+            }
+            .store(in: &cancellables)
+        
+        // Handle real-time events from Tipio
+        tipioWebSocketClient.eventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] event in
+                self?.handleTipioEvent(event)
+            }
+            .store(in: &cancellables)
+        
+        print("🔧 [LiveShow] Tipio integration setup completed")
+    }
+    
+    /// Handle real-time events from Tipio WebSocket
+    private func handleTipioEvent(_ event: TipioEvent) {
+        print("📡 [LiveShow] Handling Tipio event: \(event.type.rawValue) for stream \(event.streamId)")
+        
+        switch event.data {
+        case .streamStatus(let statusData):
+            handleStreamStatusUpdate(streamId: event.streamId, status: statusData)
+            
+        case .chatMessage(let chatData):
+            handleChatMessage(streamId: event.streamId, chatData: chatData)
+            
+        case .viewerCount(let viewerData):
+            handleViewerCountUpdate(streamId: event.streamId, viewerData: viewerData)
+            
+        case .productHighlight(let productData):
+            handleProductHighlight(streamId: event.streamId, productData: productData)
+            
+        case .component(let componentData):
+            handleComponentEvent(streamId: event.streamId, componentData: componentData)
+        }
+    }
+    
+    /// Handle stream status updates
+    private func handleStreamStatusUpdate(streamId: Int, status: TipioStreamStatusData) {
+        guard let index = activeStreams.firstIndex(where: { $0.id == String(streamId) }) else {
+            print("⚠️ [LiveShow] Stream not found for status update: \(streamId)")
+            return
+        }
+        
+        var updatedStream = activeStreams[index]
+        
+        // Update video URL if HLS is available
+        if let hlsUrl = status.hlsUrl, !hlsUrl.isEmpty {
+            updatedStream = LiveStream(
+                id: updatedStream.id,
+                title: updatedStream.title,
+                description: updatedStream.description,
+                streamer: updatedStream.streamer,
+                videoUrl: hlsUrl,
+                thumbnailUrl: updatedStream.thumbnailUrl,
+                viewerCount: updatedStream.viewerCount,
+                isLive: status.broadcasting,
+                startTime: updatedStream.startTime,
+                endTime: updatedStream.endTime,
+                featuredProducts: updatedStream.featuredProducts,
+                chatMessages: updatedStream.chatMessages
+            )
+            
+            activeStreams[index] = updatedStream
+            
+            // Update current stream if it's the one being updated
+            if currentStream?.id == updatedStream.id {
+                currentStream = updatedStream
+            }
+            
+            print("✅ [LiveShow] Updated stream status for: \(streamId)")
+        }
+    }
+    
+    /// Handle chat messages
+    private func handleChatMessage(streamId: Int, chatData: TipioChatMessageData) {
+        guard let index = activeStreams.firstIndex(where: { $0.id == String(streamId) }) else {
+            return
+        }
+        
+        let liveChatMessage = chatData.toLiveChatMessage()
+        var updatedMessages = activeStreams[index].chatMessages
+        updatedMessages.append(liveChatMessage)
+        
+        // Keep only last 100 messages for performance
+        if updatedMessages.count > 100 {
+            updatedMessages = Array(updatedMessages.suffix(100))
+        }
+        
+        var updatedStream = activeStreams[index]
+        updatedStream = LiveStream(
+            id: updatedStream.id,
+            title: updatedStream.title,
+            description: updatedStream.description,
+            streamer: updatedStream.streamer,
+            videoUrl: updatedStream.videoUrl,
+            thumbnailUrl: updatedStream.thumbnailUrl,
+            viewerCount: updatedStream.viewerCount,
+            isLive: updatedStream.isLive,
+            startTime: updatedStream.startTime,
+            endTime: updatedStream.endTime,
+            featuredProducts: updatedStream.featuredProducts,
+            chatMessages: updatedMessages
+        )
+        
+        activeStreams[index] = updatedStream
+        
+        if currentStream?.id == updatedStream.id {
+            currentStream = updatedStream
+        }
+        
+        print("💬 [LiveShow] New chat message in stream \(streamId): \(chatData.message)")
+    }
+    
+    /// Handle viewer count updates
+    private func handleViewerCountUpdate(streamId: Int, viewerData: TipioViewerCountData) {
+        guard let index = activeStreams.firstIndex(where: { $0.id == String(streamId) }) else {
+            return
+        }
+        
+        var updatedStream = activeStreams[index]
+        updatedStream = LiveStream(
+            id: updatedStream.id,
+            title: updatedStream.title,
+            description: updatedStream.description,
+            streamer: updatedStream.streamer,
+            videoUrl: updatedStream.videoUrl,
+            thumbnailUrl: updatedStream.thumbnailUrl,
+            viewerCount: viewerData.count,
+            isLive: updatedStream.isLive,
+            startTime: updatedStream.startTime,
+            endTime: updatedStream.endTime,
+            featuredProducts: updatedStream.featuredProducts,
+            chatMessages: updatedStream.chatMessages
+        )
+        
+        activeStreams[index] = updatedStream
+        
+        if currentStream?.id == updatedStream.id {
+            currentStream = updatedStream
+            currentViewerCount = viewerData.count
+        }
+        
+        print("👥 [LiveShow] Viewer count updated for stream \(streamId): \(viewerData.count)")
+    }
+    
+    /// Handle product highlighting
+    private func handleProductHighlight(streamId: Int, productData: TipioProductHighlightData) {
+        print("🛍️ [LiveShow] Product highlighted in stream \(streamId): \(productData.productId)")
+        // TODO: Implement product highlighting logic
+        // This could trigger UI animations, overlays, etc.
+    }
+    
+    /// Handle dynamic component events
+    private func handleComponentEvent(streamId: Int, componentData: TipioComponentData) {
+        print("🧩 [LiveShow] Component event in stream \(streamId): \(componentData.type) - Active: \(componentData.active)")
+        // TODO: Implement dynamic component system
+        // This could show/hide UI components, banners, countdowns, etc.
+    }
     
     /// Setup demo data for development
     private func setupDemoData() {
