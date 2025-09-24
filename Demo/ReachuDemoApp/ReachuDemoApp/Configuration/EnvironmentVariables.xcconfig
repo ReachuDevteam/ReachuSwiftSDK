@@ -1,0 +1,57 @@
+// Environment Variables Configuration for Reachu SDK
+// 
+// This file contains environment variables for different configurations.
+// To use this file in Xcode:
+// 1. Go to Project Settings > Info > Configurations
+// 2. Duplicate Debug/Release configurations
+// 3. Set the .xcconfig file for each configuration
+//
+// Or manually add these variables in:
+// Edit Scheme > Run > Environment Variables
+
+// ========================================
+// DARK STREAMING THEME CONFIGURATION
+// ========================================
+// Uncomment the line below to use Dark Streaming Theme
+REACHU_CONFIG_TYPE = dark-streaming
+
+// ========================================
+// AUTOMATIC THEME CONFIGURATION  
+// ========================================
+// Uncomment the line below to use Automatic Light/Dark Theme
+// REACHU_CONFIG_TYPE = automatic
+
+// ========================================
+// EXAMPLE THEME CONFIGURATION
+// ========================================
+// Uncomment the line below to use Example Theme (same as dark-streaming)
+// REACHU_CONFIG_TYPE = example
+
+// ========================================
+// CUSTOM API CONFIGURATION
+// ========================================
+// Uncomment and modify these for custom API settings
+// REACHU_API_KEY = your-custom-api-key-here
+// REACHU_ENVIRONMENT = production
+// REACHU_ENVIRONMENT = sandbox
+
+// ========================================
+// USAGE INSTRUCTIONS
+// ========================================
+//
+// Method 1: Using .xcconfig file (Recommended)
+// 1. In Xcode, go to Project Settings > Info > Configurations
+// 2. Duplicate Debug configuration and name it "Debug-Dark"
+// 3. Set the .xcconfig file for "Debug-Dark" configuration
+// 4. Switch between configurations to change themes
+//
+// Method 2: Manual Environment Variables
+// 1. Edit Scheme > Run > Environment Variables
+// 2. Add: REACHU_CONFIG_TYPE = dark-streaming
+// 3. Or change to: REACHU_CONFIG_TYPE = automatic
+//
+// Method 3: Code-based switching
+// In your AppDelegate or App.swift:
+// try ConfigurationLoader.loadFromJSON(fileName: "reachu-config-dark-streaming")
+// Or
+// try ConfigurationLoader.loadFromJSON(fileName: "reachu-config-automatic")
