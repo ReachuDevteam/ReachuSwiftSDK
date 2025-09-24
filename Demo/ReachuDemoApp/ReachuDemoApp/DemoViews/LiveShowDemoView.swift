@@ -454,10 +454,7 @@ struct LiveShowDemoView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
-
-// MARK: - Previews
-
+    
     // MARK: - Tipio Sections
     
     @ViewBuilder
@@ -589,6 +586,8 @@ struct LiveShowDemoView: View {
         .cornerRadius(ReachuBorderRadius.medium)
     }
 }
+
+// MARK: - Previews
 
 #Preview("Live Show Demo") {
     NavigationView {
