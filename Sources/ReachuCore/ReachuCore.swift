@@ -25,9 +25,27 @@ public final class SdkClient {
         self.channel = Channel(apolloClient)
         self.checkout = CheckoutRepositoryGQL(client: apolloClient)
         self.discount = DiscountRepositoryGQL(
-            client: apolloClient, apiKey: apiKey, baseUrl: baseUrl.absoluteString)
+            client: apolloClient,
+            apiKey: apiKey,
+            baseUrl: baseUrl.absoluteString
+        )
         self.market = MarketRepositoryGQL(client: apolloClient)
         self.payment = PaymentRepositoryGQL(client: apolloClient)
+
+        _ = prepareGraphQLOpsNoop()
+    }
+}
+
+extension SdkClient {
+    @inlinable
+    public func noop<T>(_ value: T) -> T { value }
+
+    @discardableResult
+    public func prepareGraphQLOpsNoop() -> Bool {
+        Task {
+            let _ = await GraphQLOperationLoader().loadAll(from: [])
+        }
+        return true
     }
 }
 
