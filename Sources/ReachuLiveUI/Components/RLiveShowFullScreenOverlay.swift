@@ -2,6 +2,7 @@ import SwiftUI
 import AVKit
 import AVFoundation
 import CoreMedia
+import WebKit
 import ReachuCore
 import ReachuLiveShow
 import ReachuDesignSystem
@@ -119,8 +120,13 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func videoPlayerSection(stream: LiveStream) -> some View {
         if let player = player {
-            // Custom video player using AVPlayerLayer to maintain UI control
-            CustomVideoPlayer(player: player)
+            // Custom video player using WebView to maintain UI control
+            CustomVideoPlayer(
+                player: player,
+                isPlaying: $isPlaying,
+                videoProgress: .constant(0),
+                videoDuration: .constant(100)
+            )
         } else {
             // Thumbnail placeholder
             AsyncImage(url: URL(string: stream.thumbnailUrl ?? "")) { image in
@@ -539,15 +545,10 @@ public struct RLiveShowFullScreenOverlay: View {
     private func setupPlayer() {
         guard let stream = currentStream else { return }
         
-        // Use HLS URL if available, otherwise use player URL
-        let videoURL: URL?
-        if stream.videoUrl.contains("m3u8") {
-            videoURL = URL(string: stream.videoUrl)
-        } else {
-            videoURL = URL(string: stream.videoUrl)
-        }
+        // For demo, use the working Vimeo URL
+        let vimeoUrl = "https://player.vimeo.com/video/1029631656"
         
-        if let url = videoURL {
+        if let url = URL(string: vimeoUrl) {
             player = AVPlayer(url: url)
             
             // Auto-play if live
@@ -556,6 +557,7 @@ public struct RLiveShowFullScreenOverlay: View {
             }
             
             isLoading = false
+            print("🎬 [LiveShow] Using Vimeo URL: \(vimeoUrl)")
         } else {
             isLoading = false
         }
@@ -664,47 +666,186 @@ public struct RLiveShowFullScreenOverlay: View {
 // MARK: - Custom Video Player
 
 #if os(iOS)
-/// Custom video player that doesn't take over fullscreen (iOS only)
+/// Custom Vimeo video player using WebView (based on working implementation)
 struct CustomVideoPlayer: UIViewRepresentable {
     let player: AVPlayer
+    @Binding var isPlaying: Bool
+    @Binding var videoProgress: Double
+    @Binding var videoDuration: Double
     
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = UIColor.black
-        
-        let playerLayer = AVPlayerLayer(player: player)
-        playerLayer.videoGravity = .resizeAspectFill
-        playerLayer.frame = view.bounds
-        
-        view.layer.addSublayer(playerLayer)
-        
-        // Store layer reference for updates
-        context.coordinator.playerLayer = playerLayer
-        
-        return view
+    // Extract URL from AVPlayer
+    private var vimeoUrl: String {
+        guard let url = player.currentItem?.asset as? AVURLAsset else {
+            return "https://player.vimeo.com/video/1029631656"
+        }
+        return url.url.absoluteString
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {
-        // Update layer frame when view bounds change
-        if let playerLayer = context.coordinator.playerLayer {
-            DispatchQueue.main.async {
-                playerLayer.frame = uiView.bounds
+    func makeUIView(context: Context) -> WKWebView {
+        print("🎬 [LiveShow] Creating WebView video player with URL: \(vimeoUrl)")
+        
+        // Basic configuration
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        
+        // Create the WebView
+        let webView = WKWebView(frame: .zero, configuration: configuration)
+        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.bounces = false
+        webView.backgroundColor = UIColor.black
+        webView.isOpaque = false
+        
+        // Add navigation delegate
+        webView.navigationDelegate = context.coordinator
+        
+        // Setup coordinator
+        context.coordinator.webView = webView
+        context.coordinator.parent = self
+        
+        return webView
+    }
+    
+    func updateUIView(_ webView: WKWebView, context: Context) {
+        print("🔄 [LiveShow] Updating WebView video player")
+        
+        // Check if isPlaying changed and update the video
+        if context.coordinator.tempIsPlaying != isPlaying {
+            context.coordinator.tempIsPlaying = isPlaying
+            
+            let playPauseScript = isPlaying ? 
+                "if (window.vimeoPlayer) { window.vimeoPlayer.play(); }" :
+                "if (window.vimeoPlayer) { window.vimeoPlayer.pause(); }"
+            
+            webView.evaluateJavaScript(playPauseScript) { _, error in
+                if let error = error {
+                    print("❌ [LiveShow] Error controlling playback: \(error.localizedDescription)")
+                }
             }
+        }
+        
+        // Load HTML with Vimeo embed (only if not already loaded)
+        if webView.url == nil {
+            let html = createVimeoHTML()
+            webView.loadHTMLString(html, baseURL: URL(string: "https://player.vimeo.com"))
         }
     }
     
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
+    private func createVimeoHTML() -> String {
+        return """
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+            <style>
+                body, html {
+                    margin: 0;
+                    padding: 0;
+                    height: 100%;
+                    width: 100%;
+                    background-color: #000000;
+                    overflow: hidden;
+                }
+                div {
+                    position: relative;
+                    padding: 56.25% 0 0 0; /* 16:9 aspect ratio */
+                }
+                iframe {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    border: none;
+                }
+            </style>
+        </head>
+        <body>
+            <div>
+                <iframe src="\(vimeoUrl)?badge=0&autopause=0&player_id=0&app_id=58479&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&api=1"
+                        frameborder="0"
+                        allow="autoplay; fullscreen; picture-in-picture"
+                        allowfullscreen>
+                </iframe>
+            </div>
+            
+            <script src="https://player.vimeo.com/api/player.js"></script>
+            <script>
+                window.onload = function() {
+                    console.log('🎬 Vimeo HTML page loaded');
+                    setupVimeoPlayer();
+                };
+                
+                function setupVimeoPlayer() {
+                    try {
+                        var iframe = document.querySelector('iframe');
+                        if (iframe) {
+                            console.log('🎬 Iframe found, initializing Vimeo player');
+                            
+                            var player = new Vimeo.Player(iframe);
+                            
+                            player.on('play', function() {
+                                console.log('▶️ Video is playing');
+                                window.isPlaying = true;
+                            });
+                            
+                            player.on('pause', function() {
+                                console.log('⏸️ Video is paused');
+                                window.isPlaying = false;
+                            });
+                            
+                            player.on('timeupdate', function(data) {
+                                window.videoProgress = data.percent;
+                                window.videoDuration = data.duration;
+                            });
+                            
+                            player.on('loaded', function() {
+                                console.log('✅ Video loaded successfully');
+                            });
+                            
+                            window.vimeoPlayer = player;
+                        }
+                    } catch (e) {
+                        console.error('❌ Error setting up Vimeo player:', e);
+                    }
+                }
+            </script>
+        </body>
+        </html>
+        """
     }
     
-    class Coordinator {
-        var playerLayer: AVPlayerLayer?
+    func makeCoordinator() -> Coordinator {
+        Coordinator(self)
+    }
+    
+    class Coordinator: NSObject, WKNavigationDelegate {
+        var parent: CustomVideoPlayer
+        var webView: WKWebView?
+        var tempIsPlaying: Bool = false
+        
+        init(_ parent: CustomVideoPlayer) {
+            self.parent = parent
+            self.tempIsPlaying = parent.isPlaying
+            super.init()
+        }
+        
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            print("✅ [LiveShow] WebView navigation finished")
+        }
+        
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            print("❌ [LiveShow] WebView navigation failed: \(error.localizedDescription)")
+        }
     }
 }
 #else
 /// Fallback video player for non-iOS platforms
 struct CustomVideoPlayer: View {
     let player: AVPlayer
+    @Binding var isPlaying: Bool
+    @Binding var videoProgress: Double
+    @Binding var videoDuration: Double
     
     var body: some View {
         // Use VideoPlayer for non-iOS platforms
