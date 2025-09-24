@@ -1574,8 +1574,11 @@ struct LiveStreamGlobalOverlay: View {
     
     var body: some View {
         ZStack {
-            // Video background overlay
-            if liveShowManager.isLiveShowVisible,
+            // Full screen LiveShow overlay - Use the complete component
+            if liveShowManager.isLiveShowVisible {
+                RLiveShowFullScreenOverlay()
+                    .environmentObject(cartManager)
+            } else if false, // Disabled old overlay
                let stream = liveShowManager.currentStream {
                 
                 // Video Player Background

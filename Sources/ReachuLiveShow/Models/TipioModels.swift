@@ -22,6 +22,32 @@ public struct TipioLiveStream: Identifiable, Codable {
         case endDate = "end_date"
     }
     
+    public init(
+        id: Int,
+        title: String,
+        liveStreamId: String,
+        hls: String?,
+        player: String?,
+        thumbnail: String?,
+        broadcasting: Bool,
+        date: Date,
+        endDate: Date,
+        streamDone: Bool?,
+        videoId: String?
+    ) {
+        self.id = id
+        self.title = title
+        self.liveStreamId = liveStreamId
+        self.hls = hls
+        self.player = player
+        self.thumbnail = thumbnail
+        self.broadcasting = broadcasting
+        self.date = date
+        self.endDate = endDate
+        self.streamDone = streamDone
+        self.videoId = videoId
+    }
+    
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         

@@ -393,14 +393,29 @@ public class LiveShowManager: ObservableObject {
     
     /// Setup demo data for development
     private func setupDemoData() {
+        // Use real Tipio demo data
+        let tipioStream = TipioLiveStream(
+            id: 381,
+            title: "test offline-asdasdasdad",
+            liveStreamId: "5404404",
+            hls: "https://live-ak2.vimeocdn.com/41e8eba2-be55-425c-858c-ea4dabf5ccb7/hls.m3u8?hdnts=exp%3D1749607195~acl%3D%252F41e8eba2-be55-425c-858c-ea4dabf5ccb7%252Fhls.m3u8%252A~hmac%3Db00ebb53ad71a3d5635664843951461af683de78cfeccdd14fcf07362c26a397",
+            player: "https://vimeo.com/1091391964",
+            thumbnail: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
+            broadcasting: false,
+            date: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
+            endDate: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
+            streamDone: nil,
+            videoId: "1091391964"
+        )
+        
         // Create demo streamers
         let streamer1 = LiveStreamer(
-            id: "streamer1",
-            name: "Uniqlo",
-            username: "@uniqlo",
-            avatarUrl: "https://picsum.photos/100/100?random=1",
+            id: "tipio-381",
+            name: "Live Host",
+            username: "@livehost",
+            avatarUrl: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
             isVerified: true,
-            followerCount: 125000
+            followerCount: 1247
         )
         
         let streamer2 = LiveStreamer(
@@ -435,16 +450,9 @@ public class LiveShowManager: ObservableObject {
         // Create demo chat messages
         let chatMessages = createDemoChatMessages()
         
-        // Create demo streams
-        let stream1 = LiveStream(
-            id: "stream-1",
-            title: "Spring Fashion Collection Launch", 
-            description: "Discover the latest spring trends with exclusive live offers!",
+        // Create demo streams using Tipio data
+        let stream1 = tipioStream.toLiveStream(
             streamer: streamer1,
-            videoUrl: "https://vimeo.com/1029631656", // Tu video de Vimeo
-            thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
-            viewerCount: 1247,
-            isLive: true,
             featuredProducts: [product1, product2],
             chatMessages: chatMessages
         )

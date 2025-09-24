@@ -235,3 +235,15 @@ public enum MiniPlayerPosition: String, CaseIterable {
         }
     }
 }
+
+// MARK: - Extensions
+
+extension Price {
+    /// Formatted price string for display
+    public var formattedPrice: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency_code
+        return formatter.string(from: NSNumber(value: amount)) ?? "\(currency_code) \(amount)"
+    }
+}

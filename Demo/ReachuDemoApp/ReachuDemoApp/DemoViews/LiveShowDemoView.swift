@@ -547,6 +547,18 @@ struct LiveShowDemoView: View {
                         await liveShowManager.startTipioLiveStream(id: 381)
                     }
                 }
+                
+                // Show Full Overlay
+                RButton(
+                    title: "Show Full Overlay",
+                    style: .primary,
+                    size: .medium
+                ) {
+                    // Use the first stream (Tipio demo data)
+                    if let stream = liveShowManager.activeStreams.first {
+                        liveShowManager.showLiveStream(stream, layout: .fullScreenOverlay)
+                    }
+                }
             }
             
             // API Response Example
