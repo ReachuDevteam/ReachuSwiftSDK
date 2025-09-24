@@ -477,7 +477,7 @@ struct LiveShowDemoView: View {
                 
                 if liveShowManager.currentViewerCount > 0 {
                     Text("👥 \(liveShowManager.currentViewerCount)")
-                        .font(ReachuTypography.caption)
+                        .font(.caption)
                         .foregroundColor(adaptiveColors.textSecondary)
                 }
             }
@@ -561,7 +561,7 @@ struct LiveShowDemoView: View {
             // API Response Example
             VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                 Text("Example Tipio Response:")
-                    .font(ReachuTypography.caption)
+                    .font(.caption)
                     .foregroundColor(adaptiveColors.textSecondary)
                 
                 Text("""
