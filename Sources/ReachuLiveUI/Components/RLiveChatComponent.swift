@@ -26,7 +26,23 @@ public struct RLiveChatComponent: View {
     public var body: some View {
         VStack(spacing: 0) {
             if showChat {
-                // Chat messages
+                // Chat header
+                HStack {
+                    Text("Live Chat")
+                        .font(.caption.weight(.semibold))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text("\(chatManager.messages.count) messages")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .padding(.horizontal, ReachuSpacing.md)
+                .padding(.vertical, ReachuSpacing.sm)
+                .background(Color.black.opacity(0.8))
+                
+                // Chat messages with gradient background
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -38,7 +54,17 @@ public struct RLiveChatComponent: View {
                         .padding(.vertical, ReachuSpacing.sm)
                     }
                     .frame(maxHeight: 120)
-                    .background(Color.black.opacity(0.7))
+                    .background(
+                        LinearGradient(
+                            colors: [
+                                Color.black.opacity(0.9),
+                                Color.black.opacity(0.7),
+                                Color.black.opacity(0.5)
+                            ],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
                     .onChange(of: chatManager.messages.count) { _ in
                         // Auto-scroll to last message
                         if let lastMessage = chatManager.messages.last {
@@ -93,7 +119,18 @@ public struct RLiveChatComponent: View {
             }
             .padding(.horizontal, ReachuSpacing.md)
             .padding(.vertical, ReachuSpacing.sm)
-            .background(Color.black.opacity(0.8))
+            .padding(.bottom, 0) // Remove bottom padding to reach edge
+            .background(
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.9),
+                        Color.black.opacity(0.8)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+            .ignoresSafeArea(.container, edges: .bottom) // Extend to screen bottom
         }
     }
     
@@ -117,18 +154,13 @@ public struct RLiveChatComponent: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                // Username with badges
+                // Username with admin badges only
                 HStack(spacing: ReachuSpacing.xs) {
                     Text(message.user.username)
                         .font(.caption.weight(.semibold))
                         .foregroundColor(getUsernameColor(for: message))
                     
-                    if message.user.isVerified {
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.caption2)
-                            .foregroundColor(.blue)
-                    }
-                    
+                    // Only show MOD badge for admins/moderators
                     if message.user.isModerator {
                         Text("MOD")
                             .font(.caption2.weight(.bold))
@@ -160,10 +192,8 @@ public struct RLiveChatComponent: View {
             return Color.red // Streamer messages in red
         } else if message.user.isModerator {
             return Color.yellow // Moderator messages in yellow
-        } else if message.user.isVerified {
-            return Color.blue // Verified users in blue
         } else {
-            return Color.white.opacity(0.9) // Regular users
+            return Color.white.opacity(0.9) // Regular users (no verified badge)
         }
     }
     

@@ -62,6 +62,20 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
+            // Floating LIVE badge (over controls)
+            VStack {
+                HStack {
+                    Spacer()
+                    
+                    // Animated LIVE badge
+                    AnimatedLiveBadge()
+                        .padding(.top, ReachuSpacing.lg)
+                        .padding(.trailing, ReachuSpacing.md)
+                }
+                
+                Spacer()
+            }
+            
             // Chat component at bottom (always visible)
             VStack {
                 Spacer()
@@ -242,72 +256,72 @@ public struct RLiveShowFullScreenOverlay: View {
             
             Spacer()
             
-            // Center - LIVE badge and viewer count
-            VStack(spacing: ReachuSpacing.sm) {
-                // LIVE badge (moved to center-right)
+            // Viewer count (LIVE badge now floating)
+            if liveShowManager.currentViewerCount > 0 {
                 HStack(spacing: ReachuSpacing.xs) {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
-                    
-                    Text("LIVE")
-                        .font(.caption.weight(.bold))
-                        .foregroundColor(.white)
+                    Image(systemName: "eye.fill")
+                        .font(.caption2)
+                    Text("\(liveShowManager.currentViewerCount)")
+                        .font(.caption)
                 }
+                .foregroundColor(.white)
                 .padding(.horizontal, ReachuSpacing.sm)
                 .padding(.vertical, ReachuSpacing.xs)
                 .background(Color.black.opacity(0.6))
                 .cornerRadius(ReachuBorderRadius.small)
-                
-                // Viewer count
-                if liveShowManager.currentViewerCount > 0 {
-                    HStack(spacing: ReachuSpacing.xs) {
-                        Image(systemName: "eye.fill")
-                            .font(.caption2)
-                        Text("\(liveShowManager.currentViewerCount)")
-                            .font(.caption)
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, ReachuSpacing.sm)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(ReachuBorderRadius.small)
-                }
             }
             
-            // Top right controls (larger and closer to edge)
-            VStack(spacing: ReachuSpacing.xs) {
+            // Right controls (clean style, moved towards center)
+            VStack(spacing: ReachuSpacing.md) {
                 // Close button
                 Button(action: {
                     liveShowManager.hideLiveStream()
                     dismiss()
                 }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.7))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
                 
                 // Play/Pause button
                 Button(action: togglePlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.7))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
                 
                 // Mute/Unmute button
                 Button(action: toggleMute) {
                     Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.7))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
                 
                 // Minimize to mini player
@@ -316,11 +330,17 @@ public struct RLiveShowFullScreenOverlay: View {
                     dismiss()
                 }) {
                     Image(systemName: "pip.enter")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.7))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
                 
                 // Share button
@@ -328,15 +348,21 @@ public struct RLiveShowFullScreenOverlay: View {
                     shareStream(stream)
                 }) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 40, height: 40)
-                        .background(Color.black.opacity(0.7))
-                        .clipShape(Circle())
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
             }
         }
-        .padding(.horizontal, ReachuSpacing.lg)
+        .padding(.horizontal, ReachuSpacing.md) // Less padding to move controls towards center
         .padding(.top, ReachuSpacing.lg)
     }
     
@@ -941,6 +967,41 @@ struct CustomVideoPlayer: View {
     }
 }
 #endif
+
+// MARK: - Animated LIVE Badge
+
+struct AnimatedLiveBadge: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            // Pulsating red dot
+            Circle()
+                .fill(Color.red)
+                .frame(width: 8, height: 8)
+                .scaleEffect(isAnimating ? 1.3 : 1.0)
+                .opacity(isAnimating ? 0.7 : 1.0)
+                .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)
+            
+            Text("LIVE")
+                .font(.caption.weight(.bold))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(Color.black.opacity(0.6))
+                .background(
+                    Capsule()
+                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .onAppear {
+            isAnimating = true
+        }
+    }
+}
 
 // MARK: - Preview
 
