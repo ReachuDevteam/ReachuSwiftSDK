@@ -57,9 +57,9 @@ public struct RLiveChatComponent: View {
                     .background(
                         LinearGradient(
                             colors: [
-                                Color.black.opacity(0.9),
                                 Color.black.opacity(0.7),
-                                Color.black.opacity(0.5)
+                                Color.black.opacity(0.5),
+                                Color.black.opacity(0.3)
                             ],
                             startPoint: .bottom,
                             endPoint: .top
@@ -123,8 +123,8 @@ public struct RLiveChatComponent: View {
             .background(
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.9),
-                        Color.black.opacity(0.8)
+                        Color.black.opacity(0.6),
+                        Color.black.opacity(0.7)
                     ],
                     startPoint: .top,
                     endPoint: .bottom

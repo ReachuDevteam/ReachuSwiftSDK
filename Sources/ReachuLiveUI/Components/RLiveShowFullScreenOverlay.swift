@@ -24,7 +24,7 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var player: AVPlayer?
     @State private var showControls = true
     @State private var controlsTimer: Timer?
-    @State private var showShopping = false
+    // showShopping removed - now handled by RLiveBottomTabs
     @State private var isLoading = true
     @State private var isPlaying = false
     @State private var isMuted = true
@@ -62,26 +62,29 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
-            // Floating LIVE badge (over controls)
+            // Floating LIVE badge (positioned to not overlap X button)
             VStack {
                 HStack {
                     Spacer()
                     
-                    // Animated LIVE badge
-                    AnimatedLiveBadge()
-                        .padding(.top, ReachuSpacing.lg)
-                        .padding(.trailing, ReachuSpacing.md)
+                    VStack {
+                        // Animated LIVE badge
+                        AnimatedLiveBadge()
+                        
+                        Spacer()
+                    }
+                    .padding(.top, ReachuSpacing.lg)
+                    .padding(.trailing, 100) // Give space for control buttons
                 }
                 
                 Spacer()
             }
             
-            // Chat component at bottom (always visible)
+            // Bottom tabs (Chat and Products)
             VStack {
                 Spacer()
-                RLiveChatComponent()
-                    .background(Color.clear)
-                    .ignoresSafeArea(.keyboard, edges: .bottom)
+                RLiveBottomTabs(products: currentStream?.featuredProducts ?? [])
+                    .environmentObject(cartManager)
             }
             
             // Center indicators
@@ -388,17 +391,8 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func bottomControlsContent(stream: LiveStream) -> some View {
         VStack(spacing: ReachuSpacing.md) {
-            // Shopping toggle and connection status
-            HStack(spacing: ReachuSpacing.lg) {
-                Button(action: { showShopping.toggle() }) {
-                    HStack(spacing: ReachuSpacing.xs) {
-                        Image(systemName: "bag.fill")
-                        Text("Shop")
-                    }
-                    .font(.caption)
-                    .foregroundColor(showShopping ? adaptiveColors.primary : .white.opacity(0.7))
-                }
-                
+            // Connection status only (tabs handle chat/shopping)
+            HStack {
                 Spacer()
                 
                 // Connection status
@@ -411,13 +405,11 @@ public struct RLiveShowFullScreenOverlay: View {
                             .font(.caption)
                             .foregroundColor(.white.opacity(0.7))
                     }
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(ReachuBorderRadius.small)
                 }
-            }
-            
-            // Content sections
-            if showShopping {
-                // Shopping section
-                shoppingSection(stream: stream)
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
@@ -975,28 +967,22 @@ struct AnimatedLiveBadge: View {
     
     var body: some View {
         HStack(spacing: 6) {
-            // Pulsating red dot
+            // Pulsating red dot (only the dot animates)
             Circle()
                 .fill(Color.red)
                 .frame(width: 8, height: 8)
-                .scaleEffect(isAnimating ? 1.3 : 1.0)
-                .opacity(isAnimating ? 0.7 : 1.0)
+                .scaleEffect(isAnimating ? 1.4 : 1.0)
+                .opacity(isAnimating ? 0.6 : 1.0)
                 .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)
             
             Text("LIVE")
                 .font(.caption.weight(.bold))
                 .foregroundColor(.white)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 6)
-        .background(
-            Capsule()
-                .fill(Color.black.opacity(0.6))
-                .background(
-                    Capsule()
-                        .stroke(Color.red.opacity(0.3), lineWidth: 1)
-                )
-        )
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
+        .background(Color.black.opacity(0.6))
+        .cornerRadius(ReachuBorderRadius.small)
         .onAppear {
             isAnimating = true
         }
