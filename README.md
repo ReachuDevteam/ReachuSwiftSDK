@@ -39,12 +39,17 @@ dependencies: [
    ```swift
    import ReachuCore
    
-   // Auto-detect config file
+   // Auto-detect config file (reads from environment variables)
    try ConfigurationLoader.loadConfiguration()
    
-   // Or specify a file
+   // Or specify a file directly
    try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
    ```
+
+4. **Optional: Set environment variables** in your app for quick theme switching:
+   - **In Xcode**: Edit Scheme → Run → Environment Variables
+   - **Add**: `REACHU_CONFIG_TYPE` = `dark-streaming` (or `automatic`)
+   - **The SDK will automatically use the correct theme**
 
 ### Choose Your Modules
 
