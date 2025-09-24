@@ -14,19 +14,52 @@ public class ConfigurationLoader {
     
     /// Load configuration from a JSON file in the app bundle
     /// 
-    /// **Usage:**
+    /// **Smart Configuration Loading:**
     /// ```swift
-    /// // Create reachu-config.json in your app bundle
+    /// // Option 1: Auto-detect config (recommended)
+    /// try ConfigurationLoader.loadConfiguration()
+    /// 
+    /// // Option 2: Specific file
     /// try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
     /// ```
+    public static func loadConfiguration(bundle: Bundle = .main) throws {
+        // 1. Check environment variable first
+        if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
+            print("🔧 [Config] Using environment config type: \(configType)")
+            let fileName = "reachu-config-\(configType)"
+            try loadFromJSON(fileName: fileName, bundle: bundle)
+            return
+        }
+        
+        // 2. Check for specific config files in order of preference
+        let configFiles = [
+            "reachu-config-dark-streaming",  // Dark theme
+            "reachu-config-automatic",       // Automatic theme
+            "reachu-config-example",         // Default fallback
+            "reachu-config"                  // User custom
+        ]
+        
+        for fileName in configFiles {
+            if bundle.path(forResource: fileName, ofType: "json") != nil {
+                print("🔧 [Config] Found config file: \(fileName).json")
+                try loadFromJSON(fileName: fileName, bundle: bundle)
+                return
+            }
+        }
+        
+        throw ConfigurationError.fileNotFound(fileName: "reachu-config (no config file found)")
+    }
+    
     public static func loadFromJSON(fileName: String, bundle: Bundle = .main) throws {
         guard let path = bundle.path(forResource: fileName, ofType: "json"),
               let data = FileManager.default.contents(atPath: path) else {
             throw ConfigurationError.fileNotFound(fileName: "\(fileName).json")
         }
         
+        print("📄 [Config] Loading configuration from: \(fileName).json")
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         applyConfiguration(config)
+        print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
     }
     
     /// Load configuration from JSON string
@@ -228,10 +261,19 @@ public class ConfigurationLoader {
     private static func createLiveShowConfiguration(from liveShowConfig: JSONLiveShowConfiguration?) -> LiveShowConfiguration {
         guard let config = liveShowConfig else { return .default }
         
+        // Use streaming.autoJoinChat if available, otherwise fallback to legacy autoJoinChat
+        let autoJoinChat = config.streaming?.autoJoinChat ?? config.autoJoinChat ?? true
+        
+        // Use shopping.enableShoppingDuringStream if available, otherwise fallback to legacy enableShopping
+        let enableShopping = config.shopping?.enableShoppingDuringStream ?? config.enableShopping ?? true
+        
+        // Use streaming.enableAutoplay if available, otherwise fallback to legacy enableAutoplay
+        let enableAutoplay = config.streaming?.enableAutoplay ?? config.enableAutoplay ?? false
+        
         return LiveShowConfiguration(
-            autoJoinChat: config.autoJoinChat,
-            enableShoppingDuringStream: config.enableShopping,
-            enableAutoplay: config.enableAutoplay
+            autoJoinChat: autoJoinChat,
+            enableShoppingDuringStream: enableShopping,
+            enableAutoplay: enableAutoplay
         )
     }
 }
@@ -299,9 +341,127 @@ private struct JSONUIConfiguration: Codable {
 }
 
 private struct JSONLiveShowConfiguration: Codable {
-    let autoJoinChat: Bool
-    let enableShopping: Bool
-    let enableAutoplay: Bool
+    let tipio: JSONTipioConfiguration?
+    let vimeo: JSONVimeoConfiguration?
+    let realTime: JSONRealTimeConfiguration?
+    let components: JSONComponentsConfiguration?
+    let streaming: JSONStreamingConfiguration?
+    let chat: JSONChatConfiguration?
+    let shopping: JSONShoppingConfiguration?
+    let ui: JSONLiveShowUIConfiguration?
+    let notifications: JSONNotificationsConfiguration?
+    
+    // Legacy properties for backward compatibility
+    let autoJoinChat: Bool?
+    let enableShopping: Bool?
+    let enableAutoplay: Bool?
+}
+
+private struct JSONTipioConfiguration: Codable {
+    let apiKey: String?
+    let baseUrl: String?
+    let enableWebhooks: Bool?
+    let webhookSecret: String?
+}
+
+private struct JSONVimeoConfiguration: Codable {
+    let apiKey: String?
+    let accessToken: String?
+    let baseUrl: String?
+    let enableEmbedPlayer: Bool?
+}
+
+private struct JSONRealTimeConfiguration: Codable {
+    let webSocketUrl: String?
+    let autoReconnect: Bool?
+    let heartbeatInterval: Int?
+    let maxReconnectAttempts: Int?
+    let componentCacheTimeout: Int?
+    let autoRefreshInterval: Int?
+}
+
+private struct JSONComponentsConfiguration: Codable {
+    let enableDynamicComponents: Bool?
+    let maxConcurrentComponents: Int?
+    let defaultAnimationDuration: Double?
+    let enableOfflineCache: Bool?
+    let preloadNextComponents: Bool?
+}
+
+private struct JSONStreamingConfiguration: Codable {
+    let autoJoinChat: Bool?
+    let enableAutoplay: Bool?
+    let videoQuality: String?
+    let enablePictureInPicture: Bool?
+    let enableFullscreen: Bool?
+    let showStreamControls: Bool?
+    let muteByDefault: Bool?
+}
+
+private struct JSONChatConfiguration: Codable {
+    let enableChat: Bool?
+    let enableChatModeration: Bool?
+    let maxChatMessageLength: Int?
+    let enableEmojis: Bool?
+    let enableChatNotifications: Bool?
+    let chatRefreshInterval: Double?
+    let enableUserMentions: Bool?
+    let enableChatHistory: Bool?
+    let showChatAvatars: Bool?
+}
+
+private struct JSONShoppingConfiguration: Codable {
+    let enableShoppingDuringStream: Bool?
+    let showProductOverlays: Bool?
+    let enableQuickBuy: Bool?
+    let productOverlayDuration: Double?
+    let enableProductNotifications: Bool?
+    let integrateLiveCart: Bool?
+    let specialPricingEnabled: Bool?
+    let countdownEnabled: Bool?
+}
+
+private struct JSONLiveShowUIConfiguration: Codable {
+    let playerAspectRatio: String?
+    let enableLiveIndicator: Bool?
+    let showViewerCount: Bool?
+    let enableShareButton: Bool?
+    let layout: JSONLayoutConfiguration?
+    let branding: JSONBrandingConfiguration?
+    let animations: JSONAnimationsConfiguration?
+}
+
+private struct JSONLayoutConfiguration: Codable {
+    let defaultLayout: String?
+    let enableLayoutSwitching: Bool?
+    let miniPlayerPosition: String?
+}
+
+private struct JSONBrandingConfiguration: Codable {
+    let liveIndicatorColor: String?
+    let accentColor: String?
+    let overlayBackgroundOpacity: Double?
+    let gradientOverlay: Bool?
+    let cardBackgroundColor: String?
+    let highlightColor: String?
+    let shadowColor: String?
+    let shadowOpacity: Double?
+}
+
+private struct JSONAnimationsConfiguration: Codable {
+    let enableEntryAnimations: Bool?
+    let enableExitAnimations: Bool?
+    let componentTransitionDuration: Double?
+    let fadeInDuration: Double?
+    let slideAnimationEnabled: Bool?
+}
+
+private struct JSONNotificationsConfiguration: Codable {
+    let enableStreamNotifications: Bool?
+    let enableProductNotifications: Bool?
+    let enableComponentNotifications: Bool?
+    let notificationSound: Bool?
+    let showNotificationBadges: Bool?
 }
 
 // MARK: - Plist Configuration
