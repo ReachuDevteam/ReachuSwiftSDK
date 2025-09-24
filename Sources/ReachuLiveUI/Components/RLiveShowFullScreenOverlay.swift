@@ -24,9 +24,7 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var player: AVPlayer?
     @State private var showControls = true
     @State private var controlsTimer: Timer?
-    @State private var showChat = true
     @State private var showShopping = false
-    @State private var chatMessage = ""
     @State private var isLoading = true
     @State private var isPlaying = false
     @State private var isMuted = true
@@ -62,6 +60,14 @@ public struct RLiveShowFullScreenOverlay: View {
             // Overlay UI
             if let stream = currentStream {
                 overlayUI(stream: stream)
+            }
+            
+            // Chat component at bottom (always visible)
+            VStack {
+                Spacer()
+                RLiveChatComponent()
+                    .background(Color.clear)
+                    .ignoresSafeArea(.keyboard, edges: .bottom)
             }
             
             // Center indicators
@@ -127,10 +133,18 @@ public struct RLiveShowFullScreenOverlay: View {
         // Use WebView for Vimeo URLs, AVPlayer for direct video URLs
         if stream.videoUrl.contains("player.vimeo.com") {
             VimeoWebPlayer(videoUrl: stream.videoUrl)
+                .onReceive(NotificationCenter.default.publisher(for: .vimeoPlayerLoaded)) { _ in
+                    // Hide loading when video actually loads
+                    isLoading = false
+                    print("✅ [LiveShow] Vimeo player loaded - hiding loading indicator")
+                }
                 .onAppear {
-                    // Hide loading after WebView appears
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                        isLoading = false
+                    // Fallback: hide loading after 5 seconds if no signal received
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                        if isLoading {
+                            isLoading = false
+                            print("⏰ [LiveShow] Loading timeout - hiding indicator")
+                        }
                     }
                 }
         } else if let player = player {
@@ -192,40 +206,8 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func topControlsContent(stream: LiveStream) -> some View {
         HStack(alignment: .top, spacing: ReachuSpacing.md) {
+            // Left side - Stream info
             VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                // Live indicator and viewer count
-                HStack(spacing: ReachuSpacing.sm) {
-                    // LIVE badge
-                    HStack(spacing: ReachuSpacing.xs) {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 8, height: 8)
-                        
-                        Text("LIVE")
-                            .font(.caption.weight(.bold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, ReachuSpacing.sm)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(ReachuBorderRadius.small)
-                    
-                    // Viewer count
-                    if liveShowManager.currentViewerCount > 0 {
-                        HStack(spacing: ReachuSpacing.xs) {
-                            Image(systemName: "eye.fill")
-                                .font(.caption2)
-                            Text("\(liveShowManager.currentViewerCount)")
-                                .font(.caption)
-                        }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.sm)
-                        .padding(.vertical, ReachuSpacing.xs)
-                        .background(Color.black.opacity(0.6))
-                        .cornerRadius(ReachuBorderRadius.small)
-                    }
-                }
-                
                 // Stream title and streamer info
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     Text(stream.title)
@@ -260,38 +242,71 @@ public struct RLiveShowFullScreenOverlay: View {
             
             Spacer()
             
-            // Top right controls
+            // Center - LIVE badge and viewer count
             VStack(spacing: ReachuSpacing.sm) {
+                // LIVE badge (moved to center-right)
+                HStack(spacing: ReachuSpacing.xs) {
+                    Circle()
+                        .fill(Color.red)
+                        .frame(width: 8, height: 8)
+                    
+                    Text("LIVE")
+                        .font(.caption.weight(.bold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, ReachuSpacing.sm)
+                .padding(.vertical, ReachuSpacing.xs)
+                .background(Color.black.opacity(0.6))
+                .cornerRadius(ReachuBorderRadius.small)
+                
+                // Viewer count
+                if liveShowManager.currentViewerCount > 0 {
+                    HStack(spacing: ReachuSpacing.xs) {
+                        Image(systemName: "eye.fill")
+                            .font(.caption2)
+                        Text("\(liveShowManager.currentViewerCount)")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(ReachuBorderRadius.small)
+                }
+            }
+            
+            // Top right controls (larger and closer to edge)
+            VStack(spacing: ReachuSpacing.xs) {
                 // Close button
                 Button(action: {
                     liveShowManager.hideLiveStream()
                     dismiss()
                 }) {
                     Image(systemName: "xmark")
-                        .font(.title2)
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.6))
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.7))
                         .clipShape(Circle())
                 }
                 
                 // Play/Pause button
                 Button(action: togglePlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title3)
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.6))
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.7))
                         .clipShape(Circle())
                 }
                 
                 // Mute/Unmute button
                 Button(action: toggleMute) {
                     Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
-                        .font(.title3)
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.6))
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.7))
                         .clipShape(Circle())
                 }
                 
@@ -301,10 +316,10 @@ public struct RLiveShowFullScreenOverlay: View {
                     dismiss()
                 }) {
                     Image(systemName: "pip.enter")
-                        .font(.title3)
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.6))
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.7))
                         .clipShape(Circle())
                 }
                 
@@ -313,10 +328,10 @@ public struct RLiveShowFullScreenOverlay: View {
                     shareStream(stream)
                 }) {
                     Image(systemName: "square.and.arrow.up")
-                        .font(.title3)
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
-                        .background(Color.black.opacity(0.6))
+                        .frame(width: 40, height: 40)
+                        .background(Color.black.opacity(0.7))
                         .clipShape(Circle())
                 }
             }
@@ -347,17 +362,8 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func bottomControlsContent(stream: LiveStream) -> some View {
         VStack(spacing: ReachuSpacing.md) {
-            // Toggle buttons
+            // Shopping toggle and connection status
             HStack(spacing: ReachuSpacing.lg) {
-                Button(action: { showChat.toggle() }) {
-                    HStack(spacing: ReachuSpacing.xs) {
-                        Image(systemName: "bubble.left.fill")
-                        Text("Chat")
-                    }
-                    .font(.caption)
-                    .foregroundColor(showChat ? adaptiveColors.primary : .white.opacity(0.7))
-                }
-                
                 Button(action: { showShopping.toggle() }) {
                     HStack(spacing: ReachuSpacing.xs) {
                         Image(systemName: "bag.fill")
@@ -383,72 +389,16 @@ public struct RLiveShowFullScreenOverlay: View {
             }
             
             // Content sections
-            HStack(spacing: ReachuSpacing.md) {
-                // Chat section
-                if showChat {
-                    chatSection(stream: stream)
-                        .frame(maxWidth: .infinity)
-                }
-                
+            if showShopping {
                 // Shopping section
-                if showShopping {
-                    shoppingSection(stream: stream)
-                        .frame(maxWidth: .infinity)
-                }
+                shoppingSection(stream: stream)
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
         .padding(.bottom, ReachuSpacing.xl)
     }
     
-    // MARK: - Chat Section
-    
-    @ViewBuilder
-    private func chatSection(stream: LiveStream) -> some View {
-        VStack(spacing: ReachuSpacing.sm) {
-            // Chat messages
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    ForEach(stream.chatMessages.suffix(5)) { message in
-                        chatMessageView(message: message)
-                    }
-                }
-            }
-            .frame(maxHeight: 120)
-            
-            // Chat input
-            HStack(spacing: ReachuSpacing.sm) {
-                TextField("Type a message...", text: $chatMessage)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(ReachuTypography.body)
-                
-                Button(action: sendChatMessage) {
-                    Image(systemName: "paperplane.fill")
-                        .foregroundColor(adaptiveColors.primary)
-                }
-                .disabled(chatMessage.isEmpty)
-            }
-        }
-        .padding(ReachuSpacing.md)
-        .background(Color.black.opacity(0.6))
-        .cornerRadius(ReachuBorderRadius.medium)
-    }
-    
-    @ViewBuilder
-    private func chatMessageView(message: LiveChatMessage) -> some View {
-        HStack(alignment: .top, spacing: ReachuSpacing.xs) {
-            Text(message.user.username)
-                .font(.caption.weight(.semibold))
-                .foregroundColor(message.isStreamerMessage ? Color.blue : Color.white.opacity(0.8))
-            
-            Text(message.message)
-                .font(.caption)
-                .foregroundColor(.white)
-                .lineLimit(nil)
-            
-            Spacer()
-        }
-    }
+    // Chat section removed - now using RLiveChatComponent at bottom
     
     // MARK: - Shopping Section
     
@@ -797,14 +747,7 @@ public struct RLiveShowFullScreenOverlay: View {
         }
     }
     
-    private func sendChatMessage() {
-        guard !chatMessage.isEmpty else { return }
-        
-        // In a real implementation, this would send the message via WebSocket
-        print("💬 [LiveShow] Sending chat message: \(chatMessage)")
-        
-        chatMessage = ""
-    }
+    // sendChatMessage removed - now handled by RLiveChatComponent
     
     private func shareStream(_ stream: LiveStream) {
         // Implement sharing functionality
@@ -916,6 +859,12 @@ struct VimeoWebPlayer: UIViewRepresentable {
         
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
             print("✅ [LiveShow] Vimeo WebView navigation finished")
+            
+            // Wait for iframe to load, then send notification
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                NotificationCenter.default.post(name: .vimeoPlayerLoaded, object: nil)
+                print("📺 [LiveShow] Posted Vimeo player loaded notification")
+            }
         }
         
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
@@ -998,6 +947,12 @@ struct CustomVideoPlayer: View {
 #Preview {
     RLiveShowFullScreenOverlay()
         .environmentObject(CartManager())
+}
+
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let vimeoPlayerLoaded = Notification.Name("vimeoPlayerLoaded")
 }
 
 // MARK: - Extensions for Debugging
