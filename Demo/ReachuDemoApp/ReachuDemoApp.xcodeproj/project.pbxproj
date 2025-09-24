@@ -10,6 +10,8 @@
 		176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 176858B72E7D89B300110C55 /* ReachuDesignSystem */; };
 		176858ED2E7F372400110C55 /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EC2E7F372400110C55 /* ReachuUI */; };
 		176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 176859322E82D1E500110C55 /* ReachuLiveShow */; };
+		17BD21FC2E84904E00853E53 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD21FB2E84904E00853E53 /* ReachuLiveShow */; };
+		17BD21FE2E84904E00853E53 /* ReachuLiveUI in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD21FD2E84904E00853E53 /* ReachuLiveUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,9 +60,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BD21FE2E84904E00853E53 /* ReachuLiveUI in Frameworks */,
 				176858ED2E7F372400110C55 /* ReachuUI in Frameworks */,
 				176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */,
 				176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */,
+				17BD21FC2E84904E00853E53 /* ReachuLiveShow in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -124,6 +128,8 @@
 				176858B72E7D89B300110C55 /* ReachuDesignSystem */,
 				176858EC2E7F372400110C55 /* ReachuUI */,
 				176859322E82D1E500110C55 /* ReachuLiveShow */,
+				17BD21FB2E84904E00853E53 /* ReachuLiveShow */,
+				17BD21FD2E84904E00853E53 /* ReachuLiveUI */,
 			);
 			productName = ReachuDemoApp;
 			productReference = 176858862E7D876500110C55 /* ReachuDemoApp.app */;
@@ -613,6 +619,14 @@
 		176859322E82D1E500110C55 /* ReachuLiveShow */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ReachuLiveShow;
+		};
+		17BD21FB2E84904E00853E53 /* ReachuLiveShow */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuLiveShow;
+		};
+		17BD21FD2E84904E00853E53 /* ReachuLiveUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuLiveUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,9 +1,15 @@
 import SwiftUI
 import AVKit
+import AVFoundation
+import CoreMedia
 import ReachuCore
 import ReachuLiveShow
 import ReachuDesignSystem
 import ReachuUI
+
+#if os(iOS)
+import UIKit
+#endif
 
 /// Full-screen LiveShow overlay with video player, chat, shopping, and controls
 public struct RLiveShowFullScreenOverlay: View {
@@ -21,6 +27,9 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var showShopping = false
     @State private var chatMessage = ""
     @State private var isLoading = true
+    @State private var isPlaying = false
+    @State private var isMuted = true
+    @State private var showPlayPauseIndicator = false
     
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
@@ -54,6 +63,26 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
+            // Center indicators
+            VStack {
+                Spacer()
+                
+                // Play/Pause indicator (appears temporarily)
+                if showPlayPauseIndicator {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.system(size: 64))
+                        .foregroundColor(.white)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.6))
+                                .frame(width: 100, height: 100)
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                }
+                
+                Spacer()
+            }
+            
             // Loading indicator
             if isLoading {
                 loadingIndicator
@@ -62,11 +91,19 @@ public struct RLiveShowFullScreenOverlay: View {
         .onAppear {
             setupPlayer()
             startControlsTimer()
+            if let stream = currentStream {
+                configurePlayer(with: stream)
+            }
         }
         .onDisappear {
             cleanup()
         }
+        .onTapGesture(count: 2) {
+            // Double tap to play/pause
+            togglePlayPause()
+        }
         .onTapGesture {
+            // Single tap to show/hide controls
             toggleControls()
         }
         .gesture(
@@ -82,10 +119,8 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func videoPlayerSection(stream: LiveStream) -> some View {
         if let player = player {
-            VideoPlayer(player: player)
-                .onAppear {
-                    configurePlayer(with: stream)
-                }
+            // Custom video player using AVPlayerLayer to maintain UI control
+            CustomVideoPlayer(player: player)
         } else {
             // Thumbnail placeholder
             AsyncImage(url: URL(string: stream.thumbnailUrl ?? "")) { image in
@@ -215,6 +250,26 @@ public struct RLiveShowFullScreenOverlay: View {
                 }) {
                     Image(systemName: "xmark")
                         .font(.title2)
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Circle())
+                }
+                
+                // Play/Pause button
+                Button(action: togglePlayPause) {
+                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                        .font(.title3)
+                        .foregroundColor(.white)
+                        .frame(width: 32, height: 32)
+                        .background(Color.black.opacity(0.6))
+                        .clipShape(Circle())
+                }
+                
+                // Mute/Unmute button
+                Button(action: toggleMute) {
+                    Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                        .font(.title3)
                         .foregroundColor(.white)
                         .frame(width: 32, height: 32)
                         .background(Color.black.opacity(0.6))
@@ -511,6 +566,44 @@ public struct RLiveShowFullScreenOverlay: View {
         if stream.isLive {
             player?.automaticallyWaitsToMinimizeStalling = false
         }
+        
+        // Set initial state
+        player?.isMuted = isMuted
+        isPlaying = player?.rate != 0
+        
+        // Monitor playback state
+        player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.1, preferredTimescale: 600), queue: .main) { _ in
+            self.isPlaying = self.player?.rate != 0
+        }
+    }
+    
+    private func togglePlayPause() {
+        guard let player = player else { return }
+        
+        if isPlaying {
+            player.pause()
+        } else {
+            player.play()
+        }
+        
+        // Show temporary play/pause indicator
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            showPlayPauseIndicator = true
+        }
+        
+        // Hide indicator after 1 second
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                showPlayPauseIndicator = false
+            }
+        }
+    }
+    
+    private func toggleMute() {
+        guard let player = player else { return }
+        
+        isMuted.toggle()
+        player.isMuted = isMuted
     }
     
     private func toggleControls() {
@@ -566,4 +659,63 @@ public struct RLiveShowFullScreenOverlay: View {
         player?.pause()
         controlsTimer?.invalidate()
     }
+}
+
+// MARK: - Custom Video Player
+
+#if os(iOS)
+/// Custom video player that doesn't take over fullscreen (iOS only)
+struct CustomVideoPlayer: UIViewRepresentable {
+    let player: AVPlayer
+    
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = UIColor.black
+        
+        let playerLayer = AVPlayerLayer(player: player)
+        playerLayer.videoGravity = .resizeAspectFill
+        playerLayer.frame = view.bounds
+        
+        view.layer.addSublayer(playerLayer)
+        
+        // Store layer reference for updates
+        context.coordinator.playerLayer = playerLayer
+        
+        return view
+    }
+    
+    func updateUIView(_ uiView: UIView, context: Context) {
+        // Update layer frame when view bounds change
+        if let playerLayer = context.coordinator.playerLayer {
+            DispatchQueue.main.async {
+                playerLayer.frame = uiView.bounds
+            }
+        }
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+    
+    class Coordinator {
+        var playerLayer: AVPlayerLayer?
+    }
+}
+#else
+/// Fallback video player for non-iOS platforms
+struct CustomVideoPlayer: View {
+    let player: AVPlayer
+    
+    var body: some View {
+        // Use VideoPlayer for non-iOS platforms
+        VideoPlayer(player: player)
+    }
+}
+#endif
+
+// MARK: - Preview
+
+#Preview {
+    RLiveShowFullScreenOverlay()
+        .environmentObject(CartManager())
 }
