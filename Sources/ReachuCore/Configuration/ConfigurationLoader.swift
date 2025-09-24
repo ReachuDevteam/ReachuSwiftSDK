@@ -14,19 +14,52 @@ public class ConfigurationLoader {
     
     /// Load configuration from a JSON file in the app bundle
     /// 
-    /// **Usage:**
+    /// **Smart Configuration Loading:**
     /// ```swift
-    /// // Create reachu-config.json in your app bundle
+    /// // Option 1: Auto-detect config (recommended)
+    /// try ConfigurationLoader.loadConfiguration()
+    /// 
+    /// // Option 2: Specific file
     /// try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
     /// ```
+    public static func loadConfiguration(bundle: Bundle = .main) throws {
+        // 1. Check environment variable first
+        if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
+            print("🔧 [Config] Using environment config type: \(configType)")
+            let fileName = "reachu-config-\(configType)"
+            try loadFromJSON(fileName: fileName, bundle: bundle)
+            return
+        }
+        
+        // 2. Check for specific config files in order of preference
+        let configFiles = [
+            "reachu-config-dark-streaming",  // Dark theme
+            "reachu-config-automatic",       // Automatic theme
+            "reachu-config-example",         // Default fallback
+            "reachu-config"                  // User custom
+        ]
+        
+        for fileName in configFiles {
+            if bundle.path(forResource: fileName, ofType: "json") != nil {
+                print("🔧 [Config] Found config file: \(fileName).json")
+                try loadFromJSON(fileName: fileName, bundle: bundle)
+                return
+            }
+        }
+        
+        throw ConfigurationError.fileNotFound(fileName: "reachu-config (no config file found)")
+    }
+    
     public static func loadFromJSON(fileName: String, bundle: Bundle = .main) throws {
         guard let path = bundle.path(forResource: fileName, ofType: "json"),
               let data = FileManager.default.contents(atPath: path) else {
             throw ConfigurationError.fileNotFound(fileName: "\(fileName).json")
         }
         
+        print("📄 [Config] Loading configuration from: \(fileName).json")
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         applyConfiguration(config)
+        print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
     }
     
     /// Load configuration from JSON string

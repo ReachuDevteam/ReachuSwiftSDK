@@ -22,6 +22,30 @@ dependencies: [
 ]
 ```
 
+### 🎨 Configuration Setup
+
+1. **Copy configuration files** from the demo app to your project:
+   ```bash
+   # Copy from: Demo/ReachuDemoApp/ReachuDemoApp/Configuration/
+   # To your app bundle as: reachu-config.json
+   ```
+
+2. **Choose your theme**:
+   - `reachu-config-example.json` - **Dark Streaming Theme** (default)
+   - `reachu-config-automatic.json` - **Automatic Light/Dark Theme**
+   - `reachu-config-starter.json` - **Minimal configuration**
+
+3. **Load configuration** in your app:
+   ```swift
+   import ReachuCore
+   
+   // Auto-detect config file
+   try ConfigurationLoader.loadConfiguration()
+   
+   // Or specify a file
+   try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
+   ```
+
 ### Choose Your Modules
 
 Import only what you need:
