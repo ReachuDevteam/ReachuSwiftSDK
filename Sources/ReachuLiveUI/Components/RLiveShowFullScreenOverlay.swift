@@ -63,18 +63,17 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
-            // Floating LIVE badge (positioned away from controls)
+            // Floating LIVE badge (positioned on the right)
             VStack {
                 HStack {
-                    // Position LIVE badge on the left side to avoid overlap
+                    Spacer()
+                    
                     VStack {
                         AnimatedLiveBadge()
                         Spacer()
                     }
                     .padding(.top, ReachuSpacing.lg)
-                    .padding(.leading, ReachuSpacing.lg)
-                    
-                    Spacer()
+                    .padding(.trailing, ReachuSpacing.lg)
                 }
                 
                 Spacer()
@@ -249,57 +248,53 @@ public struct RLiveShowFullScreenOverlay: View {
     @ViewBuilder
     private func topControlsContent(stream: LiveStream) -> some View {
         HStack(alignment: .top, spacing: ReachuSpacing.md) {
-            // Left side - Stream info
-            VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                // Stream title and streamer info
-                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text(stream.title)
-                        .font(ReachuTypography.headline)
-                        .foregroundColor(.white)
-                        .lineLimit(2)
-                    
-                    // Remove streamer info to keep it cleaner
-                    // HStack with streamer details removed
-                }
-            }
-            
-            Spacer()
-            
-            // Viewer count (LIVE badge now floating)
-            if liveShowManager.currentViewerCount > 0 {
-                HStack(spacing: ReachuSpacing.xs) {
-                    Image(systemName: "eye.fill")
-                        .font(.caption2)
-                    Text("\(liveShowManager.currentViewerCount)")
-                        .font(.caption)
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, ReachuSpacing.sm)
-                .padding(.vertical, ReachuSpacing.xs)
-                .background(Color.black.opacity(0.6))
-                .cornerRadius(ReachuBorderRadius.small)
-            }
-            
-            // Right controls (clean style, moved towards center)
-            VStack(spacing: ReachuSpacing.md) {
-                // Close button
+            // Left side - Close button (small)
+            VStack {
                 Button(action: {
                     liveShowManager.hideLiveStream()
                     dismiss()
                 }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 32, height: 32)
                         .background(
                             Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
+                                .fill(Color.black.opacity(0.5))
                         )
                 }
+                
+                Spacer()
+            }
+            
+            // Center - Stream info
+            VStack(alignment: .center, spacing: ReachuSpacing.sm) {
+                Text(stream.title)
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                
+                // Viewer count
+                if liveShowManager.currentViewerCount > 0 {
+                    HStack(spacing: ReachuSpacing.xs) {
+                        Image(systemName: "eye.fill")
+                            .font(.caption2)
+                        Text("\(liveShowManager.currentViewerCount)")
+                            .font(.caption)
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, ReachuSpacing.sm)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(Color.black.opacity(0.6))
+                    .cornerRadius(ReachuBorderRadius.small)
+                }
+            }
+            
+            Spacer()
+            
+            // Right controls (clean style, moved towards center)
+            VStack(spacing: ReachuSpacing.md) {
                 
                 // Play/Pause button
                 Button(action: togglePlayPause) {

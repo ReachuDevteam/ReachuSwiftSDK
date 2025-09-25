@@ -190,10 +190,10 @@ public class LiveLikesManager: ObservableObject {
     }
     
     /// Create a user-generated like (called from button)
-    public func createUserLike() {
+    public func createUserLike(from position: CGPoint = CGPoint(x: 350, y: 450)) {
         let heart = FlyingHeartModel(
             id: UUID().uuidString,
-            startPosition: CGPoint(x: 350, y: CGFloat.random(in: 300...500)),
+            startPosition: position, // Start from button position
             isUserGenerated: true
         )
         

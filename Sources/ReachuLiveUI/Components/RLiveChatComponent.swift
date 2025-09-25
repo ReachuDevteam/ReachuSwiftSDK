@@ -26,23 +26,7 @@ public struct RLiveChatComponent: View {
     public var body: some View {
         VStack(spacing: 0) {
             if showChat {
-                // Chat header
-                HStack {
-                    Text("Live Chat")
-                        .font(.caption.weight(.semibold))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    Text("\(chatManager.messages.count) messages")
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                .padding(.horizontal, ReachuSpacing.md)
-                .padding(.vertical, ReachuSpacing.sm)
-                .background(Color.black.opacity(0.8))
-                
-                // Chat messages with gradient background
+                // Chat messages with fading gradient background (no header)
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -57,9 +41,9 @@ public struct RLiveChatComponent: View {
                     .background(
                         LinearGradient(
                             colors: [
-                                Color.black.opacity(0.7),
-                                Color.black.opacity(0.5),
-                                Color.black.opacity(0.3)
+                                Color.black.opacity(0.6),
+                                Color.black.opacity(0.3),
+                                Color.clear
                             ],
                             startPoint: .bottom,
                             endPoint: .top
@@ -123,7 +107,7 @@ public struct RLiveChatComponent: View {
             .background(
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.6),
+                        Color.clear,
                         Color.black.opacity(0.7)
                     ],
                     startPoint: .top,
