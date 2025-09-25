@@ -9,9 +9,10 @@ public struct RLiveProductCard: View {
     
     // MARK: - Properties
     private let product: LiveProduct
-    private let onAddToCart: (LiveProduct) -> Void
     
     @Environment(\.colorScheme) private var colorScheme
+    @EnvironmentObject private var cartManager: CartManager
+    @State private var showProductDetail = false
     
     // Configuration
     private var config: ReachuConfiguration { ReachuConfiguration.shared }
@@ -23,39 +24,45 @@ public struct RLiveProductCard: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    public init(
-        product: LiveProduct,
-        onAddToCart: @escaping (LiveProduct) -> Void
-    ) {
+    // Convert LiveProduct to Product for detail overlay
+    private var productForDetail: Product {
+        product.asProduct
+    }
+    
+    public init(product: LiveProduct) {
         self.product = product
-        self.onAddToCart = onAddToCart
     }
     
     // MARK: - Body
     public var body: some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Product image
+        HStack(spacing: ReachuSpacing.sm) {
+            // Product image (smaller)
             productImage
             
-            // Product info (expanded)
+            // Product info (compact)
             productInfo
             
-            // Action section
-            actionSection
+            // Live indicator only
+            liveIndicator
         }
-        .padding(ReachuSpacing.md)
+        .padding(ReachuSpacing.sm)
         .background(backgroundView)
         .overlay(borderView)
         .cornerRadius(theme.borderRadius.medium)
-        .shadow(
-            color: uiConfig.enableProductCardAnimations ? 
-                Color.black.opacity(0.1) : Color.clear,
-            radius: 4,
-            x: 0,
-            y: 2
-        )
         .onTapGesture {
-            handleTap()
+            showProductDetail = true
+        }
+        .sheet(isPresented: $showProductDetail) {
+            RProductDetailOverlay(
+                product: productForDetail,
+                onAddToCart: { product in
+                    // Handle add to cart from detail overlay
+                    Task {
+                        await cartManager.addProduct(product, quantity: 1)
+                    }
+                }
+            )
+            .environmentObject(cartManager)
         }
     }
     
@@ -76,7 +83,7 @@ public struct RLiveProductCard: View {
                         .scaleEffect(0.8)
                 )
         }
-        .frame(width: 80, height: 80)
+        .frame(width: 60, height: 60)
         .cornerRadius(theme.borderRadius.small)
         .clipped()
     }
@@ -85,30 +92,22 @@ public struct RLiveProductCard: View {
     
     @ViewBuilder
     private var productInfo: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-            // Product title
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            // Product title (smaller)
             Text(product.title)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(adaptiveColors.textPrimary)
-                .lineLimit(2)
+                .lineLimit(1)
                 .multilineTextAlignment(.leading)
             
-            // Brand name
+            // Brand name (smaller)
             Text("COSMED BEAUTY")
-                .font(.system(size: 12, weight: .medium))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundColor(adaptiveColors.textSecondary)
                 .lineLimit(1)
             
-            // Price section
+            // Price section (compact)
             priceSection
-            
-            // Special offer or discount
-            if let specialOffer = product.specialOffer, !specialOffer.isEmpty {
-                Text(specialOffer)
-                    .font(.system(size: 11))
-                    .foregroundColor(adaptiveColors.textTertiary)
-                    .lineLimit(2)
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -117,84 +116,34 @@ public struct RLiveProductCard: View {
     
     @ViewBuilder
     private var priceSection: some View {
-        HStack(spacing: ReachuSpacing.sm) {
-            // Current price
+        HStack(spacing: ReachuSpacing.xs) {
+            // Current price (smaller)
             Text(product.price.formattedPrice)
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.red)
             
-            // Original price (strikethrough)
+            // Original price (strikethrough, smaller)
             if let originalPrice = product.originalPrice {
                 Text(originalPrice.formattedPrice)
-                    .font(.system(size: 14, weight: .medium))
+                    .font(.system(size: 12))
                     .foregroundColor(adaptiveColors.textTertiary)
                     .strikethrough()
-            }
-            
-            // Discount badge
-            if let discount = product.discount, !discount.isEmpty {
-                Text(discount)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        Capsule()
-                            .fill(.red)
-                    )
             }
             
             Spacer()
         }
     }
     
-    // MARK: - Action Section
+    // MARK: - Live Indicator
     
     @ViewBuilder
-    private var actionSection: some View {
-        VStack(spacing: ReachuSpacing.sm) {
-            // Stock indicator
-            if let stockCount = product.stockCount, stockCount <= 10 {
-                Text("\(stockCount) left")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(.orange)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(
-                        Capsule()
-                            .fill(Color.orange.opacity(0.2))
-                    )
-            }
+    private var liveIndicator: some View {
+        VStack {
+            Circle()
+                .fill(.red)
+                .frame(width: 8, height: 8)
             
-            // Add to cart button
-            Button {
-                handleTap()
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 14))
-                    Text("Add")
-                        .font(.system(size: 12, weight: .semibold))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, ReachuSpacing.md)
-                .padding(.vertical, ReachuSpacing.sm)
-                .background(
-                    Capsule()
-                        .fill(adaptiveColors.primary)
-                )
-            }
-            .buttonStyle(PlainButtonStyle())
-            
-            // Live indicator
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(.red)
-                    .frame(width: 6, height: 6)
-                Text("LIVE")
-                    .font(.system(size: 9, weight: .bold))
-                    .foregroundColor(.red)
-            }
+            Spacer()
         }
     }
     
@@ -217,36 +166,18 @@ public struct RLiveProductCard: View {
         }
     }
     
-    // MARK: - Actions
-    
-    private func handleTap() {
-        onAddToCart(product)
-        
-        // Haptic feedback if enabled
-        if uiConfig.enableHapticFeedback {
-            #if os(iOS)
-            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-            impactFeedback.impactOccurred()
-            #endif
-        }
-    }
+    // Actions removed - now handled by RProductDetailOverlay
 }
 
 // MARK: - Preview
 
 #Preview("Light Mode") {
     VStack(spacing: 20) {
-        RLiveProductCard(
-            product: DemoProductData.featuredProducts[0]
-        ) { product in
-            print("Added to cart: \(product.title)")
-        }
+        RLiveProductCard(product: DemoProductData.featuredProducts[0])
+            .environmentObject(CartManager())
         
-        RLiveProductCard(
-            product: DemoProductData.featuredProducts[1]
-        ) { product in
-            print("Added to cart: \(product.title)")
-        }
+        RLiveProductCard(product: DemoProductData.featuredProducts[1])
+            .environmentObject(CartManager())
     }
     .padding()
     .background(Color.black.opacity(0.8))
@@ -254,17 +185,11 @@ public struct RLiveProductCard: View {
 
 #Preview("Dark Mode") {
     VStack(spacing: 20) {
-        RLiveProductCard(
-            product: DemoProductData.featuredProducts[0]
-        ) { product in
-            print("Added to cart: \(product.title)")
-        }
+        RLiveProductCard(product: DemoProductData.featuredProducts[0])
+            .environmentObject(CartManager())
         
-        RLiveProductCard(
-            product: DemoProductData.featuredProducts[1]
-        ) { product in
-            print("Added to cart: \(product.title)")
-        }
+        RLiveProductCard(product: DemoProductData.featuredProducts[1])
+            .environmentObject(CartManager())
     }
     .padding()
     .background(Color.black.opacity(0.8))

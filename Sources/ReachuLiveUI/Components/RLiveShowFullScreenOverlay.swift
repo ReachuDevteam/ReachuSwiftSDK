@@ -81,19 +81,18 @@ public struct RLiveShowFullScreenOverlay: View {
                 Spacer()
             }
             
-            // Bottom content (Chat and Featured Product)
+            // Bottom content (Chat above, Products at very bottom)
             VStack {
                 Spacer()
-                
-                // Featured products slider
-                if let stream = currentStream, !stream.featuredProducts.isEmpty {
-                    featuredProductsSlider(products: stream.featuredProducts)
-                        .padding(.bottom, ReachuSpacing.sm)
-                }
                 
                 // Chat component
                 RLiveChatComponent()
                     .environmentObject(cartManager)
+                
+                // Featured products slider (at bottom edge)
+                if let stream = currentStream, !stream.featuredProducts.isEmpty {
+                    featuredProductsSlider(products: stream.featuredProducts)
+                }
             }
             
             // Center indicators
@@ -410,18 +409,18 @@ public struct RLiveShowFullScreenOverlay: View {
     private func featuredProductsSlider(products: [LiveProduct]) -> some View {
         GeometryReader { geometry in
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ReachuSpacing.md) {
+                HStack(spacing: ReachuSpacing.sm) {
                     ForEach(products) { product in
-                        RLiveProductCard(product: product) { liveProduct in
-                            addProductToCartWithFeedback(liveProduct)
-                        }
-                        .frame(width: geometry.size.width - 40) // Full width minus margins
+                        RLiveProductCard(product: product)
+                            .frame(width: geometry.size.width - 32) // Full width minus small margins
+                            .environmentObject(cartManager)
                     }
                 }
-                .padding(.horizontal, ReachuSpacing.lg) // Margins on sides
+                .padding(.horizontal, ReachuSpacing.md) // Small margins on sides
             }
         }
-        .frame(height: 120) // Horizontal card height
+        .frame(height: 80) // Compact height for bottom placement
+        .background(Color.black.opacity(0.8)) // Background for products area
     }
     
     // Shopping section removed - now using featured product banner only
