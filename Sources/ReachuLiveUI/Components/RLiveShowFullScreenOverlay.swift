@@ -133,8 +133,7 @@ public struct RLiveShowFullScreenOverlay: View {
                 loadingIndicator
             }
             
-            // Ensure cart appears above everything in LiveShow
-            cartOverlayLayer
+            // Remove cart layer - cart is handled globally by ContentView
         }
         .onAppear {
             print("🎬 [LiveShow] Overlay appeared - starting setup")
@@ -426,10 +425,15 @@ public struct RLiveShowFullScreenOverlay: View {
         GeometryReader { geometry in
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.sm) {
-                    ForEach(products) { product in
-                        RLiveProductCard(product: product)
-                            .frame(width: geometry.size.width - 32) // Full width minus small margins
-                            .environmentObject(cartManager)
+                    ForEach(products) { liveProduct in
+                        // Convert LiveProduct to Product and use existing RProductCard
+                        RProductCard(
+                            product: liveProduct.asProduct, 
+                            variant: .list,
+                            showDescription: false
+                        )
+                        .frame(width: geometry.size.width - 32) // Full width minus small margins
+                        .environmentObject(cartManager)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md) // Small margins on sides
@@ -741,23 +745,7 @@ public struct RLiveShowFullScreenOverlay: View {
         controlsTimer?.invalidate()
     }
     
-    // MARK: - Cart Overlay Layer
-    
-    @ViewBuilder
-    private var cartOverlayLayer: some View {
-        VStack {
-            // Floating cart indicator (above LiveShow)
-            HStack {
-                Spacer()
-                RFloatingCartIndicator()
-                    .environmentObject(cartManager)
-            }
-            .padding(.trailing, ReachuSpacing.lg)
-            .padding(.top, ReachuSpacing.xl)
-            
-            Spacer()
-        }
-    }
+    // Cart overlay removed - handled globally by ContentView
 }
 
 // MARK: - Custom Video Player

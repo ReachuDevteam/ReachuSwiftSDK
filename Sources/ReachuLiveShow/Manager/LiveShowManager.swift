@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import ReachuCore
+import ReachuTesting
 import struct Foundation.Date
 
 /// Global manager for LiveShow functionality with Tipio.no integration
@@ -427,25 +428,24 @@ public class LiveShowManager: ObservableObject {
             followerCount: 85000
         )
         
-        // Create demo products
-        let product1 = LiveProduct(
-            id: "live-product-1",
-            title: "Ribbed Cotton Top",
-            price: Price(amount: 29.99, currency_code: "USD"),
-            originalPrice: Price(amount: 39.99, currency_code: "USD"),
-            imageUrl: "https://picsum.photos/300/400?random=10",
-            discount: "25% OFF",
-            specialOffer: "Order now to get special price for viewers!",
-            showUntil: Date().addingTimeInterval(600) // 10 minutes
-        )
+        // Use real demo products from MockDataProvider
+        let mockProducts = MockDataProvider.shared.sampleProducts.prefix(3) // Use first 3 products
         
-        let product2 = LiveProduct(
-            id: "live-product-2",
-            title: "Denim Jacket",
-            price: Price(amount: 59.99, currency_code: "USD"),
-            imageUrl: "https://picsum.photos/300/400?random=11",
-            specialOffer: "Limited edition - only for live viewers!"
-        )
+        let liveProducts = mockProducts.map { product -> LiveProduct in
+            LiveProduct(
+                id: "live-\(product.id)",
+                title: product.title,
+                price: product.price,
+                originalPrice: product.price.compare_at != nil ? 
+                    Price(amount: product.price.compare_at!, currency_code: product.price.currency_code) : nil,
+                imageUrl: product.images.first?.url ?? "https://picsum.photos/300/400?random=\(product.id)",
+                isAvailable: (product.quantity ?? 0) > 0,
+                stockCount: product.quantity,
+                discount: product.price.compare_at != nil ? "Special Live Price" : nil,
+                specialOffer: "Available during live stream!",
+                showUntil: Date().addingTimeInterval(600)
+            )
+        }
         
         // Create demo chat messages
         let chatMessages = createDemoChatMessages()
@@ -453,7 +453,7 @@ public class LiveShowManager: ObservableObject {
         // Create demo streams using Tipio data
         let stream1 = tipioStream.toLiveStream(
             streamer: streamer1,
-            featuredProducts: [product1, product2],
+            featuredProducts: Array(liveProducts), // Use converted mock products
             chatMessages: chatMessages
         )
         
@@ -465,7 +465,7 @@ public class LiveShowManager: ObservableObject {
             thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
             viewerCount: 892,
             isLive: true,
-            featuredProducts: [product2],
+            featuredProducts: Array(liveProducts.suffix(2)), // Use last 2 products
             chatMessages: chatMessages.dropFirst(5).map { $0 }
         )
         
