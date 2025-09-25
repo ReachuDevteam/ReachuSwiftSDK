@@ -4,6 +4,10 @@ import ReachuLiveShow
 import ReachuDesignSystem
 import ReachuUI
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// Products grid overlay that slides from bottom (80% height)
 public struct RLiveProductsGridOverlay: View {
     
@@ -37,41 +41,39 @@ public struct RLiveProductsGridOverlay: View {
     
     // MARK: - Body
     public var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                // Header with close
-                headerSection
-                
-                // Products grid
-                ScrollView {
-                    LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.md) {
-                        ForEach(products) { liveProduct in
-                            RProductCard(
-                                product: liveProduct.asProduct,
-                                variant: .grid,
-                                showDescription: uiConfig.showProductBrands
-                            )
-                            .environmentObject(cartManager)
-                            .onTapGesture {
-                                selectedProduct = liveProduct.asProduct
-                            }
+        VStack(spacing: 0) {
+            // Header with close
+            headerSection
+            
+            // Products grid (responsive)
+            ScrollView {
+                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.lg) {
+                    ForEach(products) { liveProduct in
+                        RProductCard(
+                            product: liveProduct.asProduct,
+                            variant: .grid,
+                            showDescription: false
+                        )
+                        .environmentObject(cartManager)
+                        .onTapGesture {
+                            selectedProduct = liveProduct.asProduct
                         }
                     }
-                    .padding(.horizontal, ReachuSpacing.lg)
-                    .padding(.bottom, ReachuSpacing.xl)
                 }
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.top, ReachuSpacing.md)
+                .padding(.bottom, ReachuSpacing.xl)
             }
-            .frame(height: geometry.size.height * 0.8) // 80% of screen height
-            .background(adaptiveColors.background)
-            .cornerRadius(ReachuBorderRadius.large)
-            .shadow(
-                color: Color.black.opacity(0.3),
-                radius: 20,
-                x: 0,
-                y: -10
-            )
         }
-        // Remove iOS 16+ only modifiers for compatibility
+        .frame(maxHeight: 600) // Fixed height for compatibility
+        .background(adaptiveColors.background)
+        .cornerRadius(ReachuBorderRadius.large)
+        .shadow(
+            color: Color.black.opacity(0.2),
+            radius: 15,
+            x: 0,
+            y: -5
+        )
         .sheet(item: $selectedProduct) { product in
             RProductDetailOverlay(
                 product: product,
@@ -92,6 +94,12 @@ public struct RLiveProductsGridOverlay: View {
     
     // MARK: - Header Section
     
+    // Responsive title size based on configuration
+    private var titleFontSize: CGFloat {
+        // Use configuration for responsive sizing
+        return 18 // Fixed size for compatibility, could be from config
+    }
+    
     @ViewBuilder
     private var headerSection: some View {
         VStack(spacing: ReachuSpacing.sm) {
@@ -101,16 +109,31 @@ public struct RLiveProductsGridOverlay: View {
                 .frame(width: 40, height: 4)
                 .padding(.top, ReachuSpacing.sm)
             
-            // Header content
+            // Header content with avatar and subtitle
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Featured Products")
-                        .font(ReachuTypography.title2)
-                        .foregroundColor(adaptiveColors.textPrimary)
+                // Avatar + Title section
+                HStack(spacing: ReachuSpacing.sm) {
+                    // Live stream avatar
+                    AsyncImage(url: URL(string: "https://storage.googleapis.com/tipio-images/1756737999235-012.png")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Circle()
+                            .fill(adaptiveColors.surfaceSecondary)
+                    }
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
                     
-                    Text("\(products.count) items available")
-                        .font(ReachuTypography.body)
-                        .foregroundColor(adaptiveColors.textSecondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Featured Products")
+                            .font(.system(size: titleFontSize, weight: .semibold))
+                            .foregroundColor(adaptiveColors.textPrimary)
+                        
+                        Text("Live Shopping • \(products.count) items")
+                            .font(.system(size: 12))
+                            .foregroundColor(adaptiveColors.textSecondary)
+                    }
                 }
                 
                 Spacer()
@@ -118,11 +141,11 @@ public struct RLiveProductsGridOverlay: View {
                 Button("Close") {
                     dismiss()
                 }
-                .font(ReachuTypography.body)
+                .font(.system(size: 14))
                 .foregroundColor(adaptiveColors.primary)
             }
-                .padding(.horizontal, ReachuSpacing.lg)
-                .padding(.bottom, ReachuSpacing.md)
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.bottom, ReachuSpacing.sm)
             
             Divider()
                 .background(adaptiveColors.border)

@@ -89,8 +89,8 @@ public struct RLiveShowFullScreenOverlay: View {
                     Spacer()
                     
                     rightSideControls
-                        .padding(.trailing, ReachuSpacing.lg)
-                        .padding(.bottom, 140) // Position above chat
+                        .padding(.trailing, ReachuSpacing.md) // Less margin
+                        .padding(.bottom, 160) // Lower position, closer to chat
                 }
                 
                 // Chat component
@@ -269,9 +269,9 @@ public struct RLiveShowFullScreenOverlay: View {
                     dismiss()
                 }) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.white)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .background(
                             Circle()
                                 .fill(Color.black.opacity(0.5))
@@ -281,13 +281,33 @@ public struct RLiveShowFullScreenOverlay: View {
                 Spacer()
             }
             
-            // Center - Stream info
-            VStack(alignment: .center, spacing: ReachuSpacing.sm) {
-                Text(stream.title)
-                    .font(ReachuTypography.headline)
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
+            // Center - Stream info with avatar
+            VStack(alignment: .center, spacing: ReachuSpacing.xs) {
+                // Avatar + Title
+                HStack(spacing: ReachuSpacing.sm) {
+                    // Streamer avatar
+                    AsyncImage(url: URL(string: stream.streamer.avatarUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Circle()
+                            .fill(Color.gray.opacity(0.3))
+                    }
+                    .frame(width: 28, height: 28)
+                    .clipShape(Circle())
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(stream.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Text("by \(stream.streamer.name)")
+                            .font(.system(size: 12))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+                }
                 
                 // Viewer count
                 if liveShowManager.currentViewerCount > 0 {
