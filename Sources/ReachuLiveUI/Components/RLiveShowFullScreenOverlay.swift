@@ -81,10 +81,18 @@ public struct RLiveShowFullScreenOverlay: View {
                 Spacer()
             }
             
-            // Bottom tabs (Chat and Products)
+            // Bottom content (Chat and Featured Product)
             VStack {
                 Spacer()
-                RLiveBottomTabs(products: currentStream?.featuredProducts ?? [])
+                
+                // Featured product banner (like in the image)
+                if let stream = currentStream, !stream.featuredProducts.isEmpty {
+                    featuredProductBanner(product: stream.featuredProducts.first!)
+                        .padding(.bottom, ReachuSpacing.sm)
+                }
+                
+                // Chat component
+                RLiveChatComponent()
                     .environmentObject(cartManager)
             }
             
@@ -195,8 +203,7 @@ public struct RLiveShowFullScreenOverlay: View {
             
             Spacer()
             
-            // Bottom overlay (chat, shopping, controls)
-            bottomOverlay(stream: stream)
+            // Bottom overlay removed - now using product banner and chat separately
         }
         // Always show controls - no fade in/out
         .opacity(1)
@@ -397,28 +404,13 @@ public struct RLiveShowFullScreenOverlay: View {
         .padding(.bottom, ReachuSpacing.xl)
     }
     
-    // Chat section removed - now using RLiveChatComponent at bottom
-    
-    // MARK: - Shopping Section
+    // MARK: - Featured Product Banner (like Tipio image)
     
     @ViewBuilder
-    private func shoppingSection(stream: LiveStream) -> some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: ReachuSpacing.md) {
-                ForEach(stream.featuredProducts) { liveProduct in
-                    liveProductCard(liveProduct: liveProduct)
-                }
-            }
-            .padding(.horizontal, ReachuSpacing.sm)
-        }
-        .frame(height: 140)
-    }
-    
-    @ViewBuilder
-    private func liveProductCard(liveProduct: LiveProduct) -> some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            // Product image
-            AsyncImage(url: URL(string: liveProduct.imageUrl)) { image in
+    private func featuredProductBanner(product: LiveProduct) -> some View {
+        HStack(spacing: ReachuSpacing.md) {
+            // Product image (square, like in Tipio)
+            AsyncImage(url: URL(string: product.imageUrl)) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -426,39 +418,56 @@ public struct RLiveShowFullScreenOverlay: View {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
             }
-            .frame(width: 80, height: 80)
-            .cornerRadius(ReachuBorderRadius.small)
+            .frame(width: 60, height: 60)
+            .cornerRadius(8)
+            .clipped()
             
-            // Product info
-            VStack(alignment: .leading, spacing: 2) {
-                Text(liveProduct.title)
-                    .font(.caption)
+            // Product info (matching Tipio layout)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.title)
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white)
-                    .lineLimit(2)
+                    .lineLimit(1)
                 
-                Text(liveProduct.price.formattedPrice)
-                    .font(.caption.weight(.semibold))
-                    .foregroundColor(adaptiveColors.primary)
+                Text("COSMED BEAUTY") // Brand like in image
+                    .font(.system(size: 12))
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+                
+                // Price row (red price + strikethrough)
+                HStack(spacing: ReachuSpacing.xs) {
+                    Text(product.price.formattedPrice)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.red)
+                    
+                    if let originalPrice = product.originalPrice {
+                        Text(originalPrice.formattedPrice)
+                            .font(.system(size: 14))
+                            .foregroundColor(.gray)
+                            .strikethrough()
+                    }
+                }
             }
             
-            // Add to cart button
-            Button(action: {
-                addProductToCart(liveProduct)
-            }) {
-                Text("Add")
-                    .font(.caption.weight(.medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, ReachuSpacing.sm)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(adaptiveColors.primary)
-                    .cornerRadius(ReachuBorderRadius.small)
-            }
+            Spacer()
+            
+            // Red dot indicator (exactly like in Tipio)
+            Circle()
+                .fill(Color.red)
+                .frame(width: 10, height: 10)
         }
-        .frame(width: 100)
-        .padding(ReachuSpacing.sm)
-        .background(Color.black.opacity(0.6))
-        .cornerRadius(ReachuBorderRadius.medium)
+        .padding(.horizontal, ReachuSpacing.md)
+        .padding(.vertical, ReachuSpacing.sm)
+        .background(
+            Rectangle()
+                .fill(Color.black.opacity(0.85))
+        )
+        .onTapGesture {
+            addProductToCartWithFeedback(product)
+        }
     }
+    
+    // Shopping section removed - now using featured product banner only
     
     // MARK: - Placeholders
     
@@ -737,13 +746,15 @@ public struct RLiveShowFullScreenOverlay: View {
         }
     }
     
-    private func addProductToCart(_ liveProduct: LiveProduct) {
+    private func addProductToCartWithFeedback(_ liveProduct: LiveProduct) {
         liveShowManager.addProductToCart(liveProduct, cartManager: cartManager)
         
         // Show visual feedback
         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
             // Could add some visual feedback here
         }
+        
+        print("🛒 [LiveShow] Added to cart: \(liveProduct.title)")
     }
     
     // sendChatMessage removed - now handled by RLiveChatComponent
