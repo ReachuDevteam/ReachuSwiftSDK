@@ -85,9 +85,9 @@ public struct RLiveShowFullScreenOverlay: View {
             VStack {
                 Spacer()
                 
-                // Featured product banner (like in the image)
+                // Featured products slider
                 if let stream = currentStream, !stream.featuredProducts.isEmpty {
-                    featuredProductBanner(product: stream.featuredProducts.first!)
+                    featuredProductsSlider(products: stream.featuredProducts)
                         .padding(.bottom, ReachuSpacing.sm)
                 }
                 
@@ -404,12 +404,27 @@ public struct RLiveShowFullScreenOverlay: View {
         .padding(.bottom, ReachuSpacing.xl)
     }
     
-    // MARK: - Featured Product Banner (like Tipio image)
+    // MARK: - Featured Products Slider
     
     @ViewBuilder
-    private func featuredProductBanner(product: LiveProduct) -> some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Product image (square, like in Tipio)
+    private func featuredProductsSlider(products: [LiveProduct]) -> some View {
+        let config = ReachuConfiguration.shared
+        
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: ReachuSpacing.md) {
+                ForEach(products) { product in
+                    liveProductCard(product: product, config: config)
+                }
+            }
+            .padding(.horizontal, ReachuSpacing.md)
+        }
+        .frame(height: 160)
+    }
+    
+    @ViewBuilder
+    private func liveProductCard(product: LiveProduct, config: ReachuConfiguration) -> some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            // Product image
             AsyncImage(url: URL(string: product.imageUrl)) { image in
                 image
                     .resizable()
@@ -417,50 +432,50 @@ public struct RLiveShowFullScreenOverlay: View {
             } placeholder: {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
+                    .overlay(
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    )
             }
-            .frame(width: 60, height: 60)
-            .cornerRadius(8)
+            .frame(width: 100, height: 100)
+            .cornerRadius(config.theme.borderRadius.medium)
             .clipped()
             
-            // Product info (matching Tipio layout)
+            // Product info
             VStack(alignment: .leading, spacing: 4) {
                 Text(product.title)
-                    .font(.system(size: 16, weight: .bold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white)
-                    .lineLimit(1)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
                 
-                Text("COSMED BEAUTY") // Brand like in image
-                    .font(.system(size: 12))
+                Text("COSMED BEAUTY")
+                    .font(.system(size: 11))
                     .foregroundColor(.gray)
                     .lineLimit(1)
                 
-                // Price row (red price + strikethrough)
+                // Price row
                 HStack(spacing: ReachuSpacing.xs) {
                     Text(product.price.formattedPrice)
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.red)
                     
                     if let originalPrice = product.originalPrice {
                         Text(originalPrice.formattedPrice)
-                            .font(.system(size: 14))
+                            .font(.system(size: 12))
                             .foregroundColor(.gray)
                             .strikethrough()
                     }
                 }
             }
-            
-            Spacer()
-            
-            // Red dot indicator (exactly like in Tipio)
-            Circle()
-                .fill(Color.red)
-                .frame(width: 10, height: 10)
+            .frame(width: 100, alignment: .leading)
         }
-        .padding(.horizontal, ReachuSpacing.md)
-        .padding(.vertical, ReachuSpacing.sm)
+        .padding(ReachuSpacing.sm)
         .background(
-            Rectangle()
-                .fill(Color.black.opacity(0.85))
+            RoundedRectangle(cornerRadius: config.theme.borderRadius.medium)
+                .fill(Color.black.opacity(0.7))
+                .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
         .onTapGesture {
             addProductToCartWithFeedback(product)
