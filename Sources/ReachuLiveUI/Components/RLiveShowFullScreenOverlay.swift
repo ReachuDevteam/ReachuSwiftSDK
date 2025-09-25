@@ -30,6 +30,7 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var isMuted = true
     @State private var showPlayPauseIndicator = false
     @State private var selectedProductForDetail: Product?
+    @State private var showProductsGrid = false
     
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
@@ -79,9 +80,18 @@ public struct RLiveShowFullScreenOverlay: View {
                 Spacer()
             }
             
-            // Bottom content (Chat above, Products at very bottom)
+            // Bottom content with controls at chat level
             VStack {
                 Spacer()
+                
+                // Controls at chat level (right side)
+                HStack {
+                    Spacer()
+                    
+                    rightSideControls
+                        .padding(.trailing, ReachuSpacing.lg)
+                        .padding(.bottom, 140) // Position above chat
+                }
                 
                 // Chat component
                 RLiveChatComponent()
@@ -149,6 +159,10 @@ public struct RLiveShowFullScreenOverlay: View {
         }
         .onDisappear {
             cleanup()
+        }
+        .sheet(isPresented: $showProductsGrid) {
+            RLiveProductsGridOverlay(products: currentStream?.featuredProducts ?? [])
+                .environmentObject(cartManager)
         }
         .sheet(item: $selectedProductForDetail) { product in
             RProductDetailOverlay(
@@ -293,92 +307,7 @@ public struct RLiveShowFullScreenOverlay: View {
             
             Spacer()
             
-            // Right controls (clean style, moved towards center)
-            VStack(spacing: ReachuSpacing.md) {
-                
-                // Play/Pause button
-                Button(action: togglePlayPause) {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
-                
-                // Mute/Unmute button
-                Button(action: toggleMute) {
-                    Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
-                
-                // Mini-player and share buttons removed
-                
-                // Cart button with badge (opens cart overlay)
-                Button(action: {
-                    print("🛒 [LiveShow] Opening cart overlay")
-                    cartManager.isCheckoutPresented = true
-                }) {
-                    ZStack {
-                        Image(systemName: "bag.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(
-                                Circle()
-                                    .fill(Color.black.opacity(0.4))
-                                    .background(
-                                        Circle()
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
-                        
-                        // Cart badge
-                        if !cartManager.items.isEmpty {
-                            Text("\(cartManager.items.count)")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 18, height: 18)
-                                .background(Circle().fill(.red))
-                                .offset(x: 15, y: -15)
-                        }
-                    }
-                }
-                
-                // Likes button (below cart)
-                Button(action: {
-                    createUserLike()
-                }) {
-                    Image(systemName: "heart.fill")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.red)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
-            }
+            // This will be moved to bottom - removing from top
         }
         .padding(.horizontal, ReachuSpacing.md) // Less padding to move controls towards center
         .padding(.top, ReachuSpacing.lg)
@@ -800,7 +729,111 @@ public struct RLiveShowFullScreenOverlay: View {
         controlsTimer?.invalidate()
     }
     
-    // Cart overlay removed - handled globally by ContentView
+    // MARK: - Right Side Controls
+    
+    @ViewBuilder
+    private var rightSideControls: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            // Play/Pause button
+            Button(action: togglePlayPause) {
+                Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.4))
+                            .background(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+            }
+            
+            // Mute/Unmute button
+            Button(action: toggleMute) {
+                Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.4))
+                            .background(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+            }
+            
+            // Products grid button
+            Button(action: {
+                showProductsGrid = true
+            }) {
+                Image(systemName: "grid")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.4))
+                            .background(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+            }
+            
+            // Cart button with badge
+            Button(action: {
+                print("🛒 [LiveShow] Opening cart overlay")
+                cartManager.isCheckoutPresented = true
+            }) {
+                ZStack {
+                    Image(systemName: "bag.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
+                    
+                    // Cart badge
+                    if !cartManager.items.isEmpty {
+                        Text("\(cartManager.items.count)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 18, height: 18)
+                            .background(Circle().fill(.red))
+                            .offset(x: 15, y: -15)
+                    }
+                }
+            }
+            
+            // Likes button
+            Button(action: {
+                createUserLike()
+            }) {
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.red)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.4))
+                            .background(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                            )
+                    )
+            }
+        }
+    }
 }
 
 // MARK: - Custom Video Player
