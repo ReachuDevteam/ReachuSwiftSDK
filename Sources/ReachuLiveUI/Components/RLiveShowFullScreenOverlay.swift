@@ -387,8 +387,9 @@ public struct RLiveShowFullScreenOverlay: View {
                         )
                 }
                 
-                // Cart button with badge (at the end)
+                // Cart button with badge (opens cart overlay)
                 Button(action: {
+                    print("🛒 [LiveShow] Opening cart overlay")
                     cartManager.isCheckoutPresented = true
                 }) {
                     ZStack {
@@ -415,6 +416,24 @@ public struct RLiveShowFullScreenOverlay: View {
                                 .offset(x: 15, y: -15)
                         }
                     }
+                }
+                
+                // Likes button (below cart)
+                Button(action: {
+                    createUserLike()
+                }) {
+                    Image(systemName: "heart.fill")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.red)
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                )
+                        )
                 }
             }
         }
@@ -837,6 +856,17 @@ public struct RLiveShowFullScreenOverlay: View {
     private func shareStream(_ stream: LiveStream) {
         // Implement sharing functionality
         print("📤 [LiveShow] Sharing stream: \(stream.title)")
+    }
+    
+    private func createUserLike() {
+        // Use likes manager to create user like (red heart)
+        LiveLikesManager.shared.createUserLike()
+        
+        // Haptic feedback
+        #if os(iOS)
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        #endif
     }
     
     private func cleanup() {

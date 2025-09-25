@@ -25,26 +25,13 @@ public struct RLiveLikesComponent: View {
     // MARK: - Body
     public var body: some View {
         ZStack {
-            // Flying hearts overlay
+            // Flying hearts overlay (no tap area - controlled by button)
             ForEach(likesManager.flyingHearts) { heart in
                 FlyingHeart(heart: heart)
                     .transition(.asymmetric(
                         insertion: .scale.combined(with: .move(edge: .bottom)),
                         removal: .opacity
                     ))
-            }
-            
-            // Tap area for likes (covers right side of screen)
-            HStack {
-                Spacer()
-                
-                Rectangle()
-                    .fill(Color.clear)
-                    .frame(width: 100) // Smaller tap area to avoid conflicts
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        createLike()
-                    }
             }
         }
         .onAppear {
@@ -90,7 +77,7 @@ struct FlyingHeart: View {
     var body: some View {
         Image(systemName: "heart.fill")
             .font(.system(size: CGFloat.random(in: 16...28)))
-            .foregroundColor(.red)
+            .foregroundColor(heart.isUserGenerated ? .red : .white) // Red for user, white for others
             .scaleEffect(scale)
             .opacity(opacity)
             .offset(offset)
@@ -200,6 +187,18 @@ public class LiveLikesManager: ObservableObject {
     public func clearHearts() {
         flyingHearts.removeAll()
         print("❤️ [Likes] Hearts cleared")
+    }
+    
+    /// Create a user-generated like (called from button)
+    public func createUserLike() {
+        let heart = FlyingHeartModel(
+            id: UUID().uuidString,
+            startPosition: CGPoint(x: 350, y: CGFloat.random(in: 300...500)),
+            isUserGenerated: true
+        )
+        
+        addHeart(heart)
+        print("❤️ [Likes] User like from button")
     }
     
     // MARK: - Private Methods
