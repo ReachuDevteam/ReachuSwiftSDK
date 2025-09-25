@@ -408,81 +408,20 @@ public struct RLiveShowFullScreenOverlay: View {
     
     @ViewBuilder
     private func featuredProductsSlider(products: [LiveProduct]) -> some View {
-        let config = ReachuConfiguration.shared
-        
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: ReachuSpacing.md) {
-                ForEach(products) { product in
-                    liveProductCard(product: product, config: config)
-                }
-            }
-            .padding(.horizontal, ReachuSpacing.md)
-        }
-        .frame(height: 160)
-    }
-    
-    @ViewBuilder
-    private func liveProductCard(product: LiveProduct, config: ReachuConfiguration) -> some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-            // Product image
-            AsyncImage(url: URL(string: product.imageUrl)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .overlay(
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            .scaleEffect(0.8)
-                    )
-            }
-            .frame(width: 100, height: 100)
-            .cornerRadius(config.theme.borderRadius.medium)
-            .clipped()
-            
-            // Product info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
-                Text("COSMED BEAUTY")
-                    .font(.system(size: 11))
-                    .foregroundColor(.gray)
-                    .lineLimit(1)
-                
-                // Price row
-                HStack(spacing: ReachuSpacing.xs) {
-                    Text(product.price.formattedPrice)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.red)
-                    
-                    if let originalPrice = product.originalPrice {
-                        Text(originalPrice.formattedPrice)
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
-                            .strikethrough()
+        GeometryReader { geometry in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: ReachuSpacing.md) {
+                    ForEach(products) { product in
+                        RLiveProductCard(product: product) { liveProduct in
+                            addProductToCartWithFeedback(liveProduct)
+                        }
+                        .frame(width: geometry.size.width - 40) // Full width minus margins
                     }
                 }
+                .padding(.horizontal, ReachuSpacing.lg) // Margins on sides
             }
-            .frame(width: 100, alignment: .leading)
         }
-        .padding(ReachuSpacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: config.theme.borderRadius.medium)
-                .fill(Color.black.opacity(0.7))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: config.theme.borderRadius.medium)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-        )
-        .onTapGesture {
-            addProductToCartWithFeedback(product)
-        }
+        .frame(height: 120) // Horizontal card height
     }
     
     // Shopping section removed - now using featured product banner only
