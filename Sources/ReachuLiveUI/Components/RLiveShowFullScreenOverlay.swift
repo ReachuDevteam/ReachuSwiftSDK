@@ -29,6 +29,7 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var isPlaying = false
     @State private var isMuted = true
     @State private var showPlayPauseIndicator = false
+    @State private var selectedProductForDetail: Product?
     
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
@@ -150,6 +151,20 @@ public struct RLiveShowFullScreenOverlay: View {
         }
         .onDisappear {
             cleanup()
+        }
+        .sheet(item: $selectedProductForDetail) { product in
+            RProductDetailOverlay(
+                product: product,
+                onAddToCart: { product in
+                    // Handle add to cart from detail overlay
+                    print("🛒 [LiveShow] Adding to cart from detail: \(product.title)")
+                    Task {
+                        await cartManager.addProduct(product, quantity: 1)
+                        print("✅ [LiveShow] Successfully added to cart: \(product.title)")
+                    }
+                }
+            )
+            .environmentObject(cartManager)
         }
         .onTapGesture(count: 2) {
             // Double tap to play/pause
@@ -297,6 +312,36 @@ public struct RLiveShowFullScreenOverlay: View {
                         )
                 }
                 
+                // Cart button with badge
+                Button(action: {
+                    cartManager.isCheckoutPresented = true
+                }) {
+                    ZStack {
+                        Image(systemName: "bag.fill")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(Color.black.opacity(0.4))
+                                    .background(
+                                        Circle()
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
+                        
+                        // Cart badge
+                        if !cartManager.items.isEmpty {
+                            Text("\(cartManager.items.count)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 18, height: 18)
+                                .background(Circle().fill(.red))
+                                .offset(x: 15, y: -15)
+                        }
+                    }
+                }
+                
                 // Play/Pause button
                 Button(action: togglePlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
@@ -426,14 +471,20 @@ public struct RLiveShowFullScreenOverlay: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.sm) {
                     ForEach(products) { liveProduct in
-                        // Convert LiveProduct to Product and use existing RProductCard
+                        // Use RProductCard in display-only mode (no add to cart)
                         RProductCard(
                             product: liveProduct.asProduct, 
-                            variant: .list,
+                            variant: .minimal, // Use minimal variant for compact display
                             showDescription: false
                         )
                         .frame(width: geometry.size.width - 32) // Full width minus small margins
                         .environmentObject(cartManager)
+                        .disabled(true) // Disable add to cart - only tap to view detail
+                        .onTapGesture {
+                            // Open product detail overlay for variant selection
+                            print("🛍️ [LiveShow] Opening product detail for: \(liveProduct.title)")
+                            selectedProductForDetail = liveProduct.asProduct
+                        }
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md) // Small margins on sides
