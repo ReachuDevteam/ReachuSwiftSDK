@@ -50,6 +50,7 @@ public struct RLiveProductCard: View {
         .overlay(borderView)
         .cornerRadius(theme.borderRadius.medium)
         .onTapGesture {
+            print("🛒 [LiveProduct] Tapped product: \(product.title)")
             showProductDetail = true
         }
         .sheet(isPresented: $showProductDetail) {
@@ -57,8 +58,10 @@ public struct RLiveProductCard: View {
                 product: productForDetail,
                 onAddToCart: { product in
                     // Handle add to cart from detail overlay
+                    print("🛒 [LiveProduct] Adding to cart from detail: \(product.title)")
                     Task {
                         await cartManager.addProduct(product, quantity: 1)
+                        print("✅ [LiveProduct] Successfully added to cart: \(product.title)")
                     }
                 }
             )

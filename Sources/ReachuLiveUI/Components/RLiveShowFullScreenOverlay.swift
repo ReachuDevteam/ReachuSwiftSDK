@@ -92,6 +92,19 @@ public struct RLiveShowFullScreenOverlay: View {
                 // Featured products slider (at bottom edge)
                 if let stream = currentStream, !stream.featuredProducts.isEmpty {
                     featuredProductsSlider(products: stream.featuredProducts)
+                        .onAppear {
+                            print("🛍️ [LiveShow] Showing \(stream.featuredProducts.count) products in slider")
+                            for product in stream.featuredProducts {
+                                print("   - \(product.title): \(product.price.formattedPrice)")
+                            }
+                        }
+                } else {
+                    // Debug: Show why no products
+                    if let stream = currentStream {
+                        Text("No products available (\(stream.featuredProducts.count) products)")
+                            .foregroundColor(.red)
+                            .padding()
+                    }
                 }
             }
             
@@ -119,6 +132,9 @@ public struct RLiveShowFullScreenOverlay: View {
             if isLoading {
                 loadingIndicator
             }
+            
+            // Ensure cart appears above everything in LiveShow
+            cartOverlayLayer
         }
         .onAppear {
             print("🎬 [LiveShow] Overlay appeared - starting setup")
@@ -723,6 +739,24 @@ public struct RLiveShowFullScreenOverlay: View {
     private func cleanup() {
         player?.pause()
         controlsTimer?.invalidate()
+    }
+    
+    // MARK: - Cart Overlay Layer
+    
+    @ViewBuilder
+    private var cartOverlayLayer: some View {
+        VStack {
+            // Floating cart indicator (above LiveShow)
+            HStack {
+                Spacer()
+                RFloatingCartIndicator()
+                    .environmentObject(cartManager)
+            }
+            .padding(.trailing, ReachuSpacing.lg)
+            .padding(.top, ReachuSpacing.xl)
+            
+            Spacer()
+        }
     }
 }
 
