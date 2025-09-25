@@ -62,19 +62,20 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
-            // Floating LIVE badge (positioned to not overlap X button)
+            // Floating LIVE badge (positioned above X button)
             VStack {
                 HStack {
                     Spacer()
                     
                     VStack {
-                        // Animated LIVE badge
+                        // Animated LIVE badge positioned above controls
                         AnimatedLiveBadge()
+                            .padding(.bottom, ReachuSpacing.sm)
                         
                         Spacer()
                     }
                     .padding(.top, ReachuSpacing.lg)
-                    .padding(.trailing, 100) // Give space for control buttons
+                    .padding(.trailing, ReachuSpacing.md) // Align with control buttons
                 }
                 
                 Spacer()
@@ -232,28 +233,8 @@ public struct RLiveShowFullScreenOverlay: View {
                         .foregroundColor(.white)
                         .lineLimit(2)
                     
-                    HStack(spacing: ReachuSpacing.xs) {
-                        AsyncImage(url: URL(string: stream.streamer.avatarUrl ?? "")) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Circle()
-                                .fill(Color.gray.opacity(0.3))
-                        }
-                        .frame(width: 24, height: 24)
-                        .clipShape(Circle())
-                        
-                        Text(stream.streamer.name)
-                            .font(ReachuTypography.body)
-                            .foregroundColor(.white.opacity(0.9))
-                        
-                        if stream.streamer.isVerified {
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.caption2)
-                                .foregroundColor(.blue)
-                        }
-                    }
+                    // Remove streamer info to keep it cleaner
+                    // HStack with streamer details removed
                 }
             }
             
