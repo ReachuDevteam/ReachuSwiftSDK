@@ -204,17 +204,26 @@ public class LiveLikesManager: ObservableObject {
     // MARK: - Private Methods
     
     private func simulateAutoLike() {
-        let heart = FlyingHeartModel(
-            id: UUID().uuidString,
-            startPosition: CGPoint(
-                x: CGFloat.random(in: 100...300),
-                y: CGFloat.random(in: 400...700)
-            ),
-            isUserGenerated: false
-        )
+        // Generate 2-3 white hearts per auto like (like other users giving multiple likes)
+        let heartCount = Int.random(in: 2...3)
         
-        addHeart(heart)
-        print("❤️ [Likes] Auto-generated like")
+        for i in 0..<heartCount {
+            let heart = FlyingHeartModel(
+                id: UUID().uuidString,
+                startPosition: CGPoint(
+                    x: CGFloat.random(in: 100...300),
+                    y: CGFloat.random(in: 400...700)
+                ),
+                isUserGenerated: false
+            )
+            
+            // Stagger the hearts slightly
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2) {
+                self.addHeart(heart)
+            }
+        }
+        
+        print("❤️ [Likes] Auto-generated \(heartCount) white hearts")
     }
     
     deinit {

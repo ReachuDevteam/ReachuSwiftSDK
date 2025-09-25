@@ -63,20 +63,18 @@ public struct RLiveShowFullScreenOverlay: View {
                 overlayUI(stream: stream)
             }
             
-            // Floating LIVE badge (positioned above X button)
+            // Floating LIVE badge (positioned away from controls)
             VStack {
                 HStack {
-                    Spacer()
-                    
+                    // Position LIVE badge on the left side to avoid overlap
                     VStack {
-                        // Animated LIVE badge positioned above controls
                         AnimatedLiveBadge()
-                            .padding(.bottom, ReachuSpacing.sm)
-                        
                         Spacer()
                     }
                     .padding(.top, ReachuSpacing.lg)
-                    .padding(.trailing, ReachuSpacing.md) // Align with control buttons
+                    .padding(.leading, ReachuSpacing.lg)
+                    
+                    Spacer()
                 }
                 
                 Spacer()
@@ -175,10 +173,11 @@ public struct RLiveShowFullScreenOverlay: View {
         // Remove gesture conflicts - keep controls always visible
         // .onTapGesture { toggleControls() }
         .gesture(
-            DragGesture(minimumDistance: 150, coordinateSpace: .global)
+            DragGesture(minimumDistance: 100, coordinateSpace: .global)
                 .onEnded { value in
-                    // Only handle clear downward swipes to minimize
-                    if value.translation.height > 150 {
+                    // Swipe up to minimize to mini-player
+                    if value.translation.height < -100 {
+                        print("⬆️ [LiveShow] Swipe up detected - minimizing to mini-player")
                         liveShowManager.showMiniPlayer()
                         dismiss()
                     }
@@ -334,42 +333,7 @@ public struct RLiveShowFullScreenOverlay: View {
                         )
                 }
                 
-                // Minimize to mini player
-                Button(action: {
-                    liveShowManager.showMiniPlayer()
-                    dismiss()
-                }) {
-                    Image(systemName: "pip.enter")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
-                
-                // Share button
-                Button(action: {
-                    shareStream(stream)
-                }) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.4))
-                                .background(
-                                    Circle()
-                                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                )
-                        )
-                }
+                // Mini-player and share buttons removed
                 
                 // Cart button with badge (opens cart overlay)
                 Button(action: {
