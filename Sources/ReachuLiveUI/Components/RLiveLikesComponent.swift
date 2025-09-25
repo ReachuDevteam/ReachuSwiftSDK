@@ -159,13 +159,13 @@ public class LiveLikesManager: ObservableObject {
     public func startAutoLikes() {
         stopAutoLikes() // Ensure no duplicate timers
         
-        autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2...5), repeats: true) { _ in
+        autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
             Task { @MainActor in
                 self.simulateAutoLike()
                 
-                // Reschedule with random interval
+                // Reschedule with random interval (longer intervals for less load)
                 self.autoLikesTimer?.invalidate()
-                self.autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2...5), repeats: true) { _ in
+                self.autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
                     Task { @MainActor in
                         self.simulateAutoLike()
                     }

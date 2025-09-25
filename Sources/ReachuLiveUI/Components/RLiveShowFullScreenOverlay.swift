@@ -190,25 +190,9 @@ public struct RLiveShowFullScreenOverlay: View {
     
     @ViewBuilder
     private func videoPlayerSection(stream: LiveStream) -> some View {
-        if let stream = currentStream {
-        // Use WebView for Vimeo URLs, AVPlayer for direct video URLs
-        if stream.videoUrl.contains("player.vimeo.com") {
-            VimeoWebPlayer(videoUrl: stream.videoUrl)
-                .onReceive(NotificationCenter.default.publisher(for: .vimeoPlayerLoaded)) { _ in
-                    // Hide loading when video actually loads
-                    isLoading = false
-                    print("✅ [LiveShow] Vimeo player loaded - hiding loading indicator")
-                }
-                .onAppear {
-                    // Fallback: hide loading after 5 seconds if no signal received
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                        if isLoading {
-                            isLoading = false
-                            print("⏰ [LiveShow] Loading timeout - hiding indicator")
-                        }
-                    }
-                }
-        } else if let player = player {
+        if currentStream != nil {
+        // Use optimized video player
+        if let player = player {
                 CustomVideoPlayer(player: player)
             } else {
                 // Loading placeholder
@@ -643,32 +627,15 @@ public struct RLiveShowFullScreenOverlay: View {
         print("🎬 [LiveShow] Setting up player for stream: \(stream.title)")
         print("🎬 [LiveShow] Stream URL: \(stream.videoUrl)")
         
-        // Check if it's a Vimeo player URL
-        if stream.videoUrl.contains("player.vimeo.com") {
-            print("🎬 [LiveShow] Detected Vimeo player URL - using WebView")
-            // Keep loading = true until WebView finishes loading
-            return // WebView will handle loading state
-        }
+        // Use demo video for better performance (no WebView)
+        print("🎬 [LiveShow] Using demo video for optimal performance")
+        let demoVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
         
         // For HLS and direct video URLs, use AVPlayer
         print("🎬 [LiveShow] Using AVPlayer for direct video URL")
         
-        // Use working demo URLs for testing
-        let workingUrls = [
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4"
-        ]
-        
-        // Use stream URL or fallback
-        let videoUrl: String
-        if stream.videoUrl.contains("m3u8") {
-            videoUrl = stream.videoUrl
-            print("🎬 [LiveShow] Using HLS URL: \(videoUrl)")
-        } else {
-            videoUrl = workingUrls[0] // Use demo video as fallback
-            print("🎬 [LiveShow] Using demo video URL: \(videoUrl)")
-        }
+        // Always use demo video for performance
+        let videoUrl = demoVideoUrl
         
         print("🔗 [LiveShow] Final video URL: \(videoUrl)")
         
@@ -694,10 +661,10 @@ public struct RLiveShowFullScreenOverlay: View {
         player.isMuted = true // Start muted for better UX
         player.allowsExternalPlayback = false // Prevent fullscreen takeover
         
-        // Monitor player status
-        player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 1, preferredTimescale: 1), queue: .main) { time in
+        // Monitor player status (minimal logging)
+        player.addPeriodicTimeObserver(forInterval: CMTime(seconds: 5, preferredTimescale: 1), queue: .main) { time in
             let currentTime = CMTimeGetSeconds(time)
-            if Int(currentTime) % 5 == 0 { // Log every 5 seconds to avoid spam
+            if Int(currentTime) % 30 == 0 { // Log every 30 seconds to reduce spam
                 print("⏱️ [LiveShow] Video time: \(currentTime)s")
             }
         }
