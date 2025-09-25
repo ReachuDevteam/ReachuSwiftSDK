@@ -134,7 +134,8 @@ public struct RLiveShowFullScreenOverlay: View {
                 loadingIndicator
             }
             
-            // Remove cart layer - cart is handled globally by ContentView
+            // Flying likes component
+            RLiveLikesComponent()
         }
         .onAppear {
             print("🎬 [LiveShow] Overlay appeared - starting setup")
@@ -161,6 +162,11 @@ public struct RLiveShowFullScreenOverlay: View {
                     Task {
                         await cartManager.addProduct(product, quantity: 1)
                         print("✅ [LiveShow] Successfully added to cart: \(product.title)")
+                    }
+                    
+                    // Close modal after adding to cart
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        selectedProductForDetail = nil
                     }
                 }
             )
@@ -312,36 +318,6 @@ public struct RLiveShowFullScreenOverlay: View {
                         )
                 }
                 
-                // Cart button with badge
-                Button(action: {
-                    cartManager.isCheckoutPresented = true
-                }) {
-                    ZStack {
-                        Image(systemName: "bag.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(
-                                Circle()
-                                    .fill(Color.black.opacity(0.4))
-                                    .background(
-                                        Circle()
-                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                                    )
-                            )
-                        
-                        // Cart badge
-                        if !cartManager.items.isEmpty {
-                            Text("\(cartManager.items.count)")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 18, height: 18)
-                                .background(Circle().fill(.red))
-                                .offset(x: 15, y: -15)
-                        }
-                    }
-                }
-                
                 // Play/Pause button
                 Button(action: togglePlayPause) {
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
@@ -410,6 +386,36 @@ public struct RLiveShowFullScreenOverlay: View {
                                 )
                         )
                 }
+                
+                // Cart button with badge (at the end)
+                Button(action: {
+                    cartManager.isCheckoutPresented = true
+                }) {
+                    ZStack {
+                        Image(systemName: "bag.fill")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                            .frame(width: 44, height: 44)
+                            .background(
+                                Circle()
+                                    .fill(Color.black.opacity(0.4))
+                                    .background(
+                                        Circle()
+                                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                                    )
+                            )
+                        
+                        // Cart badge
+                        if !cartManager.items.isEmpty {
+                            Text("\(cartManager.items.count)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 18, height: 18)
+                                .background(Circle().fill(.red))
+                                .offset(x: 15, y: -15)
+                        }
+                    }
+                }
             }
         }
         .padding(.horizontal, ReachuSpacing.md) // Less padding to move controls towards center
@@ -471,20 +477,9 @@ public struct RLiveShowFullScreenOverlay: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.sm) {
                     ForEach(products) { liveProduct in
-                        // Use RProductCard in display-only mode (no add to cart)
-                        RProductCard(
-                            product: liveProduct.asProduct, 
-                            variant: .minimal, // Use minimal variant for compact display
-                            showDescription: false
-                        )
-                        .frame(width: geometry.size.width - 32) // Full width minus small margins
-                        .environmentObject(cartManager)
-                        .disabled(true) // Disable add to cart - only tap to view detail
-                        .onTapGesture {
-                            // Open product detail overlay for variant selection
-                            print("🛍️ [LiveShow] Opening product detail for: \(liveProduct.title)")
-                            selectedProductForDetail = liveProduct.asProduct
-                        }
+                        // Use the horizontal card we had before (was perfect)
+                        liveProductHorizontalCard(product: liveProduct)
+                            .frame(width: geometry.size.width - 32) // Full width minus small margins
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md) // Small margins on sides
@@ -494,7 +489,67 @@ public struct RLiveShowFullScreenOverlay: View {
         .background(Color.black.opacity(0.8)) // Background for products area
     }
     
-    // Shopping section removed - now using featured product banner only
+    // MARK: - Live Product Horizontal Card (perfect version)
+    
+    @ViewBuilder
+    private func liveProductHorizontalCard(product: LiveProduct) -> some View {
+        HStack(spacing: ReachuSpacing.md) {
+            // Product image (60x60 like before)
+            AsyncImage(url: URL(string: product.imageUrl)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+            }
+            .frame(width: 60, height: 60)
+            .cornerRadius(8)
+            .clipped()
+            
+            // Product info (matching previous perfect layout)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                
+                Text("COSMED BEAUTY")
+                    .font(.system(size: 10))
+                    .foregroundColor(.gray)
+                    .lineLimit(1)
+                
+                // Price row (red price + strikethrough)
+                HStack(spacing: ReachuSpacing.xs) {
+                    Text(product.price.formattedPrice)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.red)
+                    
+                    if let originalPrice = product.originalPrice {
+                        Text(originalPrice.formattedPrice)
+                            .font(.system(size: 12))
+                            .foregroundColor(.gray)
+                            .strikethrough()
+                    }
+                }
+            }
+            
+            Spacer()
+            
+            // Red dot indicator (exactly like before)
+            Circle()
+                .fill(Color.red)
+                .frame(width: 8, height: 8)
+        }
+        .padding(.horizontal, ReachuSpacing.md)
+        .padding(.vertical, ReachuSpacing.sm)
+        .background(Color.black.opacity(0.85))
+        .onTapGesture {
+            // Open product detail overlay for variant selection
+            print("🛍️ [LiveShow] Opening product detail for: \(product.title)")
+            selectedProductForDetail = product.asProduct
+        }
+    }
     
     // MARK: - Placeholders
     
