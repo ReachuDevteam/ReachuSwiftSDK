@@ -487,7 +487,7 @@ struct LiveShowDemoView: View {
                                 .frame(width: 8, height: 8)
                             
                             Text(stream.isLive ? "LIVE" : "OFFLINE")
-                                .font(ReachuTypography.caption.weight(.semibold))
+                                .font(.caption.weight(.semibold))
                                 .foregroundColor(stream.isLive ? Color.red : Color.gray)
                         }
                         
@@ -499,7 +499,7 @@ struct LiveShowDemoView: View {
                                     .foregroundColor(adaptiveColors.textSecondary)
                                 
                                 Text("\(stream.viewerCount) watching")
-                                    .font(ReachuTypography.caption)
+                                    .font(.caption)
                                     .foregroundColor(adaptiveColors.textSecondary)
                             }
                         }
