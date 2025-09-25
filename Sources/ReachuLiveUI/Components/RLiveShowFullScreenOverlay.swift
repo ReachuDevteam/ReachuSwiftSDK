@@ -475,6 +475,9 @@ public struct RLiveShowFullScreenOverlay: View {
         .background(
             RoundedRectangle(cornerRadius: config.theme.borderRadius.medium)
                 .fill(Color.black.opacity(0.7))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: config.theme.borderRadius.medium)
                 .stroke(Color.white.opacity(0.2), lineWidth: 1)
         )
         .onTapGesture {
