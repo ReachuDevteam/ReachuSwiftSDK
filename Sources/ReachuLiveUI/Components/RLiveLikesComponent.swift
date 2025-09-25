@@ -40,18 +40,11 @@ public struct RLiveLikesComponent: View {
                 
                 Rectangle()
                     .fill(Color.clear)
-                    .frame(width: 120) // Right side tap area
+                    .frame(width: 100) // Smaller tap area to avoid conflicts
                     .contentShape(Rectangle())
                     .onTapGesture {
                         createLike()
                     }
-                    .gesture(
-                        // Multiple taps create multiple hearts
-                        TapGesture()
-                            .onEnded { _ in
-                                createLike()
-                            }
-                    )
             }
         }
         .onAppear {

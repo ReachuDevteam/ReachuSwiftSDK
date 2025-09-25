@@ -172,16 +172,16 @@ public struct RLiveShowFullScreenOverlay: View {
             )
             .environmentObject(cartManager)
         }
-        .onTapGesture(count: 2) {
-            // Double tap to play/pause
-            togglePlayPause()
-        }
-        // Remove single tap to hide controls - keep them always visible
+        // Remove gesture conflicts - keep controls always visible
         // .onTapGesture { toggleControls() }
         .gesture(
-            DragGesture(minimumDistance: 100)
+            DragGesture(minimumDistance: 150, coordinateSpace: .global)
                 .onEnded { value in
-                    handleSwipeGesture(value)
+                    // Only handle clear downward swipes to minimize
+                    if value.translation.height > 150 {
+                        liveShowManager.showMiniPlayer()
+                        dismiss()
+                    }
                 }
         )
     }
@@ -486,7 +486,6 @@ public struct RLiveShowFullScreenOverlay: View {
             }
         }
         .frame(height: 80) // Compact height for bottom placement
-        .background(Color.black.opacity(0.8)) // Background for products area
     }
     
     // MARK: - Live Product Horizontal Card (perfect version)
@@ -820,13 +819,7 @@ public struct RLiveShowFullScreenOverlay: View {
         }
     }
     
-    private func handleSwipeGesture(_ value: DragGesture.Value) {
-        if value.translation.height > 100 {
-            // Swipe down - minimize to mini player
-            liveShowManager.showMiniPlayer()
-            dismiss()
-        }
-    }
+    // handleSwipeGesture removed - now handled inline to reduce gesture conflicts
     
     private func addProductToCartWithFeedback(_ liveProduct: LiveProduct) {
         liveShowManager.addProductToCart(liveProduct, cartManager: cartManager)
@@ -867,13 +860,19 @@ struct VimeoWebPlayer: UIViewRepresentable {
         let configuration = WKWebViewConfiguration()
         configuration.allowsInlineMediaPlayback = true
         configuration.mediaTypesRequiringUserActionForPlayback = []
+        configuration.suppressesIncrementalRendering = true
         
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.scrollView.isScrollEnabled = false
         webView.scrollView.bounces = false
+        webView.scrollView.showsVerticalScrollIndicator = false
+        webView.scrollView.showsHorizontalScrollIndicator = false
         webView.backgroundColor = UIColor.black
         webView.isOpaque = false
         webView.navigationDelegate = context.coordinator
+        
+        // Reduce gesture conflicts
+        webView.allowsBackForwardNavigationGestures = false
         
         context.coordinator.webView = webView
         
@@ -935,9 +934,8 @@ struct VimeoWebPlayer: UIViewRepresentable {
             </div>
             
             <script>
-                console.log('🎬 Vimeo player HTML loaded');
-                console.log('📹 Video ID: \(videoId)');
-                console.log('🔗 Full iframe src: https://player.vimeo.com/video/\(videoId)?badge=0&autopause=0&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&background=1');
+                // Minimal JavaScript to reduce processing
+                console.log('🎬 Vimeo loaded');
             </script>
         </body>
         </html>
