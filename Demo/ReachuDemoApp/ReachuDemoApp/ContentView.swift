@@ -766,6 +766,13 @@ struct LayoutInfoCard: View {
     let description: String
     let useCase: String
     
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             HStack {
