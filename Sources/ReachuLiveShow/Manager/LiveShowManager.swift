@@ -2,8 +2,11 @@ import Foundation
 import SwiftUI
 import Combine
 import ReachuCore
-import ReachuTesting
 import struct Foundation.Date
+
+#if DEBUG
+import ReachuTesting
+#endif
 
 /// Global manager for LiveShow functionality with Tipio.no integration
 @MainActor
@@ -428,8 +431,12 @@ public class LiveShowManager: ObservableObject {
             followerCount: 85000
         )
         
-        // Use real demo products from MockDataProvider
+        // Use real demo products from MockDataProvider (debug only)
+        #if DEBUG
         let mockProducts = MockDataProvider.shared.sampleProducts.prefix(3) // Use first 3 products
+        #else
+        let mockProducts: [Product] = [] // Empty in release
+        #endif
         
         let liveProducts = mockProducts.map { product -> LiveProduct in
             LiveProduct(
