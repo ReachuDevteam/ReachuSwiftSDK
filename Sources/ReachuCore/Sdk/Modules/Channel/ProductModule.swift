@@ -13,12 +13,14 @@ public final class ProductRepositoryGQL: ProductRepository {
                 "\(field) must contain positive IDs only", details: ["field": field])
         }
     }
+
     private func requireNonEmptyStrings(_ values: [String], _ field: String) throws {
         if values.contains(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
             throw ValidationException(
                 "\(field) cannot contain empty strings", details: ["field": field])
         }
     }
+
     private func validateCommonFilters(
         currency: String?, imageSize: String?, shippingCountryCode: String?
     ) throws {
@@ -29,6 +31,40 @@ public final class ProductRepositoryGQL: ProductRepository {
         }
     }
 
+    @inline(__always)
+    private func fetchProducts(
+        currency: String?,
+        imageSize: String?,
+        barcodeList: [String]?,
+        categoryIds: [Int]?,
+        productIds: [Int]?,
+        skuList: [String]?,
+        useCache: Bool,
+        shippingCountryCode: String?
+    ) async throws -> [ProductDto] {
+        let vars: [String: Any] = [
+            "currency": currency as Any,
+            "imageSize": imageSize as Any,
+            "barcodeList": barcodeList ?? [],
+            "skuList": skuList ?? [],
+            "categoryIds": categoryIds ?? [],
+            "productIds": productIds ?? [],
+            "useCache": useCache,
+            "shippingCountryCode": shippingCountryCode as Any,
+        ].compactMapValues { $0 }
+
+        let res = try await client.runQuerySafe(
+            query: ChannelGraphQL.GET_PRODUCTS_CHANNEL_QUERY,
+            variables: vars
+        )
+        guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "Products"]) else {
+            throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
+        }
+        let data = try JSONSerialization.data(withJSONObject: list, options: [])
+        return try JSONDecoder().decode([ProductDto].self, from: data)
+    }
+
+    // ---------- Public API (unchanged signatures) ----------
     public func get(
         currency: String?,
         imageSize: String? = "large",
@@ -46,26 +82,16 @@ public final class ProductRepositoryGQL: ProductRepository {
         if let list = skuList { try requireNonEmptyStrings(list, "skuList") }
         if let list = barcodeList { try requireNonEmptyStrings(list, "barcodeList") }
 
-        let vars: [String: Any] = [
-            "currency": currency as Any,
-            "imageSize": imageSize as Any,
-            "barcodeList": barcodeList ?? [],
-            "categoryIds": categoryIds ?? [],
-            "productIds": productIds ?? [],
-            "skuList": skuList ?? [],
-            "useCache": useCache,
-            "shippingCountryCode": shippingCountryCode as Any,
-        ].compactMapValues { $0 }
-
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCTS_CHANNEL_QUERY,
-            variables: vars
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: barcodeList,
+            categoryIds: categoryIds,
+            productIds: productIds,
+            skuList: skuList,
+            useCache: useCache,
+            shippingCountryCode: shippingCountryCode
         )
-        guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "Products"]) else {
-            throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 
     public func getByCategoryId(
@@ -80,23 +106,16 @@ public final class ProductRepositoryGQL: ProductRepository {
         try validateCommonFilters(
             currency: currency, imageSize: imageSize, shippingCountryCode: shippingCountryCode)
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCTS_BY_CATEGORY_CHANNEL_QUERY,
-            variables: [
-                "categoryId": categoryId,
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: [],
+            categoryIds: [categoryId],
+            productIds: [],
+            skuList: [],
+            useCache: true,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let list: [Any] = GraphQLPick.pickPath(
-                res.data, path: ["Channel", "GetProductsByCategory"])
-        else {
-            throw SdkException("Empty response in Product.getByCategoryId", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 
     public func getByCategoryIds(
@@ -109,23 +128,16 @@ public final class ProductRepositoryGQL: ProductRepository {
         try validateCommonFilters(
             currency: currency, imageSize: imageSize, shippingCountryCode: shippingCountryCode)
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCTS_BY_CATEGORIES_CHANNEL_QUERY,
-            variables: [
-                "categoryIds": categoryIds,
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: [],
+            categoryIds: categoryIds,
+            productIds: [],
+            skuList: [],
+            useCache: true,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let list: [Any] = GraphQLPick.pickPath(
-                res.data, path: ["Channel", "GetProductsByCategories"])
-        else {
-            throw SdkException("Empty response in Product.getByCategoryIds", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 
     public func getByParams(
@@ -148,24 +160,20 @@ public final class ProductRepositoryGQL: ProductRepository {
             throw ValidationException("barcode cannot be empty", details: ["field": "barcode"])
         }
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCT_CHANNEL_QUERY,
-            variables: [
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "sku": sku as Any,
-                "barcode": barcode as Any,
-                "productId": productId as Any,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        let products = try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: barcode.map { [$0] } ?? [],
+            categoryIds: [],
+            productIds: productId.map { [$0] } ?? [],
+            skuList: sku.map { [$0] } ?? [],
+            useCache: true,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let obj: [String: Any] = GraphQLPick.pickPath(
-                res.data, path: ["Channel", "GetProduct"])
-        else {
+        guard let first = products.first else {
             throw SdkException("Empty response in Product.getByParams", code: "EMPTY_RESPONSE")
         }
-        return try GraphQLPick.decodeJSON(obj, as: ProductDto.self)
+        return first
     }
 
     public func getByIds(
@@ -179,23 +187,16 @@ public final class ProductRepositoryGQL: ProductRepository {
         try validateCommonFilters(
             currency: currency, imageSize: imageSize, shippingCountryCode: shippingCountryCode)
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCTS_BY_IDS_CHANNEL_QUERY,
-            variables: [
-                "productIds": productIds,
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "useCache": useCache,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: [],
+            categoryIds: [],
+            productIds: productIds,
+            skuList: [],
+            useCache: useCache,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "GetProductsByIds"])
-        else {
-            throw SdkException("Empty response in Product.getByIds", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 
     public func getBySkus(
@@ -212,23 +213,16 @@ public final class ProductRepositoryGQL: ProductRepository {
         try validateCommonFilters(
             currency: currency, imageSize: imageSize, shippingCountryCode: shippingCountryCode)
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCT_BY_SKUS_CHANNEL_QUERY,
-            variables: [
-                "sku": sku,
-                "productId": productId as Any,
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: [],
+            categoryIds: [],
+            productIds: productId.map { [$0] } ?? [],
+            skuList: [sku],
+            useCache: true,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "GetProductBySKUs"])
-        else {
-            throw SdkException("Empty response in Product.getBySkus", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 
     public func getByBarcodes(
@@ -245,23 +239,15 @@ public final class ProductRepositoryGQL: ProductRepository {
         try validateCommonFilters(
             currency: currency, imageSize: imageSize, shippingCountryCode: shippingCountryCode)
 
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCT_BY_BARCODES_CHANNEL_QUERY,
-            variables: [
-                "barcode": barcode,
-                "productId": productId as Any,
-                "currency": currency as Any,
-                "imageSize": imageSize,
-                "shippingCountryCode": shippingCountryCode as Any,
-            ].compactMapValues { $0 }
+        return try await fetchProducts(
+            currency: currency,
+            imageSize: imageSize,
+            barcodeList: [barcode],
+            categoryIds: [],
+            productIds: productId.map { [$0] } ?? [],
+            skuList: [],
+            useCache: true,
+            shippingCountryCode: shippingCountryCode
         )
-        guard
-            let list: [Any] = GraphQLPick.pickPath(
-                res.data, path: ["Channel", "GetProductByBarcodes"])
-        else {
-            throw SdkException("Empty response in Product.getByBarcodes", code: "EMPTY_RESPONSE")
-        }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
     }
 }

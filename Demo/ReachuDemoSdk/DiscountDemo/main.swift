@@ -12,8 +12,7 @@ struct DiscountDemo {
         let COUNTRY = "NO"
 
         let PRODUCT_ID: Int = 397968
-        let VARIANT_ID: Int? = nil
-        let QUANTITY: Int = 1
+        let QUANTITY: Int = 10
 
         let DISCOUNT_TYPE_ID = 2
         // ===============================================
@@ -74,17 +73,41 @@ struct DiscountDemo {
             }
             Log.json(addResp, label: "Response (Discounts.add)")
 
+            Log.section("Discounts.getById")
+            let (byId, _) = try await Log.measure("Discounts.getById") {
+                try await sdk.discount.getById(discountId: addResp.id)
+            }
+            Log.json(byId, label: "Response (Discounts.getById)")
+
+            Log.section("Cart.get (before apply)")
+            let (cartBefore, _) = try await Log.measure("Cart.get (before apply)") {
+                try await sdk.cart.getById(cart_id: cartId)
+            }
+            Log.json(cartBefore, label: "Response (Cart before apply)")
+
             Log.section("Discounts.apply")
             let (applyResp, _) = try await Log.measure("Discounts.apply") {
                 try await sdk.discount.apply(code: code, cartId: cartId)
             }
             Log.json(applyResp, label: "Response (Discounts.apply)")
 
+            Log.section("Cart.get (after apply)")
+            let (cartAfter, _) = try await Log.measure("Cart.get (after apply)") {
+                try await sdk.cart.getById(cart_id: cartId)
+            }
+            Log.json(cartAfter, label: "Response (Cart after apply)")
+
             Log.section("Discounts.deleteApplied")
             let (delAppliedResp, _) = try await Log.measure("Discounts.deleteApplied") {
                 try await sdk.discount.deleteApplied(code: code, cartId: cartId)
             }
             Log.json(delAppliedResp, label: "Response (Discounts.deleteApplied)")
+
+            Log.section("Discounts.delete (created)")
+            let (deletedDiscount, _) = try await Log.measure("Discounts.delete") {
+                try await sdk.discount.delete(discountId: addResp.id)
+            }
+            Log.json(deletedDiscount, label: "Response (Discounts.delete)")
 
             Log.section("Done")
             Log.success("Discount demo finished successfully.")
