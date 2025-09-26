@@ -1,6 +1,10 @@
 import SwiftUI
 import ReachuCore
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// Reachu Design System Color Tokens
 /// 
 /// Provides adaptive colors that automatically respond to theme changes
@@ -97,11 +101,23 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
-    /// Returns the current color scheme based on configuration and system appearance
-    /// Note: This uses light colors by default - for SwiftUI views, use @Environment(\.colorScheme)
+    /// Returns the current color scheme based on configuration
+    /// Note: For automatic themes, SwiftUI views should use @Environment(\.colorScheme) with adaptiveColors
     private static var currentColorScheme: ReachuCore.ColorScheme {
-        // For SwiftUI views that need dynamic colors, they should use colors(for:) method
-        ReachuConfiguration.shared.theme.lightColors
+        let theme = ReachuConfiguration.shared.theme
+        
+        // For automatic mode, we can't reliably detect system changes here
+        // Components should use adaptiveColors with @Environment(\.colorScheme)
+        switch theme.mode {
+        case .automatic:
+            // Default to light for static access - dynamic components use adaptiveColors
+            print("⚠️ [ReachuColors] Static access in automatic mode - use adaptiveColors for proper theming")
+            return theme.lightColors
+        case .light:
+            return theme.lightColors
+        case .dark:
+            return theme.darkColors
+        }
     }
     
     // MARK: - Adaptive Color Access
@@ -121,7 +137,9 @@ public struct AdaptiveColors {
     
     internal init(colorScheme: SwiftUI.ColorScheme) {
         self.colorScheme = colorScheme
-        self.themeColors = ReachuConfiguration.shared.theme.colors(for: colorScheme)
+        let theme = ReachuConfiguration.shared.theme
+        self.themeColors = theme.colors(for: colorScheme)
+        print("🎨 [AdaptiveColors] Created for \(colorScheme == .dark ? "dark" : "light") mode, theme: \(theme.name)")
     }
     
     // MARK: - Brand Colors

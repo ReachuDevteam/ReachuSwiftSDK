@@ -145,6 +145,8 @@ public struct ReachuTheme {
             darkColors: .autoDark(from: lightColors)
         )
     }
+    
+    // Smart defaults are handled by using existing .reachu and .reachuDark schemes
 }
 
 // MARK: - Color Scheme

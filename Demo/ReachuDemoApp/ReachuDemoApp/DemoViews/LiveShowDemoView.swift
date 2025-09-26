@@ -29,22 +29,16 @@ struct LiveShowDemoView: View {
                 // Live streams available
                 activeStreamsSection
                 
-                // Layout selector
-                layoutSelectorSection
-                
-                // Control buttons
-                controlButtonsSection
-                
-                // Current status
-                statusSection
-                
-                // Demo actions
-                demoActionsSection
+                // Main action button
+                showLiveStreamSection
                 
             }
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.vertical, ReachuSpacing.md)
         }
+        .background(adaptiveColors.background)
+        .navigationTitle("Live Show")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             selectedStream = liveShowManager.featuredLiveStream
         }
@@ -448,6 +442,101 @@ struct LiveShowDemoView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
+    
+    // MARK: - Live Stream Card
+    
+    @ViewBuilder
+    private var showLiveStreamSection: some View {
+        if let stream = liveShowManager.activeStreams.first {
+            Button(action: {
+                liveShowManager.showLiveStream(stream, layout: .fullScreenOverlay)
+            }) {
+                HStack(spacing: ReachuSpacing.md) {
+                    // Thumbnail
+                    AsyncImage(url: URL(string: stream.thumbnailUrl ?? "")) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            )
+                    }
+                    .frame(width: 80, height: 80)
+                    .cornerRadius(ReachuBorderRadius.medium)
+                    .clipped()
+                    
+                    // Stream info
+                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                        // Title
+                        Text(stream.title)
+                            .font(ReachuTypography.headline)
+                            .foregroundColor(adaptiveColors.textPrimary)
+                            .lineLimit(2)
+                            .multilineTextAlignment(.leading)
+                        
+                        // Streamer
+                        Text("by \(stream.streamer.name)")
+                            .font(ReachuTypography.body)
+                            .foregroundColor(adaptiveColors.textSecondary)
+                        
+                        // Status
+                        HStack(spacing: ReachuSpacing.xs) {
+                            Circle()
+                                .fill(stream.isLive ? Color.red : Color.gray)
+                                .frame(width: 8, height: 8)
+                            
+                            Text(stream.isLive ? "LIVE" : "OFFLINE")
+                                .font(.caption.weight(.semibold))
+                                .foregroundColor(stream.isLive ? Color.red : Color.gray)
+                        }
+                        
+                        // Viewer count
+                        if stream.viewerCount > 0 {
+                            HStack(spacing: ReachuSpacing.xs) {
+                                Image(systemName: "eye.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                                
+                                Text("\(stream.viewerCount) watching")
+                                    .font(.caption)
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                            }
+                        }
+                    }
+                    
+                    Spacer()
+                    
+                    // Arrow indicator
+                    Image(systemName: "chevron.right")
+                        .font(.title3)
+                        .foregroundColor(adaptiveColors.textTertiary)
+                }
+                .padding(ReachuSpacing.lg)
+                .background(adaptiveColors.surface)
+                .cornerRadius(ReachuBorderRadius.medium)
+                .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+            }
+            .buttonStyle(PlainButtonStyle())
+        } else {
+            // No stream available
+            VStack(spacing: ReachuSpacing.md) {
+                Text("No Live Stream Available")
+                    .font(ReachuTypography.headline)
+                    .foregroundColor(adaptiveColors.textSecondary)
+                
+                Text("Demo stream data is loading...")
+                    .font(ReachuTypography.body)
+                    .foregroundColor(adaptiveColors.textTertiary)
+            }
+            .padding(ReachuSpacing.xl)
+            .background(adaptiveColors.surface)
+            .cornerRadius(ReachuBorderRadius.medium)
+        }
+    }
 }
 
 // MARK: - Previews
@@ -459,3 +548,4 @@ struct LiveShowDemoView: View {
     }
     .navigationViewStyle(StackNavigationViewStyle())
 }
+
