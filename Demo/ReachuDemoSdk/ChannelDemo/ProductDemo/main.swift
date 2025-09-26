@@ -13,7 +13,6 @@ struct ProductDemo {
         let IMAGE_SZ = "large"
 
         let PRODUCT_ID: Int = 402517
-        // ==============================================
 
         let sdk = SdkClient(baseUrl: BASE_URL, apiKey: API_TOKEN)
         let products = ProductRepositoryGQL(client: sdk.apolloClient)
@@ -104,18 +103,15 @@ struct ProductDemo {
             }
             Log.json(generic, label: "Response (Product.get)")
 
-            // Log.section("Category.get")
             let (cats, _) = try await Log.measure("Category.get") {
                 try await categoriesRepo.get()
             }
-            // Log.json(cats, label: "Response (Category.get)")
 
             if let firstCat = cats.first {
                 var catId: Int? = nil
                 do {
                     let data = try JSONEncoder().encode(firstCat)
                     if let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                        // Common keys: "id" or "category_id"
                         catId = (dict["id"] as? Int) ?? (dict["category_id"] as? Int)
                     }
                 } catch { /* ignore */  }

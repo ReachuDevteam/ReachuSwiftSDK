@@ -20,7 +20,6 @@ struct CheckoutDemo {
         let PHONE_CODE = "47"
 
         let DELETE_CHECKOUT_AT_END = false
-        // ====================================
 
         let sessionId = "demo-\(UUID().uuidString)"
         let sdk = SdkClient(baseUrl: BASE_URL, apiKey: API_TOKEN)

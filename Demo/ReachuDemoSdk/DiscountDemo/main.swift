@@ -15,7 +15,6 @@ struct DiscountDemo {
         let QUANTITY: Int = 10
 
         let DISCOUNT_TYPE_ID = 2
-        // ===============================================
 
         let iso = ISO8601DateFormatter()
         let startDate = iso.string(from: Date())
