@@ -16,6 +16,12 @@ import AVKit
 
 struct ContentView: View {
     @StateObject private var cartManager = CartManager()
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         NavigationView {
@@ -24,11 +30,11 @@ struct ContentView: View {
                     VStack(spacing: ReachuSpacing.md) {
                         Text("Reachu SDK")
                             .font(ReachuTypography.largeTitle)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                         
                         Text("Demo iOS App")
                             .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textPrimary)
+                            .foregroundColor(adaptiveColors.textPrimary)
                     }
                     .padding(.top, ReachuSpacing.xl)
                     
@@ -69,8 +75,9 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.bottom, ReachuSpacing.xl)
             }
-            .navigationTitle("Reachu Demo")
-            .navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Reachu Demo")
+        .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
         }
         .environmentObject(cartManager)
         .sheet(isPresented: $cartManager.isCheckoutPresented) {
@@ -99,27 +106,34 @@ struct DemoSection<Destination: View>: View {
     let description: String
     @ViewBuilder let destination: () -> Destination
     
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         NavigationLink(destination: destination) {
             HStack(spacing: ReachuSpacing.md) {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     Text(title)
                         .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     Text(description)
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                 }
                 
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(ReachuColors.textTertiary)
+                    .foregroundColor(adaptiveColors.textTertiary)
             }
             .padding(ReachuSpacing.lg)
-            .background(ReachuColors.surface)
+            .background(adaptiveColors.surface)
             .cornerRadius(ReachuBorderRadius.large)
-            .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+            .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -129,8 +143,14 @@ struct DemoSection<Destination: View>: View {
 
 struct ProductCatalogDemoView: View {
     @EnvironmentObject var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isSelectedVariant: RProductCard.Variant = .grid
     private let products = MockDataProvider.shared.sampleProducts
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -138,7 +158,7 @@ struct ProductCatalogDemoView: View {
             VStack(spacing: ReachuSpacing.sm) {
                 Text("Choose Layout")
                     .font(ReachuTypography.headline)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: ReachuSpacing.sm) {
@@ -159,7 +179,7 @@ struct ProductCatalogDemoView: View {
                 }
             }
             .padding(.vertical, ReachuSpacing.md)
-            .background(ReachuColors.surfaceSecondary)
+            .background(adaptiveColors.surfaceSecondary)
             
             // Products Display
             ScrollView {
@@ -269,6 +289,12 @@ struct VariantButton: View {
 
 struct ShoppingCartDemoView: View {
     @EnvironmentObject var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         VStack(spacing: ReachuSpacing.lg) {
@@ -276,18 +302,18 @@ struct ShoppingCartDemoView: View {
             VStack(spacing: ReachuSpacing.sm) {
                 Text("Shopping Cart")
                     .font(ReachuTypography.largeTitle)
-                    .foregroundColor(ReachuColors.primary)
+                    .foregroundColor(adaptiveColors.primary)
                 
                 HStack {
                     Text("\(cartManager.itemCount) items")
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                     
                     Spacer()
                     
                     Text("Total: \(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
                         .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.primary)
+                        .foregroundColor(adaptiveColors.primary)
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
             }
@@ -300,11 +326,11 @@ struct ShoppingCartDemoView: View {
                     
                     Image(systemName: "cart")
                         .font(.system(size: 48))
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                     
                     Text("Your cart is empty")
                         .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                     
                     Text("Add some products from the catalog")
                         .font(ReachuTypography.body)
@@ -338,7 +364,7 @@ struct ShoppingCartDemoView: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.vertical, ReachuSpacing.md)
                 }
-                .background(ReachuColors.surface)
+                .background(adaptiveColors.surface)
             }
         }
         .navigationTitle("Cart")
@@ -366,11 +392,11 @@ struct CheckoutDemoView: View {
             VStack(spacing: ReachuSpacing.lg) {
                 Text("Checkout Demo")
                     .font(ReachuTypography.largeTitle)
-                    .foregroundColor(ReachuColors.primary)
+                    .foregroundColor(adaptiveColors.primary)
                 
                 Text("This demo shows the checkout system integration")
                     .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
             .padding(.top, ReachuSpacing.xl)
@@ -380,7 +406,7 @@ struct CheckoutDemoView: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                     Text("Current Cart")
                         .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     HStack {
                         Text("Items:")
@@ -394,11 +420,11 @@ struct CheckoutDemoView: View {
                         Spacer()
                         Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
                             .fontWeight(.semibold)
-                            .foregroundColor(ReachuColors.primary)
+                            .foregroundColor(adaptiveColors.primary)
                     }
                 }
                 .padding(ReachuSpacing.md)
-                .background(ReachuColors.surface)
+                .background(adaptiveColors.surface)
                 .cornerRadius(ReachuBorderRadius.medium)
                 .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 2, x: 0, y: 1)
                 
@@ -406,7 +432,7 @@ struct CheckoutDemoView: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                     Text("Quick Add to Cart")
                         .font(ReachuTypography.headline)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     let sampleProducts = Array(MockDataProvider.shared.sampleProducts.prefix(3))
                     ForEach(sampleProducts) { product in
@@ -418,7 +444,7 @@ struct CheckoutDemoView: View {
                                 
                                 Text("\(product.price.currency_code) \(String(format: "%.2f", product.price.amount))")
                                     .font(ReachuTypography.body)
-                                    .foregroundColor(ReachuColors.primary)
+                                    .foregroundColor(adaptiveColors.primary)
                             }
                             
                             Spacer()
@@ -435,7 +461,7 @@ struct CheckoutDemoView: View {
                             }
                         }
                         .padding(ReachuSpacing.sm)
-                        .background(ReachuColors.surfaceSecondary)
+                        .background(adaptiveColors.surfaceSecondary)
                         .cornerRadius(ReachuBorderRadius.small)
                     }
                 }
@@ -454,7 +480,7 @@ struct CheckoutDemoView: View {
                     if cartManager.items.isEmpty {
                         Text("Add items to enable checkout")
                             .font(ReachuTypography.caption1)
-                            .foregroundColor(ReachuColors.textSecondary)
+                            .foregroundColor(adaptiveColors.textSecondary)
                     }
                 }
                 
@@ -500,7 +526,7 @@ struct ProductSliderDemoView: View {
             VStack(spacing: ReachuSpacing.sm) {
                 Text("Choose Layout Style")
                     .font(ReachuTypography.headline)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                 
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: ReachuSpacing.sm) {
@@ -518,7 +544,7 @@ struct ProductSliderDemoView: View {
                 }
             }
             .padding(.vertical, ReachuSpacing.md)
-            .background(ReachuColors.surfaceSecondary)
+            .background(adaptiveColors.surfaceSecondary)
             
             // Layout Information
             VStack(spacing: ReachuSpacing.sm) {
@@ -526,7 +552,7 @@ struct ProductSliderDemoView: View {
             }
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.vertical, ReachuSpacing.md)
-            .background(ReachuColors.surface)
+            .background(adaptiveColors.surface)
             
             // Selected Layout Display
             ScrollView {
@@ -733,13 +759,13 @@ struct LayoutInfoCard: View {
             HStack {
                 Text(title)
                     .font(ReachuTypography.bodyBold)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                 
                 Spacer()
                 
                 Text(width)
                     .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .padding(.horizontal, ReachuSpacing.sm)
                     .padding(.vertical, ReachuSpacing.xs)
                     .background(ReachuColors.background)
@@ -748,14 +774,14 @@ struct LayoutInfoCard: View {
             
             Text(description)
                 .font(ReachuTypography.body)
-                .foregroundColor(ReachuColors.textSecondary)
+                .foregroundColor(adaptiveColors.textSecondary)
             
             Text("Use case: \(useCase)")
                 .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textTertiary)
         }
         .padding(ReachuSpacing.md)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
         .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -958,19 +984,19 @@ struct SimpleProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
                     .font(ReachuTypography.headline)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(2)
                 }
                 
@@ -982,7 +1008,7 @@ struct SimpleProductCard: View {
             }
             .padding(ReachuSpacing.md)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
         .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
@@ -996,19 +1022,19 @@ struct SimpleProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
                 Text(product.title)
                     .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(1)
                 }
                 
@@ -1024,7 +1050,7 @@ struct SimpleProductCard: View {
             Spacer()
         }
         .padding(ReachuSpacing.md)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
         .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -1037,19 +1063,19 @@ struct SimpleProductCard: View {
                 if showBrand, let brand = product.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .textCase(.uppercase)
                 }
                 
                 Text(product.title)
                     .font(ReachuTypography.title2)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(3)
                 
                 if showDescription, let description = product.description {
                     Text(description)
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                         .lineLimit(3)
                 }
                 
@@ -1064,7 +1090,7 @@ struct SimpleProductCard: View {
             }
             .padding(ReachuSpacing.lg)
         }
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.xl)
         .shadow(color: ReachuColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
     }
@@ -1076,7 +1102,7 @@ struct SimpleProductCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.title)
                     .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(2)
                 
                 priceView
@@ -1084,7 +1110,7 @@ struct SimpleProductCard: View {
             .padding(ReachuSpacing.sm)
         }
         .frame(width: 120)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
         .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
     }
@@ -1203,12 +1229,12 @@ struct SimpleProductCard: View {
             Text(product.price.displayAmount)
                 .font(variant == .hero ? ReachuTypography.title3 : ReachuTypography.body)
                 .fontWeight(.semibold)
-                .foregroundColor(ReachuColors.primary)
+                .foregroundColor(adaptiveColors.primary)
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)
                     .font(ReachuTypography.caption1)
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .strikethrough()
             }
         }
@@ -1261,7 +1287,7 @@ struct CartItemRowDemo: View {
                     .fill(ReachuColors.background)
                     .overlay {
                         Image(systemName: "photo")
-                            .foregroundColor(ReachuColors.textSecondary)
+                            .foregroundColor(adaptiveColors.textSecondary)
                     }
             }
             .frame(width: 60, height: 60)
@@ -1276,12 +1302,12 @@ struct CartItemRowDemo: View {
                 if let brand = item.brand {
                     Text(brand)
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
+                        .foregroundColor(adaptiveColors.textSecondary)
                 }
                 
                 Text("\(item.currency) \(String(format: "%.2f", item.price))")
                     .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.primary)
+                    .foregroundColor(adaptiveColors.primary)
             }
             
             Spacer()
@@ -1324,7 +1350,7 @@ struct CartItemRowDemo: View {
             }
         }
         .padding(ReachuSpacing.md)
-        .background(ReachuColors.surface)
+        .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
         .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
@@ -1344,13 +1370,13 @@ struct FloatingCartDemoView: View {
             VStack(spacing: ReachuSpacing.lg) {
                 Text("Configure Floating Cart")
                     .font(ReachuTypography.headline)
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.textPrimary)
                 
                 // Position Selection
                 VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                     Text("Position")
                         .font(ReachuTypography.bodyBold)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     VStack(spacing: ReachuSpacing.sm) {
                         // Top row
@@ -1380,7 +1406,7 @@ struct FloatingCartDemoView: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                     Text("Display Mode")
                         .font(ReachuTypography.bodyBold)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     HStack(spacing: ReachuSpacing.sm) {
                         ForEach([
@@ -1403,7 +1429,7 @@ struct FloatingCartDemoView: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                     Text("Size")
                         .font(ReachuTypography.bodyBold)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.textPrimary)
                     
                     HStack(spacing: ReachuSpacing.sm) {
                         ForEach([
@@ -1431,7 +1457,7 @@ struct FloatingCartDemoView: View {
                 }
             }
             .padding(ReachuSpacing.lg)
-            .background(ReachuColors.surface)
+            .background(adaptiveColors.surface)
             .cornerRadius(ReachuBorderRadius.large)
             .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
             .padding(.horizontal, ReachuSpacing.lg)
@@ -1441,7 +1467,7 @@ struct FloatingCartDemoView: View {
             if !showConfiguredIndicator {
                 Text("Add items to cart to see the floating cart indicator")
                     .font(ReachuTypography.body)
-                    .foregroundColor(ReachuColors.textSecondary)
+                    .foregroundColor(adaptiveColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(ReachuSpacing.lg)
             }
