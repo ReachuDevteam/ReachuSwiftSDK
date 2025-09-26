@@ -79,6 +79,16 @@ struct ContentView: View {
         .navigationBarTitleDisplayMode(.inline)
         .background(adaptiveColors.background)
         .preferredColorScheme(nil) // Respect system setting
+        .onChange(of: colorScheme) { newColorScheme in
+            print("🎨 [Demo] Color scheme changed to: \(newColorScheme == .dark ? "dark" : "light")")
+            // Force refresh of static colors by reloading configuration
+            do {
+                try ConfigurationLoader.loadConfiguration()
+                print("✅ [Demo] Configuration reloaded for theme change")
+            } catch {
+                print("❌ [Demo] Failed to reload configuration: \(error)")
+            }
+        }
         }
         .environmentObject(cartManager)
         .sheet(isPresented: $cartManager.isCheckoutPresented) {
@@ -816,7 +826,7 @@ struct LayoutInfoCard: View {
             
             Text("Use case: \(useCase)")
                 .font(ReachuTypography.caption1)
-                .foregroundColor(ReachuColors.textTertiary)
+                .foregroundColor(adaptiveColors.textTertiary)
         }
         .padding(ReachuSpacing.md)
         .background(adaptiveColors.surface)

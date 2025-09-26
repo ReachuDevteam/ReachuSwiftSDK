@@ -101,21 +101,23 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
-    /// Returns the current color scheme based on configuration and system appearance
-    /// Note: This tries to detect system appearance, but SwiftUI views should use @Environment(\.colorScheme)
+    /// Returns the current color scheme based on configuration
+    /// Note: For automatic themes, SwiftUI views should use @Environment(\.colorScheme) with adaptiveColors
     private static var currentColorScheme: ReachuCore.ColorScheme {
-        // Try to detect system appearance (best effort)
-        #if os(iOS)
-        if #available(iOS 13.0, *) {
-            let isDark = UITraitCollection.current.userInterfaceStyle == .dark
-            let theme = ReachuConfiguration.shared.theme
-            print("🎨 [ReachuColors] System appearance: \(isDark ? "dark" : "light"), theme mode: \(theme.mode)")
-            return theme.colors(for: isDark ? .dark : .light)
-        }
-        #endif
+        let theme = ReachuConfiguration.shared.theme
         
-        // Fallback to light colors if detection fails
-        return ReachuConfiguration.shared.theme.lightColors
+        // For automatic mode, we can't reliably detect system changes here
+        // Components should use adaptiveColors with @Environment(\.colorScheme)
+        switch theme.mode {
+        case .automatic:
+            // Default to light for static access - dynamic components use adaptiveColors
+            print("⚠️ [ReachuColors] Static access in automatic mode - use adaptiveColors for proper theming")
+            return theme.lightColors
+        case .light:
+            return theme.lightColors
+        case .dark:
+            return theme.darkColors
+        }
     }
     
     // MARK: - Adaptive Color Access
