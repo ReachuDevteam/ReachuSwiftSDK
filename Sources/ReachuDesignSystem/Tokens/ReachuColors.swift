@@ -108,7 +108,9 @@ public struct ReachuColors {
         #if os(iOS)
         if #available(iOS 13.0, *) {
             let isDark = UITraitCollection.current.userInterfaceStyle == .dark
-            return ReachuConfiguration.shared.theme.colors(for: isDark ? .dark : .light)
+            let theme = ReachuConfiguration.shared.theme
+            print("🎨 [ReachuColors] System appearance: \(isDark ? "dark" : "light"), theme mode: \(theme.mode)")
+            return theme.colors(for: isDark ? .dark : .light)
         }
         #endif
         
@@ -133,7 +135,9 @@ public struct AdaptiveColors {
     
     internal init(colorScheme: SwiftUI.ColorScheme) {
         self.colorScheme = colorScheme
-        self.themeColors = ReachuConfiguration.shared.theme.colors(for: colorScheme)
+        let theme = ReachuConfiguration.shared.theme
+        self.themeColors = theme.colors(for: colorScheme)
+        print("🎨 [AdaptiveColors] Created for \(colorScheme == .dark ? "dark" : "light") mode, theme: \(theme.name)")
     }
     
     // MARK: - Brand Colors
