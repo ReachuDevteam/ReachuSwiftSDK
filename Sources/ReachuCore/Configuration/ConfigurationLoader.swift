@@ -148,7 +148,7 @@ public class ConfigurationLoader {
         
         let mode = ThemeMode(rawValue: config.mode ?? "automatic") ?? .automatic
         
-        // Parse light colors (complete set)
+        // Parse light colors (with smart defaults from existing schemes)
         let lightColors = ColorScheme(
             primary: hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF"),
             secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6"),
@@ -166,7 +166,7 @@ public class ConfigurationLoader {
             borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6")
         )
         
-        // Parse dark colors (complete set, fallback to auto-generated if not specified)
+        // Parse dark colors (with smart defaults, fallback to auto-generated if not specified)
         let darkColors: ReachuCore.ColorScheme
         if let darkColorsConfig = config.darkColors {
             darkColors = ColorScheme(
@@ -190,7 +190,7 @@ public class ConfigurationLoader {
         }
         
         return ReachuTheme(
-            name: config.name,
+            name: config.name ?? "Custom Theme",
             mode: mode,
             lightColors: lightColors,
             darkColors: darkColors
