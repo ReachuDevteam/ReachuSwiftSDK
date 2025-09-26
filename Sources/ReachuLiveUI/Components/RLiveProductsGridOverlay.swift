@@ -42,12 +42,12 @@ public struct RLiveProductsGridOverlay: View {
     // MARK: - Body
     public var body: some View {
         VStack(spacing: 0) {
-            // Header with close
+            // Custom header
             headerSection
             
-            // Products grid (responsive)
+            // Products grid with proper layout
             ScrollView {
-                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.lg) {
+                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.md) {
                     ForEach(products) { liveProduct in
                         RProductCard(
                             product: liveProduct.asProduct,
@@ -61,19 +61,11 @@ public struct RLiveProductsGridOverlay: View {
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
-                .padding(.top, ReachuSpacing.md)
-                .padding(.bottom, ReachuSpacing.xl)
+                .padding(.vertical, ReachuSpacing.md)
             }
         }
-        .frame(maxHeight: 600) // Fixed height for compatibility
         .background(adaptiveColors.background)
         .cornerRadius(ReachuBorderRadius.large)
-        .shadow(
-            color: Color.black.opacity(0.2),
-            radius: 15,
-            x: 0,
-            y: -5
-        )
         .sheet(item: $selectedProduct) { product in
             RProductDetailOverlay(
                 product: product,
@@ -94,26 +86,19 @@ public struct RLiveProductsGridOverlay: View {
     
     // MARK: - Header Section
     
-    // Responsive title size based on configuration
-    private var titleFontSize: CGFloat {
-        // Use configuration for responsive sizing
-        return 18 // Fixed size for compatibility, could be from config
-    }
-    
     @ViewBuilder
     private var headerSection: some View {
-        VStack(spacing: ReachuSpacing.sm) {
+        VStack(spacing: 0) {
             // Drag indicator
             Capsule()
                 .fill(adaptiveColors.textTertiary)
                 .frame(width: 40, height: 4)
                 .padding(.top, ReachuSpacing.sm)
             
-            // Header content with avatar and subtitle
+            // Header content with avatar and title
             HStack {
                 // Avatar + Title section
                 HStack(spacing: ReachuSpacing.sm) {
-                    // Live stream avatar
                     AsyncImage(url: URL(string: "https://storage.googleapis.com/tipio-images/1756737999235-012.png")) { image in
                         image
                             .resizable()
@@ -122,16 +107,16 @@ public struct RLiveProductsGridOverlay: View {
                         Circle()
                             .fill(adaptiveColors.surfaceSecondary)
                     }
-                    .frame(width: 32, height: 32)
+                    .frame(width: 28, height: 28)
                     .clipShape(Circle())
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Featured Products")
-                            .font(.system(size: titleFontSize, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(adaptiveColors.textPrimary)
                         
                         Text("Live Shopping • \(products.count) items")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundColor(adaptiveColors.textSecondary)
                     }
                 }
@@ -145,11 +130,12 @@ public struct RLiveProductsGridOverlay: View {
                 .foregroundColor(adaptiveColors.primary)
             }
             .padding(.horizontal, ReachuSpacing.lg)
-            .padding(.bottom, ReachuSpacing.sm)
+            .padding(.vertical, ReachuSpacing.md)
             
             Divider()
                 .background(adaptiveColors.border)
         }
+        .background(adaptiveColors.surface)
     }
 }
 
