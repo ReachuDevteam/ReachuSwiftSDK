@@ -4,9 +4,7 @@ import Combine
 import ReachuCore
 import struct Foundation.Date
 
-#if DEBUG
-import ReachuTesting
-#endif
+// ReachuTesting import removed - using hardcoded demo data instead
 
 /// Global manager for LiveShow functionality with Tipio.no integration
 @MainActor
@@ -431,28 +429,44 @@ public class LiveShowManager: ObservableObject {
             followerCount: 85000
         )
         
-        // Use real demo products from MockDataProvider (debug only)
-        #if DEBUG
-        let mockProducts = MockDataProvider.shared.sampleProducts.prefix(3) // Use first 3 products
-        #else
-        let mockProducts: [Product] = [] // Empty in release
-        #endif
-        
-        let liveProducts = mockProducts.map { product -> LiveProduct in
+        // Create hardcoded demo products for LiveShow
+        let liveProducts = [
             LiveProduct(
-                id: "live-\(product.id)",
-                title: product.title,
-                price: product.price,
-                originalPrice: product.price.compare_at != nil ? 
-                    Price(amount: product.price.compare_at!, currency_code: product.price.currency_code) : nil,
-                imageUrl: product.images.first?.url ?? "https://picsum.photos/300/400?random=\(product.id)",
-                isAvailable: (product.quantity ?? 0) > 0,
-                stockCount: product.quantity,
-                discount: product.price.compare_at != nil ? "Special Live Price" : nil,
-                specialOffer: "Available during live stream!",
+                id: "live-101",
+                title: "Reachu Wireless Headphones",
+                price: Price(amount: 199.99, currency_code: "USD"),
+                originalPrice: Price(amount: 249.99, currency_code: "USD"),
+                imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center",
+                isAvailable: true,
+                stockCount: 50,
+                discount: "20% OFF",
+                specialOffer: "Special live price for viewers!",
                 showUntil: Date().addingTimeInterval(600)
+            ),
+            LiveProduct(
+                id: "live-102",
+                title: "Reachu Smart Watch Series 5",
+                price: Price(amount: 349.99, currency_code: "USD"),
+                originalPrice: nil,
+                imageUrl: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=300&fit=crop&crop=center",
+                isAvailable: true,
+                stockCount: 30,
+                specialOffer: "Latest smartwatch technology",
+                showUntil: Date().addingTimeInterval(900)
+            ),
+            LiveProduct(
+                id: "live-103",
+                title: "Reachu Minimalist Backpack",
+                price: Price(amount: 89.99, currency_code: "USD"),
+                originalPrice: Price(amount: 109.99, currency_code: "USD"),
+                imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop&crop=center",
+                isAvailable: true,
+                stockCount: 15,
+                discount: "18% OFF",
+                specialOffer: "Perfect for daily use",
+                showUntil: Date().addingTimeInterval(1200)
             )
-        }
+        ]
         
         // Create demo chat messages
         let chatMessages = createDemoChatMessages()
