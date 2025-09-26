@@ -780,7 +780,7 @@ struct LayoutInfoCard: View {
                     .foregroundColor(adaptiveColors.textSecondary)
                     .padding(.horizontal, ReachuSpacing.sm)
                     .padding(.vertical, ReachuSpacing.xs)
-                    .background(ReachuColors.background)
+                    .background(adaptiveColors.background)
                     .cornerRadius(ReachuBorderRadius.small)
             }
             
@@ -1286,6 +1286,12 @@ struct SimpleProductCard: View {
 struct CartItemRowDemo: View {
     let item: CartManager.CartItem
     let cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         HStack(spacing: ReachuSpacing.md) {
@@ -1335,7 +1341,7 @@ struct CartItemRowDemo: View {
                         }
                     }
                     .frame(width: 32, height: 32)
-                    .background(ReachuColors.background)
+                    .background(adaptiveColors.background)
                     .cornerRadius(ReachuBorderRadius.small)
                     
                     Text("\(item.quantity)")
@@ -1348,7 +1354,7 @@ struct CartItemRowDemo: View {
                         }
                     }
                     .frame(width: 32, height: 32)
-                    .background(ReachuColors.background)
+                    .background(adaptiveColors.background)
                     .cornerRadius(ReachuBorderRadius.small)
                 }
                 
@@ -1518,15 +1524,21 @@ struct PositionButton: View {
     let position: RFloatingCartIndicator.Position
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         Button(action: action) {
             Text(position.displayName)
                 .font(ReachuTypography.caption1)
-                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .foregroundColor(isSelected ? .white : adaptiveColors.textPrimary)
                 .padding(.horizontal, ReachuSpacing.sm)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .background(isSelected ? adaptiveColors.primary : adaptiveColors.background)
                 .cornerRadius(ReachuBorderRadius.small)
         }
     }
@@ -1536,15 +1548,21 @@ struct ModeButton: View {
     let mode: RFloatingCartIndicator.DisplayMode
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         Button(action: action) {
             Text(mode.displayName)
                 .font(ReachuTypography.caption1)
-                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .foregroundColor(isSelected ? .white : adaptiveColors.textPrimary)
                 .padding(.horizontal, ReachuSpacing.sm)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .background(isSelected ? adaptiveColors.primary : adaptiveColors.background)
                 .cornerRadius(ReachuBorderRadius.small)
         }
     }
@@ -1554,15 +1572,21 @@ struct SizeButton: View {
     let size: RFloatingCartIndicator.Size
     let isSelected: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         Button(action: action) {
             Text(size.displayName)
                 .font(ReachuTypography.caption1)
-                .foregroundColor(isSelected ? .white : ReachuColors.textPrimary)
+                .foregroundColor(isSelected ? .white : adaptiveColors.textPrimary)
                 .padding(.horizontal, ReachuSpacing.sm)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(isSelected ? ReachuColors.primary : ReachuColors.background)
+                .background(isSelected ? adaptiveColors.primary : adaptiveColors.background)
                 .cornerRadius(ReachuBorderRadius.small)
         }
     }
