@@ -49,19 +49,11 @@ public struct RLiveProductsGridOverlay: View {
             
             // Products grid with proper layout
             ScrollView {
-                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.xl) {
-                    ForEach(products) { liveProduct in
-                        RProductCard(
-                            product: liveProduct.asProduct,
-                            variant: .grid,
-                            showDescription: false
-                        )
-                        .environmentObject(cartManager)
-                        .onTapGesture {
-                            selectedProduct = liveProduct.asProduct
+                    LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.xl) {
+                        ForEach(products) { liveProduct in
+                            compactProductCard(liveProduct)
                         }
                     }
-                }
                 .padding(.horizontal, ReachuSpacing.xl)
                 .padding(.top, ReachuSpacing.lg)
                 .padding(.bottom, ReachuSpacing.xl)
@@ -87,6 +79,80 @@ public struct RLiveProductsGridOverlay: View {
             )
             .environmentObject(cartManager)
         }
+    }
+    
+    // MARK: - Compact Product Card
+    
+    @ViewBuilder
+    private func compactProductCard(_ liveProduct: LiveProduct) -> some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            // Product image
+            AsyncImage(url: URL(string: liveProduct.imageUrl)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(adaptiveColors.surfaceSecondary)
+                    .overlay(
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.primary))
+                    )
+            }
+            .frame(height: 120) // Fixed height to prevent overlap
+            .cornerRadius(ReachuBorderRadius.medium)
+            .clipped()
+            
+            // Product info
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text(liveProduct.title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(adaptiveColors.textPrimary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                
+                HStack(spacing: ReachuSpacing.xs) {
+                    Text(liveProduct.price.formattedPrice)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(adaptiveColors.primary)
+                    
+                    if let originalPrice = liveProduct.originalPrice {
+                        Text(originalPrice.formattedPrice)
+                            .font(.system(size: 12))
+                            .foregroundColor(adaptiveColors.textTertiary)
+                            .strikethrough()
+                    }
+                }
+                
+                // Add to cart button
+                Button(action: {
+                    selectedProduct = liveProduct.asProduct
+                }) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus")
+                            .font(.system(size: 12))
+                        Text("Add")
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, ReachuSpacing.md)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(adaptiveColors.primary)
+                    .cornerRadius(ReachuBorderRadius.small)
+                }
+            }
+        }
+        .padding(ReachuSpacing.sm)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .shadow(
+            color: Color.black.opacity(0.1),
+            radius: 4,
+            x: 0,
+            y: 2
+        )
+        .frame(maxWidth: .infinity) // Ensure cards fill available space
     }
     
     // MARK: - Header Section
