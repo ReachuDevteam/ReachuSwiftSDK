@@ -432,7 +432,7 @@ struct CheckoutDemoView: View {
                 .padding(ReachuSpacing.md)
                 .background(adaptiveColors.surface)
                 .cornerRadius(ReachuBorderRadius.medium)
-                .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 2, x: 0, y: 1)
+                .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 2, x: 0, y: 1)
                 
                 // Add Sample Products
                 VStack(alignment: .leading, spacing: ReachuSpacing.md) {
@@ -795,7 +795,7 @@ struct LayoutInfoCard: View {
         .padding(ReachuSpacing.md)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 
@@ -956,6 +956,13 @@ struct SimpleProductCard: View {
     let onTap: (() -> Void)?
     let onAddToCart: (() -> Void)?
     
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     init(
         product: DemoProduct,
         variant: ProductCardVariant = .grid,
@@ -1022,7 +1029,7 @@ struct SimpleProductCard: View {
         }
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
     private var listLayout: some View {
@@ -1064,7 +1071,7 @@ struct SimpleProductCard: View {
         .padding(ReachuSpacing.md)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
     
     private var heroLayout: some View {
@@ -1104,7 +1111,7 @@ struct SimpleProductCard: View {
         }
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.xl)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
     }
     
     private var minimalLayout: some View {
@@ -1124,7 +1131,7 @@ struct SimpleProductCard: View {
         .frame(width: 120)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.08), radius: 2, x: 0, y: 1)
     }
     
     private func productImage(height: CGFloat) -> some View {
@@ -1190,7 +1197,7 @@ struct SimpleProductCard: View {
     /// Placeholder view for loading/error states
     private func placeholderView(systemImage: String, color: Color, text: String?) -> some View {
         Rectangle()
-            .fill(ReachuColors.background)
+            .fill(adaptiveColors.background)
             .overlay(
                 VStack(spacing: ReachuSpacing.xs) {
                     Image(systemName: systemImage)
@@ -1302,7 +1309,7 @@ struct CartItemRowDemo: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(ReachuColors.background)
+                    .fill(adaptiveColors.background)
                     .overlay {
                         Image(systemName: "photo")
                             .foregroundColor(adaptiveColors.textSecondary)
@@ -1370,7 +1377,7 @@ struct CartItemRowDemo: View {
         .padding(ReachuSpacing.md)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 }
 
@@ -1483,7 +1490,7 @@ struct FloatingCartDemoView: View {
             .padding(ReachuSpacing.lg)
             .background(adaptiveColors.surface)
             .cornerRadius(ReachuBorderRadius.large)
-            .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+            .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
             .padding(.horizontal, ReachuSpacing.lg)
             
             Spacer()
