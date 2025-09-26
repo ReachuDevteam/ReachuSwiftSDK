@@ -1,6 +1,10 @@
 import SwiftUI
 import ReachuCore
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// Reachu Design System Color Tokens
 /// 
 /// Provides adaptive colors that automatically respond to theme changes
@@ -98,10 +102,18 @@ public struct ReachuColors {
     // MARK: - Private Helpers
     
     /// Returns the current color scheme based on configuration and system appearance
-    /// Note: This uses light colors by default - for SwiftUI views, use @Environment(\.colorScheme)
+    /// Note: This tries to detect system appearance, but SwiftUI views should use @Environment(\.colorScheme)
     private static var currentColorScheme: ReachuCore.ColorScheme {
-        // For SwiftUI views that need dynamic colors, they should use colors(for:) method
-        ReachuConfiguration.shared.theme.lightColors
+        // Try to detect system appearance (best effort)
+        #if os(iOS)
+        if #available(iOS 13.0, *) {
+            let isDark = UITraitCollection.current.userInterfaceStyle == .dark
+            return ReachuConfiguration.shared.theme.colors(for: isDark ? .dark : .light)
+        }
+        #endif
+        
+        // Fallback to light colors if detection fails
+        return ReachuConfiguration.shared.theme.lightColors
     }
     
     // MARK: - Adaptive Color Access
