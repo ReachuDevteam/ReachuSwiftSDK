@@ -78,6 +78,7 @@ struct ContentView: View {
         .navigationTitle("Reachu Demo")
         .navigationBarTitleDisplayMode(.inline)
         .background(adaptiveColors.background)
+        .preferredColorScheme(nil) // Respect system setting
         }
         .environmentObject(cartManager)
         .sheet(isPresented: $cartManager.isCheckoutPresented) {
@@ -260,6 +261,7 @@ struct ProductCatalogDemoView: View {
         }
         .navigationTitle("Product Cards")
         .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
     }
 }
 
@@ -376,6 +378,7 @@ struct ShoppingCartDemoView: View {
         }
         .navigationTitle("Cart")
         .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
         .toolbar {
             if !cartManager.items.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -503,6 +506,7 @@ struct CheckoutDemoView: View {
         }
         .navigationTitle("Checkout")
         .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
         .toolbar {
             if !cartManager.items.isEmpty {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -571,7 +575,7 @@ struct ProductSliderDemoView: View {
             }
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.vertical, ReachuSpacing.md)
-            .background(adaptiveColors.surface)
+            .background(adaptiveColors.surfaceSecondary)
             
             // Selected Layout Display
             ScrollView {
@@ -583,6 +587,7 @@ struct ProductSliderDemoView: View {
         }
         .navigationTitle("Product Sliders")
         .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
     }
     
     @ViewBuilder
@@ -1526,6 +1531,7 @@ struct FloatingCartDemoView: View {
         }
         .navigationTitle("Floating Cart")
         .navigationBarTitleDisplayMode(.inline)
+        .background(adaptiveColors.background)
         .overlay {
             if showConfiguredIndicator {
                 RFloatingCartIndicator(
