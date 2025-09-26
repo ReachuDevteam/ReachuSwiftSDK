@@ -33,10 +33,10 @@ public class ConfigurationLoader {
         
         // 2. Check for specific config files in order of preference
         let configFiles = [
-            "reachu-config-dark-streaming",  // Dark theme
-            "reachu-config-automatic",       // Automatic theme
+            "reachu-config",                 // User custom (highest priority)
+            "reachu-config-automatic",       // Automatic theme (preferred)
             "reachu-config-example",         // Default fallback
-            "reachu-config"                  // User custom
+            "reachu-config-dark-streaming"   // Dark theme (lowest priority)
         ]
         
         for fileName in configFiles {
@@ -60,6 +60,13 @@ public class ConfigurationLoader {
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         applyConfiguration(config)
         print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
+        print("🎨 [Config] Theme mode: \(config.theme?.mode ?? "unknown")")
+        if let lightColors = config.theme?.lightColors {
+            print("💡 [Config] Light primary: \(lightColors.primary ?? "default")")
+        }
+        if let darkColors = config.theme?.darkColors {
+            print("🌙 [Config] Dark primary: \(darkColors.primary ?? "default")")
+        }
     }
     
     /// Load configuration from JSON string
