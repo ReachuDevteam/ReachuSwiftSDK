@@ -29,11 +29,11 @@ public struct RLiveProductsGridOverlay: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    // Grid configuration with proper spacing to prevent overlap
+    // Grid configuration with compact spacing
     private var gridColumns: [GridItem] {
         [
-            GridItem(.flexible(), spacing: ReachuSpacing.lg),
-            GridItem(.flexible(), spacing: ReachuSpacing.lg)
+            GridItem(.flexible(), spacing: ReachuSpacing.sm),
+            GridItem(.flexible(), spacing: ReachuSpacing.sm)
         ]
     }
     
@@ -49,14 +49,14 @@ public struct RLiveProductsGridOverlay: View {
             
             // Products grid with proper layout
             ScrollView {
-                    LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.xl) {
+                    LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.md) {
                         ForEach(products) { liveProduct in
                             compactProductCard(liveProduct)
                         }
                     }
-                .padding(.horizontal, ReachuSpacing.xl)
-                .padding(.top, ReachuSpacing.lg)
-                .padding(.bottom, ReachuSpacing.xl)
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.top, ReachuSpacing.md)
+                .padding(.bottom, ReachuSpacing.lg)
             }
         }
         .background(adaptiveColors.background)
@@ -99,7 +99,7 @@ public struct RLiveProductsGridOverlay: View {
                             .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.primary))
                     )
             }
-            .frame(height: 120) // Fixed height to prevent overlap
+            .frame(height: 100) // More compact height
             .cornerRadius(ReachuBorderRadius.medium)
             .clipped()
             
@@ -125,22 +125,7 @@ public struct RLiveProductsGridOverlay: View {
                     }
                 }
                 
-                // Add to cart button
-                Button(action: {
-                    selectedProduct = liveProduct.asProduct
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 12))
-                        Text("Add")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, ReachuSpacing.md)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(adaptiveColors.primary)
-                    .cornerRadius(ReachuBorderRadius.small)
-                }
+                // Remove add to cart button - only tap to open detail
             }
         }
         .padding(ReachuSpacing.sm)
@@ -152,7 +137,7 @@ public struct RLiveProductsGridOverlay: View {
             x: 0,
             y: 2
         )
-        .frame(maxWidth: .infinity) // Ensure cards fill available space
+        .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180) // Fixed consistent height
     }
     
     // MARK: - Header Section
