@@ -386,6 +386,12 @@ struct ShoppingCartDemoView: View {
 
 struct CheckoutDemoView: View {
     @EnvironmentObject var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         VStack(spacing: ReachuSpacing.xl) {
@@ -517,8 +523,14 @@ enum ProductSliderLayout: String, CaseIterable {
 
 struct ProductSliderDemoView: View {
     @EnvironmentObject var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
     @State private var isSelectedLayout: ProductSliderLayout = .featured
     private let products = MockDataProvider.shared.sampleProducts
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -1359,10 +1371,16 @@ struct CartItemRowDemo: View {
 // MARK: - Floating Cart Demo View
 struct FloatingCartDemoView: View {
     @EnvironmentObject var cartManager: CartManager
+    @Environment(\.colorScheme) private var colorScheme
     @State private var selectedPosition: RFloatingCartIndicator.Position = .bottomRight
     @State private var selectedDisplayMode: RFloatingCartIndicator.DisplayMode = .full
     @State private var selectedSize: RFloatingCartIndicator.Size = .medium
     @State private var showConfiguredIndicator = false
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     var body: some View {
         VStack(spacing: 0) {
