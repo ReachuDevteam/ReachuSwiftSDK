@@ -29,10 +29,12 @@ public struct RLiveProductsGridOverlay: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    // Grid configuration from ReachuConfiguration
+    // Grid configuration with proper spacing to prevent overlap
     private var gridColumns: [GridItem] {
-        let columnCount = 2 // Could be from uiConfig in future
-        return Array(repeating: GridItem(.flexible(), spacing: ReachuSpacing.md), count: columnCount)
+        [
+            GridItem(.flexible(), spacing: ReachuSpacing.lg),
+            GridItem(.flexible(), spacing: ReachuSpacing.lg)
+        ]
     }
     
     public init(products: [LiveProduct]) {
@@ -47,7 +49,7 @@ public struct RLiveProductsGridOverlay: View {
             
             // Products grid with proper layout
             ScrollView {
-                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.md) {
+                LazyVGrid(columns: gridColumns, spacing: ReachuSpacing.xl) {
                     ForEach(products) { liveProduct in
                         RProductCard(
                             product: liveProduct.asProduct,
@@ -60,12 +62,15 @@ public struct RLiveProductsGridOverlay: View {
                         }
                     }
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
-                .padding(.vertical, ReachuSpacing.md)
+                .padding(.horizontal, ReachuSpacing.xl)
+                .padding(.top, ReachuSpacing.lg)
+                .padding(.bottom, ReachuSpacing.xl)
             }
         }
         .background(adaptiveColors.background)
         .cornerRadius(ReachuBorderRadius.large)
+        .clipped() // Prevent overflow
+        .ignoresSafeArea(.container, edges: .bottom) // Remove white border at bottom
         .sheet(item: $selectedProduct) { product in
             RProductDetailOverlay(
                 product: product,
