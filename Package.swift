@@ -194,7 +194,7 @@ let package = Package(
             path: "Demo/ReachuDemoSdk/PaymentDemo"
         ),
         .executableTarget(
-            name: "Sdk",
+            name: "SdkDemo",
             dependencies: [
                 "ReachuCore", "ReachuDemoKit",
             ],

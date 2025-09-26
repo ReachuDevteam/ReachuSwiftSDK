@@ -259,6 +259,20 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "YES"
+            buildForProfiling = "YES"
+            buildForArchiving = "YES"
+            buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "SdkDemo"
+               BuildableName = "SdkDemo"
+               BlueprintName = "SdkDemo"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
    <TestAction
@@ -282,9 +296,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ReachuCartDemo"
-            BuildableName = "ReachuCartDemo"
-            BlueprintName = "ReachuCartDemo"
+            BlueprintIdentifier = "SdkDemo"
+            BuildableName = "SdkDemo"
+            BlueprintName = "SdkDemo"
             ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -308,9 +322,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "ReachuCartDemo"
-            BuildableName = "ReachuCartDemo"
-            BlueprintName = "ReachuCartDemo"
+            BlueprintIdentifier = "SdkDemo"
+            BuildableName = "SdkDemo"
+            BlueprintName = "SdkDemo"
             ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>

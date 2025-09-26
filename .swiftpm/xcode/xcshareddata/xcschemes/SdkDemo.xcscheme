@@ -15,9 +15,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "Sdk"
-               BuildableName = "Sdk"
-               BlueprintName = "Sdk"
+               BlueprintIdentifier = "SdkDemo"
+               BuildableName = "SdkDemo"
+               BlueprintName = "SdkDemo"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -44,9 +44,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "Sdk"
-            BuildableName = "Sdk"
-            BlueprintName = "Sdk"
+            BlueprintIdentifier = "SdkDemo"
+            BuildableName = "SdkDemo"
+            BlueprintName = "SdkDemo"
             ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -61,9 +61,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "Sdk"
-            BuildableName = "Sdk"
-            BlueprintName = "Sdk"
+            BlueprintIdentifier = "SdkDemo"
+            BuildableName = "SdkDemo"
+            BlueprintName = "SdkDemo"
             ReferencedContainer = "container:">
          </BuildableReference>
       </BuildableProductRunnable>

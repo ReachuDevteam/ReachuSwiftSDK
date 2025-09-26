@@ -197,6 +197,24 @@
             "name": "Release ReachuCartDemo",
             "program": "${workspaceFolder:ReachuSwiftSDK}/.build/release/ReachuCartDemo",
             "preLaunchTask": "swift: Build Release ReachuCartDemo"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ReachuSwiftSDK}",
+            "name": "Debug SdkDemo",
+            "program": "${workspaceFolder:ReachuSwiftSDK}/.build/debug/SdkDemo",
+            "preLaunchTask": "swift: Build Debug SdkDemo"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ReachuSwiftSDK}",
+            "name": "Release SdkDemo",
+            "program": "${workspaceFolder:ReachuSwiftSDK}/.build/release/SdkDemo",
+            "preLaunchTask": "swift: Build Release SdkDemo"
         }
     ]
 }
