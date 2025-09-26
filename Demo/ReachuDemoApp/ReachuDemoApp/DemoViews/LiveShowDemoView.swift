@@ -36,6 +36,9 @@ struct LiveShowDemoView: View {
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.vertical, ReachuSpacing.md)
         }
+        .background(adaptiveColors.background)
+        .navigationTitle("Live Show")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             selectedStream = liveShowManager.featuredLiveStream
         }
@@ -515,6 +518,7 @@ struct LiveShowDemoView: View {
                 .padding(ReachuSpacing.lg)
                 .background(adaptiveColors.surface)
                 .cornerRadius(ReachuBorderRadius.medium)
+                .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(PlainButtonStyle())
         } else {
