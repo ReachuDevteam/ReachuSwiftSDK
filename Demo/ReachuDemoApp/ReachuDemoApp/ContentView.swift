@@ -81,7 +81,11 @@ struct ContentView: View {
         .preferredColorScheme(nil) // Respect system setting
         .onChange(of: colorScheme) { newColorScheme in
             print("🎨 [Demo] Color scheme changed to: \(newColorScheme == .dark ? "dark" : "light")")
-            // Force refresh of static colors by reloading configuration
+            
+            // Update static ReachuColors to match new color scheme
+            ReachuColors.updateForColorScheme(newColorScheme)
+            
+            // Also reload configuration to ensure everything is in sync
             do {
                 try ConfigurationLoader.loadConfiguration()
                 print("✅ [Demo] Configuration reloaded for theme change")

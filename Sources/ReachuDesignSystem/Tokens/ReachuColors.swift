@@ -101,23 +101,40 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
+    /// Current color scheme - can be overridden for dynamic theming
+    private static var _currentColorScheme: ReachuCore.ColorScheme?
+    
     /// Returns the current color scheme based on configuration
-    /// Note: For automatic themes, SwiftUI views should use @Environment(\.colorScheme) with adaptiveColors
     private static var currentColorScheme: ReachuCore.ColorScheme {
+        // Use override if available (set by theme change detection)
+        if let override = _currentColorScheme {
+            return override
+        }
+        
         let theme = ReachuConfiguration.shared.theme
         
-        // For automatic mode, we can't reliably detect system changes here
-        // Components should use adaptiveColors with @Environment(\.colorScheme)
+        // Try to detect system appearance for automatic mode
         switch theme.mode {
         case .automatic:
-            // Default to light for static access - dynamic components use adaptiveColors
-            print("⚠️ [ReachuColors] Static access in automatic mode - use adaptiveColors for proper theming")
+            #if os(iOS)
+            if #available(iOS 13.0, *) {
+                let isDark = UITraitCollection.current.userInterfaceStyle == .dark
+                return theme.colors(for: isDark ? .dark : .light)
+            }
+            #endif
             return theme.lightColors
         case .light:
             return theme.lightColors
         case .dark:
             return theme.darkColors
         }
+    }
+    
+    /// Update colors for theme changes (called from demo app)
+    public static func updateForColorScheme(_ colorScheme: SwiftUI.ColorScheme) {
+        let theme = ReachuConfiguration.shared.theme
+        _currentColorScheme = theme.colors(for: colorScheme)
+        print("🎨 [ReachuColors] Updated static colors for \(colorScheme == .dark ? "dark" : "light") mode")
     }
     
     // MARK: - Adaptive Color Access
