@@ -268,18 +268,25 @@ struct VariantButton: View {
     let isSelected: Bool
     let action: () -> Void
     
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(ReachuTypography.caption1)
                 .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : ReachuColors.primary)
+                .foregroundColor(isSelected ? .white : adaptiveColors.primary)
                 .padding(.horizontal, ReachuSpacing.md)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(isSelected ? ReachuColors.primary : Color.clear)
+                .background(isSelected ? adaptiveColors.primary : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.circle)
-                        .stroke(ReachuColors.primary, lineWidth: 1)
+                        .stroke(adaptiveColors.primary, lineWidth: 1)
                 )
                 .cornerRadius(ReachuBorderRadius.circle)
         }
@@ -334,7 +341,7 @@ struct ShoppingCartDemoView: View {
                     
                     Text("Add some products from the catalog")
                         .font(ReachuTypography.body)
-                        .foregroundColor(ReachuColors.textTertiary)
+                        .foregroundColor(adaptiveColors.textTertiary)
                     
                     Spacer()
                 }
@@ -742,18 +749,25 @@ struct SliderLayoutButton: View {
     let isSelected: Bool
     let action: () -> Void
     
+    @Environment(\.colorScheme) private var colorScheme
+    
+    // Colors based on theme and color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         Button(action: action) {
             Text(title)
                 .font(ReachuTypography.caption1)
                 .fontWeight(.medium)
-                .foregroundColor(isSelected ? .white : ReachuColors.primary)
+                .foregroundColor(isSelected ? .white : adaptiveColors.primary)
                 .padding(.horizontal, ReachuSpacing.md)
                 .padding(.vertical, ReachuSpacing.xs)
-                .background(isSelected ? ReachuColors.primary : Color.clear)
+                .background(isSelected ? adaptiveColors.primary : Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.circle)
-                        .stroke(ReachuColors.primary, lineWidth: 1)
+                        .stroke(adaptiveColors.primary, lineWidth: 1)
                 )
                 .cornerRadius(ReachuBorderRadius.circle)
         }
@@ -1190,10 +1204,10 @@ struct SimpleProductCard: View {
                 placeholderView(systemImage: "exclamationmark.triangle", color: ReachuColors.error, text: "Image unavailable")
             case .empty:
                 // Cargando - mostrar placeholder con ícono de carga
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary, text: nil)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary, text: nil)
             @unknown default:
                 // Fallback - mostrar placeholder genérico
-                placeholderView(systemImage: "photo", color: ReachuColors.textSecondary, text: nil)
+                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary, text: nil)
             }
         }
         .frame(height: height)
