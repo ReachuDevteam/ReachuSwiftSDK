@@ -79,7 +79,7 @@ public struct RProductDetailOverlay: View {
                     imageGallerySection
                     
                     // Product Information
-                    VStack(spacing: ReachuSpacing.lg) {
+                    VStack(spacing: ReachuSpacing.md) {
                         productInfoSection
                         variantSelectionSection
                         quantitySelectionSection
@@ -87,12 +87,12 @@ public struct RProductDetailOverlay: View {
                         specificationsSection
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
-                    .padding(.bottom, ReachuSpacing.xl)
+                    .padding(.bottom, ReachuSpacing.lg)
                 }
             }
-            .navigationTitle(product.title)
+            .navigationTitle("Product Details")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -121,7 +121,7 @@ public struct RProductDetailOverlay: View {
                 // Placeholder when no images
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
                     .fill(ReachuColors.background)
-                    .frame(height: 300)
+                    .frame(height: 200)
                     .overlay {
                         VStack(spacing: ReachuSpacing.sm) {
                             Image(systemName: "photo")
@@ -157,7 +157,7 @@ public struct RProductDetailOverlay: View {
                         EmptyView()
                     }
                 }
-                .frame(height: 300)
+                .frame(height: 240)
                 .cornerRadius(ReachuBorderRadius.large)
             } else {
                 // Multiple images with gallery
@@ -191,7 +191,7 @@ public struct RProductDetailOverlay: View {
                             .tag(index)
                         }
                     }
-                    .frame(height: 300)
+                    .frame(height: 200)
                     #if os(iOS) || os(tvOS) || os(watchOS)
                     .tabViewStyle(.page(indexDisplayMode: .always))
                     #endif
@@ -251,16 +251,17 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Product Info Section
     private var productInfoSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             // Title and Brand
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 Text(product.title)
-                    .font(ReachuTypography.title2)
+                    .font(ReachuTypography.title3)
                     .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(2)
                 
                 if let brand = product.brand, !brand.isEmpty {
                     Text(brand)
-                        .font(ReachuTypography.subheadline)
+                        .font(ReachuTypography.body)
                         .foregroundColor(ReachuColors.textSecondary)
                 }
             }
@@ -292,11 +293,12 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Variant Selection Section
     private var variantSelectionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             if !product.variants.isEmpty {
-                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     Text("Options")
-                        .font(ReachuTypography.headline)
+                        .font(ReachuTypography.body)
+                        .fontWeight(.semibold)
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     ScrollView(.horizontal, showsIndicators: false) {
@@ -336,9 +338,10 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Quantity Selection Section
     private var quantitySelectionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Quantity")
-                .font(ReachuTypography.headline)
+                .font(ReachuTypography.body)
+                .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
             HStack(spacing: ReachuSpacing.md) {
@@ -351,7 +354,7 @@ public struct RProductDetailOverlay: View {
                     Image(systemName: "minus")
                         .font(.body)
                         .foregroundColor(quantity > 1 ? ReachuColors.textPrimary : ReachuColors.textSecondary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                         .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
@@ -363,9 +366,10 @@ public struct RProductDetailOverlay: View {
                 
                 // Current quantity
                 Text("\(quantity)")
-                    .font(ReachuTypography.headline)
+                    .font(ReachuTypography.body)
+                    .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
-                    .frame(minWidth: 40)
+                    .frame(minWidth: 36)
                 
                 // Increase button
                 Button {
@@ -380,7 +384,7 @@ public struct RProductDetailOverlay: View {
                             quantity < (selectedVariant?.quantity ?? product.quantity ?? 0) ? 
                             ReachuColors.textPrimary : ReachuColors.textSecondary
                         )
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                         .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
@@ -407,25 +411,28 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Description Section
     private var descriptionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             if let description = product.description, !description.isEmpty {
                 Text("Description")
-                    .font(ReachuTypography.headline)
+                    .font(ReachuTypography.body)
+                    .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
                 
                 Text(description)
-                    .font(ReachuTypography.body)
+                    .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(3)
             }
         }
     }
     
     // MARK: - Specifications Section
     private var specificationsSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Details")
-                .font(ReachuTypography.headline)
+                .font(ReachuTypography.body)
+                .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
             VStack(spacing: ReachuSpacing.xs) {
@@ -453,17 +460,17 @@ public struct RProductDetailOverlay: View {
     private func specificationRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textSecondary)
             
             Spacer()
             
             Text(value)
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textPrimary)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, ReachuSpacing.xs)
+        .padding(.vertical, 2)
     }
     
     private var stockStatusBadge: some View {
