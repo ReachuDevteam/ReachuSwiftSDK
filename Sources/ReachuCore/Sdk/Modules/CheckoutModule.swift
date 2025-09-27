@@ -55,14 +55,6 @@ public final class CheckoutRepositoryGQL: CheckoutRepository {
         if let s = email, s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw ValidationException("email cannot be empty", details: ["field": "email"])
         }
-        if let s = success_url, s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            throw ValidationException(
-                "success_url cannot be empty", details: ["field": "success_url"])
-        }
-        if let s = cancel_url, s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            throw ValidationException(
-                "cancel_url cannot be empty", details: ["field": "cancel_url"])
-        }
         if let s = payment_method, s.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             throw ValidationException(
                 "payment_method cannot be empty", details: ["field": "payment_method"])
