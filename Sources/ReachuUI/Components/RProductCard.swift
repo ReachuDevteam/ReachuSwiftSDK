@@ -351,7 +351,7 @@ public struct RProductCard: View {
                     ReachuTypography.body
                 )
                 .fontWeight(.semibold)
-                .foregroundColor(ReachuColors.primary)
+                .foregroundColor(adaptiveColors.primary)
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)
@@ -482,7 +482,7 @@ public struct RProductCard: View {
         )
     }
     .padding()
-    .background(ReachuColors.background)
+    .background(Color.clear)
 }
 
 #Preview("List Variant") {
@@ -497,7 +497,7 @@ public struct RProductCard: View {
         }
     }
     .padding()
-    .background(ReachuColors.background)
+    .background(Color.clear)
 }
 
 #Preview("Hero Variant") {
@@ -509,7 +509,7 @@ public struct RProductCard: View {
         onAddToCart: { print("Hero add to cart") }
     )
     .padding()
-    .background(ReachuColors.background)
+    .background(Color.clear)
 }
 
 #Preview("Minimal Variant") {
@@ -525,7 +525,7 @@ public struct RProductCard: View {
         }
         .padding(.horizontal)
     }
-    .background(ReachuColors.background)
+    .background(Color.clear)
 }
 
 #Preview("All Variants Comparison") {
@@ -587,6 +587,6 @@ public struct RProductCard: View {
         }
         .padding(.vertical)
     }
-    .background(ReachuColors.background)
+    .background(Color.clear)
 }
 #endif

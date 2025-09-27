@@ -33,10 +33,10 @@ public class ConfigurationLoader {
         
         // 2. Check for specific config files in order of preference
         let configFiles = [
-            "reachu-config-dark-streaming",  // Dark theme
-            "reachu-config-automatic",       // Automatic theme
+            "reachu-config",                 // User custom (highest priority)
+            "reachu-config-automatic",       // Automatic theme (preferred)
             "reachu-config-example",         // Default fallback
-            "reachu-config"                  // User custom
+            "reachu-config-dark-streaming"   // Dark theme (lowest priority)
         ]
         
         for fileName in configFiles {
@@ -60,6 +60,13 @@ public class ConfigurationLoader {
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         applyConfiguration(config)
         print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
+        print("🎨 [Config] Theme mode: \(config.theme?.mode ?? "unknown")")
+        if let lightColors = config.theme?.lightColors {
+            print("💡 [Config] Light primary: \(lightColors.primary ?? "default")")
+        }
+        if let darkColors = config.theme?.darkColors {
+            print("🌙 [Config] Dark primary: \(darkColors.primary ?? "default")")
+        }
     }
     
     /// Load configuration from JSON string
@@ -148,7 +155,7 @@ public class ConfigurationLoader {
         
         let mode = ThemeMode(rawValue: config.mode ?? "automatic") ?? .automatic
         
-        // Parse light colors (complete set)
+        // Parse light colors (with smart defaults from existing schemes)
         let lightColors = ColorScheme(
             primary: hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF"),
             secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6"),
@@ -166,7 +173,7 @@ public class ConfigurationLoader {
             borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6")
         )
         
-        // Parse dark colors (complete set, fallback to auto-generated if not specified)
+        // Parse dark colors (with smart defaults, fallback to auto-generated if not specified)
         let darkColors: ReachuCore.ColorScheme
         if let darkColorsConfig = config.darkColors {
             darkColors = ColorScheme(
@@ -190,7 +197,7 @@ public class ConfigurationLoader {
         }
         
         return ReachuTheme(
-            name: config.name,
+            name: config.name ?? "Custom Theme",
             mode: mode,
             lightColors: lightColors,
             darkColors: darkColors

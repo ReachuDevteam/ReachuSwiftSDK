@@ -1,6 +1,10 @@
 import SwiftUI
 import ReachuCore
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// Reachu Design System Color Tokens
 /// 
 /// Provides adaptive colors that automatically respond to theme changes
@@ -97,11 +101,40 @@ public struct ReachuColors {
     
     // MARK: - Private Helpers
     
-    /// Returns the current color scheme based on configuration and system appearance
-    /// Note: This uses light colors by default - for SwiftUI views, use @Environment(\.colorScheme)
+    /// Current color scheme - can be overridden for dynamic theming
+    private static var _currentColorScheme: ReachuCore.ColorScheme?
+    
+    /// Returns the current color scheme based on configuration
     private static var currentColorScheme: ReachuCore.ColorScheme {
-        // For SwiftUI views that need dynamic colors, they should use colors(for:) method
-        ReachuConfiguration.shared.theme.lightColors
+        // Use override if available (set by theme change detection)
+        if let override = _currentColorScheme {
+            return override
+        }
+        
+        let theme = ReachuConfiguration.shared.theme
+        
+        // Try to detect system appearance for automatic mode
+        switch theme.mode {
+        case .automatic:
+            #if os(iOS)
+            if #available(iOS 13.0, *) {
+                let isDark = UITraitCollection.current.userInterfaceStyle == .dark
+                return theme.colors(for: isDark ? .dark : .light)
+            }
+            #endif
+            return theme.lightColors
+        case .light:
+            return theme.lightColors
+        case .dark:
+            return theme.darkColors
+        }
+    }
+    
+    /// Update colors for theme changes (called from demo app)
+    public static func updateForColorScheme(_ colorScheme: SwiftUI.ColorScheme) {
+        let theme = ReachuConfiguration.shared.theme
+        _currentColorScheme = theme.colors(for: colorScheme)
+        print("🎨 [ReachuColors] Updated static colors for \(colorScheme == .dark ? "dark" : "light") mode")
     }
     
     // MARK: - Adaptive Color Access
@@ -121,7 +154,9 @@ public struct AdaptiveColors {
     
     internal init(colorScheme: SwiftUI.ColorScheme) {
         self.colorScheme = colorScheme
-        self.themeColors = ReachuConfiguration.shared.theme.colors(for: colorScheme)
+        let theme = ReachuConfiguration.shared.theme
+        self.themeColors = theme.colors(for: colorScheme)
+        print("🎨 [AdaptiveColors] Created for \(colorScheme == .dark ? "dark" : "light") mode, theme: \(theme.name)")
     }
     
     // MARK: - Brand Colors
