@@ -315,6 +315,193 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         // Use currency from first item, default to USD
         currency = items.first?.currency ?? "USD"
     }
+
+    // MARK: Helpers
+    @discardableResult
+    private func ensureCartIDForCheckout() async -> String? {
+        if let id = currentCartId { return id }
+        await createCart(currency: currency, country: country)
+        return currentCartId
+    }
+
+    private func extractCheckoutId<T: Encodable>(_ dto: T) -> String? {
+        guard
+            let data = try? JSONEncoder().encode(dto),
+            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return (dict["checkout_id"] as? String)
+            ?? (dict["checkoutId"] as? String)
+            ?? (dict["id"] as? String)
+    }
+
+    @discardableResult
+    public func createCheckout() async -> String? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        guard let cid = await ensureCartIDForCheckout() else {
+            print("ℹ️ [Checkout] createCheckout: missing cartId")
+            return nil
+        }
+
+        print("🧾 [Checkout] Create START cartId=\(cid)")
+        do {
+            let dto = try await sdk.checkout.create(cart_id: cid)
+            let chkId = extractCheckoutId(dto)
+            print("✅ [Checkout] Create OK checkoutId=\(chkId ?? "nil")")
+            return chkId
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Checkout] Create FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func updateCheckout(
+        checkoutId: String? = nil,
+        email: String? = nil,
+        successUrl: String? = nil,
+        cancelUrl: String? = nil,
+        paymentMethod: String? = nil,
+        shippingAddress: [String: Any]? = nil,
+        billingAddress: [String: Any]? = nil,
+        acceptsTerms: Bool = true,
+        acceptsPurchaseConditions: Bool = true
+    ) async -> UpdateCheckoutDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let chkId: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            chkId = passed
+        } else {
+            chkId = await createCheckout()
+        }
+
+        guard let id = chkId, !id.isEmpty else {
+            print("ℹ️ [Checkout] Update: missing checkoutId")
+            return nil
+        }
+
+        print("🧾 [Checkout] Update START checkoutId=\(id)")
+        do {
+            let dto = try await sdk.checkout.update(
+                checkout_id: id,
+                status: nil,
+                email: email,
+                success_url: successUrl,
+                cancel_url: cancelUrl,
+                payment_method: paymentMethod,
+                shipping_address: shippingAddress,
+                billing_address: billingAddress,
+                buyer_accepts_terms_conditions: acceptsTerms,
+                buyer_accepts_purchase_conditions: acceptsPurchaseConditions
+            )
+            print("✅ [Checkout] Update OK")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Checkout] Update FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func initKlarna(countryCode: String, href: String, email: String?) async
+        -> InitPaymentKlarnaDto?
+    {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let chkId = await createCheckout()
+        guard let id = chkId, !id.isEmpty else {
+            print("ℹ️ [Payment] KlarnaInit: missing checkoutId")
+            return nil
+        }
+
+        print("💳 [Payment] KlarnaInit START checkoutId=\(id)")
+        do {
+            let dto = try await sdk.payment.klarnaInit(
+                checkoutId: id,
+                countryCode: countryCode,
+                href: href,
+                email: email
+            )
+            print("✅ [Payment] KlarnaInit OK")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] KlarnaInit FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func stripeIntent(returnEphemeralKey: Bool? = true) async -> PaymentIntentStripeDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let chkId = await createCheckout()
+        guard let id = chkId, !id.isEmpty else {
+            print("ℹ️ [Payment] StripeIntent: missing checkoutId")
+            return nil
+        }
+
+        print("💳 [Payment] StripeIntent START checkoutId=\(id)")
+        do {
+            let dto = try await sdk.payment.stripeIntent(
+                checkoutId: id,
+                returnEphemeralKey: returnEphemeralKey
+            )
+            print("✅ [Payment] StripeIntent OK")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] StripeIntent FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func stripeLink(successUrl: String, paymentMethod: String, email: String) async
+        -> InitPaymentStripeDto?
+    {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let chkId = await createCheckout()
+        guard let id = chkId, !id.isEmpty else {
+            print("ℹ️ [Payment] StripeLink: missing checkoutId")
+            return nil
+        }
+
+        print("💳 [Payment] StripeLink START checkoutId=\(id)")
+        do {
+            let dto = try await sdk.payment.stripeLink(
+                checkoutId: id,
+                successUrl: successUrl,
+                paymentMethod: paymentMethod,
+                email: email
+            )
+            print("✅ [Payment] StripeLink OK")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] StripeLink FAIL \(msg)")
+            return nil
+        }
+    }
 }
 
 // MARK: - Cart Errors
