@@ -41,6 +41,7 @@ public struct RProductDetailOverlay: View {
     @State private var showCheckmark = false
     @State private var buttonScale: CGFloat = 1.0
     @State private var selectedVariant: Variant?
+    @State private var selectedOptions: [String: String] = [:] // option_name: selected_value
     @State private var quantity = 1
     
     // MARK: - Computed Properties
@@ -87,6 +88,7 @@ public struct RProductDetailOverlay: View {
                         specificationsSection
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
+                    .padding(.top, ReachuSpacing.lg)
                     .padding(.bottom, ReachuSpacing.lg)
                 }
             }
@@ -109,8 +111,8 @@ public struct RProductDetailOverlay: View {
         }
         
         .onAppear {
-            // Select first variant by default
-            selectedVariant = product.variants.first
+            // Initialize default options and variant
+            initializeDefaultOptions()
         }
     }
     
@@ -121,7 +123,7 @@ public struct RProductDetailOverlay: View {
                 // Placeholder when no images
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
                     .fill(ReachuColors.background)
-                    .frame(height: 200)
+                    .frame(height: 300)
                     .overlay {
                         VStack(spacing: ReachuSpacing.sm) {
                             Image(systemName: "photo")
@@ -191,7 +193,7 @@ public struct RProductDetailOverlay: View {
                             .tag(index)
                         }
                     }
-                    .frame(height: 200)
+                    .frame(height: 300)
                     #if os(iOS) || os(tvOS) || os(watchOS)
                     .tabViewStyle(.page(indexDisplayMode: .always))
                     #endif
@@ -297,39 +299,52 @@ public struct RProductDetailOverlay: View {
             if !product.variants.isEmpty {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     Text("Options")
-                        .font(ReachuTypography.body)
+                        .font(ReachuTypography.caption1)
                         .fontWeight(.semibold)
                         .foregroundColor(ReachuColors.textPrimary)
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: ReachuSpacing.sm) {
-                            ForEach(product.variants, id: \.id) { variant in
-                                Button {
-                                    selectedVariant = variant
-                                } label: {
-                                    Text(variant.title)
-                                        .font(ReachuTypography.body)
-                                        .padding(.horizontal, ReachuSpacing.md)
-                                        .padding(.vertical, ReachuSpacing.sm)
-                                        .background(
-                                            selectedVariant?.id == variant.id ? 
-                                            ReachuColors.primary : ReachuColors.surface
-                                        )
-                                        .foregroundColor(
-                                            selectedVariant?.id == variant.id ? 
-                                            .white : ReachuColors.textPrimary
-                                        )
-                                        .cornerRadius(ReachuBorderRadius.medium)
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                                .stroke(ReachuColors.border, lineWidth: 1)
+                    // Group variants by option type (Color, Size, etc.)
+                    let variantOptions = groupVariantsByOptions()
+                    
+                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                        ForEach(Array(variantOptions.keys.sorted()), id: \.self) { optionName in
+                            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                                Text(optionName)
+                                    .font(ReachuTypography.caption2)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: ReachuSpacing.sm) {
+                                        ForEach(variantOptions[optionName] ?? [], id: \.self) { optionValue in
+                                            Button {
+                                                selectedOptions[optionName] = optionValue
+                                                updateSelectedVariant()
+                                            } label: {
+                                                Text(optionValue)
+                                                    .font(ReachuTypography.caption1)
+                                                    .padding(.horizontal, ReachuSpacing.sm)
+                                                    .padding(.vertical, ReachuSpacing.xs)
+                                                    .background(
+                                                        selectedOptions[optionName] == optionValue ? 
+                                                        ReachuColors.primary : ReachuColors.surface
+                                                    )
+                                                    .foregroundColor(
+                                                        selectedOptions[optionName] == optionValue ? 
+                                                        .white : ReachuColors.textPrimary
+                                                    )
+                                                    .cornerRadius(ReachuBorderRadius.small)
+                                                    .overlay {
+                                                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                                            .stroke(ReachuColors.border, lineWidth: 1)
+                                                    }
+                                            }
                                         }
+                                    }
+                                    .padding(.horizontal, ReachuSpacing.lg)
                                 }
-                                .disabled((variant.quantity ?? 0) <= 0)
-                                .opacity((variant.quantity ?? 0) <= 0 ? 0.5 : 1.0)
                             }
                         }
-                        .padding(.horizontal, ReachuSpacing.lg)
                     }
                 }
             }
@@ -340,7 +355,7 @@ public struct RProductDetailOverlay: View {
     private var quantitySelectionSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Quantity")
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
@@ -414,7 +429,7 @@ public struct RProductDetailOverlay: View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             if let description = product.description, !description.isEmpty {
                 Text("Description")
-                    .font(ReachuTypography.body)
+                    .font(ReachuTypography.caption1)
                     .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
                 
@@ -431,7 +446,7 @@ public struct RProductDetailOverlay: View {
     private var specificationsSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Details")
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
@@ -494,27 +509,77 @@ public struct RProductDetailOverlay: View {
     // MARK: - Bottom Action Bar
     private var bottomActionBar: some View {
         VStack(spacing: 0) {
-            Divider()
+            // Subtle top separator
+            Rectangle()
+                .fill(ReachuColors.border.opacity(0.3))
+                .frame(height: 0.5)
             
-            HStack(spacing: ReachuSpacing.md) {
-                // Add to Cart Button
-                RButton(
-                    title: showCheckmark ? "Added!" : "Add to Cart",
-                    style: .primary,
-                    size: .large,
-                    isLoading: isAddingToCart,
-                    icon: showCheckmark ? "checkmark" : nil
-                ) {
-                    addToCart()
+            // Full-width sexy button
+            Button(action: addToCart) {
+                HStack(spacing: ReachuSpacing.sm) {
+                    // Icon
+                    if showCheckmark {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    } else if isAddingToCart {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "cart.badge.plus")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    // Button text
+                    Text(showCheckmark ? "Added to Cart!" : isAddingToCart ? "Adding..." : "Add to Cart")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    // Price
+                    if !isAddingToCart && !showCheckmark {
+                        Text("$\(String(format: "%.2f", Double(currentPrice.amount) * Double(quantity)))")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
-                .disabled(!isInStock || isAddingToCart)
-                .scaleEffect(buttonScale)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.vertical, ReachuSpacing.sm)
                 .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    ReachuColors.primary,
+                                    ReachuColors.primary.opacity(0.8)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(
+                    color: ReachuColors.primary.opacity(0.3),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
             }
+            .disabled(!isInStock || isAddingToCart)
+            .scaleEffect(buttonScale)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showCheckmark)
             .padding(.horizontal, ReachuSpacing.lg)
-            .padding(.vertical, ReachuSpacing.md)
-            .background(.ultraThinMaterial)
+            .padding(.vertical, ReachuSpacing.sm)
+            .background(ReachuColors.surface.opacity(0.95))
         }
     }
     
@@ -555,6 +620,78 @@ public struct RProductDetailOverlay: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         #endif
+    }
+    
+    // MARK: - Helper Functions for Variants
+    
+    /// Group variants by option types (Color, Size, etc.)
+    private func groupVariantsByOptions() -> [String: [String]] {
+        var options: [String: Set<String>] = [:]
+        
+        for variant in product.variants {
+            // Extract option name and value from variant title
+            // Example: "Black - Large" → ["Color": "Black", "Size": "Large"]
+            let components = variant.title.components(separatedBy: " - ")
+            
+            if components.count == 1 {
+                // Single option (e.g., "Black")
+                options["Color", default: Set()].insert(components[0])
+            } else if components.count == 2 {
+                // Two options (e.g., "Black - Large")
+                options["Color", default: Set()].insert(components[0])
+                options["Size", default: Set()].insert(components[1])
+            }
+        }
+        
+        // Convert Set to Array and sort
+        return options.mapValues { Array($0).sorted() }
+    }
+    
+    /// Update selected variant based on selected options
+    private func updateSelectedVariant() {
+        // Find variant that matches selected options
+        for variant in product.variants {
+            let components = variant.title.components(separatedBy: " - ")
+            
+            var matches = true
+            if components.count == 1 {
+                // Single option
+                if selectedOptions["Color"] != components[0] {
+                    matches = false
+                }
+            } else if components.count == 2 {
+                // Two options
+                if selectedOptions["Color"] != components[0] || selectedOptions["Size"] != components[1] {
+                    matches = false
+                }
+            }
+            
+            if matches {
+                selectedVariant = variant
+                break
+            }
+        }
+    }
+    
+    /// Initialize default options from first variant
+    private func initializeDefaultOptions() {
+        guard let firstVariant = product.variants.first else {
+            selectedVariant = nil
+            return
+        }
+        
+        let components = firstVariant.title.components(separatedBy: " - ")
+        
+        if components.count == 1 {
+            // Single option
+            selectedOptions["Color"] = components[0]
+        } else if components.count == 2 {
+            // Two options
+            selectedOptions["Color"] = components[0]
+            selectedOptions["Size"] = components[1]
+        }
+        
+        selectedVariant = firstVariant
     }
 }
 
