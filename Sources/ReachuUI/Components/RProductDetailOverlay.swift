@@ -43,6 +43,8 @@ public struct RProductDetailOverlay: View {
     @State private var selectedVariant: Variant?
     @State private var selectedOptions: [String: String] = [:] // option_name: selected_value
     @State private var quantity = 1
+    @State private var showSuccessAnimation = false
+    @State private var showToastOverModal = false
     
     // MARK: - Computed Properties
     private var displayImages: [ProductImage] {
@@ -113,6 +115,18 @@ public struct RProductDetailOverlay: View {
         .onAppear {
             // Initialize default options and variant
             initializeDefaultOptions()
+        }
+        .overlay {
+            // Success animation overlay
+            if showSuccessAnimation {
+                successAnimationOverlay
+            }
+        }
+        .overlay {
+            // Toast notification over modal
+            if showToastOverModal {
+                toastOverlayView
+            }
         }
     }
     
@@ -585,31 +599,60 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Actions
     private func addToCart() {
-        // Animate button
+        // Start loading animation
         withAnimation(.easeInOut(duration: 0.1)) {
             buttonScale = 0.95
             isAddingToCart = true
         }
         
-        // Scale back and show success
+        // Scale back button
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                 buttonScale = 1.0
-                showCheckmark = true
-            }
-        }
-        
-        // Reset after showing success
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showCheckmark = false
-                isAddingToCart = false
             }
         }
         
         // Add to cart
         Task {
             await cartManager.addProduct(product, quantity: quantity)
+            
+            // Show success animation sequence
+            await MainActor.run {
+                // 1. Show full-screen success animation
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    showSuccessAnimation = true
+                }
+                
+                // 2. Hide success animation and show button checkmark
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showSuccessAnimation = false
+                        showCheckmark = true
+                        isAddingToCart = false
+                    }
+                    
+                    // 3. Show toast notification over modal
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showToastOverModal = true
+                        }
+                        
+                        // 4. Hide toast after 2 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showToastOverModal = false
+                            }
+                        }
+                    }
+                    
+                    // 5. Reset button after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showCheckmark = false
+                        }
+                    }
+                }
+            }
         }
         
         // Call callback
@@ -692,6 +735,90 @@ public struct RProductDetailOverlay: View {
         }
         
         selectedVariant = firstVariant
+    }
+    
+    // MARK: - Success Animation Overlay
+    
+    @ViewBuilder
+    private var successAnimationOverlay: some View {
+        ZStack {
+            // Semi-transparent background
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+            
+            // Success animation
+            VStack(spacing: ReachuSpacing.md) {
+                // Animated circle with checkmark
+                ZStack {
+                    Circle()
+                        .fill(ReachuColors.success)
+                        .frame(width: 80, height: 80)
+                        .scaleEffect(showSuccessAnimation ? 1.0 : 0.5)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: showSuccessAnimation)
+                    
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.2), value: showSuccessAnimation)
+                }
+                
+                // Success text
+                VStack(spacing: ReachuSpacing.xs) {
+                    Text("Added to Cart!")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3).delay(0.4), value: showSuccessAnimation)
+                    
+                    Text("\(quantity) × \(product.title)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3).delay(0.5), value: showSuccessAnimation)
+                }
+            }
+            .padding(ReachuSpacing.xl)
+            .background(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    .fill(Color.black.opacity(0.8))
+            )
+            .scaleEffect(showSuccessAnimation ? 1.0 : 0.8)
+            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: showSuccessAnimation)
+        }
+    }
+    
+    // MARK: - Toast Overlay View
+    
+    @ViewBuilder
+    private var toastOverlayView: some View {
+        VStack {
+            HStack(spacing: ReachuSpacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(ReachuColors.success)
+                
+                Text("Added \(product.title) to cart")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(1)
+                
+                Spacer()
+            }
+            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, ReachuSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .fill(ReachuColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            )
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.top, ReachuSpacing.lg)
+            
+            Spacer()
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 
