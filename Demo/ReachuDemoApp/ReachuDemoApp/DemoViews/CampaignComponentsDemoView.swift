@@ -15,8 +15,6 @@ struct CampaignComponentsDemoView: View {
     }
     
     // MARK: - State
-    @State private var selectedStockCount = 5
-    @State private var selectedDiscountPercentage = 25
     @State private var selectedCountdownDuration = 1800.0 // 30 minutes
     @State private var showFlashSaleBanner = true
     
@@ -26,9 +24,6 @@ struct CampaignComponentsDemoView: View {
                 
                 // Header
                 headerSection
-                
-                // Stock Alert Demo
-                stockAlertSection
                 
                 // Live Show Countdown Demo
                 liveShowCountdownSection
@@ -60,7 +55,7 @@ struct CampaignComponentsDemoView: View {
                 .foregroundColor(adaptiveColors.textPrimary)
                 .multilineTextAlignment(.center)
             
-            Text("Components for creating urgency, promoting offers, and enhancing campaign effectiveness.")
+            Text("Components for live shows, campaigns, and time-sensitive promotions.")
                 .font(ReachuTypography.body)
                 .foregroundColor(adaptiveColors.textSecondary)
                 .multilineTextAlignment(.center)
@@ -68,55 +63,7 @@ struct CampaignComponentsDemoView: View {
         .padding(.top, ReachuSpacing.lg)
     }
     
-    // MARK: - Stock Alert Section
-    
-    private var stockAlertSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            Text("🚨 Stock Alerts")
-                .font(ReachuTypography.headline)
-                .foregroundColor(adaptiveColors.textPrimary)
-            
-            Text("Create urgency with low stock warnings")
-                .font(ReachuTypography.body)
-                .foregroundColor(adaptiveColors.textSecondary)
-            
-            // Stock count selector
-            VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                Text("Stock Count: \(selectedStockCount)")
-                    .font(ReachuTypography.bodyBold)
-                    .foregroundColor(adaptiveColors.textPrimary)
-                
-                Slider(value: Binding(
-                    get: { Double(selectedStockCount) },
-                    set: { selectedStockCount = Int($0) }
-                ), in: 0...20, step: 1)
-                .accentColor(adaptiveColors.primary)
-            }
-            
-            // Stock alert examples
-            VStack(spacing: ReachuSpacing.sm) {
-                RStockAlert(stockCount: selectedStockCount, style: .warning)
-                RStockAlert(
-                    stockCount: selectedStockCount,
-                    configuration: RStockAlert.Configuration(
-                        style: .critical,
-                        animation: .pulse
-                    )
-                )
-                RStockAlert(
-                    stockCount: selectedStockCount,
-                    configuration: RStockAlert.Configuration(
-                        style: .warning,
-                        animation: .shake
-                    )
-                )
-            }
-        }
-        .padding(ReachuSpacing.lg)
-        .background(adaptiveColors.surface)
-        .cornerRadius(ReachuBorderRadius.medium)
-        .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
-    }
+    // Stock Alert section removed - focusing on live show components
     
     // MARK: - Live Show Countdown Section
     
@@ -376,13 +323,10 @@ struct CampaignComponentsDemoView: View {
                                 .strikethrough()
                         }
                         
-                        // Stock alert
-                        RStockAlert(
-                            stockCount: 3,
-                            configuration: RStockAlert.Configuration(
-                                style: .critical,
-                                animation: .pulse
-                            )
+                        // Live show countdown
+                        RLiveShowCountdown.minimal(
+                            title: "Live Sale",
+                            startDate: Date().addingTimeInterval(1800)
                         )
                     }
                     .padding(ReachuSpacing.sm)
