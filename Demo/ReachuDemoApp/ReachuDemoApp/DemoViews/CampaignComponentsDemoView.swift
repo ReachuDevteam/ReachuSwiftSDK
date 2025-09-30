@@ -96,8 +96,20 @@ struct CampaignComponentsDemoView: View {
             // Stock alert examples
             VStack(spacing: ReachuSpacing.sm) {
                 RStockAlert(stockCount: selectedStockCount, style: .warning)
-                RStockAlert(stockCount: selectedStockCount, style: .critical, animation: .pulse)
-                RStockAlert(stockCount: selectedStockCount, style: .warning, animation: .shake)
+                RStockAlert(
+                    stockCount: selectedStockCount,
+                    configuration: RStockAlert.Configuration(
+                        style: .critical,
+                        animation: .pulse
+                    )
+                )
+                RStockAlert(
+                    stockCount: selectedStockCount,
+                    configuration: RStockAlert.Configuration(
+                        style: .warning,
+                        animation: .shake
+                    )
+                )
             }
         }
         .padding(ReachuSpacing.lg)
@@ -360,7 +372,13 @@ struct CampaignComponentsDemoView: View {
                         }
                         
                         // Stock alert
-                        RStockAlert(stockCount: 3, style: .critical, animation: .pulse)
+                        RStockAlert(
+                            stockCount: 3,
+                            configuration: RStockAlert.Configuration(
+                                style: .critical,
+                                animation: .pulse
+                            )
+                        )
                     }
                     .padding(ReachuSpacing.sm)
                 }
