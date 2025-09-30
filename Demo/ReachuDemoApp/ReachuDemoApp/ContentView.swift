@@ -69,6 +69,11 @@ struct ContentView: View {
                             LiveShowDemoView()
                                 .environmentObject(cartManager)
                         }
+                        
+                        DemoSection(title: "Campaign Components", description: "Urgency and promotion components for campaigns") {
+                            CampaignComponentsDemoView()
+                                .environmentObject(cartManager)
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
