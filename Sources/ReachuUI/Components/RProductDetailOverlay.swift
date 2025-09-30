@@ -41,7 +41,10 @@ public struct RProductDetailOverlay: View {
     @State private var showCheckmark = false
     @State private var buttonScale: CGFloat = 1.0
     @State private var selectedVariant: Variant?
+    @State private var selectedOptions: [String: String] = [:] // option_name: selected_value
     @State private var quantity = 1
+    @State private var showSuccessAnimation = false
+    @State private var showToastOverModal = false
     
     // MARK: - Computed Properties
     private var displayImages: [ProductImage] {
@@ -79,7 +82,7 @@ public struct RProductDetailOverlay: View {
                     imageGallerySection
                     
                     // Product Information
-                    VStack(spacing: ReachuSpacing.lg) {
+                    VStack(spacing: ReachuSpacing.md) {
                         productInfoSection
                         variantSelectionSection
                         quantitySelectionSection
@@ -87,12 +90,13 @@ public struct RProductDetailOverlay: View {
                         specificationsSection
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
-                    .padding(.bottom, ReachuSpacing.xl)
+                    .padding(.top, ReachuSpacing.lg)
+                    .padding(.bottom, ReachuSpacing.lg)
                 }
             }
-            .navigationTitle(product.title)
+            .navigationTitle("Product Details")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
+            .navigationBarTitleDisplayMode(.inline)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -109,8 +113,20 @@ public struct RProductDetailOverlay: View {
         }
         
         .onAppear {
-            // Select first variant by default
-            selectedVariant = product.variants.first
+            // Initialize default options and variant
+            initializeDefaultOptions()
+        }
+        .overlay {
+            // Success animation overlay
+            if showSuccessAnimation {
+                successAnimationOverlay
+            }
+        }
+        .overlay {
+            // Toast notification over modal
+            if showToastOverModal {
+                toastOverlayView
+            }
         }
     }
     
@@ -157,7 +173,7 @@ public struct RProductDetailOverlay: View {
                         EmptyView()
                     }
                 }
-                .frame(height: 300)
+                .frame(height: 240)
                 .cornerRadius(ReachuBorderRadius.large)
             } else {
                 // Multiple images with gallery
@@ -251,16 +267,17 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Product Info Section
     private var productInfoSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             // Title and Brand
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 Text(product.title)
-                    .font(ReachuTypography.title2)
+                    .font(ReachuTypography.title3)
                     .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(2)
                 
                 if let brand = product.brand, !brand.isEmpty {
                     Text(brand)
-                        .font(ReachuTypography.subheadline)
+                        .font(ReachuTypography.body)
                         .foregroundColor(ReachuColors.textSecondary)
                 }
             }
@@ -292,42 +309,56 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Variant Selection Section
     private var variantSelectionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             if !product.variants.isEmpty {
-                VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     Text("Options")
-                        .font(ReachuTypography.headline)
+                        .font(ReachuTypography.caption1)
+                        .fontWeight(.semibold)
                         .foregroundColor(ReachuColors.textPrimary)
                     
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: ReachuSpacing.sm) {
-                            ForEach(product.variants, id: \.id) { variant in
-                                Button {
-                                    selectedVariant = variant
-                                } label: {
-                                    Text(variant.title)
-                                        .font(ReachuTypography.body)
-                                        .padding(.horizontal, ReachuSpacing.md)
-                                        .padding(.vertical, ReachuSpacing.sm)
-                                        .background(
-                                            selectedVariant?.id == variant.id ? 
-                                            ReachuColors.primary : ReachuColors.surface
-                                        )
-                                        .foregroundColor(
-                                            selectedVariant?.id == variant.id ? 
-                                            .white : ReachuColors.textPrimary
-                                        )
-                                        .cornerRadius(ReachuBorderRadius.medium)
-                                        .overlay {
-                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                                .stroke(ReachuColors.border, lineWidth: 1)
+                    // Group variants by option type (Color, Size, etc.)
+                    let variantOptions = groupVariantsByOptions()
+                    
+                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                        ForEach(Array(variantOptions.keys.sorted()), id: \.self) { optionName in
+                            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                                Text(optionName)
+                                    .font(ReachuTypography.caption2)
+                                    .fontWeight(.medium)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: ReachuSpacing.sm) {
+                                        ForEach(variantOptions[optionName] ?? [], id: \.self) { optionValue in
+                                            Button {
+                                                selectedOptions[optionName] = optionValue
+                                                updateSelectedVariant()
+                                            } label: {
+                                                Text(optionValue)
+                                                    .font(ReachuTypography.caption1)
+                                                    .padding(.horizontal, ReachuSpacing.sm)
+                                                    .padding(.vertical, ReachuSpacing.xs)
+                                                    .background(
+                                                        selectedOptions[optionName] == optionValue ? 
+                                                        ReachuColors.primary : ReachuColors.surface
+                                                    )
+                                                    .foregroundColor(
+                                                        selectedOptions[optionName] == optionValue ? 
+                                                        .white : ReachuColors.textPrimary
+                                                    )
+                                                    .cornerRadius(ReachuBorderRadius.small)
+                                                    .overlay {
+                                                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                                            .stroke(ReachuColors.border, lineWidth: 1)
+                                                    }
+                                            }
                                         }
+                                    }
+                                    .padding(.horizontal, ReachuSpacing.lg)
                                 }
-                                .disabled((variant.quantity ?? 0) <= 0)
-                                .opacity((variant.quantity ?? 0) <= 0 ? 0.5 : 1.0)
                             }
                         }
-                        .padding(.horizontal, ReachuSpacing.lg)
                     }
                 }
             }
@@ -336,9 +367,10 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Quantity Selection Section
     private var quantitySelectionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Quantity")
-                .font(ReachuTypography.headline)
+                .font(ReachuTypography.caption1)
+                .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
             HStack(spacing: ReachuSpacing.md) {
@@ -351,7 +383,7 @@ public struct RProductDetailOverlay: View {
                     Image(systemName: "minus")
                         .font(.body)
                         .foregroundColor(quantity > 1 ? ReachuColors.textPrimary : ReachuColors.textSecondary)
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                         .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
@@ -363,9 +395,10 @@ public struct RProductDetailOverlay: View {
                 
                 // Current quantity
                 Text("\(quantity)")
-                    .font(ReachuTypography.headline)
+                    .font(ReachuTypography.body)
+                    .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
-                    .frame(minWidth: 40)
+                    .frame(minWidth: 36)
                 
                 // Increase button
                 Button {
@@ -380,7 +413,7 @@ public struct RProductDetailOverlay: View {
                             quantity < (selectedVariant?.quantity ?? product.quantity ?? 0) ? 
                             ReachuColors.textPrimary : ReachuColors.textSecondary
                         )
-                        .frame(width: 44, height: 44)
+                        .frame(width: 36, height: 36)
                         .background(ReachuColors.surface)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .overlay {
@@ -407,25 +440,28 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Description Section
     private var descriptionSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             if let description = product.description, !description.isEmpty {
                 Text("Description")
-                    .font(ReachuTypography.headline)
+                    .font(ReachuTypography.caption1)
+                    .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
                 
                 Text(description)
-                    .font(ReachuTypography.body)
+                    .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(3)
             }
         }
     }
     
     // MARK: - Specifications Section
     private var specificationsSection: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             Text("Details")
-                .font(ReachuTypography.headline)
+                .font(ReachuTypography.caption1)
+                .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
             VStack(spacing: ReachuSpacing.xs) {
@@ -453,17 +489,17 @@ public struct RProductDetailOverlay: View {
     private func specificationRow(title: String, value: String) -> some View {
         HStack {
             Text(title)
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textSecondary)
             
             Spacer()
             
             Text(value)
-                .font(ReachuTypography.body)
+                .font(ReachuTypography.caption1)
                 .foregroundColor(ReachuColors.textPrimary)
                 .multilineTextAlignment(.trailing)
         }
-        .padding(.vertical, ReachuSpacing.xs)
+        .padding(.vertical, 2)
     }
     
     private var stockStatusBadge: some View {
@@ -487,57 +523,136 @@ public struct RProductDetailOverlay: View {
     // MARK: - Bottom Action Bar
     private var bottomActionBar: some View {
         VStack(spacing: 0) {
-            Divider()
+            // Subtle top separator
+            Rectangle()
+                .fill(ReachuColors.border.opacity(0.3))
+                .frame(height: 0.5)
             
-            HStack(spacing: ReachuSpacing.md) {
-                // Add to Cart Button
-                RButton(
-                    title: showCheckmark ? "Added!" : "Add to Cart",
-                    style: .primary,
-                    size: .large,
-                    isLoading: isAddingToCart,
-                    icon: showCheckmark ? "checkmark" : nil
-                ) {
-                    addToCart()
+            // Full-width sexy button
+            Button(action: addToCart) {
+                HStack(spacing: ReachuSpacing.sm) {
+                    // Icon
+                    if showCheckmark {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    } else if isAddingToCart {
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .scaleEffect(0.8)
+                    } else {
+                        Image(systemName: "cart.badge.plus")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    // Button text
+                    Text(showCheckmark ? "Added to Cart!" : isAddingToCart ? "Adding..." : "Add to Cart")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    // Price
+                    if !isAddingToCart && !showCheckmark {
+                        Text("$\(String(format: "%.2f", Double(currentPrice.amount) * Double(quantity)))")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                 }
-                .disabled(!isInStock || isAddingToCart)
-                .scaleEffect(buttonScale)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
+                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.vertical, ReachuSpacing.sm)
                 .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    ReachuColors.primary,
+                                    ReachuColors.primary.opacity(0.8)
+                                ],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                )
+                .shadow(
+                    color: ReachuColors.primary.opacity(0.3),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
             }
+            .disabled(!isInStock || isAddingToCart)
+            .scaleEffect(buttonScale)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
+            .animation(.spring(response: 0.4, dampingFraction: 0.7), value: showCheckmark)
             .padding(.horizontal, ReachuSpacing.lg)
-            .padding(.vertical, ReachuSpacing.md)
-            .background(.ultraThinMaterial)
+            .padding(.vertical, ReachuSpacing.sm)
+            .background(ReachuColors.surface.opacity(0.95))
         }
     }
     
     // MARK: - Actions
     private func addToCart() {
-        // Animate button
+        // Start loading animation
         withAnimation(.easeInOut(duration: 0.1)) {
             buttonScale = 0.95
             isAddingToCart = true
         }
         
-        // Scale back and show success
+        // Scale back button
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                 buttonScale = 1.0
-                showCheckmark = true
-            }
-        }
-        
-        // Reset after showing success
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            withAnimation(.easeInOut(duration: 0.3)) {
-                showCheckmark = false
-                isAddingToCart = false
             }
         }
         
         // Add to cart
         Task {
             await cartManager.addProduct(product, quantity: quantity)
+            
+            // Show success animation sequence
+            await MainActor.run {
+                // 1. Show full-screen success animation
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                    showSuccessAnimation = true
+                }
+                
+                // 2. Hide success animation and show button checkmark
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        showSuccessAnimation = false
+                        showCheckmark = true
+                        isAddingToCart = false
+                    }
+                    
+                    // 3. Show toast notification over modal
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            showToastOverModal = true
+                        }
+                        
+                        // 4. Hide toast after 2 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation(.easeOut(duration: 0.3)) {
+                                showToastOverModal = false
+                            }
+                        }
+                    }
+                    
+                    // 5. Reset button after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            showCheckmark = false
+                        }
+                    }
+                }
+            }
         }
         
         // Call callback
@@ -548,6 +663,162 @@ public struct RProductDetailOverlay: View {
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         #endif
+    }
+    
+    // MARK: - Helper Functions for Variants
+    
+    /// Group variants by option types (Color, Size, etc.)
+    private func groupVariantsByOptions() -> [String: [String]] {
+        var options: [String: Set<String>] = [:]
+        
+        for variant in product.variants {
+            // Extract option name and value from variant title
+            // Example: "Black - Large" → ["Color": "Black", "Size": "Large"]
+            let components = variant.title.components(separatedBy: " - ")
+            
+            if components.count == 1 {
+                // Single option (e.g., "Black")
+                options["Color", default: Set()].insert(components[0])
+            } else if components.count == 2 {
+                // Two options (e.g., "Black - Large")
+                options["Color", default: Set()].insert(components[0])
+                options["Size", default: Set()].insert(components[1])
+            }
+        }
+        
+        // Convert Set to Array and sort
+        return options.mapValues { Array($0).sorted() }
+    }
+    
+    /// Update selected variant based on selected options
+    private func updateSelectedVariant() {
+        // Find variant that matches selected options
+        for variant in product.variants {
+            let components = variant.title.components(separatedBy: " - ")
+            
+            var matches = true
+            if components.count == 1 {
+                // Single option
+                if selectedOptions["Color"] != components[0] {
+                    matches = false
+                }
+            } else if components.count == 2 {
+                // Two options
+                if selectedOptions["Color"] != components[0] || selectedOptions["Size"] != components[1] {
+                    matches = false
+                }
+            }
+            
+            if matches {
+                selectedVariant = variant
+                break
+            }
+        }
+    }
+    
+    /// Initialize default options from first variant
+    private func initializeDefaultOptions() {
+        guard let firstVariant = product.variants.first else {
+            selectedVariant = nil
+            return
+        }
+        
+        let components = firstVariant.title.components(separatedBy: " - ")
+        
+        if components.count == 1 {
+            // Single option
+            selectedOptions["Color"] = components[0]
+        } else if components.count == 2 {
+            // Two options
+            selectedOptions["Color"] = components[0]
+            selectedOptions["Size"] = components[1]
+        }
+        
+        selectedVariant = firstVariant
+    }
+    
+    // MARK: - Success Animation Overlay
+    
+    @ViewBuilder
+    private var successAnimationOverlay: some View {
+        ZStack {
+            // Semi-transparent background
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+            
+            // Success animation
+            VStack(spacing: ReachuSpacing.md) {
+                // Animated circle with checkmark
+                ZStack {
+                    Circle()
+                        .fill(ReachuColors.success)
+                        .frame(width: 80, height: 80)
+                        .scaleEffect(showSuccessAnimation ? 1.0 : 0.5)
+                        .animation(.spring(response: 0.4, dampingFraction: 0.6), value: showSuccessAnimation)
+                    
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .scaleEffect(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.2), value: showSuccessAnimation)
+                }
+                
+                // Success text
+                VStack(spacing: ReachuSpacing.xs) {
+                    Text("Added to Cart!")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3).delay(0.4), value: showSuccessAnimation)
+                    
+                    Text("\(quantity) × \(product.title)")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                        .opacity(showSuccessAnimation ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3).delay(0.5), value: showSuccessAnimation)
+                }
+            }
+            .padding(ReachuSpacing.xl)
+            .background(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    .fill(Color.black.opacity(0.8))
+            )
+            .scaleEffect(showSuccessAnimation ? 1.0 : 0.8)
+            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: showSuccessAnimation)
+        }
+    }
+    
+    // MARK: - Toast Overlay View
+    
+    @ViewBuilder
+    private var toastOverlayView: some View {
+        VStack {
+            HStack(spacing: ReachuSpacing.sm) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(ReachuColors.success)
+                
+                Text("Added \(product.title) to cart")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .lineLimit(1)
+                
+                Spacer()
+            }
+            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, ReachuSpacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .fill(ReachuColors.surface)
+                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+            )
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.top, ReachuSpacing.lg)
+            
+            Spacer()
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 
