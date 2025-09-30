@@ -30,8 +30,8 @@ struct CampaignComponentsDemoView: View {
                 // Stock Alert Demo
                 stockAlertSection
                 
-                // Discount Badge Demo
-                discountBadgeSection
+                // Live Show Countdown Demo
+                liveShowCountdownSection
                 
                 // Countdown Timer Demo
                 countdownTimerSection
@@ -118,54 +118,59 @@ struct CampaignComponentsDemoView: View {
         .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
     }
     
-    // MARK: - Discount Badge Section
+    // MARK: - Live Show Countdown Section
     
-    private var discountBadgeSection: some View {
+    private var liveShowCountdownSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            Text("🏷️ Discount Badges")
+            Text("📺 Live Show Countdown")
                 .font(ReachuTypography.headline)
                 .foregroundColor(adaptiveColors.textPrimary)
             
-            Text("Visual discount indicators for products")
+            Text("Show when live shows start with configurable countdown")
                 .font(ReachuTypography.body)
                 .foregroundColor(adaptiveColors.textSecondary)
             
-            // Discount percentage selector
-            VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-                Text("Discount: \(selectedDiscountPercentage)%")
-                    .font(ReachuTypography.bodyBold)
-                    .foregroundColor(adaptiveColors.textPrimary)
-                
-                Slider(value: Binding(
-                    get: { Double(selectedDiscountPercentage) },
-                    set: { selectedDiscountPercentage = Int($0) }
-                ), in: 5...75, step: 5)
-                .accentColor(adaptiveColors.primary)
-            }
-            
-            // Badge styles
+            // Live show countdown examples
             VStack(spacing: ReachuSpacing.md) {
                 Text("Styles:")
                     .font(ReachuTypography.bodyBold)
                     .foregroundColor(adaptiveColors.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                HStack(spacing: ReachuSpacing.md) {
-                    RDiscountBadge.percentage(Double(selectedDiscountPercentage))
-                    RDiscountBadge.amount(10, animation: .bounce)
-                    RDiscountBadge.flashSale(animation: .glow)
-                }
+                // Card style (main style)
+                RLiveShowCountdown.startsInHours(
+                    5,
+                    title: "Beauty & Skincare Live Show",
+                    streamerName: "Sarah Johnson",
+                    style: .card
+                )
                 
-                Text("Sizes:")
+                // Banner style (compact)
+                RLiveShowCountdown.startsInHours(
+                    2,
+                    title: "Fashion Week Special",
+                    streamerName: "Alex Chen",
+                    style: .banner
+                )
+                
+                // Minimal style
+                RLiveShowCountdown.minimal(
+                    title: "Tech Review Live",
+                    startDate: Date().addingTimeInterval(1800)
+                )
+                
+                Text("Far Future (Days):")
                     .font(ReachuTypography.bodyBold)
                     .foregroundColor(adaptiveColors.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                HStack(spacing: ReachuSpacing.md) {
-                    RDiscountBadge.percentage(Double(selectedDiscountPercentage), size: .small)
-                    RDiscountBadge.percentage(Double(selectedDiscountPercentage), size: .medium)
-                    RDiscountBadge.percentage(Double(selectedDiscountPercentage), size: .large)
-                }
+                // Days countdown
+                RLiveShowCountdown.startsInDays(
+                    3,
+                    title: "Holiday Shopping Event",
+                    streamerName: "Maria Rodriguez",
+                    style: .card
+                )
             }
         }
         .padding(ReachuSpacing.lg)
@@ -389,12 +394,23 @@ struct CampaignComponentsDemoView: View {
                         .stroke(adaptiveColors.border, lineWidth: 1)
                 )
                 
-                // Discount badge overlay
+                // Live show countdown overlay
                 VStack {
                     HStack {
                         Spacer()
-                        RDiscountBadge.percentage(20, animation: .pulse)
-                            .offset(x: -8, y: 8)
+                        RLiveShowCountdown(
+                            liveShow: RLiveShowCountdown.LiveShowSchedule(
+                                id: "demo",
+                                title: "Live Sale",
+                                streamerName: "Host",
+                                startDate: Date().addingTimeInterval(3600)
+                            ),
+                            configuration: RLiveShowCountdown.Configuration(
+                                style: .badge,
+                                size: .small
+                            )
+                        )
+                        .offset(x: -8, y: 8)
                     }
                     Spacer()
                 }
