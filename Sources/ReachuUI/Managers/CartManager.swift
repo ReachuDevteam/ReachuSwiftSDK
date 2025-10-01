@@ -4,7 +4,6 @@ import ReachuDesignSystem
 import ReachuLiveShow
 import SwiftUI
 
-/// Global cart manager that handles cart state and checkout flow
 @MainActor
 public class CartManager: ObservableObject, LiveShowCartManaging {
 
@@ -16,11 +15,14 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     @Published public var country: String = "US"
     @Published public var errorMessage: String?
     @Published public var cartId: String?
+    @Published public var checkoutId: String?
+    @Published public var lastDiscountCode: String?
+    @Published public var lastDiscountId: Int?
 
     private var currentCartId: String?
     private let sdk: SdkClient = {
         let baseURL = URL(string: "https://graph-ql-dev.reachu.io/graphql")!
-        let apiKey = "THVXN06-MGB4D4P-KCPRCKP-RHGT6VJ"
+        let apiKey = "3DEXXY0-JQ4MB1W-HTF2E3B-H6M5M8K"
         return SdkClient(baseUrl: baseURL, apiKey: apiKey)
     }()
 
@@ -71,6 +73,10 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
     }
 
+    private func _iso8601(_ date: Date = Date()) -> String {
+        ISO8601DateFormatter().string(from: date)
+    }
+
     // MARK: - Cart Item Model
     public struct CartItem: Identifiable, Equatable {
         public let id: String
@@ -118,7 +124,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
         let previousCount = itemCount
 
-        if let existingIndex = items.firstIndex(where: { $0.productId == 397968 }) {
+        if let existingIndex = items.firstIndex(where: { $0.productId == 408737 }) {
             let existingItem = items[existingIndex]
             let newQuantity = existingItem.quantity + quantity
 
@@ -152,19 +158,19 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             var serverId: String? = nil
             if let cid = self.currentCartId {
                 let line = LineItemInput(
-                    productId: 397968,
+                    productId: 408737,
                     quantity: quantity,
                     priceData: nil
                 )
                 if let dto = try? await sdk.cart.addItem(cart_id: cid, line_items: [line]) {
                     serverId =
-                        (dto.lineItems.last { $0.productId == 397968 } ?? dto.lineItems.last)?.id
+                        (dto.lineItems.last { $0.productId == 408737 } ?? dto.lineItems.last)?.id
                 }
             }
 
             let cartItem = CartItem(
                 id: serverId ?? UUID().uuidString,
-                productId: 397968,
+                productId: 408737,
                 variantId: product.variants.first?.id,
                 title: product.title,
                 brand: product.brand,
@@ -341,7 +347,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         defer { isLoading = false }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Checkout] createCheckout: missing cartId")
+            print("ℹ️ [Checkout] Create: missing cartId")
             return nil
         }
 
@@ -349,6 +355,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         do {
             let dto = try await sdk.checkout.create(cart_id: cid)
             let chkId = extractCheckoutId(dto)
+            self.checkoutId = chkId
             print("✅ [Checkout] Create OK checkoutId=\(chkId ?? "nil")")
             return chkId
         } catch {
@@ -502,6 +509,277 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             return nil
         }
     }
+
+    @discardableResult
+    public func applyCheapestShippingPerSupplier() async -> Int {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        guard let cid = await ensureCartIDForCheckout() else {
+            print("ℹ️ [Cart] applyCheapestShippingPerSupplier: missing cartId")
+            return 0
+        }
+
+        let localItemIds = Set(items.map { $0.id })
+
+        print("🚚 [Cart] GetLineItemsBySupplier START cartId=\(cid)")
+        do {
+            let groups = try await sdk.cart.getLineItemsBySupplier(cart_id: cid)
+            var updatedCount = 0
+
+            for group in groups {
+                let cheapestId: String? = group.availableShippings?
+                    .min(by: {
+                        ($0.price.amount ?? .greatestFiniteMagnitude)
+                            < ($1.price.amount ?? .greatestFiniteMagnitude)
+                    })?
+                    .id
+
+                guard let shippingId = cheapestId, !shippingId.isEmpty else {
+                    print(
+                        "⚠️ [Cart] No shippings for supplier \(group.supplier?.name ?? "N/A"). Skipping."
+                    )
+                    continue
+                }
+
+                for li in group.lineItems {
+                    guard localItemIds.contains(li.id) else { continue }
+                    if li.shipping?.id == shippingId { continue }
+
+                    do {
+                        _ = try await sdk.cart.updateItem(
+                            cart_id: cid,
+                            cart_item_id: li.id,
+                            shipping_id: shippingId,
+                            quantity: nil
+                        )
+                        updatedCount += 1
+                    } catch {
+                        let msg =
+                            (error as? SdkException)?.description ?? error.localizedDescription
+                        print("⚠️ [Cart] updateItem(shipping) failed for \(li.id): \(msg)")
+                    }
+                }
+            }
+
+            print("✅ [Cart] Shipping updated for \(updatedCount) item(s).")
+            return updatedCount
+
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Cart] getLineItemsBySupplier FAIL \(msg)")
+            return 0
+        }
+    }
+
+    @discardableResult
+    public func discountCreate(
+        code: String,
+        percentage: Int,
+        startDate: String? = nil,
+        endDate: String? = nil,
+        typeId: Int = 2
+    ) async -> Int? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        do {
+            let dto = try await sdk.discount.add(
+                code: code,
+                percentage: percentage,
+                startDate: startDate ?? _iso8601(),
+                endDate: endDate
+                    ?? _iso8601(Calendar.current.date(byAdding: .day, value: 7, to: Date())!),
+                typeId: typeId
+            )
+            let did = dto.id
+            self.lastDiscountId = did
+            self.lastDiscountCode = code
+            await MainActor.run { ToastManager.shared.showSuccess("Discount created: \(code)") }
+            return did
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Discount] create FAIL \(msg)")
+            await MainActor.run { ToastManager.shared.showError("Create discount failed") }
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func discountApply(code: String) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !normalized.isEmpty else {
+            print("ℹ️ [Discount] apply: missing code")
+            return false
+        }
+
+        guard let cid = await ensureCartIDForCheckout() else {
+            print("ℹ️ [Discount] apply: missing cartId")
+            return false
+        }
+
+        do {
+            let dto: ApplyDiscountDto = try await sdk.discount.apply(code: normalized, cartId: cid)
+
+            if dto.executed {
+                self.lastDiscountCode = normalized
+                await MainActor.run {
+                    ToastManager.shared.showSuccess(
+                        dto.message.isEmpty
+                            ? "Discount applied: \(normalized)"
+                            : dto.message
+                    )
+                }
+                return true
+            } else {
+                self.errorMessage = dto.message
+                print("⚠️ [Discount] apply NOT EXECUTED (\(normalized)) -> \(dto.message)")
+                await MainActor.run {
+                    ToastManager.shared.showInfo(
+                        dto.message.isEmpty
+                            ? "Discount not applied"
+                            : dto.message
+                    )
+                }
+                return false
+            }
+
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            self.errorMessage = msg
+            print("❌ [Discount] apply FAIL \(msg)")
+            await MainActor.run { ToastManager.shared.showError("Apply discount failed") }
+            return false
+        }
+    }
+
+    @discardableResult
+    public func discountRemoveApplied(code: String? = nil) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        guard let cid = await ensureCartIDForCheckout() else {
+            print("ℹ️ [Discount] deleteApplied: missing cartId")
+            return false
+        }
+
+        let useCode =
+            (code ?? lastDiscountCode)?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            ?? ""
+        guard !useCode.isEmpty else {
+            print("ℹ️ [Discount] deleteApplied: missing code")
+            return false
+        }
+
+        do {
+            _ = try await sdk.discount.deleteApplied(code: useCode, cartId: cid)
+            if lastDiscountCode == useCode { lastDiscountCode = nil }
+            await MainActor.run { ToastManager.shared.showInfo("Discount removed: \(useCode)") }
+            return true
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Discount] deleteApplied FAIL \(msg)")
+            await MainActor.run { ToastManager.shared.showError("Remove discount failed") }
+            return false
+        }
+    }
+
+    @discardableResult
+    public func discountDelete(discountId: Int) async -> Bool {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        do {
+            _ = try await sdk.discount.delete(discountId: discountId)
+            if lastDiscountId == discountId { lastDiscountId = nil }
+            await MainActor.run { ToastManager.shared.showInfo("Discount deleted: \(discountId)") }
+            return true
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Discount] delete FAIL \(msg)")
+            await MainActor.run { ToastManager.shared.showError("Delete discount failed") }
+            return false
+        }
+    }
+
+    // MARK: - Discounts helpers: get-by-code y apply-or-create
+
+    @discardableResult
+    public func discountGetIdByCode(code: String) async -> Int? {
+        let needle = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !needle.isEmpty else { return nil }
+
+        do {
+            let channelList = try await sdk.discount.getByChannel()
+            if let found = channelList.first(where: {
+                ($0.code ?? "").caseInsensitiveCompare(needle) == .orderedSame
+            }) {
+                self.lastDiscountId = found.id
+                self.lastDiscountCode = found.code
+                return found.id
+            }
+
+            let all = try await sdk.discount.get()
+            if let found = all.first(where: {
+                ($0.code ?? "").caseInsensitiveCompare(needle) == .orderedSame
+            }) {
+                self.lastDiscountId = found.id
+                self.lastDiscountCode = found.code
+                return found.id
+            }
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            print("⚠️ [Discount] get by code '\(code)' FAIL \(msg)")
+            self.errorMessage = msg
+        }
+        return nil
+    }
+
+    @discardableResult
+    public func discountApplyOrCreate(
+        code: String,
+        percentage: Int = 10,
+        startDate: String? = nil,
+        endDate: String? = nil,
+        typeId: Int = 2
+    ) async -> Bool {
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        guard !normalized.isEmpty else { return false }
+
+        if await discountApply(code: normalized) {
+            return true
+        }
+
+        if await discountGetIdByCode(code: normalized) != nil {
+            if await discountApply(code: normalized) { return true }
+            return false
+        }
+
+        if await discountCreate(
+            code: normalized,
+            percentage: percentage,
+            startDate: startDate,
+            endDate: endDate,
+            typeId: typeId) != nil
+        {
+            return await discountApply(code: normalized)
+        }
+
+        return false
+    }
+
 }
 
 // MARK: - Cart Errors
