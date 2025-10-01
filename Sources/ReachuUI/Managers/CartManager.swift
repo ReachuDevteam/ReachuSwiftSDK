@@ -426,16 +426,17 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         errorMessage = nil
         defer { isLoading = false }
 
-        let chkId = await createCheckout()
-        guard let id = chkId, !id.isEmpty else {
-            print("ℹ️ [Payment] KlarnaInit: missing checkoutId")
-            return nil
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
         }
 
-        print("💳 [Payment] KlarnaInit START checkoutId=\(id)")
+        print("💳 [Payment] KlarnaInit START checkoutId=\(id!)")
         do {
             let dto = try await sdk.payment.klarnaInit(
-                checkoutId: id,
+                checkoutId: id!,
                 countryCode: countryCode,
                 href: href,
                 email: email
@@ -456,16 +457,17 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         errorMessage = nil
         defer { isLoading = false }
 
-        let chkId = await createCheckout()
-        guard let id = chkId, !id.isEmpty else {
-            print("ℹ️ [Payment] StripeIntent: missing checkoutId")
-            return nil
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
         }
 
-        print("💳 [Payment] StripeIntent START checkoutId=\(id)")
+        print("💳 [Payment] StripeIntent START checkoutId=\(id!)")
         do {
             let dto = try await sdk.payment.stripeIntent(
-                checkoutId: id,
+                checkoutId: id!,
                 returnEphemeralKey: returnEphemeralKey
             )
             print("✅ [Payment] StripeIntent OK")
@@ -486,16 +488,17 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         errorMessage = nil
         defer { isLoading = false }
 
-        let chkId = await createCheckout()
-        guard let id = chkId, !id.isEmpty else {
-            print("ℹ️ [Payment] StripeLink: missing checkoutId")
-            return nil
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
         }
 
-        print("💳 [Payment] StripeLink START checkoutId=\(id)")
+        print("💳 [Payment] StripeLink START checkoutId=\(id!)")
         do {
             let dto = try await sdk.payment.stripeLink(
-                checkoutId: id,
+                checkoutId: id!,
                 successUrl: successUrl,
                 paymentMethod: paymentMethod,
                 email: email

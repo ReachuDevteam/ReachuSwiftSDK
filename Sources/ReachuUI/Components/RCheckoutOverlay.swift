@@ -2,6 +2,11 @@ import ReachuCore
 import ReachuDesignSystem
 import SwiftUI
 
+#if os(iOS)
+    import UIKit
+    import StripePaymentSheet
+#endif
+
 /// Complete checkout overlay matching original Reachu design
 @available(iOS 15.0, macOS 12.0, tvOS 15.0, watchOS 8.0, *)
 public struct RCheckoutOverlay: View {
@@ -35,13 +40,18 @@ public struct RCheckoutOverlay: View {
 
     // Payment Information
     @State private var selectedPaymentMethod: PaymentMethod = .stripe
-    @State private var acceptsTerms = false
-    @State private var acceptsPurchaseConditions = false
+    @State private var acceptsTerms = true
+    @State private var acceptsPurchaseConditions = true
 
     // Discount Code
     @State private var discountCode = ""
     @State private var appliedDiscount: Double = 0.0
     @State private var discountMessage = ""
+
+    #if os(iOS)
+        @State private var paymentSheet: PaymentSheet?
+        @State private var shouldPresentStripeSheet = false
+    #endif
 
     private var draftSyncKey: String {
         [
@@ -392,7 +402,18 @@ public struct RCheckoutOverlay: View {
                     size: .large,
                     isDisabled: !canProceedToNext
                 ) {
-                    proceedToNext()
+                    Task { @MainActor in
+                        #if os(iOS)
+                            if selectedPaymentMethod == .stripe {
+                                isLoading = true
+                                let ok = await prepareStripePaymentSheet()
+                                isLoading = false
+                                if ok { shouldPresentStripeSheet = true }
+                            }
+                        #endif
+
+                        proceedToNext()
+                    }
                 }
                 .frame(maxWidth: .infinity)  // Full width
                 .padding(.horizontal, ReachuSpacing.lg)
@@ -602,6 +623,12 @@ public struct RCheckoutOverlay: View {
                 .padding(.vertical, ReachuSpacing.md)
             }
             .background(ReachuColors.surface)
+        }.onAppear {
+            #if os(iOS)
+                if shouldPresentStripeSheet {
+                    presentStripePaymentSheet()
+                }
+            #endif
         }
     }
 
@@ -866,6 +893,93 @@ public struct RCheckoutOverlay: View {
         checkoutDraft.acceptsPurchaseConditions = acceptsPurchaseConditions
         checkoutDraft.appliedDiscount = appliedDiscount
     }
+
+    #if os(iOS)
+        private func dtoToDict<T: Encodable>(_ dto: T) -> [String: Any]? {
+            guard let data = try? JSONEncoder().encode(dto) else { return nil }
+            return (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? nil
+        }
+
+        private func pick<T>(_ dict: [String: Any], _ keys: [String]) -> T? {
+            for k in keys {
+                if let v = dict[k] as? T { return v }
+                let normalized = k.replacingOccurrences(of: "_", with: "").lowercased()
+                if let hit = dict.first(where: {
+                    $0.key.replacingOccurrences(of: "_", with: "").lowercased() == normalized
+                }), let cast = hit.value as? T {
+                    return cast
+                }
+            }
+            return nil
+        }
+
+        private func prepareStripePaymentSheet() async -> Bool {
+            guard let dto = await cartManager.stripeIntent(returnEphemeralKey: true),
+                let dict = dtoToDict(dto)
+            else {
+                self.errorMessage = "Could not get Stripe Intent from API."
+                return false
+            }
+
+            let clientSecret: String? = pick(
+                dict,
+                [
+                    "payment_intent_client_secret", "client_secret", "paymentIntentClientSecret",
+                ])
+            guard let secret = clientSecret, !secret.isEmpty else {
+                self.errorMessage = "Missing Payment Intent client_secret."
+                return false
+            }
+
+            let ephemeralKey: String? = pick(
+                dict, ["ephemeralKeySecret", "ephemeral_key_secret", "ephemeral_key"])
+            let customerId: String? = pick(dict, ["customer", "customer_id", "customerId"])
+
+            var config = PaymentSheet.Configuration()
+            config.merchantDisplayName = "Reachu Demo"
+            if let ek = ephemeralKey, let cid = customerId {
+                config.customer = .init(id: cid, ephemeralKeySecret: ek)
+            }
+
+            self.paymentSheet = PaymentSheet(
+                paymentIntentClientSecret: secret, configuration: config)
+            return true
+        }
+
+        // Present PaymentSheet from the top-most view controller
+        private func presentStripePaymentSheet() {
+            guard let sheet = paymentSheet, let root = topMostViewController() else { return }
+            sheet.present(from: root) { result in
+                switch result {
+                case .completed:
+                    withAnimation { checkoutStep = .success }  // ✅ done
+                case .canceled:
+                    withAnimation { checkoutStep = .orderSummary }  // ↩️ back to summary
+                case .failed(let error):
+                    self.errorMessage = error.localizedDescription
+                    withAnimation { checkoutStep = .error }  // ❌ error
+                }
+                shouldPresentStripeSheet = false
+            }
+        }
+
+        // Find the top-most view controller for presentation
+        private func topMostViewController() -> UIViewController? {
+            guard
+                let scene = UIApplication.shared.connectedScenes
+                    .compactMap({ $0 as? UIWindowScene })
+                    .first(where: { $0.activationState == .foregroundActive }),
+                let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
+            else { return nil }
+
+            var vc: UIViewController = root
+            while let presented = vc.presentedViewController { vc = presented }
+            if let nav = vc as? UINavigationController { return nav.visibleViewController ?? nav }
+            if let tab = vc as? UITabBarController { return tab.selectedViewController ?? tab }
+            return vc
+        }
+    #endif
+
 }
 
 // MARK: - Supporting Components
