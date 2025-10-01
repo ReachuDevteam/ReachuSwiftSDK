@@ -58,6 +58,12 @@ let package = Package(
             targets: ["ReachuCore", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
         ),
         
+        // Dynamic Components - optional target (Phase: Dynamic Components System)
+        .library(
+            name: "ReachuDynamicComponents",
+            targets: ["ReachuCore", "ReachuDynamicComponents"]
+        ),
+        
     ],
     dependencies: [
         // GraphQL client for Reachu API
@@ -140,6 +146,15 @@ let package = Package(
                 "ReachuNetwork",
             ],
             path: "Sources/ReachuTesting"
+        ),
+        
+        // MARK: - Dynamic Components Target (Optional)
+        .target(
+            name: "ReachuDynamicComponents",
+            dependencies: [
+                "ReachuCore"
+            ],
+            path: "Sources/ReachuDynamicComponents"
         ),
         
         

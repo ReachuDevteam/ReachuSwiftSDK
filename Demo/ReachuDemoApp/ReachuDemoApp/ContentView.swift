@@ -62,6 +62,11 @@ struct ContentView: View {
                             LiveShowDemoView()
                                 .environmentObject(cartManager)
                         }
+                        
+                        DemoSection(title: "Dynamic Components", description: "Carga desde campaign y render overlay") {
+                            DynamicComponentsDemoView()
+                                .environmentObject(cartManager)
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
