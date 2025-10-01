@@ -68,6 +68,9 @@ let package = Package(
 
         // Image caching for UI components
         .package(url: "https://github.com/kean/Nuke.git", from: "12.0.0"),
+
+        .package(url: "https://github.com/stripe/stripe-ios", .upToNextMajor(from: "24.24.1")),
+
     ],
     targets: [
         // MARK: - INTERNAL: Network Target (Shared)
@@ -105,6 +108,10 @@ let package = Package(
                 "ReachuCore",
                 "ReachuDesignSystem",
                 "ReachuTesting",  // For previews and mock data
+                .product(
+                    name: "StripePaymentSheet", package: "stripe-ios",
+                    condition: .when(platforms: [.iOS])),
+
             ],
             path: "Sources/ReachuUI"
         ),
