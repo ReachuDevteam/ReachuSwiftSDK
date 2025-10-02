@@ -408,10 +408,17 @@ public struct RCheckoutOverlay: View {
                                 isLoading = true
                                 let ok = await prepareStripePaymentSheet()
                                 isLoading = false
-                                if ok { shouldPresentStripeSheet = true }
+                                if ok {
+                                    shouldPresentStripeSheet = true
+                                    // Mostrar el PaymentSheet inmediatamente
+                                    presentStripePaymentSheet()
+                                    return
+                                } else {
+                                    checkoutStep = .error
+                                    return
+                                }
                             }
                         #endif
-
                         proceedToNext()
                     }
                 }
@@ -593,40 +600,75 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Review Step View
     private var reviewStepView: some View {
-        VStack(spacing: 0) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                    Text("Review Order")
-                        .font(ReachuTypography.title2)
-                        .foregroundColor(ReachuColors.textPrimary)
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.top, ReachuSpacing.lg)
-
-                    // Complete order summary would go here
-                    Text("Order review content...")
-                        .padding(.horizontal, ReachuSpacing.lg)
-
-                    Spacer(minLength: 100)
-                }
-            }
-
-            // Bottom Button
-            VStack {
-                RButton(
-                    title: "Complete Purchase",
-                    style: .primary,
-                    size: .large
-                ) {
-                    simulatePayment()
-                }
-                .padding(.horizontal, ReachuSpacing.lg)
-                .padding(.vertical, ReachuSpacing.md)
-            }
-            .background(ReachuColors.surface)
-        }.onAppear {
+        Group {
             #if os(iOS)
-                if shouldPresentStripeSheet {
-                    presentStripePaymentSheet()
+                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet {
+                    Color.clear
+                        .onAppear {
+                            presentStripePaymentSheet()
+                        }
+                } else {
+                    VStack(spacing: 0) {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
+                                Text("Review Order")
+                                    .font(ReachuTypography.title2)
+                                    .foregroundColor(ReachuColors.textPrimary)
+                                    .padding(.horizontal, ReachuSpacing.lg)
+                                    .padding(.top, ReachuSpacing.lg)
+
+                                Text("Order review content...")
+                                    .padding(.horizontal, ReachuSpacing.lg)
+
+                                Spacer(minLength: 100)
+                            }
+                        }
+
+                        VStack {
+                            RButton(
+                                title: "Complete Purchase",
+                                style: .primary,
+                                size: .large
+                            ) {
+                                Task {
+                                    await prepareStripePaymentSheet()
+                                    shouldPresentStripeSheet = true
+                                }
+                            }
+                            .padding(.horizontal, ReachuSpacing.lg)
+                            .padding(.vertical, ReachuSpacing.md)
+                        }
+                        .background(ReachuColors.surface)
+                    }
+                }
+            #else
+                VStack(spacing: 0) {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
+                            Text("Review Order")
+                                .font(ReachuTypography.title2)
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .padding(.horizontal, ReachuSpacing.lg)
+                                .padding(.top, ReachuSpacing.lg)
+
+                            Text("Order review content...")
+                                .padding(.horizontal, ReachuSpacing.lg)
+
+                            Spacer(minLength: 100)
+                        }
+                    }
+                    VStack {
+                        RButton(
+                            title: "Complete Purchase",
+                            style: .primary,
+                            size: .large
+                        ) {
+                            checkoutStep = .review
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.vertical, ReachuSpacing.md)
+                    }
+                    .background(ReachuColors.surface)
                 }
             #endif
         }
@@ -833,7 +875,16 @@ public struct RCheckoutOverlay: View {
             case .orderSummary:
                 checkoutStep = .review
             case .review:
-                simulatePayment()
+                if selectedPaymentMethod == .stripe {
+                    #if os(iOS)
+                        Task {
+                            await prepareStripePaymentSheet()
+                            shouldPresentStripeSheet = true
+                        }
+                    #endif
+                } else {
+                    checkoutStep = .success
+                }
             case .success, .error:
                 break
             }
