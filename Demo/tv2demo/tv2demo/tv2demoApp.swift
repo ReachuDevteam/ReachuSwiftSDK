@@ -6,13 +6,34 @@
 //
 
 import SwiftUI
+import ReachuCore
+import ReachuUI
 
 @main
 struct tv2demoApp: App {
+    // MARK: - Global State Managers
+    // These are initialized once and shared across the entire app
+    @StateObject private var cartManager = CartManager()
+    @StateObject private var checkoutDraft = CheckoutDraft()
+    
+    init() {
+        // Load Reachu SDK configuration FIRST
+        // This reads the reachu-config.json file with TV2 colors and theme
+        print("🚀 [TV2Demo] Loading Reachu SDK configuration...")
+        ConfigurationLoader.loadConfiguration()
+        print("✅ [TV2Demo] Reachu SDK configured successfully")
+        print("🎨 [TV2Demo] Theme: \(ReachuConfiguration.shared.theme.name)")
+        print("🎨 [TV2Demo] Mode: \(ReachuConfiguration.shared.theme.mode)")
+    }
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .preferredColorScheme(.dark)
+                // Inject managers as environment objects
+                // This makes them available to ALL child views via @EnvironmentObject
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
 }

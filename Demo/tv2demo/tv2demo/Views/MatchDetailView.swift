@@ -3,6 +3,7 @@ import SwiftUI
 struct MatchDetailView: View {
     let match: Match
     @Environment(\.dismiss) private var dismiss
+    @State private var showVideoPlayer = false
     
     var body: some View {
         ZStack {
@@ -97,8 +98,8 @@ struct MatchDetailView: View {
                         
                         // Action Buttons
                         HStack(spacing: TV2Theme.Spacing.md) {
-                            // Play button
-                            Button(action: {}) {
+                            // Play button - Opens fullscreen video player
+                            Button(action: { showVideoPlayer = true }) {
                                 HStack(spacing: TV2Theme.Spacing.sm) {
                                     Image(systemName: "play.fill")
                                         .font(.system(size: 18, weight: .semibold))
@@ -210,6 +211,11 @@ struct MatchDetailView: View {
             .ignoresSafeArea(edges: .top)
         }
         .navigationBarHidden(true)
+        .fullScreenCover(isPresented: $showVideoPlayer) {
+            TV2VideoPlayer(match: match) {
+                showVideoPlayer = false
+            }
+        }
     }
 }
 

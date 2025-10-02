@@ -1,14 +1,18 @@
 import SwiftUI
-import ReachuCore
-import ReachuDesignSystem
 import ReachuUI
-import ReachuLiveUI
+import ReachuCore
 
 struct HomeView: View {
+    // MARK: - State
     @State private var selectedCategory: Category? = Category.mockCategories[0]
     @State private var filteredContent: [ContentItem] = ContentItem.mockItems
     @State private var selectedTab: TabItem = .home
     @State private var showMatchDetail = false
+    
+    // MARK: - Environment Objects
+    // These come from the app-level injection in tv2demoApp
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     
     var body: some View {
         NavigationView {
@@ -38,6 +42,14 @@ struct HomeView: View {
                                 .padding(.vertical, TV2Theme.Spacing.sm)
                             }
                             
+                            // Products Section for Cart Testing
+                            RProductSlider(
+                                title: "🛍️ Test Products",
+                                layout: .cards,
+                                maxItems: 6
+                            )
+                            .environmentObject(cartManager)
+                            
                             // Featured Content Section
                             contentSection(
                                 title: "Direkte",
@@ -55,10 +67,20 @@ struct HomeView: View {
                     // Bottom Tab Bar (part of VStack, not floating)
                     BottomTabBar(selectedTab: $selectedTab)
                 }
+                
+                // MARK: - Floating Cart Indicator
+                // Configuration comes from reachu-config.json (size: small, mode: iconOnly)
+                // Custom padding needed here because of bottom tab bar
+                RFloatingCartIndicator(
+                    customPadding: EdgeInsets(
+                        top: 0,
+                        leading: 0,
+                        bottom: 100, // Above tab bar
+                        trailing: TV2Theme.Spacing.md
+                    )
+                )
+                // Without customPadding, would use smart defaults from the component
             }
-            .RProductCard(product: product)
-            .RLiveShowFullScreenOverlay(stream: stream)
-            .RCheckoutOverlay()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -92,6 +114,14 @@ struct HomeView: View {
         .preferredColorScheme(.dark)
         .onAppear {
             filterContent()
+        }
+        // MARK: - Checkout Overlay
+        // Full checkout flow: Address → Shipping → Payment → Success
+        // This is controlled by cartManager.isCheckoutPresented
+        .sheet(isPresented: $cartManager.isCheckoutPresented) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
     

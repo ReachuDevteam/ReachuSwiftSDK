@@ -1,21 +1,17 @@
 {
   "name": "TV2 Demo Configuration",
   "version": "1.0.0",
-  "api": {
-    "baseURL": "https://api.reachu.io",
-    "apiKey": "tv2-demo-key",
-    "environment": "development"
-  },
+  "apiKey": "3DEXXY0-JQ4MB1W-HTF2E3B-H6M5M8K",
+  "environment": "development",
   "theme": {
     "name": "TV2 Dark Theme",
     "mode": "dark",
     "lightColors": {
       "primary": "#7B5FFF",
       "secondary": "#E893CF",
-      "accent": "#00D9FF",
       "background": "#FFFFFF",
       "surface": "#F5F5F5",
-      "surfaceVariant": "#E0E0E0",
+      "surfaceSecondary": "#E0E0E0",
       "error": "#B00020",
       "success": "#00C853",
       "warning": "#FFB300",
@@ -24,15 +20,14 @@
       "textSecondary": "#757575",
       "textTertiary": "#9E9E9E",
       "border": "#E0E0E0",
-      "divider": "#BDBDBD"
+      "borderSecondary": "#BDBDBD"
     },
     "darkColors": {
       "primary": "#7B5FFF",
       "secondary": "#E893CF",
-      "accent": "#00D9FF",
       "background": "#1A1625",
       "surface": "#2B2438",
-      "surfaceVariant": "#3D3450",
+      "surfaceSecondary": "#3D3450",
       "error": "#CF6679",
       "success": "#00E676",
       "warning": "#FFD54F",
@@ -41,7 +36,7 @@
       "textSecondary": "#B3B3B3",
       "textTertiary": "#808080",
       "border": "#3D3450",
-      "divider": "#4A4A4A"
+      "borderSecondary": "#4A4A4A"
     }
   },
   "typography": {
@@ -79,11 +74,36 @@
     "enableSearch": false,
     "enableNotifications": false
   },
-  "brand": {
-    "name": "TV2",
-    "logoUrl": "",
-    "primaryColor": "#7B5FFF",
-    "accentColor": "#E893CF"
+  "ui": {
+    "enableAnimations": true,
+    "showProductBrands": true,
+    "showProductDescriptions": false,
+    "enableHapticFeedback": true
+  },
+  "cart": {
+    "floatingCartPosition": "bottomRight",
+    "floatingCartDisplayMode": "minimal",
+    "floatingCartSize": "small",
+    "autoSaveCart": true,
+    "showCartNotifications": true,
+    "enableGuestCheckout": true
+  },
+  "_cartOptions": {
+    "_comment": "Available options for cart configuration",
+    "floatingCartPosition": ["topLeft", "topCenter", "topRight", "centerLeft", "centerRight", "bottomLeft", "bottomCenter", "bottomRight"],
+    "floatingCartDisplayMode": ["iconOnly", "minimal", "compact", "full"],
+    "floatingCartDisplayModeDescription": {
+      "iconOnly": "Circle icon with badge only (smallest)",
+      "minimal": "Icon + item count",
+      "compact": "Icon + item count + price",
+      "full": "Icon + item count + price + arrow (complete)"
+    },
+    "floatingCartSize": ["small", "medium", "large"],
+    "floatingCartSizeDescription": {
+      "small": "Compact size with title3 icon",
+      "medium": "Standard size with title2 icon",
+      "large": "Large size with title icon"
+    }
   }
 }
 

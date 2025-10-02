@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		17BD230A2E8F0BBA00853E53 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD23092E8F0BBA00853E53 /* ReachuComplete */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		17BD22C72E8E8D0700853E53 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17BD230A2E8F0BBA00853E53 /* ReachuComplete in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = tv2demo;
 			packageProductDependencies = (
+				17BD23092E8F0BBA00853E53 /* ReachuComplete */,
 			);
 			productName = tv2demo;
 			productReference = 17BD22B42E8E8D0500853E53 /* tv2demo.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 17BD22AB2E8E8D0500853E53;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 17BD22B52E8E8D0500853E53 /* Products */;
 			projectDirPath = "";
@@ -578,6 +587,21 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../ReachuSwiftSDK;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17BD23092E8F0BBA00853E53 /* ReachuComplete */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
+			productName = ReachuComplete;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 17BD22AC2E8E8D0500853E53 /* Project object */;
 }

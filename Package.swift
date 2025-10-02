@@ -55,7 +55,7 @@ let package = Package(
         // Complete SDK - everything included
         .library(
             name: "ReachuComplete",
-            targets: ["ReachuCore", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
+            targets: ["ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
         ),
 
     ],
