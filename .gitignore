@@ -10,3 +10,4 @@ DerivedData/
 Demo/*/.build/
 Demo/*/Package.resolved
 Demo/*/.swiftpm/
+**/ins.instructions.md
