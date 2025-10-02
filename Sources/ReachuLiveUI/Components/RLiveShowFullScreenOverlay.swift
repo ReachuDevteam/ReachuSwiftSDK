@@ -63,6 +63,10 @@ public struct RLiveShowFullScreenOverlay: View {
             if let stream = currentStream {
                 overlayUI(stream: stream)
             }
+
+            // Dynamic components overlay (renderer)
+            DynamicComponentRenderer()
+                .zIndex(10_000_000)
             
             // Floating LIVE badge (positioned on the right)
             VStack {
