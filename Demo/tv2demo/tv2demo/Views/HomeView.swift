@@ -1,4 +1,8 @@
 import SwiftUI
+import ReachuCore
+import ReachuDesignSystem
+import ReachuUI
+import ReachuLiveUI
 
 struct HomeView: View {
     @State private var selectedCategory: Category? = Category.mockCategories[0]
@@ -52,6 +56,9 @@ struct HomeView: View {
                     BottomTabBar(selectedTab: $selectedTab)
                 }
             }
+            .RProductCard(product: product)
+            .RLiveShowFullScreenOverlay(stream: stream)
+            .RCheckoutOverlay()
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
