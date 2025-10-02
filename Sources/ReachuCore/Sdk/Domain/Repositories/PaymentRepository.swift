@@ -27,4 +27,19 @@ public protocol PaymentRepository {
         email: String,
         returnUrl: String
     ) async throws -> InitPaymentVippsDto
+
+    func klarnaNativeInit(
+        checkoutId: String,
+        input: KlarnaNativeInitInputDto
+    ) async throws -> InitPaymentKlarnaNativeDto
+
+    func klarnaNativeConfirm(
+        checkoutId: String,
+        input: KlarnaNativeConfirmInputDto
+    ) async throws -> ConfirmPaymentKlarnaNativeDto
+
+    func klarnaNativeOrder(
+        orderId: String,
+        userId: String?
+    ) async throws -> KlarnaNativeOrderDto
 }

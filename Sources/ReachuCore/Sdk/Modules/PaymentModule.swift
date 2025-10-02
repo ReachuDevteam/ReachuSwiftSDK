@@ -124,4 +124,119 @@ public final class PaymentRepositoryGQL: PaymentRepository {
         }
         return try GraphQLPick.decodeJSON(obj, as: InitPaymentVippsDto.self)
     }
+
+    public func klarnaNativeInit(
+        checkoutId: String,
+        input: KlarnaNativeInitInputDto
+    ) async throws -> InitPaymentKlarnaNativeDto {
+        try Validation.requireNonEmpty(checkoutId, field: "checkoutId")
+        if let country = input.countryCode { try Validation.requireCountry(country) }
+        if let currency = input.currency { try Validation.requireCurrency(currency) }
+        if let url = input.returnUrl,
+            url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        {
+            throw ValidationException(
+                "returnUrl cannot be empty when provided", details: ["field": "returnUrl"])
+        }
+
+        var vars: [String: Any?] = [
+            "checkoutId": checkoutId,
+            "countryCode": input.countryCode,
+            "currency": input.currency,
+            "locale": input.locale,
+            "returnUrl": input.returnUrl,
+            "intent": input.intent,
+            "autoCapture": input.autoCapture,
+        ]
+        if let customer = input.customer {
+            vars["customer"] = try encodeToDictionary(customer)
+        }
+        if let billing = input.billingAddress {
+            vars["billingAddress"] = try encodeToDictionary(billing)
+        }
+        if let shipping = input.shippingAddress {
+            vars["shippingAddress"] = try encodeToDictionary(shipping)
+        }
+
+        let res = try await client.runMutationSafe(
+            query: PaymentGraphQL.KLARNA_NATIVE_INIT_PAYMENT_MUTATION,
+            variables: vars.compactMapValues { $0 }
+        )
+        guard
+            let obj: [String: Any] = GraphQLPick.pickPath(
+                res.data, path: ["Payment", "CreatePaymentKlarnaNative"])
+        else {
+            throw SdkException("Empty response in Payment.klarnaNativeInit", code: "EMPTY_RESPONSE")
+        }
+        return try GraphQLPick.decodeJSON(obj, as: InitPaymentKlarnaNativeDto.self)
+    }
+
+    public func klarnaNativeConfirm(
+        checkoutId: String,
+        input: KlarnaNativeConfirmInputDto
+    ) async throws -> ConfirmPaymentKlarnaNativeDto {
+        try Validation.requireNonEmpty(checkoutId, field: "checkoutId")
+        try Validation.requireNonEmpty(input.authorizationToken, field: "authorizationToken")
+
+        var vars: [String: Any?] = [
+            "checkoutId": checkoutId,
+            "authorizationToken": input.authorizationToken,
+            "autoCapture": input.autoCapture,
+        ]
+        if let customer = input.customer {
+            vars["customer"] = try encodeToDictionary(customer)
+        }
+        if let billing = input.billingAddress {
+            vars["billingAddress"] = try encodeToDictionary(billing)
+        }
+        if let shipping = input.shippingAddress {
+            vars["shippingAddress"] = try encodeToDictionary(shipping)
+        }
+
+        let res = try await client.runMutationSafe(
+            query: PaymentGraphQL.KLARNA_NATIVE_CONFIRM_PAYMENT_MUTATION,
+            variables: vars.compactMapValues { $0 }
+        )
+        guard
+            let obj: [String: Any] = GraphQLPick.pickPath(
+                res.data, path: ["Payment", "ConfirmPaymentKlarnaNative"])
+        else {
+            throw SdkException("Empty response in Payment.klarnaNativeConfirm", code: "EMPTY_RESPONSE")
+        }
+        return try GraphQLPick.decodeJSON(obj, as: ConfirmPaymentKlarnaNativeDto.self)
+    }
+
+    public func klarnaNativeOrder(orderId: String, userId: String?) async throws -> KlarnaNativeOrderDto {
+        try Validation.requireNonEmpty(orderId, field: "orderId")
+        if let uid = userId, uid.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            throw ValidationException(
+                "userId cannot be empty when provided", details: ["field": "userId"])
+        }
+
+        let res = try await client.runQuerySafe(
+            query: PaymentGraphQL.KLARNA_NATIVE_ORDER_QUERY,
+            variables: [
+                "orderId": orderId,
+                "userId": userId?.trimmingCharacters(in: .whitespacesAndNewlines),
+            ].compactMapValues { $0 }
+        )
+        guard
+            let obj: [String: Any] = GraphQLPick.pickPath(
+                res.data, path: ["Payment", "GetKlarnaOrderNative"])
+        else {
+            throw SdkException("Empty response in Payment.klarnaNativeOrder", code: "EMPTY_RESPONSE")
+        }
+        return try GraphQLPick.decodeJSON(obj, as: KlarnaNativeOrderDto.self)
+    }
+
+    private func encodeToDictionary<T: Encodable>(_ value: T) throws -> [String: Any] {
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(value)
+        guard
+            let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            throw SdkException("Failed to encode input as dictionary", code: "ENCODING_ERROR")
+        }
+        return dict
+    }
 }

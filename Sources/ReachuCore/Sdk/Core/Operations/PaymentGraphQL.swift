@@ -66,6 +66,137 @@ public enum PaymentGraphQL {
     }
     """#
 
+  public static let KLARNA_NATIVE_INIT_PAYMENT_MUTATION = #"""
+    mutation CreatePaymentKlarnaNative(
+      $checkoutId: String!
+      $countryCode: String
+      $currency: String
+      $locale: String
+      $returnUrl: String
+      $intent: String
+      $autoCapture: Boolean
+      $customer: KlarnaNativeCustomerInput
+      $billingAddress: KlarnaNativeAddressInput
+      $shippingAddress: KlarnaNativeAddressInput
+    ) {
+      Payment {
+        CreatePaymentKlarnaNative(
+          checkout_id: $checkoutId
+          country_code: $countryCode
+          currency: $currency
+          locale: $locale
+          return_url: $returnUrl
+          intent: $intent
+          auto_capture: $autoCapture
+          customer: $customer
+          billing_address: $billingAddress
+          shipping_address: $shippingAddress
+        ) {
+          client_token
+          session_id
+          purchase_country
+          purchase_currency
+          order_amount
+          order_tax_amount
+          payment_method_categories {
+            identifier
+            name
+          }
+          order_lines {
+            type
+            name
+            quantity
+            unit_price
+            total_amount
+            tax_rate
+            tax_amount
+          }
+          cart_id
+          checkout_id
+        }
+      }
+    }
+    """#
+
+  public static let KLARNA_NATIVE_CONFIRM_PAYMENT_MUTATION = #"""
+    mutation ConfirmPaymentKlarnaNative(
+      $checkoutId: String!
+      $authorizationToken: String!
+      $autoCapture: Boolean
+      $customer: KlarnaNativeCustomerInput
+      $billingAddress: KlarnaNativeAddressInput
+      $shippingAddress: KlarnaNativeAddressInput
+    ) {
+      Payment {
+        ConfirmPaymentKlarnaNative(
+          checkout_id: $checkoutId
+          authorization_token: $authorizationToken
+          auto_capture: $autoCapture
+          customer: $customer
+          billing_address: $billingAddress
+          shipping_address: $shippingAddress
+        ) {
+          order_id
+          checkout_id
+          fraud_status
+          order {
+            order_id
+            status
+            locale
+            html_snippet
+            purchase_country
+            purchase_currency
+            order_amount
+            order_tax_amount
+            payment_method_categories {
+              identifier
+              name
+            }
+            order_lines {
+              type
+              name
+              quantity
+              unit_price
+              total_amount
+              tax_rate
+              tax_amount
+            }
+          }
+        }
+      }
+    }
+    """#
+
+  public static let KLARNA_NATIVE_ORDER_QUERY = #"""
+    query GetKlarnaOrderNative($orderId: String!, $userId: String) {
+      Payment {
+        GetKlarnaOrderNative(order_id: $orderId, user_id: $userId) {
+          order_id
+          status
+          locale
+          html_snippet
+          purchase_country
+          purchase_currency
+          order_amount
+          order_tax_amount
+          payment_method_categories {
+            identifier
+            name
+          }
+          order_lines {
+            type
+            name
+            quantity
+            unit_price
+            total_amount
+            tax_rate
+            tax_amount
+          }
+        }
+      }
+    }
+    """#
+
   public static let VIPPS_PAYMENT = #"""
     mutation CreatePaymentVipps($checkoutId: String!, $email: String!, $returnUrl: String!) {
       Payment {
