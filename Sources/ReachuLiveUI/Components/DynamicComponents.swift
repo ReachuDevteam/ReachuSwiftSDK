@@ -132,14 +132,12 @@ public struct FeaturedProductComponentData: Codable, Equatable {
         let triggerOn: DynamicComponentTrigger?
     }
     
-    // Decodable
     //public init(from decoder: Decoder) throws {
-        //// Necesitamos el contenedor del componente padre para ir a la clave .data
-        //let c = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
+        //// Obtenemos el contenedor del componente padre (DynamicComponent)
+        //let container = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
 //        
-        //// Decodificamos el objeto 'Inner' de la clave "data"
-        //let innerContainer = try c.nestedContainer(keyedBy: CodingKeys.self, forKey: .data)
-        //let inner = try innerContainer.decode(Inner.self, forKey: .data)
+        //// 2. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
+        //let inner = try container.decode(Inner.self, forKey: .data) // <-- CORREGIDO
 //        
         //self.product = inner.product.asProduct() // Conversión de DTO a Product
         //self.productId = inner.productId
@@ -149,40 +147,23 @@ public struct FeaturedProductComponentData: Codable, Equatable {
         //self.startTime = inner.startTime.flatMap { df.date(from: $0) }
         //self.endTime = inner.endTime.flatMap { df.date(from: $0) }
         //self.triggerOn = inner.triggerOn
-    //}
-    public init(from decoder: Decoder) throws {
-        // Obtenemos el contenedor del componente padre (DynamicComponent)
-        let container = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
-        
-        // 2. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
-        let inner = try container.decode(Inner.self, forKey: .data) // <-- CORREGIDO
-        
-        self.product = inner.product.asProduct() // Conversión de DTO a Product
-        self.productId = inner.productId
-        self.position = inner.position
-        
-        let df = ISO8601DateFormatter()
-        self.startTime = inner.startTime.flatMap { df.date(from: $0) }
-        self.endTime = inner.endTime.flatMap { df.date(from: $0) }
-        self.triggerOn = inner.triggerOn
-    }    
+    //}    
+    public init( 
+        product: Product, 
+        productId: Int?, 
+        position: DynamicComponentPosition?, 
+        startTime: Date?, 
+        endTime: Date?, 
+        triggerOn: DynamicComponentTrigger? 
+    ) { 
+        self.product = product 
+        self.productId = productId 
+        self.position = position 
+        self.startTime = startTime 
+        self.endTime = endTime 
+        self.triggerOn = triggerOn 
+    }
     
-    // Encodable
-    //public func encode(to encoder: Encoder) throws {
-        //var container = encoder.container(keyedBy: CodingKeys.self)
-        //let df = ISO8601DateFormatter()
-//        
-        //// Conversión de Product a DTO para codificar
-        //let inner = Inner(
-            //product: ProductDtoCompat(from: product), // Necesita init(from: Product)
-            //productId: productId,
-            //position: position,
-            //startTime: startTime.map { df.string(from: $0) },
-            //endTime: endTime.map { df.string(from: $0) },
-            //triggerOn: triggerOn
-        //)
-        //try container.encode(inner, forKey: .data)
-    //}
     public func encode(to encoder: Encoder) throws {
         // 3. Ajustamos Encodable para usar `singleValueContainer` ya que Inner es el objeto.
         var container = encoder.singleValueContainer() 
@@ -236,68 +217,48 @@ public struct BannerComponentData: Codable, Equatable {
         let endTime: String?
     }
     
-    // Decodable
     //public init(from decoder: Decoder) throws {
-        //// Necesitamos el contenedor del componente padre para ir a la clave .data
-        //let c = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
+        //// Necesitamos acceder al contenedor principal para obtener la clave 'data'
+        //let container = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
 //        
-        //// Decodificamos el objeto 'Inner' de la clave "data"
-        //let innerContainer = try c.nestedContainer(keyedBy: CodingKeys.self, forKey: .data)
-        //let inner = try innerContainer.decode(Inner.self, forKey: .data)
+        //// 1. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
+        //// Esto asume que el objeto JSON bajo "data" coincide con la estructura de Inner.
+        //let inner = try container.decode(Inner.self, forKey: .data) // <--- CORRECCIÓN APLICADA
 //        
         //self.title = inner.title
         //self.text = inner.text
         //self.position = inner.position
         //self.animation = inner.animation
-        //// Conversión de String a TimeInterval (Double)
-        //if let d = inner.duration, let seconds = TimeInterval(d) { self.duration = seconds } else { self.duration = nil }
 //        
-        //let df = ISO8601DateFormatter()
+        //// Conversión de String a TimeInterval
+        //if let d = inner.duration, let seconds = TimeInterval(d) { 
+            //self.duration = seconds 
+        //} else { 
+            //self.duration = nil 
+        //}
+//        
         //let df = ISO8601DateFormatter()
         //self.startTime = inner.startTime.flatMap { df.date(from: $0) }
         //self.endTime = inner.endTime.flatMap { df.date(from: $0) }
     //}
-    public init(from decoder: Decoder) throws {
-        // Necesitamos acceder al contenedor principal para obtener la clave 'data'
-        let container = try decoder.container(keyedBy: DynamicComponent.CodingKeys.self)
-        
-        // 1. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
-        // Esto asume que el objeto JSON bajo "data" coincide con la estructura de Inner.
-        let inner = try container.decode(Inner.self, forKey: .data) // <--- CORRECCIÓN APLICADA
-        
-        self.title = inner.title
-        self.text = inner.text
-        self.position = inner.position
-        self.animation = inner.animation
-        
-        // Conversión de String a TimeInterval
-        if let d = inner.duration, let seconds = TimeInterval(d) { 
-            self.duration = seconds 
-        } else { 
-            self.duration = nil 
-        }
-        
-        let df = ISO8601DateFormatter()
-        self.startTime = inner.startTime.flatMap { df.date(from: $0) }
-        self.endTime = inner.endTime.flatMap { df.date(from: $0) }
+
+ public init( 
+    title: String?, 
+    text: String?, 
+    position: DynamicComponentPosition?, 
+    animation: String?, 
+    duration: TimeInterval?, 
+    startTime: Date?, 
+    endTime: Date? 
+    ) { 
+        self.title = title 
+        self.text = text 
+        self.position = position 
+        self.animation = animation 
+        self.duration = duration 
+        self.startTime = startTime 
+        self.endTime = endTime 
     }
-        
-    
-    // Encodable
-    //public func encode(to encoder: Encoder) throws {
-        //var container = encoder.container(keyedBy: CodingKeys.self)
-        //let df = ISO8601DateFormatter()
-        //let inner = Inner(
-            //title: title,
-            //text: text,
-            //position: position,
-            //animation: animation,
-            //duration: duration.map { String($0) }, // Conversión de TimeInterval (Double) a String
-            //startTime: startTime.map { df.string(from: $0) },
-            //endTime: endTime.map { df.string(from: $0) }
-        //)
-        //try container.encode(inner, forKey: .data)
-    //}
     public func encode(to encoder: Encoder) throws {
         // Para la codificación, usaremos un contenedor para codificar el objeto Inner
         // directamente, ya que el JSON espera que BannerComponentData sea el objeto

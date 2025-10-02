@@ -161,14 +161,16 @@ struct LiveShowDemoView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             selectedStream = liveShowManager.featuredLiveStream
-            // Registrar componentes dinámicos del demo JSON si existe
-            if let data = demoDynamicComponentsJson.data(using: String.Encoding.utf8) {
+            // Cargar componentes dinámicos desde API (reemplaza la URL/header en el servicio si es necesario)
+            Task { @MainActor in
                 do {
-                    let components = try JSONDecoder().decode([DynamicComponent].self, from: data)
-                    print("[DynamicDemo] Decoded components: count=\(components.count)")
+                    DynamicComponentManager.shared.reset()
+                    print("[DynamicDemo] selectedStream?.id \(String(describing: selectedStream?.id))")
+                    let components = try await DynamicComponentsService.fetch(for: selectedStream?.id)
+                    print("[DynamicDemo] Remote components count=\(components.count)")
                     DynamicComponentManager.shared.register(components)
                 } catch {
-                    print("[DynamicDemo][ERROR] Failed to decode components: \(error)")
+                    print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
                 }
             }
         }
