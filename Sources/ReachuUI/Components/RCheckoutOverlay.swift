@@ -14,7 +14,8 @@ public struct RCheckoutOverlay: View {
     // MARK: - Environment
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft  // ⬅️ Exponemos estado al contexto
-    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme:
+        SwiftUI.ColorScheme
 
     // MARK: - State
     @State private var checkoutStep: CheckoutStep = .address
@@ -51,6 +52,12 @@ public struct RCheckoutOverlay: View {
     #if os(iOS)
         @State private var paymentSheet: PaymentSheet?
         @State private var shouldPresentStripeSheet = false
+
+        @State private var showKlarnaSheet = false
+        @State private var klarnaStartURL: URL?
+        @State private var klarnaHTML: String?
+        private let klarnaSuccessURLString =
+            "https://www.example.com/confirmation.html"
     #endif
 
     private var draftSyncKey: String {
@@ -199,6 +206,53 @@ public struct RCheckoutOverlay: View {
                 loadingOverlay
             }
         }
+        #if os(iOS)
+            .sheet(
+                isPresented: $showKlarnaSheet,
+                onDismiss: {
+                    if checkoutStep != .success && checkoutStep != .error {
+                        checkoutStep = .orderSummary  // cerrar=cancel
+                    }
+                }
+            ) {
+                if let html = klarnaHTML {
+                    KlarnaWebViewHTML(
+                        html: html,
+                        successURLPrefix: klarnaSuccessURLString
+                    ) { result in
+                        switch result {
+                        case .success: checkoutStep = .success
+                        case .canceled: checkoutStep = .orderSummary
+                        case .error(_): checkoutStep = .error
+                        }
+                        showKlarnaSheet = false
+                    }
+                    .ignoresSafeArea()
+                } else if let url = klarnaStartURL {
+                    KlarnaWebView(
+                        startURL: url,
+                        successURLPrefix: klarnaSuccessURLString,
+                        cancelURLPrefix: ""
+                    ) { result in
+                        switch result {
+                        case .success: checkoutStep = .success
+                        case .canceled: checkoutStep = .orderSummary
+                        case .error(_): checkoutStep = .error
+                        }
+                        showKlarnaSheet = false
+                    }
+                    .ignoresSafeArea()
+                } else {
+                    Text("Unable to start Klarna.")
+                    .padding()
+                    .onAppear {
+                        showKlarnaSheet = false
+                        checkoutStep = .error
+                    }
+                }
+            }
+        #endif
+
         .onAppear {
             fillDemoData()
             syncDraftFromState()
@@ -239,9 +293,12 @@ public struct RCheckoutOverlay: View {
                                     isEditingAddress.toggle()
                                 }
                             }) {
-                                Image(systemName: isEditingAddress ? "checkmark" : "pencil")
-                                    .foregroundColor(ReachuColors.primary)
-                                    .font(.system(size: 16))
+                                Image(
+                                    systemName: isEditingAddress
+                                        ? "checkmark" : "pencil"
+                                )
+                                .foregroundColor(ReachuColors.primary)
+                                .font(.system(size: 16))
                             }
                         }
                         .padding(.horizontal, ReachuSpacing.lg)
@@ -252,15 +309,22 @@ public struct RCheckoutOverlay: View {
                                 addressEditForm
                                     .transition(
                                         AnyTransition.opacity.combined(
-                                            with: AnyTransition.move(edge: .top)))
+                                            with: AnyTransition.move(edge: .top)
+                                        )
+                                    )
                             } else {
                                 addressDisplayView
                                     .transition(
                                         AnyTransition.opacity.combined(
-                                            with: AnyTransition.move(edge: .top)))
+                                            with: AnyTransition.move(edge: .top)
+                                        )
+                                    )
                             }
                         }
-                        .animation(.easeInOut(duration: 0.3), value: isEditingAddress)
+                        .animation(
+                            .easeInOut(duration: 0.3),
+                            value: isEditingAddress
+                        )
 
                         // Shipping Options (smaller)
                         compactShippingOptionsView
@@ -294,40 +358,50 @@ public struct RCheckoutOverlay: View {
                         checkoutDraft.lastName = lastName
                         checkoutDraft.email = email
                         checkoutDraft.phone = phone
-                        checkoutDraft.phoneCountryCode = phoneCountryCode.replacingOccurrences(
-                            of: "+", with: "")
+                        checkoutDraft.phoneCountryCode =
+                            phoneCountryCode.replacingOccurrences(
+                                of: "+",
+                                with: ""
+                            )
                         checkoutDraft.address1 = address1
                         checkoutDraft.address2 = address2
                         checkoutDraft.city = city
                         checkoutDraft.province = province
                         checkoutDraft.countryName = country
                         checkoutDraft.zip = zip
-                        checkoutDraft.shippingOptionRaw = selectedShippingOption.rawValue
-                        checkoutDraft.paymentMethodRaw = selectedPaymentMethod.rawValue
+                        checkoutDraft.shippingOptionRaw =
+                            selectedShippingOption.rawValue
+                        checkoutDraft.paymentMethodRaw =
+                            selectedPaymentMethod.rawValue
                         checkoutDraft.acceptsTerms = acceptsTerms
-                        checkoutDraft.acceptsPurchaseConditions = acceptsPurchaseConditions
+                        checkoutDraft.acceptsPurchaseConditions =
+                            acceptsPurchaseConditions
                         checkoutDraft.appliedDiscount = appliedDiscount
 
                         _ = await cartManager.applyCheapestShippingPerSupplier()
 
-                        guard let chkId = await cartManager.createCheckout() else {
+                        guard let chkId = await cartManager.createCheckout()
+                        else {
                             proceedToNext()
                             return
                         }
 
                         let addr = checkoutDraft.addressPayload(
-                            fallbackCountryISO2: cartManager.country)
+                            fallbackCountryISO2: cartManager.country
+                        )
 
                         _ = await cartManager.updateCheckout(
                             checkoutId: chkId,
                             email: checkoutDraft.email,
                             successUrl: nil,
                             cancelUrl: nil,
-                            paymentMethod: checkoutDraft.paymentMethodRaw.capitalized,
+                            paymentMethod: checkoutDraft.paymentMethodRaw
+                                .capitalized,
                             shippingAddress: addr,
                             billingAddress: addr,
                             acceptsTerms: checkoutDraft.acceptsTerms,
-                            acceptsPurchaseConditions: checkoutDraft.acceptsPurchaseConditions
+                            acceptsPurchaseConditions: checkoutDraft
+                                .acceptsPurchaseConditions
                         )
 
                         proceedToNext()
@@ -365,7 +439,8 @@ public struct RCheckoutOverlay: View {
                             .foregroundColor(ReachuColors.textPrimary)
 
                         VStack(spacing: ReachuSpacing.sm) {
-                            ForEach(PaymentMethod.allCases, id: \.self) { method in
+                            ForEach(PaymentMethod.allCases, id: \.self) {
+                                method in
                                 PaymentMethodRowCompact(
                                     method: method,
                                     isSelected: selectedPaymentMethod == method
@@ -379,8 +454,11 @@ public struct RCheckoutOverlay: View {
 
                     // Klarna installments Details
                     if selectedPaymentMethod == .klarna {
-                        PaymentScheduleCompact(total: finalTotal, currency: cartManager.currency)
-                            .padding(.horizontal, ReachuSpacing.lg)
+                        PaymentScheduleCompact(
+                            total: finalTotal,
+                            currency: cartManager.currency
+                        )
+                        .padding(.horizontal, ReachuSpacing.lg)
                     }
 
                     // Discount Code Section
@@ -410,8 +488,18 @@ public struct RCheckoutOverlay: View {
                                 isLoading = false
                                 if ok {
                                     shouldPresentStripeSheet = true
-                                    // Mostrar el PaymentSheet inmediatamente
                                     presentStripePaymentSheet()
+                                    return
+                                } else {
+                                    checkoutStep = .error
+                                    return
+                                }
+                            } else if selectedPaymentMethod == .klarna {
+                                isLoading = true
+                                let ok = await prepareKlarna()  // ⬅️ prepara html_snippet
+                                isLoading = false
+                                if ok {
+                                    showKlarnaSheet = true  // ⬅️ abre el sheet (como Stripe)
                                     return
                                 } else {
                                     checkoutStep = .error
@@ -428,6 +516,21 @@ public struct RCheckoutOverlay: View {
             }
             .background(ReachuColors.surface)
         }
+        .onChange(of: selectedPaymentMethod) { newMethod in
+            Task { @MainActor in
+                _ = await cartManager.updateCheckout(
+                    checkoutId: cartManager.checkoutId,
+                    email: nil,
+                    successUrl: nil,
+                    cancelUrl: nil,
+                    paymentMethod: newMethod.rawValue.capitalized,  // "Stripe" | "Klarna"
+                    shippingAddress: nil,
+                    billingAddress: nil,
+                    acceptsTerms: acceptsTerms,
+                    acceptsPurchaseConditions: acceptsPurchaseConditions
+                )
+            }
+        }
     }
 
     // MARK: - Payment Step View (now Review Step)
@@ -443,22 +546,30 @@ public struct RCheckoutOverlay: View {
 
                         Spacer()
 
-                        Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(ReachuColors.textPrimary)
+                        Text(
+                            "\(cartManager.currency) \(String(format: "%.2f", finalTotal))"
+                        )
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
 
                     // Products List - Each product with individual quantity controls
                     VStack(spacing: ReachuSpacing.xl) {
-                        ForEach(Array(cartManager.items.enumerated()), id: \.offset) {
-                            index, item in
+                        ForEach(
+                            Array(cartManager.items.enumerated()),
+                            id: \.offset
+                        ) {
+                            index,
+                            item in
                             VStack(spacing: ReachuSpacing.md) {
                                 // Product header with image and details
                                 HStack(spacing: ReachuSpacing.md) {
                                     // Product image
-                                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                                    AsyncImage(
+                                        url: URL(string: item.imageUrl ?? "")
+                                    ) { image in
                                         image
                                             .resizable()
                                             .aspectRatio(contentMode: .fill)
@@ -469,69 +580,128 @@ public struct RCheckoutOverlay: View {
                                     .frame(width: 60, height: 60)
                                     .cornerRadius(8)
 
-                                    VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                                    VStack(
+                                        alignment: .leading,
+                                        spacing: ReachuSpacing.xs
+                                    ) {
                                         Text(item.brand ?? "Reachu Audio")
-                                            .font(.system(size: 14, weight: .regular))
-                                            .foregroundColor(ReachuColors.textSecondary)
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
 
                                         Text(item.title)
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(ReachuColors.textPrimary)
+                                            .font(
+                                                .system(
+                                                    size: 16,
+                                                    weight: .semibold
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textPrimary
+                                            )
                                             .lineLimit(2)
                                     }
 
                                     Spacer()
 
-                                    Text("\(item.currency) \(String(format: "%.2f", item.price))")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(ReachuColors.textPrimary)
+                                    Text(
+                                        "\(item.currency) \(String(format: "%.2f", item.price))"
+                                    )
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(ReachuColors.textPrimary)
                                 }
 
                                 // Product details
                                 VStack(spacing: ReachuSpacing.xs) {
                                     HStack {
                                         Text("Order ID:")
-                                            .font(.system(size: 14, weight: .regular))
-                                            .foregroundColor(ReachuColors.textSecondary)
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
 
                                         Spacer()
 
                                         Text("BD23672983")
-                                            .font(.system(size: 14, weight: .regular))
-                                            .foregroundColor(ReachuColors.textSecondary)
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
                                     }
 
                                     HStack {
                                         Text("Colors:")
-                                            .font(.system(size: 14, weight: .regular))
-                                            .foregroundColor(ReachuColors.textSecondary)
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
 
                                         Spacer()
 
                                         Text("Like Water")
-                                            .font(.system(size: 14, weight: .regular))
-                                            .foregroundColor(ReachuColors.textSecondary)
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
+                                            )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
                                     }
                                 }
 
                                 // Read-only Quantity Display (NO controls in payment step)
                                 HStack {
                                     Text("Quantity")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .font(
+                                            .system(size: 16, weight: .semibold)
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textPrimary
+                                        )
 
                                     Spacer()
 
                                     Text("\(item.quantity)")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .font(
+                                            .system(size: 18, weight: .semibold)
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textPrimary
+                                        )
                                 }
 
                                 // Show total for this product
                                 HStack {
                                     Text("Total for this item:")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(ReachuColors.textSecondary)
+                                        .font(
+                                            .system(size: 14, weight: .medium)
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textSecondary
+                                        )
 
                                     Spacer()
 
@@ -557,7 +727,8 @@ public struct RCheckoutOverlay: View {
                                 .padding(.horizontal, ReachuSpacing.lg)
 
                             PaymentScheduleDetailed(
-                                total: finalTotal, currency: cartManager.currency
+                                total: finalTotal,
+                                currency: cartManager.currency
                             )
                             .padding(.horizontal, ReachuSpacing.lg)
                         }
@@ -584,7 +755,8 @@ public struct RCheckoutOverlay: View {
     }
 
     // Helper function for the simple summary rows
-    private func summaryDetailRow(_ title: String, _ value: String) -> some View {
+    private func summaryDetailRow(_ title: String, _ value: String) -> some View
+    {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .regular))
@@ -602,7 +774,8 @@ public struct RCheckoutOverlay: View {
     private var reviewStepView: some View {
         Group {
             #if os(iOS)
-                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet {
+                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet
+                {
                     Color.clear
                         .onAppear {
                             presentStripePaymentSheet()
@@ -610,7 +783,10 @@ public struct RCheckoutOverlay: View {
                 } else {
                     VStack(spacing: 0) {
                         ScrollView {
-                            VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
+                            VStack(
+                                alignment: .leading,
+                                spacing: ReachuSpacing.lg
+                            ) {
                                 Text("Review Order")
                                     .font(ReachuTypography.title2)
                                     .foregroundColor(ReachuColors.textPrimary)
@@ -687,16 +863,22 @@ public struct RCheckoutOverlay: View {
                         .frame(width: 100, height: 100)
                         .scaleEffect(checkoutStep == .success ? 1.0 : 0.5)
                         .animation(
-                            .spring(response: 0.6, dampingFraction: 0.6).delay(0.2),
-                            value: checkoutStep)
+                            .spring(response: 0.6, dampingFraction: 0.6).delay(
+                                0.2
+                            ),
+                            value: checkoutStep
+                        )
 
                     Image(systemName: "checkmark")
                         .font(.system(size: 45, weight: .bold))
                         .foregroundColor(.white)
                         .scaleEffect(checkoutStep == .success ? 1.0 : 0.0)
                         .animation(
-                            .spring(response: 0.4, dampingFraction: 0.6).delay(0.4),
-                            value: checkoutStep)
+                            .spring(response: 0.4, dampingFraction: 0.6).delay(
+                                0.4
+                            ),
+                            value: checkoutStep
+                        )
                 }
 
                 // Success Message (smaller and more compact)
@@ -706,7 +888,10 @@ public struct RCheckoutOverlay: View {
                         .foregroundColor(ReachuColors.textPrimary)
                         .multilineTextAlignment(.center)
                         .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                        .animation(.easeInOut(duration: 0.5).delay(0.6), value: checkoutStep)
+                        .animation(
+                            .easeInOut(duration: 0.5).delay(0.6),
+                            value: checkoutStep
+                        )
 
                     Text(
                         selectedPaymentMethod == .klarna
@@ -718,7 +903,10 @@ public struct RCheckoutOverlay: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, ReachuSpacing.xl)
                     .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                    .animation(.easeInOut(duration: 0.5).delay(0.8), value: checkoutStep)
+                    .animation(
+                        .easeInOut(duration: 0.5).delay(0.8),
+                        value: checkoutStep
+                    )
                 }
             }
 
@@ -739,7 +927,10 @@ public struct RCheckoutOverlay: View {
                 .padding(.horizontal, ReachuSpacing.lg)
                 .padding(.bottom, ReachuSpacing.xl)
                 .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.5).delay(1.0), value: checkoutStep)
+                .animation(
+                    .easeInOut(duration: 0.5).delay(1.0),
+                    value: checkoutStep
+                )
             }
         }
     }
@@ -757,16 +948,22 @@ public struct RCheckoutOverlay: View {
                         .frame(width: 100, height: 100)
                         .scaleEffect(checkoutStep == .error ? 1.0 : 0.5)
                         .animation(
-                            .spring(response: 0.6, dampingFraction: 0.6).delay(0.2),
-                            value: checkoutStep)
+                            .spring(response: 0.6, dampingFraction: 0.6).delay(
+                                0.2
+                            ),
+                            value: checkoutStep
+                        )
 
                     Image(systemName: "xmark")
                         .font(.system(size: 45, weight: .bold))
                         .foregroundColor(.white)
                         .scaleEffect(checkoutStep == .error ? 1.0 : 0.0)
                         .animation(
-                            .spring(response: 0.4, dampingFraction: 0.6).delay(0.4),
-                            value: checkoutStep)
+                            .spring(response: 0.4, dampingFraction: 0.6).delay(
+                                0.4
+                            ),
+                            value: checkoutStep
+                        )
                 }
 
                 // Error Message
@@ -776,7 +973,10 @@ public struct RCheckoutOverlay: View {
                         .foregroundColor(ReachuColors.textPrimary)
                         .multilineTextAlignment(.center)
                         .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                        .animation(.easeInOut(duration: 0.5).delay(0.6), value: checkoutStep)
+                        .animation(
+                            .easeInOut(duration: 0.5).delay(0.6),
+                            value: checkoutStep
+                        )
 
                     Text(
                         "There was an issue processing your payment. Please check your payment information and try again."
@@ -786,7 +986,10 @@ public struct RCheckoutOverlay: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, ReachuSpacing.xl)
                     .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                    .animation(.easeInOut(duration: 0.5).delay(0.8), value: checkoutStep)
+                    .animation(
+                        .easeInOut(duration: 0.5).delay(0.8),
+                        value: checkoutStep
+                    )
                 }
             }
 
@@ -803,7 +1006,10 @@ public struct RCheckoutOverlay: View {
                     checkoutStep = .orderSummary
                 }
                 .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.5).delay(1.0), value: checkoutStep)
+                .animation(
+                    .easeInOut(duration: 0.5).delay(1.0),
+                    value: checkoutStep
+                )
 
                 RButton(
                     title: "Go Back",
@@ -813,7 +1019,10 @@ public struct RCheckoutOverlay: View {
                     cartManager.hideCheckout()
                 }
                 .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                .animation(.easeInOut(duration: 0.5).delay(1.1), value: checkoutStep)
+                .animation(
+                    .easeInOut(duration: 0.5).delay(1.1),
+                    value: checkoutStep
+                )
             }
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.bottom, ReachuSpacing.xl)
@@ -827,7 +1036,9 @@ public struct RCheckoutOverlay: View {
             .overlay {
                 VStack(spacing: ReachuSpacing.md) {
                     ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .progressViewStyle(
+                            CircularProgressViewStyle(tint: .white)
+                        )
                         .scaleEffect(1.5)
 
                     Text("Processing...")
@@ -843,7 +1054,8 @@ public struct RCheckoutOverlay: View {
     private var canProceedToNext: Bool {
         switch checkoutStep {
         case .address:
-            return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && !phone.isEmpty
+            return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty
+                && !phone.isEmpty
                 && !address1.isEmpty && !city.isEmpty && !zip.isEmpty
         case .orderSummary:
             return true
@@ -905,7 +1117,9 @@ public struct RCheckoutOverlay: View {
             }
 
             #if os(iOS)
-                let impactFeedback = UIImpactFeedbackGenerator(style: isSuccess ? .heavy : .rigid)
+                let impactFeedback = UIImpactFeedbackGenerator(
+                    style: isSuccess ? .heavy : .rigid
+                )
                 impactFeedback.impactOccurred()
             #endif
         }
@@ -915,11 +1129,11 @@ public struct RCheckoutOverlay: View {
         firstName = "John"
         lastName = "Doe"
         email = "john.doe@example.com"
-        phone = "(555) 123-4456"
+        phone = "2125551212"
         phoneCountryCode = "+1"
         address1 = "82 Melora Street"
         city = "Westbridge"
-        province = "CA"
+        province = "California"
         country = "United States"
         zip = "92841"
     }
@@ -929,7 +1143,10 @@ public struct RCheckoutOverlay: View {
         checkoutDraft.lastName = lastName
         checkoutDraft.email = email
         checkoutDraft.phone = phone
-        checkoutDraft.phoneCountryCode = phoneCountryCode.replacingOccurrences(of: "+", with: "")
+        checkoutDraft.phoneCountryCode = phoneCountryCode.replacingOccurrences(
+            of: "+",
+            with: ""
+        )
 
         checkoutDraft.address1 = address1
         checkoutDraft.address2 = address2
@@ -948,15 +1165,19 @@ public struct RCheckoutOverlay: View {
     #if os(iOS)
         private func dtoToDict<T: Encodable>(_ dto: T) -> [String: Any]? {
             guard let data = try? JSONEncoder().encode(dto) else { return nil }
-            return (try? JSONSerialization.jsonObject(with: data) as? [String: Any]) ?? nil
+            return
+                (try? JSONSerialization.jsonObject(with: data) as? [String: Any])
+                ?? nil
         }
 
         private func pick<T>(_ dict: [String: Any], _ keys: [String]) -> T? {
             for k in keys {
                 if let v = dict[k] as? T { return v }
-                let normalized = k.replacingOccurrences(of: "_", with: "").lowercased()
+                let normalized = k.replacingOccurrences(of: "_", with: "")
+                    .lowercased()
                 if let hit = dict.first(where: {
-                    $0.key.replacingOccurrences(of: "_", with: "").lowercased() == normalized
+                    $0.key.replacingOccurrences(of: "_", with: "").lowercased()
+                        == normalized
                 }), let cast = hit.value as? T {
                     return cast
                 }
@@ -965,7 +1186,10 @@ public struct RCheckoutOverlay: View {
         }
 
         private func prepareStripePaymentSheet() async -> Bool {
-            guard let dto = await cartManager.stripeIntent(returnEphemeralKey: true),
+            guard
+                let dto = await cartManager.stripeIntent(
+                    returnEphemeralKey: true
+                ),
                 let dict = dtoToDict(dto)
             else {
                 self.errorMessage = "Could not get Stripe Intent from API."
@@ -975,16 +1199,23 @@ public struct RCheckoutOverlay: View {
             let clientSecret: String? = pick(
                 dict,
                 [
-                    "payment_intent_client_secret", "client_secret", "paymentIntentClientSecret",
-                ])
+                    "payment_intent_client_secret", "client_secret",
+                    "paymentIntentClientSecret",
+                ]
+            )
             guard let secret = clientSecret, !secret.isEmpty else {
                 self.errorMessage = "Missing Payment Intent client_secret."
                 return false
             }
 
             let ephemeralKey: String? = pick(
-                dict, ["ephemeralKeySecret", "ephemeral_key_secret", "ephemeral_key"])
-            let customerId: String? = pick(dict, ["customer", "customer_id", "customerId"])
+                dict,
+                ["ephemeralKeySecret", "ephemeral_key_secret", "ephemeral_key"]
+            )
+            let customerId: String? = pick(
+                dict,
+                ["customer", "customer_id", "customerId"]
+            )
 
             var config = PaymentSheet.Configuration()
             config.merchantDisplayName = "Reachu Demo"
@@ -993,13 +1224,16 @@ public struct RCheckoutOverlay: View {
             }
 
             self.paymentSheet = PaymentSheet(
-                paymentIntentClientSecret: secret, configuration: config)
+                paymentIntentClientSecret: secret,
+                configuration: config
+            )
             return true
         }
 
         // Present PaymentSheet from the top-most view controller
         private func presentStripePaymentSheet() {
-            guard let sheet = paymentSheet, let root = topMostViewController() else { return }
+            guard let sheet = paymentSheet, let root = topMostViewController()
+            else { return }
             sheet.present(from: root) { result in
                 switch result {
                 case .completed:
@@ -1020,15 +1254,44 @@ public struct RCheckoutOverlay: View {
                 let scene = UIApplication.shared.connectedScenes
                     .compactMap({ $0 as? UIWindowScene })
                     .first(where: { $0.activationState == .foregroundActive }),
-                let root = scene.windows.first(where: { $0.isKeyWindow })?.rootViewController
+                let root = scene.windows.first(where: { $0.isKeyWindow })?
+                    .rootViewController
             else { return nil }
 
             var vc: UIViewController = root
             while let presented = vc.presentedViewController { vc = presented }
-            if let nav = vc as? UINavigationController { return nav.visibleViewController ?? nav }
-            if let tab = vc as? UITabBarController { return tab.selectedViewController ?? tab }
+            if let nav = vc as? UINavigationController {
+                return nav.visibleViewController ?? nav
+            }
+            if let tab = vc as? UITabBarController {
+                return tab.selectedViewController ?? tab
+            }
             return vc
         }
+
+        private func prepareKlarna() async -> Bool {
+            guard
+                let dto = await cartManager.initKlarna(
+                    countryCode: cartManager.country,
+                    href: klarnaSuccessURLString,
+                    email: checkoutDraft.email.isEmpty
+                        ? email : checkoutDraft.email
+                )
+            else {
+                return false
+            }
+
+            let snippet = dto
+                .htmlSnippet 
+            if !snippet.isEmpty {
+                self.klarnaHTML = snippet
+                self.klarnaStartURL = nil
+                return true
+            }
+
+            return false
+        }
+
     #endif
 
 }
@@ -1043,11 +1306,12 @@ struct PaymentMethodRowCompact: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: ReachuSpacing.md) {
-                // Selection Circle
                 ZStack {
                     Circle()
                         .stroke(
-                            isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: 2
+                            isSelected
+                                ? ReachuColors.primary : ReachuColors.border,
+                            lineWidth: 2
                         )
                         .frame(width: 20, height: 20)
 
@@ -1091,12 +1355,18 @@ struct PaymentScheduleCompact: View {
                 VStack(spacing: ReachuSpacing.xs) {
                     ZStack {
                         Circle()
-                            .fill(installment == 1 ? ReachuColors.primary : ReachuColors.border)
+                            .fill(
+                                installment == 1
+                                    ? ReachuColors.primary : ReachuColors.border
+                            )
                             .frame(width: 24, height: 24)
 
                         Text("\(installment)")
                             .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(installment == 1 ? .white : ReachuColors.textSecondary)
+                            .foregroundColor(
+                                installment == 1
+                                    ? .white : ReachuColors.textSecondary
+                            )
                     }
 
                     Text(
@@ -1107,9 +1377,11 @@ struct PaymentScheduleCompact: View {
                     .font(.system(size: 10))
                     .foregroundColor(ReachuColors.textSecondary)
 
-                    Text("\(currency) \(String(format: "%.2f", installmentAmount))")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(ReachuColors.textPrimary)
+                    Text(
+                        "\(currency) \(String(format: "%.2f", installmentAmount))"
+                    )
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(ReachuColors.textPrimary)
                 }
             }
         }
@@ -1160,13 +1432,19 @@ struct PaymentScheduleDetailed: View {
                     VStack(spacing: ReachuSpacing.xs) {
                         ZStack {
                             Circle()
-                                .fill(installment == 1 ? ReachuColors.primary : ReachuColors.border)
+                                .fill(
+                                    installment == 1
+                                        ? ReachuColors.primary
+                                        : ReachuColors.border
+                                )
                                 .frame(width: 32, height: 32)
 
                             Text("\(installment)")
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(
-                                    installment == 1 ? .white : ReachuColors.textSecondary)
+                                    installment == 1
+                                        ? .white : ReachuColors.textSecondary
+                                )
                         }
 
                         Text(
@@ -1177,9 +1455,11 @@ struct PaymentScheduleDetailed: View {
                         .font(.system(size: 11))
                         .foregroundColor(ReachuColors.textSecondary)
 
-                        Text("\(currency) \(String(format: "%.2f", installmentAmount))")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(ReachuColors.textPrimary)
+                        Text(
+                            "\(currency) \(String(format: "%.2f", installmentAmount))"
+                        )
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
                     }
                     .frame(maxWidth: .infinity)
                 }
@@ -1349,12 +1629,15 @@ extension RCheckoutOverlay {
     // Individual products with quantity controls for address step (like the image)
     private var individualProductsWithQuantityView: some View {
         VStack(spacing: ReachuSpacing.xl) {
-            ForEach(Array(cartManager.items.enumerated()), id: \.offset) { index, item in
+            ForEach(Array(cartManager.items.enumerated()), id: \.offset) {
+                index,
+                item in
                 VStack(spacing: ReachuSpacing.md) {
                     // Product header with image and details
                     HStack(spacing: ReachuSpacing.md) {
                         // Product image
-                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
+                        AsyncImage(url: URL(string: item.imageUrl ?? "")) {
+                            image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
@@ -1381,15 +1664,23 @@ extension RCheckoutOverlay {
                                     if item.quantity > 1 {
                                         Task {
                                             await cartManager.updateQuantity(
-                                                for: item, to: item.quantity - 1)
+                                                for: item,
+                                                to: item.quantity - 1
+                                            )
                                         }
                                     }
                                 }) {
                                     Image(systemName: "minus")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .font(
+                                            .system(size: 14, weight: .medium)
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textPrimary
+                                        )
                                         .frame(width: 28, height: 28)
-                                        .background(ReachuColors.surfaceSecondary)
+                                        .background(
+                                            ReachuColors.surfaceSecondary
+                                        )
                                         .cornerRadius(4)
                                 }
                                 .disabled(item.quantity <= 1)
@@ -1403,14 +1694,22 @@ extension RCheckoutOverlay {
                                 Button(action: {
                                     Task {
                                         await cartManager.updateQuantity(
-                                            for: item, to: item.quantity + 1)
+                                            for: item,
+                                            to: item.quantity + 1
+                                        )
                                     }
                                 }) {
                                     Image(systemName: "plus")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(ReachuColors.textPrimary)
+                                        .font(
+                                            .system(size: 14, weight: .medium)
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textPrimary
+                                        )
                                         .frame(width: 28, height: 28)
-                                        .background(ReachuColors.surfaceSecondary)
+                                        .background(
+                                            ReachuColors.surfaceSecondary
+                                        )
                                         .cornerRadius(4)
                                 }
                             }
@@ -1418,9 +1717,11 @@ extension RCheckoutOverlay {
 
                         Spacer()
 
-                        Text("\(item.currency) \(String(format: "%.2f", item.price))")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(ReachuColors.textPrimary)
+                        Text(
+                            "\(item.currency) \(String(format: "%.2f", item.price))"
+                        )
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
                     }
 
                     // Product details
@@ -1487,7 +1788,8 @@ extension RCheckoutOverlay {
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        ReachuColors.surfaceSecondary, ReachuColors.background,
+                                        ReachuColors.surfaceSecondary,
+                                        ReachuColors.background,
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -1496,7 +1798,9 @@ extension RCheckoutOverlay {
                             .overlay {
                                 Image(systemName: "photo")
                                     .font(.title2)
-                                    .foregroundColor(ReachuColors.textSecondary.opacity(0.6))
+                                    .foregroundColor(
+                                        ReachuColors.textSecondary.opacity(0.6)
+                                    )
                             }
                     }
 
@@ -1509,19 +1813,28 @@ extension RCheckoutOverlay {
                 }
                 .frame(width: 90, height: 90)
                 .cornerRadius(ReachuBorderRadius.large)
-                .shadow(color: ReachuColors.textPrimary.opacity(0.1), radius: 8, x: 0, y: 4)
+                .shadow(
+                    color: ReachuColors.textPrimary.opacity(0.1),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
 
                 // Product Details with Elegant Typography
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     // Brand with subtle styling
                     Text(item.brand ?? "Adidas Store")
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .font(
+                            .system(size: 13, weight: .medium, design: .rounded)
+                        )
                         .foregroundColor(ReachuColors.textSecondary)
                         .textCase(.uppercase)
 
                     // Product name with emphasis
                     Text(item.title)
-                        .font(.system(size: 16, weight: .bold, design: .default))
+                        .font(
+                            .system(size: 16, weight: .bold, design: .default)
+                        )
                         .foregroundColor(ReachuColors.textPrimary)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
@@ -1533,7 +1846,13 @@ extension RCheckoutOverlay {
                             .foregroundColor(ReachuColors.primary.opacity(0.7))
 
                         Text("BD23672983")
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .font(
+                                .system(
+                                    size: 12,
+                                    weight: .medium,
+                                    design: .monospaced
+                                )
+                            )
                             .foregroundColor(ReachuColors.textSecondary)
                     }
 
@@ -1542,7 +1861,10 @@ extension RCheckoutOverlay {
                         Circle()
                             .fill(
                                 LinearGradient(
-                                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                                    colors: [
+                                        Color.blue.opacity(0.8),
+                                        Color.purple.opacity(0.6),
+                                    ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
@@ -1573,7 +1895,13 @@ extension RCheckoutOverlay {
                             .foregroundColor(ReachuColors.textSecondary)
 
                         Text("\(item.quantity)")
-                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .font(
+                                .system(
+                                    size: 14,
+                                    weight: .bold,
+                                    design: .rounded
+                                )
+                            )
                             .foregroundColor(ReachuColors.primary)
                     }
                     .padding(.horizontal, ReachuSpacing.sm)
@@ -1585,7 +1913,12 @@ extension RCheckoutOverlay {
             .padding(ReachuSpacing.lg)
             .background(ReachuColors.surface)
             .cornerRadius(ReachuBorderRadius.large)
-            .shadow(color: ReachuColors.textPrimary.opacity(0.05), radius: 12, x: 0, y: 6)
+            .shadow(
+                color: ReachuColors.textPrimary.opacity(0.05),
+                radius: 12,
+                x: 0,
+                y: 6
+            )
         }
         .padding(.horizontal, ReachuSpacing.lg)
     }
@@ -1605,8 +1938,10 @@ extension RCheckoutOverlay {
                     .background(ReachuColors.surfaceSecondary)
                     .cornerRadius(ReachuBorderRadius.medium)
                     .overlay(
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .stroke(ReachuColors.border, lineWidth: 1)
+                        RoundedRectangle(
+                            cornerRadius: ReachuBorderRadius.medium
+                        )
+                        .stroke(ReachuColors.border, lineWidth: 1)
                     )
 
                 RButton(
@@ -1623,18 +1958,27 @@ extension RCheckoutOverlay {
                 HStack {
                     Image(
                         systemName: appliedDiscount > 0
-                            ? "checkmark.circle.fill" : "exclamationmark.circle.fill"
+                            ? "checkmark.circle.fill"
+                            : "exclamationmark.circle.fill"
                     )
                     .font(.body)
                     .foregroundColor(
-                        appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
+                        appliedDiscount > 0
+                            ? ReachuColors.success : ReachuColors.error
+                    )
 
                     Text(discountMessage)
                         .font(ReachuTypography.caption1)
                         .foregroundColor(
-                            appliedDiscount > 0 ? ReachuColors.success : ReachuColors.error)
+                            appliedDiscount > 0
+                                ? ReachuColors.success : ReachuColors.error
+                        )
                 }
-                .transition(AnyTransition.opacity.combined(with: AnyTransition.move(edge: .top)))
+                .transition(
+                    AnyTransition.opacity.combined(
+                        with: AnyTransition.move(edge: .top)
+                    )
+                )
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
@@ -1656,9 +2000,11 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(ReachuColors.textPrimary)
+                    Text(
+                        "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                    )
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textPrimary)
                 }
 
                 // Shipping
@@ -1687,9 +2033,11 @@ extension RCheckoutOverlay {
 
                         Spacer()
 
-                        Text("-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(ReachuColors.success)
+                        Text(
+                            "-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))"
+                        )
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(ReachuColors.success)
                     }
                 }
 
@@ -1719,9 +2067,11 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(ReachuColors.primary)
+                    Text(
+                        "\(cartManager.currency) \(String(format: "%.2f", finalTotal))"
+                    )
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(ReachuColors.primary)
                 }
             }
         }
@@ -1759,7 +2109,9 @@ extension RCheckoutOverlay {
                             for item in cartManager.items {
                                 if item.quantity > 1 {
                                     await cartManager.updateQuantity(
-                                        for: item, to: item.quantity - 1)
+                                        for: item,
+                                        to: item.quantity - 1
+                                    )
                                 }
                             }
                         }
@@ -1784,7 +2136,10 @@ extension RCheckoutOverlay {
                     // Increase entire order quantity
                     Task {
                         for item in cartManager.items {
-                            await cartManager.updateQuantity(for: item, to: item.quantity + 1)
+                            await cartManager.updateQuantity(
+                                for: item,
+                                to: item.quantity + 1
+                            )
                         }
                     }
                 }) {
@@ -1841,7 +2196,8 @@ extension RCheckoutOverlay {
                             )
                             .foregroundColor(
                                 selectedShippingOption == option
-                                    ? ReachuColors.primary : ReachuColors.textSecondary
+                                    ? ReachuColors.primary
+                                    : ReachuColors.textSecondary
                             )
                             .font(.system(size: 16))
 
@@ -1865,15 +2221,20 @@ extension RCheckoutOverlay {
                             Spacer()
 
                             // Price
-                            Text(option.price > 0 ? "$\(String(format: "%.2f", option.price))" : "")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(ReachuColors.textPrimary)
+                            Text(
+                                option.price > 0
+                                    ? "$\(String(format: "%.2f", option.price))"
+                                    : ""
+                            )
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(ReachuColors.textPrimary)
                         }
                         .padding(.horizontal, ReachuSpacing.lg)
                         .padding(.vertical, ReachuSpacing.sm)
                         .background(
                             selectedShippingOption == option
-                                ? ReachuColors.primary.opacity(0.1) : Color.clear
+                                ? ReachuColors.primary.opacity(0.1)
+                                : Color.clear
                         )
                         .cornerRadius(ReachuBorderRadius.small)
                     }
@@ -1894,9 +2255,11 @@ extension RCheckoutOverlay {
 
                 Spacer()
 
-                Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(ReachuColors.textPrimary)
+                Text(
+                    "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                )
+                .font(.system(size: 14, weight: .regular))
+                .foregroundColor(ReachuColors.textPrimary)
             }
 
             // Shipping
@@ -2001,9 +2364,11 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundColor(ReachuColors.textPrimary)
+                    Text(
+                        "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                    )
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundColor(ReachuColors.textPrimary)
                 }
 
                 // Shipping
@@ -2032,9 +2397,11 @@ extension RCheckoutOverlay {
 
                         Spacer()
 
-                        Text("-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(ReachuColors.success)
+                        Text(
+                            "-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))"
+                        )
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.success)
                     }
                 }
 
@@ -2064,9 +2431,11 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) \(String(format: "%.2f", finalTotal))")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(ReachuColors.primary)
+                    Text(
+                        "\(cartManager.currency) \(String(format: "%.2f", finalTotal))"
+                    )
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(ReachuColors.primary)
                 }
             }
             .padding(.horizontal, ReachuSpacing.lg)
@@ -2076,11 +2445,13 @@ extension RCheckoutOverlay {
     // MARK: - Helper Functions
 
     private var finalTotal: Double {
-        return cartManager.cartTotal + selectedShippingOption.price - appliedDiscount
+        return cartManager.cartTotal + selectedShippingOption.price
+            - appliedDiscount
     }
 
     private func applyDiscountCode() {
-        let code = discountCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let code = discountCode.trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
         guard !code.isEmpty else { return }
 
         Task {
@@ -2100,7 +2471,10 @@ extension RCheckoutOverlay {
 
                 var applied = await cartManager.discountApply(code: code)
                 if !applied {
-                    _ = await cartManager.discountCreate(code: code, percentage: percentInt)
+                    _ = await cartManager.discountCreate(
+                        code: code,
+                        percentage: percentInt
+                    )
                     applied = await cartManager.discountApply(code: code)
                 }
 
@@ -2109,7 +2483,9 @@ extension RCheckoutOverlay {
                     discountMessage = "\(percentInt)% discount applied!"
                 }
                 #if os(iOS)
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    UINotificationFeedbackGenerator().notificationOccurred(
+                        .success
+                    )
                 #endif
 
             case "FREE10", "WELCOME":
@@ -2119,41 +2495,55 @@ extension RCheckoutOverlay {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                     appliedDiscount = fixed
                     discountMessage =
-                        (code == "WELCOME") ? "Welcome discount applied!" : "$10 off applied!"
+                        (code == "WELCOME")
+                        ? "Welcome discount applied!" : "$10 off applied!"
                 }
                 #if os(iOS)
-                    UINotificationFeedbackGenerator().notificationOccurred(.success)
+                    UINotificationFeedbackGenerator().notificationOccurred(
+                        .success
+                    )
                 #endif
 
             default:
                 var applied = await cartManager.discountApply(code: code)
                 if !applied {
-                    _ = await cartManager.discountCreate(code: code, percentage: 10)
+                    _ = await cartManager.discountCreate(
+                        code: code,
+                        percentage: 10
+                    )
                     applied = await cartManager.discountApply(code: code)
                 }
 
                 if applied {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+                    {
                         appliedDiscount = cartManager.cartTotal * 0.10
                         discountMessage = "10% discount applied!"
                     }
                     #if os(iOS)
-                        UINotificationFeedbackGenerator().notificationOccurred(.success)
+                        UINotificationFeedbackGenerator().notificationOccurred(
+                            .success
+                        )
                     #endif
                 } else {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8))
+                    {
                         appliedDiscount = 0.0
                         discountMessage = "Invalid discount code"
                     }
                     #if os(iOS)
-                        UINotificationFeedbackGenerator().notificationOccurred(.error)
+                        UINotificationFeedbackGenerator().notificationOccurred(
+                            .error
+                        )
                     #endif
                 }
             }
 
             if !discountMessage.isEmpty && appliedDiscount > 0 {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                    withAnimation(.easeOut(duration: 0.3)) { discountMessage = "" }
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        discountMessage = ""
+                    }
                 }
             }
         }
@@ -2192,7 +2582,10 @@ struct CountryCodePicker: View {
             }
         } label: {
             HStack(spacing: ReachuSpacing.xs) {
-                Text(countryCodes.first(where: { $0.0 == selectedCode })?.1 ?? "🇺🇸")
+                Text(
+                    countryCodes.first(where: { $0.0 == selectedCode })?.1
+                        ?? "🇺🇸"
+                )
                 Text(selectedCode)
                     .font(ReachuTypography.body)
                     .foregroundColor(ReachuColors.textPrimary)
@@ -2238,11 +2631,14 @@ struct CountryPicker: View {
             }
         } label: {
             HStack {
-                Text(selectedCountry.isEmpty ? "Select Country" : selectedCountry)
-                    .font(ReachuTypography.body)
-                    .foregroundColor(
-                        selectedCountry.isEmpty
-                            ? ReachuColors.textSecondary : ReachuColors.textPrimary)
+                Text(
+                    selectedCountry.isEmpty ? "Select Country" : selectedCountry
+                )
+                .font(ReachuTypography.body)
+                .foregroundColor(
+                    selectedCountry.isEmpty
+                        ? ReachuColors.textSecondary : ReachuColors.textPrimary
+                )
 
                 Spacer()
 
@@ -2273,7 +2669,9 @@ struct ShippingOptionRow: View {
                 ZStack {
                     Circle()
                         .stroke(
-                            isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: 2
+                            isSelected
+                                ? ReachuColors.primary : ReachuColors.border,
+                            lineWidth: 2
                         )
                         .frame(width: 20, height: 20)
 
@@ -2315,7 +2713,10 @@ struct ShippingOptionRow: View {
         }
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .animation(
+            .spring(response: 0.3, dampingFraction: 0.7),
+            value: isSelected
+        )
     }
 }
 
@@ -2329,11 +2730,162 @@ struct ShippingOptionRow: View {
                 {
                     let manager = CartManager()
                     Task {
-                        await manager.addProduct(MockDataProvider.shared.sampleProducts[0])
+                        await manager.addProduct(
+                            MockDataProvider.shared.sampleProducts[0]
+                        )
                     }
                     return manager
                 }()
             )
             .environmentObject(CheckoutDraft())
+    }
+#endif
+
+#if os(iOS)
+    import WebKit
+
+    enum KlarnaResult {
+        case success, canceled
+        case error(Error?)
+    }
+
+    struct KlarnaWebViewHTML: UIViewRepresentable {
+        let html: String
+        let successURLPrefix: String
+        let onFinish: (KlarnaResult) -> Void
+
+        func makeCoordinator() -> Coordinator {
+            Coordinator(successPrefix: successURLPrefix, onFinish: onFinish)
+        }
+
+        func makeUIView(context: Context) -> WKWebView {
+            let web = WKWebView()
+            web.navigationDelegate = context.coordinator
+            web.loadHTMLString(html, baseURL: nil)
+            return web
+        }
+
+        func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+        final class Coordinator: NSObject, WKNavigationDelegate {
+            let successPrefix: String
+            let onFinish: (KlarnaResult) -> Void
+
+            init(
+                successPrefix: String,
+                onFinish: @escaping (KlarnaResult) -> Void
+            ) {
+                self.successPrefix = successPrefix
+                self.onFinish = onFinish
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                decidePolicyFor navigationAction: WKNavigationAction,
+                decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+            ) {
+                if let url = navigationAction.request.url?.absoluteString {
+                    if url.hasPrefix(successPrefix) {
+                        onFinish(.success)
+                        decisionHandler(.cancel)
+                        return
+                    }
+                }
+                decisionHandler(.allow)
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                didFail navigation: WKNavigation!,
+                withError error: Error
+            ) {
+                onFinish(.error(error))
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                didFailProvisionalNavigation navigation: WKNavigation!,
+                withError error: Error
+            ) {
+                onFinish(.error(error))
+            }
+        }
+    }
+
+    struct KlarnaWebView: UIViewRepresentable {
+        let startURL: URL
+        let successURLPrefix: String
+        let cancelURLPrefix: String
+        let onFinish: (KlarnaResult) -> Void
+
+        func makeCoordinator() -> Coordinator {
+            Coordinator(
+                successPrefix: successURLPrefix,
+                cancelPrefix: cancelURLPrefix,
+                onFinish: onFinish
+            )
+        }
+
+        func makeUIView(context: Context) -> WKWebView {
+            let web = WKWebView()
+            web.navigationDelegate = context.coordinator
+            web.load(URLRequest(url: startURL))
+            return web
+        }
+
+        func updateUIView(_ uiView: WKWebView, context: Context) {}
+
+        final class Coordinator: NSObject, WKNavigationDelegate {
+            let successPrefix: String
+            let cancelPrefix: String
+            let onFinish: (KlarnaResult) -> Void
+
+            init(
+                successPrefix: String,
+                cancelPrefix: String,
+                onFinish: @escaping (KlarnaResult) -> Void
+            ) {
+                self.successPrefix = successPrefix
+                self.cancelPrefix = cancelPrefix
+                self.onFinish = onFinish
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                decidePolicyFor navigationAction: WKNavigationAction,
+                decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+            ) {
+                if let url = navigationAction.request.url?.absoluteString {
+                    if url.hasPrefix(successPrefix) {
+                        onFinish(.success)
+                        decisionHandler(.cancel)
+                        return
+                    } else if !cancelPrefix.isEmpty
+                        && url.hasPrefix(cancelPrefix)
+                    {
+                        onFinish(.canceled)
+                        decisionHandler(.cancel)
+                        return
+                    }
+                }
+                decisionHandler(.allow)
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                didFail navigation: WKNavigation!,
+                withError error: Error
+            ) {
+                onFinish(.error(error))
+            }
+
+            func webView(
+                _ webView: WKWebView,
+                didFailProvisionalNavigation navigation: WKNavigation!,
+                withError error: Error
+            ) {
+                onFinish(.error(error))
+            }
+        }
     }
 #endif

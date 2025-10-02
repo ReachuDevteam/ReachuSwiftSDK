@@ -28,14 +28,20 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
     public init() {
         Task { [currency, country] in
-            print("🛒 [Cart] init → scheduling createCart(currency:\(currency), country:\(country))")
+            print(
+                "🛒 [Cart] init → scheduling createCart(currency:\(currency), country:\(country))"
+            )
             await createCart(currency: currency, country: country)
         }
     }
 
-    public func createCart(currency: String = "USD", country: String = "US") async {
+    public func createCart(currency: String = "USD", country: String = "US")
+        async
+    {
         if currentCartId != nil {
-            print("🛒 [Cart] createCart skipped — existing cartId=\(currentCartId)")
+            print(
+                "🛒 [Cart] createCart skipped — existing cartId=\(currentCartId)"
+            )
             return
         }
         isLoading = true
@@ -43,7 +49,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
         let session = "ios-\(UUID().uuidString)"
         print(
-            "🛒 [Cart] createCart START  session=\(session) currency=\(currency) country=\(country)")
+            "🛒 [Cart] createCart START  session=\(session) currency=\(currency) country=\(country)"
+        )
 
         do {
             let dto = try await sdk.cart.create(
@@ -124,7 +131,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
         let previousCount = itemCount
 
-        if let existingIndex = items.firstIndex(where: { $0.productId == 408737 }) {
+        if let existingIndex = items.firstIndex(where: {
+            $0.productId == 408737
+        }) {
             let existingItem = items[existingIndex]
             let newQuantity = existingItem.quantity + quantity
 
@@ -151,7 +160,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             }
 
             await MainActor.run {
-                ToastManager.shared.showSuccess("Updated \(product.title) quantity in cart")
+                ToastManager.shared.showSuccess(
+                    "Updated \(product.title) quantity in cart"
+                )
             }
 
         } else {
@@ -162,9 +173,13 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                     quantity: quantity,
                     priceData: nil
                 )
-                if let dto = try? await sdk.cart.addItem(cart_id: cid, line_items: [line]) {
+                if let dto = try? await sdk.cart.addItem(
+                    cart_id: cid,
+                    line_items: [line]
+                ) {
                     serverId =
-                        (dto.lineItems.last { $0.productId == 408737 } ?? dto.lineItems.last)?.id
+                        (dto.lineItems.last { $0.productId == 408737 }
+                        ?? dto.lineItems.last)?.id
                 }
             }
 
@@ -184,7 +199,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             items.append(cartItem)
 
             await MainActor.run {
-                ToastManager.shared.showSuccess("Added \(product.title) to cart")
+                ToastManager.shared.showSuccess(
+                    "Added \(product.title) to cart"
+                )
             }
         }
 
@@ -214,7 +231,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                     cart_item_id: item.id
                 )
             } catch {
-                let msg = (error as? SdkException)?.description ?? error.localizedDescription
+                let msg =
+                    (error as? SdkException)?.description
+                    ?? error.localizedDescription
                 print("⚠️ [Cart] SDK.deleteItem failed: \(msg)")
             }
         } else {
@@ -260,7 +279,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                         cart_item_id: item.id
                     )
                 } catch {
-                    let msg = (error as? SdkException)?.description ?? error.localizedDescription
+                    let msg =
+                        (error as? SdkException)?.description
+                        ?? error.localizedDescription
                     print("⚠️ [Cart] SDK.deleteItem failed: \(msg)")
                 }
             } else {
@@ -272,7 +293,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                         quantity: newQuantity
                     )
                 } catch {
-                    let msg = (error as? SdkException)?.description ?? error.localizedDescription
+                    let msg =
+                        (error as? SdkException)?.description
+                        ?? error.localizedDescription
                     print("⚠️ [Cart] SDK.updateItem failed: \(msg)")
                 }
             }
@@ -333,7 +356,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     private func extractCheckoutId<T: Encodable>(_ dto: T) -> String? {
         guard
             let data = try? JSONEncoder().encode(dto),
-            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+            let dict = try? JSONSerialization.jsonObject(with: data)
+                as? [String: Any]
         else { return nil }
         return (dict["checkout_id"] as? String)
             ?? (dict["checkoutId"] as? String)
@@ -359,7 +383,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             print("✅ [Checkout] Create OK checkoutId=\(chkId ?? "nil")")
             return chkId
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Checkout] Create FAIL \(msg)")
             return nil
@@ -411,7 +437,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             print("✅ [Checkout] Update OK")
             return dto
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Checkout] Update FAIL \(msg)")
             return nil
@@ -419,7 +447,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     @discardableResult
-    public func initKlarna(countryCode: String, href: String, email: String?) async
+    public func initKlarna(countryCode: String, href: String, email: String?)
+        async
         -> InitPaymentKlarnaDto?
     {
         isLoading = true
@@ -444,7 +473,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             print("✅ [Payment] KlarnaInit OK")
             return dto
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Payment] KlarnaInit FAIL \(msg)")
             return nil
@@ -452,7 +483,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     @discardableResult
-    public func stripeIntent(returnEphemeralKey: Bool? = true) async -> PaymentIntentStripeDto? {
+    public func stripeIntent(returnEphemeralKey: Bool? = true) async
+        -> PaymentIntentStripeDto?
+    {
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -473,7 +506,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             print("✅ [Payment] StripeIntent OK")
             return dto
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Payment] StripeIntent FAIL \(msg)")
             return nil
@@ -481,7 +516,11 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     @discardableResult
-    public func stripeLink(successUrl: String, paymentMethod: String, email: String) async
+    public func stripeLink(
+        successUrl: String,
+        paymentMethod: String,
+        email: String
+    ) async
         -> InitPaymentStripeDto?
     {
         isLoading = true
@@ -506,7 +545,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             print("✅ [Payment] StripeLink OK")
             return dto
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Payment] StripeLink FAIL \(msg)")
             return nil
@@ -560,8 +601,11 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                         updatedCount += 1
                     } catch {
                         let msg =
-                            (error as? SdkException)?.description ?? error.localizedDescription
-                        print("⚠️ [Cart] updateItem(shipping) failed for \(li.id): \(msg)")
+                            (error as? SdkException)?.description
+                            ?? error.localizedDescription
+                        print(
+                            "⚠️ [Cart] updateItem(shipping) failed for \(li.id): \(msg)"
+                        )
                     }
                 }
             }
@@ -570,7 +614,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             return updatedCount
 
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Cart] getLineItemsBySupplier FAIL \(msg)")
             return 0
@@ -595,19 +641,31 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 percentage: percentage,
                 startDate: startDate ?? _iso8601(),
                 endDate: endDate
-                    ?? _iso8601(Calendar.current.date(byAdding: .day, value: 7, to: Date())!),
+                    ?? _iso8601(
+                        Calendar.current.date(
+                            byAdding: .day,
+                            value: 7,
+                            to: Date()
+                        )!
+                    ),
                 typeId: typeId
             )
             let did = dto.id
             self.lastDiscountId = did
             self.lastDiscountCode = code
-            await MainActor.run { ToastManager.shared.showSuccess("Discount created: \(code)") }
+            await MainActor.run {
+                ToastManager.shared.showSuccess("Discount created: \(code)")
+            }
             return did
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Discount] create FAIL \(msg)")
-            await MainActor.run { ToastManager.shared.showError("Create discount failed") }
+            await MainActor.run {
+                ToastManager.shared.showError("Create discount failed")
+            }
             return nil
         }
     }
@@ -618,7 +676,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         errorMessage = nil
         defer { isLoading = false }
 
-        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
         guard !normalized.isEmpty else {
             print("ℹ️ [Discount] apply: missing code")
             return false
@@ -630,7 +689,10 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         }
 
         do {
-            let dto: ApplyDiscountDto = try await sdk.discount.apply(code: normalized, cartId: cid)
+            let dto: ApplyDiscountDto = try await sdk.discount.apply(
+                code: normalized,
+                cartId: cid
+            )
 
             if dto.executed {
                 self.lastDiscountCode = normalized
@@ -644,7 +706,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 return true
             } else {
                 self.errorMessage = dto.message
-                print("⚠️ [Discount] apply NOT EXECUTED (\(normalized)) -> \(dto.message)")
+                print(
+                    "⚠️ [Discount] apply NOT EXECUTED (\(normalized)) -> \(dto.message)"
+                )
                 await MainActor.run {
                     ToastManager.shared.showInfo(
                         dto.message.isEmpty
@@ -656,10 +720,14 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             }
 
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             self.errorMessage = msg
             print("❌ [Discount] apply FAIL \(msg)")
-            await MainActor.run { ToastManager.shared.showError("Apply discount failed") }
+            await MainActor.run {
+                ToastManager.shared.showError("Apply discount failed")
+            }
             return false
         }
     }
@@ -676,7 +744,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         }
 
         let useCode =
-            (code ?? lastDiscountCode)?.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+            (code ?? lastDiscountCode)?.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ).uppercased()
             ?? ""
         guard !useCode.isEmpty else {
             print("ℹ️ [Discount] deleteApplied: missing code")
@@ -686,13 +756,19 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         do {
             _ = try await sdk.discount.deleteApplied(code: useCode, cartId: cid)
             if lastDiscountCode == useCode { lastDiscountCode = nil }
-            await MainActor.run { ToastManager.shared.showInfo("Discount removed: \(useCode)") }
+            await MainActor.run {
+                ToastManager.shared.showInfo("Discount removed: \(useCode)")
+            }
             return true
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Discount] deleteApplied FAIL \(msg)")
-            await MainActor.run { ToastManager.shared.showError("Remove discount failed") }
+            await MainActor.run {
+                ToastManager.shared.showError("Remove discount failed")
+            }
             return false
         }
     }
@@ -706,13 +782,19 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         do {
             _ = try await sdk.discount.delete(discountId: discountId)
             if lastDiscountId == discountId { lastDiscountId = nil }
-            await MainActor.run { ToastManager.shared.showInfo("Discount deleted: \(discountId)") }
+            await MainActor.run {
+                ToastManager.shared.showInfo("Discount deleted: \(discountId)")
+            }
             return true
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             errorMessage = msg
             print("❌ [Discount] delete FAIL \(msg)")
-            await MainActor.run { ToastManager.shared.showError("Delete discount failed") }
+            await MainActor.run {
+                ToastManager.shared.showError("Delete discount failed")
+            }
             return false
         }
     }
@@ -743,7 +825,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 return found.id
             }
         } catch {
-            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
             print("⚠️ [Discount] get by code '\(code)' FAIL \(msg)")
             self.errorMessage = msg
         }
@@ -758,7 +842,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         endDate: String? = nil,
         typeId: Int = 2
     ) async -> Bool {
-        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines)
+            .uppercased()
         guard !normalized.isEmpty else { return false }
 
         if await discountApply(code: normalized) {
@@ -775,8 +860,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             percentage: percentage,
             startDate: startDate,
             endDate: endDate,
-            typeId: typeId) != nil
-        {
+            typeId: typeId
+        ) != nil {
             return await discountApply(code: normalized)
         }
 
