@@ -17,37 +17,76 @@ public class ConfigurationLoader {
     /// **Smart Configuration Loading:**
     /// ```swift
     /// // Option 1: Auto-detect config (recommended)
-    /// try ConfigurationLoader.loadConfiguration()
+    /// ConfigurationLoader.loadConfiguration()
     /// 
     /// // Option 2: Specific file
-    /// try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
+    /// ConfigurationLoader.loadConfiguration(fileName: "reachu-config")
+    /// 
+    /// // Option 3: Custom bundle (for frameworks/modules)
+    /// ConfigurationLoader.loadConfiguration(bundle: Bundle(for: MyClass.self))
     /// ```
-    public static func loadConfiguration(bundle: Bundle = .main) throws {
-        // 1. Check environment variable first
-        if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
-            print("🔧 [Config] Using environment config type: \(configType)")
-            let fileName = "reachu-config-\(configType)"
-            try loadFromJSON(fileName: fileName, bundle: bundle)
-            return
-        }
-        
-        // 2. Check for specific config files in order of preference
-        let configFiles = [
-            "reachu-config",                 // User custom (highest priority)
-            "reachu-config-automatic",       // Automatic theme (preferred)
-            "reachu-config-example",         // Default fallback
-            "reachu-config-dark-streaming"   // Dark theme (lowest priority)
-        ]
-        
-        for fileName in configFiles {
-            if bundle.path(forResource: fileName, ofType: "json") != nil {
-                print("🔧 [Config] Found config file: \(fileName).json")
+    /// 
+    /// - Parameters:
+    ///   - fileName: Optional specific config file name (without .json extension)
+    ///   - bundle: Bundle to search for config files (defaults to main app bundle)
+    public static func loadConfiguration(fileName: String? = nil, bundle: Bundle = .main) {
+        do {
+            // 1. If specific fileName provided, use it directly
+            if let fileName = fileName {
+                print("🔧 [Config] Loading specific config: \(fileName).json")
                 try loadFromJSON(fileName: fileName, bundle: bundle)
                 return
             }
+            
+            // 2. Check environment variable
+            if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
+                print("🔧 [Config] Using environment config type: \(configType)")
+                let envFileName = "reachu-config-\(configType)"
+                try loadFromJSON(fileName: envFileName, bundle: bundle)
+                return
+            }
+            
+            // 3. Check for config files in order of preference
+            let configFiles = [
+                "reachu-config",                 // User custom (highest priority)
+                "reachu-config-automatic",       // Automatic theme (preferred)
+                "reachu-config-example",         // Default fallback
+                "reachu-config-dark-streaming"   // Dark theme (lowest priority)
+            ]
+            
+            for configFile in configFiles {
+                if bundle.path(forResource: configFile, ofType: "json") != nil {
+                    print("🔧 [Config] Found config file: \(configFile).json")
+                    try loadFromJSON(fileName: configFile, bundle: bundle)
+                    return
+                }
+            }
+            
+            // 4. No config file found - use defaults
+            print("⚠️ [Config] No config file found in bundle, using SDK defaults")
+            applyDefaultConfiguration()
+            
+        } catch {
+            print("❌ [Config] Error loading configuration: \(error)")
+            print("🔧 [Config] Falling back to SDK defaults")
+            applyDefaultConfiguration()
         }
-        
-        throw ConfigurationError.fileNotFound(fileName: "reachu-config (no config file found)")
+    }
+    
+    /// Apply default SDK configuration when no config file is found
+    private static func applyDefaultConfiguration() {
+        // Configure with minimal defaults
+        ReachuConfiguration.configure(
+            apiKey: "",
+            environment: .sandbox,
+            theme: ReachuTheme(
+                name: "Default SDK Theme",
+                mode: .automatic,
+                lightColors: .reachu,
+                darkColors: .reachuDark
+            )
+        )
+        print("✅ [Config] Applied default SDK configuration")
     }
     
     public static func loadFromJSON(fileName: String, bundle: Bundle = .main) throws {
