@@ -214,7 +214,7 @@
 			mainGroup = 1768587D2E7D876400110C55;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
+				176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 176858872E7D876500110C55 /* Products */;
@@ -601,7 +601,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
+		176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../..;
 		};
