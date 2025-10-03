@@ -63,6 +63,10 @@ public struct TipioLiveStream: Identifiable, Codable {
         
         // Parse dates
         let dateFormatter = ISO8601DateFormatter()
+        dateFormatter.formatOptions = [
+            .withInternetDateTime,
+            .withFractionalSeconds
+        ]        
         let dateString = try container.decode(String.self, forKey: .date)
         let endDateString = try container.decode(String.self, forKey: .endDate)
         

@@ -4,7 +4,7 @@ import ReachuCore
 // MARK: - Live Stream Models
 
 /// Represents a live streaming session
-public struct LiveStream: Identifiable, Codable {
+public struct LiveStream: Identifiable, Codable, Equatable {
     public let id: String
     public let title: String
     public let description: String?
@@ -48,7 +48,7 @@ public struct LiveStream: Identifiable, Codable {
 }
 
 /// Represents a live streamer/host
-public struct LiveStreamer: Identifiable, Codable {
+public struct LiveStreamer: Identifiable, Codable, Equatable {
     public let id: String
     public let name: String
     public let username: String
@@ -74,11 +74,11 @@ public struct LiveStreamer: Identifiable, Codable {
 }
 
 /// Product featured during live stream
-public struct LiveProduct: Identifiable, Codable {
+public struct LiveProduct: Identifiable, Codable, Equatable {
     public let id: String
     public let title: String
     public let price: Price
-    public let originalPrice: Price?
+    public let originalPrice: Price?     
     public let imageUrl: String
     public let isAvailable: Bool
     public let stockCount: Int?
@@ -140,7 +140,7 @@ public struct LiveProduct: Identifiable, Codable {
 }
 
 /// Chat message in live stream
-public struct LiveChatMessage: Identifiable, Codable {
+public struct LiveChatMessage: Identifiable, Codable, Equatable {
     public let id: String
     public let user: LiveChatUser
     public let message: String
@@ -169,7 +169,7 @@ public struct LiveChatMessage: Identifiable, Codable {
 }
 
 /// Chat user
-public struct LiveChatUser: Identifiable, Codable {
+public struct LiveChatUser: Identifiable, Codable, Equatable {
     public let id: String
     public let username: String
     public let avatarUrl: String?
@@ -192,7 +192,7 @@ public struct LiveChatUser: Identifiable, Codable {
 }
 
 /// Chat reaction/emoji
-public struct LiveChatReaction: Identifiable, Codable {
+public struct LiveChatReaction: Identifiable, Codable, Equatable {
     public let id: String
     public let emoji: String
     public let count: Int

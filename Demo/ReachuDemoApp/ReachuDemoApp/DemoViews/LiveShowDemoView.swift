@@ -14,126 +14,8 @@ struct LiveShowDemoView: View {
     
     @State private var selectedLayout: LiveStreamLayout = .fullScreenOverlay
     @State private var selectedStream: LiveStream?
-    // Demo JSON local para componentes dinámicos (aislado al App target)
-    private let demoDynamicComponentsJson: String = """
-[
-  {
-    "id": "05c76fc0-555d-4614-aeca-709b36f293d8",
-    "type": "featured_product",
-    "data": {
-      "product": {
-        "id": 397934,
-        "sku": "PLEMG6EXZLGQMWKZ",
-        "tags": "",
-        "brand": "GlowCare",
-        "price": {
-          "amount": "800.00",
-          "currencyCode": "NOK"
-        },
-        "title": "Hydration Sparkle Cream",
-        "images": [
-          {
-            "id": 220113,
-            "url": "https://containerqa.reachu.io/reachu-uploads-qa/product-images/1715043799529.jpg",
-            "order": 0,
-            "width": 1200,
-            "height": 1333
-          }
-        ],
-        "origin": "SCRAPING",
-        "digital": false,
-        "options": [],
-        "quantity": 98,
-        "supplier": "cosmedbeautyshop1",
-        "variants": [],
-        "categories": [
-          {
-            "id": 2937,
-            "name": "Skin Care"
-          }
-        ],
-        "supplierId": 1242,
-        "description": "Nourishing cream for radiant skin."
-      },
-      "position": "bottom",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "triggerOn": "stream_start"
-    }
-  },
-  {
-    "id": "8d7ee7a6-29cd-4165-8e9a-d5301b300a0b1",
-    "type": "banner",
-    "data": {
-      "title": "Welcome to Our Live Show!",
-      "text": "Discover exclusive deals and highlights during today's stream.",
-      "animation": "slide-up",
-      "duration": "20",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "position": "top",
-      "triggerOn": "stream_start"
-    }
-  },
-  {
-    "id": "8d7ee7a6-29cd-4165-8e9a-d5301b300a0b2",
-    "type": "banner",
-    "data": {
-      "title": "Limited Time Offer",
-      "text": "Get 20% off on select items! Only available during this stream.",
-      "animation": "slide-up",
-      "duration": "20",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "position": "top-center",
-      "triggerOn": "stream_start"
-    }
-  },
-  {
-    "id": "8d7ee7a6-29cd-4165-8e9a-d5301b300a0b3",
-    "type": "banner",
-    "data": {
-      "title": "Mid-Stream Spotlight",
-      "text": "Check out our featured products showcased right now!",
-      "animation": "slide-up",
-      "duration": "20",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "position": "center",
-      "triggerOn": "stream_start"
-    }
-  },
-  {
-    "id": "8d7ee7a6-29cd-4165-8e9a-d5301b300a0b4",
-    "type": "banner",
-    "data": {
-      "title": "Don't Miss Out!",
-      "text": "Special promotions will end soon—grab your favorites now!",
-      "animation": "slide-up",
-      "duration": "20",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "position": "bottom-center",
-      "triggerOn": "stream_start"
-    }
-  },
-  {
-    "id": "8d7ee7a6-29cd-4165-8e9a-d5301b300a0b5",
-    "type": "banner",
-    "data": {
-      "title": "Thanks for Watching!",
-      "text": "Stay tuned for more live events and exciting offers.",
-      "animation": "slide-up",
-      "duration": "20",
-      "startTime": "2024-01-01T00:00:00.000Z",
-      "endTime": "2025-12-31T23:59:59.999Z",
-      "position": "bottom",
-      "triggerOn": "stream_start"
-    }
-  }
-]
-"""
     
+    @State private var hasLoadedInitialComponents: Bool = false 
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
@@ -159,22 +41,58 @@ struct LiveShowDemoView: View {
         .background(adaptiveColors.background)
         .navigationTitle("Live Show")
         .navigationBarTitleDisplayMode(.inline)
+        //.onAppear {
+            //selectedStream = liveShowManager.featuredLiveStream
+            //// Cargar componentes dinámicos desde API (reemplaza la URL/header en el servicio si es necesario)
+            //Task { @MainActor in
+                //do {
+                    //DynamicComponentManager.shared.reset()
+                    //print("[DynamicDemo] selectedStream?.id \(String(describing: selectedStream?.id))")
+                    //let components = try await DynamicComponentsService.fetch(for: selectedStream?.id)
+                    //print("[DynamicDemo] Remote components count=\(components.count)")
+                    //DynamicComponentManager.shared.register(components)
+                //} catch {
+                    //print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
+                //}
+            //}
+        //}
         .onAppear {
-            selectedStream = liveShowManager.featuredLiveStream
-            // Cargar componentes dinámicos desde API (reemplaza la URL/header en el servicio si es necesario)
-            Task { @MainActor in
-                do {
-                    DynamicComponentManager.shared.reset()
-                    print("[DynamicDemo] selectedStream?.id \(String(describing: selectedStream?.id))")
-                    let components = try await DynamicComponentsService.fetch(for: selectedStream?.id)
-                    print("[DynamicDemo] Remote components count=\(components.count)")
-                    DynamicComponentManager.shared.register(components)
-                } catch {
-                    print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
-                }
+            if !liveShowManager.activeStreams.isEmpty && !hasLoadedInitialComponents {
+                loadDynamicComponents()
+            }
+        } 
+        .onChange(of: liveShowManager.activeStreams) { newStreams in            
+            if !newStreams.isEmpty && !hasLoadedInitialComponents {
+                loadDynamicComponents()
+            }
+        }      
+    }
+
+    private func loadDynamicComponents() {
+        guard !liveShowManager.activeStreams.isEmpty else { return }
+
+        // 2. Establecer el stream destacado/primero
+        let streamToSelect = liveShowManager.featuredLiveStream ?? liveShowManager.activeStreams.first
+        selectedStream = streamToSelect
+        
+        // 3. Cargar los componentes dinámicos
+        Task { @MainActor in
+            do {
+                DynamicComponentManager.shared.reset()
+                print("[DynamicDemo] selectedStream?.id \(String(describing: streamToSelect?.id))")
+                let components = try await DynamicComponentsService.fetch(for: streamToSelect?.id)
+                print("[DynamicDemo] Remote components count=\(components.count)")
+                DynamicComponentManager.shared.register(components)
+
+                // Only set the flag after a successful attempt
+                hasLoadedInitialComponents = true 
+            } catch {
+                print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
+                // It's still safer to set the flag to true here to avoid retrying on every minor array update.
+                hasLoadedInitialComponents = true 
             }
         }
-    }
+    }    
     
     // MARK: - Header Section
     
