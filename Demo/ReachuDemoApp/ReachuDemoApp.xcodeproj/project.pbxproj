@@ -603,7 +603,7 @@
 /* Begin XCLocalSwiftPackageReference section */
 		176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../ReachuSwiftSDK;
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 
