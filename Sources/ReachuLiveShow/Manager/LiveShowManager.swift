@@ -42,7 +42,10 @@ public class LiveShowManager: ObservableObject {
     private init() {
         self.configuration = ReachuConfiguration.shared.liveShowConfiguration
         setupTipioIntegration()
-        setupDemoData()
+        //setupDemoData()
+        Task {
+            await fetchActiveTipioStreams()        
+        }
     }
     
     // MARK: - Public Methods
@@ -191,6 +194,7 @@ public class LiveShowManager: ObservableObject {
             
         } catch {
             print("❌ [LiveShow] Failed to fetch active Tipio livestreams: \(error)")
+            setupDemoData()
         }
     }
     

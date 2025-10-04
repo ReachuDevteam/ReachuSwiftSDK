@@ -77,7 +77,7 @@ public struct Product: Identifiable, Codable {
 }
 
 /// Product price information
-public struct Price: Codable {
+public struct Price: Codable, Equatable {
     public let amount: Float
     public let currency_code: String
     public let amount_incl_taxes: Float?

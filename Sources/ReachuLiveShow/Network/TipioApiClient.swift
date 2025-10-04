@@ -22,7 +22,9 @@ public class TipioApiClient {
         // TODO: Add tipio configuration to LiveShowConfiguration
         // For now, use default values
         self.init(
-            baseUrl: "https://api.tipio.no",
+            //baseUrl: "https://api.tipio.no",
+            //No acepta localhost, hay que buscar la IP de tu Mac
+            baseUrl: "http://192.168.1.3:8000",
             apiKey: "your-tipio-api-key"
         )
     }
@@ -56,25 +58,26 @@ public class TipioApiClient {
     /// Fetch active livestreams
     /// - Returns: Array of active TipioLiveStream objects
     public func getActiveLiveStreams() async throws -> [TipioLiveStream] {
-        let endpoint = "/api/livestreams/active"
+        // Real url
+        //let endpoint = "/api/livestreams/active"
+        // To localhost
+        let endpoint = "/active"
         let url = try buildURL(endpoint: endpoint)
         
         print("🔗 [Tipio] Fetching active livestreams")
-        
+        print("🔗 [Tipio] Building request url=> \(url)")        
         let request = try buildRequest(url: url, method: "GET")
+        print("🔗 [Tipio] Request builded, call GET")        
         let (data, response) = try await session.data(for: request)
+        print("🔗 [Tipio] Request called")        
         
         try validateResponse(response)
         
         do {
-            let apiResponse = try JSONDecoder().decode(TipioApiResponse<[TipioLiveStream]>.self, from: data)
+            let streams = try JSONDecoder().decode([TipioLiveStream].self, from: data)
             
-            if apiResponse.success, let streams = apiResponse.data {
-                print("✅ [Tipio] Successfully fetched \(streams.count) active livestreams")
-                return streams
-            } else {
-                throw apiResponse.error ?? TipioApiError(code: "API_ERROR", message: apiResponse.message ?? "Unknown error")
-            }
+            print("✅ [Tipio] Successfully fetched \(streams.count) active livestreams")
+            return streams            
         } catch {
             print("❌ [Tipio] Failed to decode active livestreams: \(error)")
             throw TipioApiError(code: "DECODE_ERROR", message: "Failed to decode active livestreams")

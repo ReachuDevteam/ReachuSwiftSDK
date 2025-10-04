@@ -65,6 +65,10 @@ public struct RLiveShowOverlay: View {
             
             // Content layers
             contentLayers
+
+            // Dynamic components overlay (non-intrusivo)
+            DynamicComponentRenderer()
+                .zIndex(10_000_000)
             
             // Loading indicator
             if isLoading {

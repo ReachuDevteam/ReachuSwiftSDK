@@ -12,23 +12,26 @@ import SwiftUI
 @main
 struct ReachuDemoAppApp: App {
     init() {
-        // Load Reachu SDK configuration
+        // Load Reachu SDK configuration FIRST
+        // This reads the reachu-config.json file with theme colors and settings
+        print("🚀 [ReachuDemoApp] Loading Reachu SDK configuration...")
+        ConfigurationLoader.loadConfiguration()
+        print("✅ [ReachuDemoApp] Reachu SDK configured successfully")
+        print("🎨 [ReachuDemoApp] Theme: \(ReachuConfiguration.shared.theme.name)")
+        print("🎨 [ReachuDemoApp] Mode: \(ReachuConfiguration.shared.theme.mode)")
+        print("🛒 [ReachuDemoApp] Cart Display: \(ReachuConfiguration.shared.cartConfiguration.floatingCartDisplayMode)")
+        
+        // Setup Stripe after configuration is loaded
         StripeAPI.defaultPublishableKey =
             "pk_test_51MvQONBjfRnXLEB43vxVNP53LmkC13ZruLbNqDYIER8GmRgLX97vWKw9gPuhYLuOSwXaXpDFYAKsZhYtBpcAWvcy00zQ9ZES0L"
-
-        do {
-            try ConfigurationLoader.loadConfiguration()
-            print("✅ Reachu SDK configuration loaded successfully")
-        } catch {
-            print("❌ Failed to load Reachu SDK configuration: \(error)")
-        }
+        print("💳 [ReachuDemoApp] Stripe configured")
     }
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .onAppear {
-                    print("🚀 Reachu SDK Demo App iniciada")
+                    print("✨ [ReachuDemoApp] App ready")
                 }
         }
     }

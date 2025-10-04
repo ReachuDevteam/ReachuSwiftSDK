@@ -97,7 +97,7 @@ public struct RProductSlider: View {
     // MARK: - Initializer
     public init(
         title: String? = nil,
-        products: [Product],
+        products: [Product]? = nil,
         layout: Layout = .cards,
         showSeeAll: Bool = false,
         maxItems: Int? = nil,
@@ -106,7 +106,12 @@ public struct RProductSlider: View {
         onSeeAllTap: (() -> Void)? = nil
     ) {
         self.title = title
-        self.products = products
+        // Use provided products or fallback to mock data for demos/testing
+        #if DEBUG
+        self.products = products ?? MockDataProvider.shared.sampleProducts
+        #else
+        self.products = products ?? []
+        #endif
         self.layout = layout
         self.showSeeAll = showSeeAll
         self.maxItems = maxItems

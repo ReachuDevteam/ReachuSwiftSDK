@@ -4,6 +4,7 @@ import ReachuLiveShow
 import ReachuDesignSystem
 import ReachuUI
 import ReachuTesting
+import ReachuLiveUI
 
 struct LiveShowDemoView: View {
     
@@ -14,6 +15,7 @@ struct LiveShowDemoView: View {
     @State private var selectedLayout: LiveStreamLayout = .fullScreenOverlay
     @State private var selectedStream: LiveStream?
     
+    @State private var hasLoadedInitialComponents: Bool = false 
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
@@ -39,10 +41,58 @@ struct LiveShowDemoView: View {
         .background(adaptiveColors.background)
         .navigationTitle("Live Show")
         .navigationBarTitleDisplayMode(.inline)
+        //.onAppear {
+            //selectedStream = liveShowManager.featuredLiveStream
+            //// Cargar componentes dinámicos desde API (reemplaza la URL/header en el servicio si es necesario)
+            //Task { @MainActor in
+                //do {
+                    //DynamicComponentManager.shared.reset()
+                    //print("[DynamicDemo] selectedStream?.id \(String(describing: selectedStream?.id))")
+                    //let components = try await DynamicComponentsService.fetch(for: selectedStream?.id)
+                    //print("[DynamicDemo] Remote components count=\(components.count)")
+                    //DynamicComponentManager.shared.register(components)
+                //} catch {
+                    //print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
+                //}
+            //}
+        //}
         .onAppear {
-            selectedStream = liveShowManager.featuredLiveStream
-        }
+            if !liveShowManager.activeStreams.isEmpty && !hasLoadedInitialComponents {
+                loadDynamicComponents()
+            }
+        } 
+        .onChange(of: liveShowManager.activeStreams) { newStreams in            
+            if !newStreams.isEmpty && !hasLoadedInitialComponents {
+                loadDynamicComponents()
+            }
+        }      
     }
+
+    private func loadDynamicComponents() {
+        guard !liveShowManager.activeStreams.isEmpty else { return }
+
+        // 2. Establecer el stream destacado/primero
+        let streamToSelect = liveShowManager.featuredLiveStream ?? liveShowManager.activeStreams.first
+        selectedStream = streamToSelect
+        
+        // 3. Cargar los componentes dinámicos
+        Task { @MainActor in
+            do {
+                DynamicComponentManager.shared.reset()
+                print("[DynamicDemo] selectedStream?.id \(String(describing: streamToSelect?.id))")
+                let components = try await DynamicComponentsService.fetch(for: streamToSelect?.id)
+                print("[DynamicDemo] Remote components count=\(components.count)")
+                DynamicComponentManager.shared.register(components)
+
+                // Only set the flag after a successful attempt
+                hasLoadedInitialComponents = true 
+            } catch {
+                print("[DynamicDemo][ERROR] fetch dynamic components: \(error)")
+                // It's still safer to set the flag to true here to avoid retrying on every minor array update.
+                hasLoadedInitialComponents = true 
+            }
+        }
+    }    
     
     // MARK: - Header Section
     

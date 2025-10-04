@@ -1,4 +1,5 @@
 import SwiftUI
+import ReachuCore
 import ReachuDesignSystem
 
 /// Floating cart indicator that appears on all screens when cart has items
@@ -35,7 +36,7 @@ public struct RFloatingCartIndicator: View {
         
         var iconSize: Font {
             switch self {
-            case .small: return .body
+            case .small: return .title3
             case .medium: return .title2
             case .large: return .title
             }
@@ -43,7 +44,7 @@ public struct RFloatingCartIndicator: View {
         
         var horizontalPadding: CGFloat {
             switch self {
-            case .small: return ReachuSpacing.sm
+            case .small: return ReachuSpacing.md
             case .medium: return ReachuSpacing.lg
             case .large: return ReachuSpacing.xl
             }
@@ -51,9 +52,18 @@ public struct RFloatingCartIndicator: View {
         
         var verticalPadding: CGFloat {
             switch self {
-            case .small: return ReachuSpacing.xs
+            case .small: return ReachuSpacing.md
             case .medium: return ReachuSpacing.md
             case .large: return ReachuSpacing.lg
+            }
+        }
+        
+        /// Circle padding for iconOnly mode
+        var circlePadding: CGFloat {
+            switch self {
+            case .small: return 12
+            case .medium: return 16
+            case .large: return 20
             }
         }
         
@@ -77,18 +87,24 @@ public struct RFloatingCartIndicator: View {
     private let displayMode: DisplayMode
     private let size: Size
     private let customPadding: EdgeInsets?
+    private let onTapAction: (() -> Void)?
     
     // MARK: - Initializer
     public init(
-        position: Position = .bottomRight,
-        displayMode: DisplayMode = .full,
-        size: Size = .medium,
-        customPadding: EdgeInsets? = nil
+        position: Position? = nil,
+        displayMode: DisplayMode? = nil,
+        size: Size? = nil,
+        customPadding: EdgeInsets? = nil,
+        onTap: (() -> Void)? = nil
     ) {
-        self.position = position
-        self.displayMode = displayMode
-        self.size = size
+        // Read from configuration if not provided
+        let cartConfig = ReachuConfiguration.shared.cartConfiguration
+        
+        self.position = position ?? Position.from(cartConfig.floatingCartPosition)
+        self.displayMode = displayMode ?? DisplayMode.from(cartConfig.floatingCartDisplayMode)
+        self.size = size ?? Size.from(cartConfig.floatingCartSize)
         self.customPadding = customPadding
+        self.onTapAction = onTap
     }
     
     public var body: some View {
@@ -125,7 +141,12 @@ public struct RFloatingCartIndicator: View {
     private var cartIndicatorButton: some View {
         Button(action: {
             performHapticFeedback()
-            cartManager.showCheckout()
+            // Use custom action if provided, otherwise use default
+            if let customAction = onTapAction {
+                customAction()
+            } else {
+                cartManager.showCheckout()
+            }
         }) {
             cartContentView
         }
@@ -225,7 +246,7 @@ public struct RFloatingCartIndicator: View {
     
     private var iconOnlyContent: some View {
         cartIconWithBadge
-            .padding(size.verticalPadding)
+            .padding(size.circlePadding)
             .background(cartBackground)
             .clipShape(Circle())
             .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
@@ -242,14 +263,14 @@ public struct RFloatingCartIndicator: View {
             
             // Item count badge
             Text("\(cartManager.itemCount)")
-                .font(.caption2)
+                .font(size == .small ? .caption2 : .caption)
                 .fontWeight(.bold)
                 .foregroundColor(ReachuColors.primary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.horizontal, size == .small ? 5 : 6)
+                .padding(.vertical, size == .small ? 2 : 3)
                 .background(.white)
                 .clipShape(Capsule())
-                .offset(x: 12, y: -8)
+                .offset(x: size == .small ? 10 : 12, y: size == .small ? -6 : -8)
                 .scaleEffect(bounceAnimation ? 1.2 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
         }
@@ -344,6 +365,45 @@ extension RFloatingCartIndicator.Position {
             return .trailing
         case .centerLeft:
             return .leading
+        }
+    }
+    
+    /// Map from configuration enum to component enum
+    static func from(_ configPosition: FloatingCartPosition) -> Self {
+        switch configPosition {
+        case .bottomRight: return .bottomRight
+        case .bottomLeft: return .bottomLeft
+        case .bottomCenter: return .bottomCenter
+        case .topRight: return .topRight
+        case .topLeft: return .topLeft
+        case .topCenter: return .topCenter
+        case .centerRight: return .centerRight
+        case .centerLeft: return .centerLeft
+        }
+    }
+}
+
+// MARK: - DisplayMode Extensions
+extension RFloatingCartIndicator.DisplayMode {
+    /// Map from configuration enum to component enum
+    static func from(_ configMode: FloatingCartDisplayMode) -> Self {
+        switch configMode {
+        case .full: return .full
+        case .compact: return .compact
+        case .minimal: return .minimal
+        case .iconOnly: return .iconOnly
+        }
+    }
+}
+
+// MARK: - Size Extensions
+extension RFloatingCartIndicator.Size {
+    /// Map from configuration enum to component enum
+    static func from(_ configSize: FloatingCartSize) -> Self {
+        switch configSize {
+        case .small: return .small
+        case .medium: return .medium
+        case .large: return .large
         }
     }
 }

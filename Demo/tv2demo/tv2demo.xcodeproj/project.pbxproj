@@ -7,75 +7,67 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 176858B72E7D89B300110C55 /* ReachuDesignSystem */; };
-		176858ED2E7F372400110C55 /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EC2E7F372400110C55 /* ReachuUI */; };
-		176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 176859322E82D1E500110C55 /* ReachuLiveShow */; };
-		17BD21FC2E84904E00853E53 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD21FB2E84904E00853E53 /* ReachuLiveShow */; };
-		17BD21FE2E84904E00853E53 /* ReachuLiveUI in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD21FD2E84904E00853E53 /* ReachuLiveUI */; };
+		17BD230A2E8F0BBA00853E53 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = 17BD23092E8F0BBA00853E53 /* ReachuComplete */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		176858992E7D876600110C55 /* PBXContainerItemProxy */ = {
+		17BD22C72E8E8D0700853E53 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1768587E2E7D876400110C55 /* Project object */;
+			containerPortal = 17BD22AC2E8E8D0500853E53 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 176858852E7D876500110C55;
-			remoteInfo = ReachuDemoApp;
+			remoteGlobalIDString = 17BD22B32E8E8D0500853E53;
+			remoteInfo = tv2demo;
 		};
-		176858A32E7D876600110C55 /* PBXContainerItemProxy */ = {
+		17BD22D12E8E8D0700853E53 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 1768587E2E7D876400110C55 /* Project object */;
+			containerPortal = 17BD22AC2E8E8D0500853E53 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 176858852E7D876500110C55;
-			remoteInfo = ReachuDemoApp;
+			remoteGlobalIDString = 17BD22B32E8E8D0500853E53;
+			remoteInfo = tv2demo;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		176858862E7D876500110C55 /* ReachuDemoApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReachuDemoApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		176858982E7D876600110C55 /* ReachuDemoAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReachuDemoAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		176858A22E7D876600110C55 /* ReachuDemoAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ReachuDemoAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		17BD22B42E8E8D0500853E53 /* tv2demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = tv2demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		17BD22C62E8E8D0700853E53 /* tv2demoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tv2demoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		17BD22D02E8E8D0700853E53 /* tv2demoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = tv2demoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		176858882E7D876500110C55 /* ReachuDemoApp */ = {
+		17BD22B62E8E8D0500853E53 /* tv2demo */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ReachuDemoApp;
+			path = tv2demo;
 			sourceTree = "<group>";
 		};
-		1768589B2E7D876600110C55 /* ReachuDemoAppTests */ = {
+		17BD22C92E8E8D0700853E53 /* tv2demoTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ReachuDemoAppTests;
+			path = tv2demoTests;
 			sourceTree = "<group>";
 		};
-		176858A52E7D876600110C55 /* ReachuDemoAppUITests */ = {
+		17BD22D32E8E8D0700853E53 /* tv2demoUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ReachuDemoAppUITests;
+			path = tv2demoUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		176858832E7D876500110C55 /* Frameworks */ = {
+		17BD22B12E8E8D0500853E53 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				17BD21FE2E84904E00853E53 /* ReachuLiveUI in Frameworks */,
-				176858ED2E7F372400110C55 /* ReachuUI in Frameworks */,
-				176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */,
-				176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */,
-				17BD21FC2E84904E00853E53 /* ReachuLiveShow in Frameworks */,
+				17BD230A2E8F0BBA00853E53 /* ReachuComplete in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		176858952E7D876600110C55 /* Frameworks */ = {
+		17BD22C32E8E8D0700853E53 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1768589F2E7D876600110C55 /* Frameworks */ = {
+		17BD22CD2E8E8D0700853E53 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -85,22 +77,22 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		1768587D2E7D876400110C55 = {
+		17BD22AB2E8E8D0500853E53 = {
 			isa = PBXGroup;
 			children = (
-				176858882E7D876500110C55 /* ReachuDemoApp */,
-				1768589B2E7D876600110C55 /* ReachuDemoAppTests */,
-				176858A52E7D876600110C55 /* ReachuDemoAppUITests */,
-				176858872E7D876500110C55 /* Products */,
+				17BD22B62E8E8D0500853E53 /* tv2demo */,
+				17BD22C92E8E8D0700853E53 /* tv2demoTests */,
+				17BD22D32E8E8D0700853E53 /* tv2demoUITests */,
+				17BD22B52E8E8D0500853E53 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		176858872E7D876500110C55 /* Products */ = {
+		17BD22B52E8E8D0500853E53 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				176858862E7D876500110C55 /* ReachuDemoApp.app */,
-				176858982E7D876600110C55 /* ReachuDemoAppTests.xctest */,
-				176858A22E7D876600110C55 /* ReachuDemoAppUITests.xctest */,
+				17BD22B42E8E8D0500853E53 /* tv2demo.app */,
+				17BD22C62E8E8D0700853E53 /* tv2demoTests.xctest */,
+				17BD22D02E8E8D0700853E53 /* tv2demoUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -108,142 +100,138 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		176858852E7D876500110C55 /* ReachuDemoApp */ = {
+		17BD22B32E8E8D0500853E53 /* tv2demo */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 176858AC2E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoApp" */;
+			buildConfigurationList = 17BD22DA2E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demo" */;
 			buildPhases = (
-				176858822E7D876500110C55 /* Sources */,
-				176858832E7D876500110C55 /* Frameworks */,
-				176858842E7D876500110C55 /* Resources */,
+				17BD22B02E8E8D0500853E53 /* Sources */,
+				17BD22B12E8E8D0500853E53 /* Frameworks */,
+				17BD22B22E8E8D0500853E53 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				176858882E7D876500110C55 /* ReachuDemoApp */,
+				17BD22B62E8E8D0500853E53 /* tv2demo */,
 			);
-			name = ReachuDemoApp;
+			name = tv2demo;
 			packageProductDependencies = (
-				176858B72E7D89B300110C55 /* ReachuDesignSystem */,
-				176858EC2E7F372400110C55 /* ReachuUI */,
-				176859322E82D1E500110C55 /* ReachuLiveShow */,
-				17BD21FB2E84904E00853E53 /* ReachuLiveShow */,
-				17BD21FD2E84904E00853E53 /* ReachuLiveUI */,
+				17BD23092E8F0BBA00853E53 /* ReachuComplete */,
 			);
-			productName = ReachuDemoApp;
-			productReference = 176858862E7D876500110C55 /* ReachuDemoApp.app */;
+			productName = tv2demo;
+			productReference = 17BD22B42E8E8D0500853E53 /* tv2demo.app */;
 			productType = "com.apple.product-type.application";
 		};
-		176858972E7D876600110C55 /* ReachuDemoAppTests */ = {
+		17BD22C52E8E8D0700853E53 /* tv2demoTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 176858AF2E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoAppTests" */;
+			buildConfigurationList = 17BD22DD2E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demoTests" */;
 			buildPhases = (
-				176858942E7D876600110C55 /* Sources */,
-				176858952E7D876600110C55 /* Frameworks */,
-				176858962E7D876600110C55 /* Resources */,
+				17BD22C22E8E8D0700853E53 /* Sources */,
+				17BD22C32E8E8D0700853E53 /* Frameworks */,
+				17BD22C42E8E8D0700853E53 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				1768589A2E7D876600110C55 /* PBXTargetDependency */,
+				17BD22C82E8E8D0700853E53 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				1768589B2E7D876600110C55 /* ReachuDemoAppTests */,
+				17BD22C92E8E8D0700853E53 /* tv2demoTests */,
 			);
-			name = ReachuDemoAppTests;
+			name = tv2demoTests;
 			packageProductDependencies = (
 			);
-			productName = ReachuDemoAppTests;
-			productReference = 176858982E7D876600110C55 /* ReachuDemoAppTests.xctest */;
+			productName = tv2demoTests;
+			productReference = 17BD22C62E8E8D0700853E53 /* tv2demoTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		176858A12E7D876600110C55 /* ReachuDemoAppUITests */ = {
+		17BD22CF2E8E8D0700853E53 /* tv2demoUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 176858B22E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoAppUITests" */;
+			buildConfigurationList = 17BD22E02E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demoUITests" */;
 			buildPhases = (
-				1768589E2E7D876600110C55 /* Sources */,
-				1768589F2E7D876600110C55 /* Frameworks */,
-				176858A02E7D876600110C55 /* Resources */,
+				17BD22CC2E8E8D0700853E53 /* Sources */,
+				17BD22CD2E8E8D0700853E53 /* Frameworks */,
+				17BD22CE2E8E8D0700853E53 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				176858A42E7D876600110C55 /* PBXTargetDependency */,
+				17BD22D22E8E8D0700853E53 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				176858A52E7D876600110C55 /* ReachuDemoAppUITests */,
+				17BD22D32E8E8D0700853E53 /* tv2demoUITests */,
 			);
-			name = ReachuDemoAppUITests;
+			name = tv2demoUITests;
 			packageProductDependencies = (
 			);
-			productName = ReachuDemoAppUITests;
-			productReference = 176858A22E7D876600110C55 /* ReachuDemoAppUITests.xctest */;
+			productName = tv2demoUITests;
+			productReference = 17BD22D02E8E8D0700853E53 /* tv2demoUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		1768587E2E7D876400110C55 /* Project object */ = {
+		17BD22AC2E8E8D0500853E53 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
-					176858852E7D876500110C55 = {
+					17BD22B32E8E8D0500853E53 = {
 						CreatedOnToolsVersion = 26.0;
 					};
-					176858972E7D876600110C55 = {
+					17BD22C52E8E8D0700853E53 = {
 						CreatedOnToolsVersion = 26.0;
-						TestTargetID = 176858852E7D876500110C55;
+						TestTargetID = 17BD22B32E8E8D0500853E53;
 					};
-					176858A12E7D876600110C55 = {
+					17BD22CF2E8E8D0700853E53 = {
 						CreatedOnToolsVersion = 26.0;
-						TestTargetID = 176858852E7D876500110C55;
+						TestTargetID = 17BD22B32E8E8D0500853E53;
 					};
 				};
 			};
-			buildConfigurationList = 176858812E7D876400110C55 /* Build configuration list for PBXProject "ReachuDemoApp" */;
+			buildConfigurationList = 17BD22AF2E8E8D0500853E53 /* Build configuration list for PBXProject "tv2demo" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
 				Base,
 			);
-			mainGroup = 1768587D2E7D876400110C55;
+			mainGroup = 17BD22AB2E8E8D0500853E53;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */,
+				17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
 			);
 			preferredProjectObjectVersion = 77;
-			productRefGroup = 176858872E7D876500110C55 /* Products */;
+			productRefGroup = 17BD22B52E8E8D0500853E53 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				176858852E7D876500110C55 /* ReachuDemoApp */,
-				176858972E7D876600110C55 /* ReachuDemoAppTests */,
-				176858A12E7D876600110C55 /* ReachuDemoAppUITests */,
+				17BD22B32E8E8D0500853E53 /* tv2demo */,
+				17BD22C52E8E8D0700853E53 /* tv2demoTests */,
+				17BD22CF2E8E8D0700853E53 /* tv2demoUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		176858842E7D876500110C55 /* Resources */ = {
+		17BD22B22E8E8D0500853E53 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		176858962E7D876600110C55 /* Resources */ = {
+		17BD22C42E8E8D0700853E53 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		176858A02E7D876600110C55 /* Resources */ = {
+		17BD22CE2E8E8D0700853E53 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,21 +241,21 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		176858822E7D876500110C55 /* Sources */ = {
+		17BD22B02E8E8D0500853E53 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		176858942E7D876600110C55 /* Sources */ = {
+		17BD22C22E8E8D0700853E53 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		1768589E2E7D876600110C55 /* Sources */ = {
+		17BD22CC2E8E8D0700853E53 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -277,20 +265,20 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1768589A2E7D876600110C55 /* PBXTargetDependency */ = {
+		17BD22C82E8E8D0700853E53 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 176858852E7D876500110C55 /* ReachuDemoApp */;
-			targetProxy = 176858992E7D876600110C55 /* PBXContainerItemProxy */;
+			target = 17BD22B32E8E8D0500853E53 /* tv2demo */;
+			targetProxy = 17BD22C72E8E8D0700853E53 /* PBXContainerItemProxy */;
 		};
-		176858A42E7D876600110C55 /* PBXTargetDependency */ = {
+		17BD22D22E8E8D0700853E53 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 176858852E7D876500110C55 /* ReachuDemoApp */;
-			targetProxy = 176858A32E7D876600110C55 /* PBXContainerItemProxy */;
+			target = 17BD22B32E8E8D0500853E53 /* tv2demo */;
+			targetProxy = 17BD22D12E8E8D0700853E53 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		176858AA2E7D876600110C55 /* Debug */ = {
+		17BD22D82E8E8D0700853E53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -354,7 +342,7 @@
 			};
 			name = Debug;
 		};
-		176858AB2E7D876600110C55 /* Release */ = {
+		17BD22D92E8E8D0700853E53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -411,7 +399,7 @@
 			};
 			name = Release;
 		};
-		176858AD2E7D876600110C55 /* Debug */ = {
+		17BD22DB2E8E8D0700853E53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -431,7 +419,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoApp;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -443,7 +431,7 @@
 			};
 			name = Debug;
 		};
-		176858AE2E7D876600110C55 /* Release */ = {
+		17BD22DC2E8E8D0700853E53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -463,7 +451,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoApp;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demo;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -475,7 +463,7 @@
 			};
 			name = Release;
 		};
-		176858B02E7D876600110C55 /* Debug */ = {
+		17BD22DE2E8E8D0700853E53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -485,7 +473,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoAppTests;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -493,11 +481,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReachuDemoApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ReachuDemoApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/tv2demo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/tv2demo";
 			};
 			name = Debug;
 		};
-		176858B12E7D876600110C55 /* Release */ = {
+		17BD22DF2E8E8D0700853E53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -507,7 +495,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoAppTests;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demoTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -515,11 +503,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/ReachuDemoApp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/ReachuDemoApp";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/tv2demo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/tv2demo";
 			};
 			name = Release;
 		};
-		176858B32E7D876600110C55 /* Debug */ = {
+		17BD22E12E8E8D0700853E53 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -527,7 +515,7 @@
 				DEVELOPMENT_TEAM = U4R2B2U7E6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoAppUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -535,11 +523,11 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = ReachuDemoApp;
+				TEST_TARGET_NAME = tv2demo;
 			};
 			name = Debug;
 		};
-		176858B42E7D876600110C55 /* Release */ = {
+		17BD22E22E8E8D0700853E53 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
@@ -547,7 +535,7 @@
 				DEVELOPMENT_TEAM = U4R2B2U7E6;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = reachudev.ReachuDemoAppUITests;
+				PRODUCT_BUNDLE_IDENTIFIER = reachudev.tv2demoUITests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -555,45 +543,45 @@
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = ReachuDemoApp;
+				TEST_TARGET_NAME = tv2demo;
 			};
 			name = Release;
 		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		176858812E7D876400110C55 /* Build configuration list for PBXProject "ReachuDemoApp" */ = {
+		17BD22AF2E8E8D0500853E53 /* Build configuration list for PBXProject "tv2demo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				176858AA2E7D876600110C55 /* Debug */,
-				176858AB2E7D876600110C55 /* Release */,
+				17BD22D82E8E8D0700853E53 /* Debug */,
+				17BD22D92E8E8D0700853E53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		176858AC2E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoApp" */ = {
+		17BD22DA2E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demo" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				176858AD2E7D876600110C55 /* Debug */,
-				176858AE2E7D876600110C55 /* Release */,
+				17BD22DB2E8E8D0700853E53 /* Debug */,
+				17BD22DC2E8E8D0700853E53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		176858AF2E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoAppTests" */ = {
+		17BD22DD2E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demoTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				176858B02E7D876600110C55 /* Debug */,
-				176858B12E7D876600110C55 /* Release */,
+				17BD22DE2E8E8D0700853E53 /* Debug */,
+				17BD22DF2E8E8D0700853E53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		176858B22E7D876600110C55 /* Build configuration list for PBXNativeTarget "ReachuDemoAppUITests" */ = {
+		17BD22E02E8E8D0700853E53 /* Build configuration list for PBXNativeTarget "tv2demoUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
-				176858B32E7D876600110C55 /* Debug */,
-				176858B42E7D876600110C55 /* Release */,
+				17BD22E12E8E8D0700853E53 /* Debug */,
+				17BD22E22E8E8D0700853E53 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -601,34 +589,19 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */ = {
+		17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../..;
+			relativePath = ../../../ReachuSwiftSDK;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		176858B72E7D89B300110C55 /* ReachuDesignSystem */ = {
+		17BD23092E8F0BBA00853E53 /* ReachuComplete */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = ReachuDesignSystem;
-		};
-		176858EC2E7F372400110C55 /* ReachuUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ReachuUI;
-		};
-		176859322E82D1E500110C55 /* ReachuLiveShow */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ReachuLiveShow;
-		};
-		17BD21FB2E84904E00853E53 /* ReachuLiveShow */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ReachuLiveShow;
-		};
-		17BD21FD2E84904E00853E53 /* ReachuLiveUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = ReachuLiveUI;
+			package = 17BD23082E8F0BBA00853E53 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
+			productName = ReachuComplete;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = 1768587E2E7D876400110C55 /* Project object */;
+	rootObject = 17BD22AC2E8E8D0500853E53 /* Project object */;
 }
