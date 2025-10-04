@@ -101,22 +101,14 @@ public struct InitPaymentKlarnaNativeDto: Codable, Equatable {
     public let sessionId: String
     public let purchaseCountry: String
     public let purchaseCurrency: String
-    public let orderAmount: Int
-    public let orderTaxAmount: Int?
-    public let paymentMethodCategories: [KlarnaNativePaymentMethodCategoryDto]?
-    public let orderLines: [KlarnaNativeOrderLineDto]?
-    public let cartId: String?
-    public let checkoutId: String?
+    public let cartId: String
+    public let checkoutId: String
 
     enum CodingKeys: String, CodingKey {
         case clientToken = "client_token"
         case sessionId = "session_id"
         case purchaseCountry = "purchase_country"
         case purchaseCurrency = "purchase_currency"
-        case orderAmount = "order_amount"
-        case orderTaxAmount = "order_tax_amount"
-        case paymentMethodCategories = "payment_method_categories"
-        case orderLines = "order_lines"
         case cartId = "cart_id"
         case checkoutId = "checkout_id"
     }
