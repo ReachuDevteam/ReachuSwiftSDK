@@ -483,6 +483,121 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     @discardableResult
+    public func initKlarnaNative(
+        input: KlarnaNativeInitInputDto
+    ) async -> InitPaymentKlarnaNativeDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
+        }
+
+        guard let checkout = id, !checkout.isEmpty else {
+            print("ℹ️ [Payment] KlarnaNativeInit: missing checkoutId")
+            return nil
+        }
+
+        print("💳 [Payment] KlarnaNativeInit START checkoutId=\(checkout)")
+        do {
+            let dto = try await sdk.payment.klarnaNativeInit(
+                checkoutId: checkout,
+                input: input
+            )
+            self.checkoutId = dto.checkoutId
+            print("✅ [Payment] KlarnaNativeInit OK sessionId=\(dto.sessionId)")
+            return dto
+        } catch {
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] KlarnaNativeInit FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
+    public func confirmKlarnaNative(
+        authorizationToken: String,
+        autoCapture: Bool? = nil,
+        customer: KlarnaNativeCustomerInputDto? = nil,
+        billingAddress: KlarnaNativeAddressInputDto? = nil,
+        shippingAddress: KlarnaNativeAddressInputDto? = nil
+    ) async -> ConfirmPaymentKlarnaNativeDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
+        }
+
+        guard let checkout = id, !checkout.isEmpty else {
+            print("ℹ️ [Payment] KlarnaNativeConfirm: missing checkoutId")
+            return nil
+        }
+
+        let input = KlarnaNativeConfirmInputDto(
+            authorizationToken: authorizationToken,
+            autoCapture: autoCapture,
+            customer: customer,
+            billingAddress: billingAddress,
+            shippingAddress: shippingAddress
+        )
+
+        print("💳 [Payment] KlarnaNativeConfirm START checkoutId=\(checkout)")
+        do {
+            let dto = try await sdk.payment.klarnaNativeConfirm(
+                checkoutId: checkout,
+                input: input
+            )
+            print("✅ [Payment] KlarnaNativeConfirm OK orderId=\(dto.orderId)")
+            return dto
+        } catch {
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] KlarnaNativeConfirm FAIL \(msg)")
+            return nil
+        }
+    }
+
+    public func klarnaNativeOrder(
+        orderId: String,
+        userId: String? = nil
+    ) async -> KlarnaNativeOrderDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        print("🔍 [Payment] KlarnaNativeOrder START orderId=\(orderId)")
+        do {
+            let dto = try await sdk.payment.klarnaNativeOrder(
+                orderId: orderId,
+                userId: userId
+            )
+            print("✅ [Payment] KlarnaNativeOrder OK status=\(dto.status ?? "-")")
+            return dto
+        } catch {
+            let msg =
+                (error as? SdkException)?.description
+                ?? error.localizedDescription
+            errorMessage = msg
+            print("❌ [Payment] KlarnaNativeOrder FAIL \(msg)")
+            return nil
+        }
+    }
+
+    @discardableResult
     public func stripeIntent(returnEphemeralKey: Bool? = true) async
         -> PaymentIntentStripeDto?
     {

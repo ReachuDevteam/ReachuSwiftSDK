@@ -50,6 +50,23 @@ public struct InitPaymentKlarnaDto: Codable, Equatable {
 public struct KlarnaNativePaymentMethodCategoryDto: Codable, Equatable {
     public let identifier: String
     public let name: String?
+    public let assetUrls: KlarnaNativeAssetUrlsDto?
+
+    enum CodingKeys: String, CodingKey {
+        case identifier
+        case name
+        case assetUrls = "asset_urls"
+    }
+}
+
+public struct KlarnaNativeAssetUrlsDto: Codable, Equatable {
+    public let descriptive: String?
+    public let standard: String?
+
+    enum CodingKeys: String, CodingKey {
+        case descriptive
+        case standard
+    }
 }
 
 public struct KlarnaNativeOrderLineDto: Codable, Equatable {
@@ -103,6 +120,7 @@ public struct InitPaymentKlarnaNativeDto: Codable, Equatable {
     public let purchaseCurrency: String
     public let cartId: String
     public let checkoutId: String
+    public let paymentMethodCategories: [KlarnaNativePaymentMethodCategoryDto]?
 
     enum CodingKeys: String, CodingKey {
         case clientToken = "client_token"
@@ -111,6 +129,7 @@ public struct InitPaymentKlarnaNativeDto: Codable, Equatable {
         case purchaseCurrency = "purchase_currency"
         case cartId = "cart_id"
         case checkoutId = "checkout_id"
+        case paymentMethodCategories = "payment_method_categories"
     }
 }
 
@@ -152,6 +171,30 @@ public struct KlarnaNativeAddressInputDto: Codable, Equatable {
         case postalCode = "postal_code"
         case country
     }
+
+    public init(
+        givenName: String? = nil,
+        familyName: String? = nil,
+        email: String? = nil,
+        phone: String? = nil,
+        streetAddress: String? = nil,
+        streetAddress2: String? = nil,
+        city: String? = nil,
+        region: String? = nil,
+        postalCode: String? = nil,
+        country: String? = nil
+    ) {
+        self.givenName = givenName
+        self.familyName = familyName
+        self.email = email
+        self.phone = phone
+        self.streetAddress = streetAddress
+        self.streetAddress2 = streetAddress2
+        self.city = city
+        self.region = region
+        self.postalCode = postalCode
+        self.country = country
+    }
 }
 
 public struct KlarnaNativeCustomerInputDto: Codable, Equatable {
@@ -167,6 +210,20 @@ public struct KlarnaNativeCustomerInputDto: Codable, Equatable {
         case dob
         case type
         case organizationRegistrationId = "organization_registration_id"
+    }
+
+    public init(
+        email: String? = nil,
+        phone: String? = nil,
+        dob: String? = nil,
+        type: String? = nil,
+        organizationRegistrationId: String? = nil
+    ) {
+        self.email = email
+        self.phone = phone
+        self.dob = dob
+        self.type = type
+        self.organizationRegistrationId = organizationRegistrationId
     }
 }
 
@@ -192,6 +249,28 @@ public struct KlarnaNativeInitInputDto: Codable, Equatable {
         case billingAddress = "billing_address"
         case shippingAddress = "shipping_address"
     }
+
+    public init(
+        countryCode: String? = nil,
+        currency: String? = nil,
+        locale: String? = nil,
+        returnUrl: String? = nil,
+        intent: String? = nil,
+        autoCapture: Bool? = nil,
+        customer: KlarnaNativeCustomerInputDto? = nil,
+        billingAddress: KlarnaNativeAddressInputDto? = nil,
+        shippingAddress: KlarnaNativeAddressInputDto? = nil
+    ) {
+        self.countryCode = countryCode
+        self.currency = currency
+        self.locale = locale
+        self.returnUrl = returnUrl
+        self.intent = intent
+        self.autoCapture = autoCapture
+        self.customer = customer
+        self.billingAddress = billingAddress
+        self.shippingAddress = shippingAddress
+    }
 }
 
 public struct KlarnaNativeConfirmInputDto: Codable, Equatable {
@@ -207,5 +286,19 @@ public struct KlarnaNativeConfirmInputDto: Codable, Equatable {
         case customer
         case billingAddress = "billing_address"
         case shippingAddress = "shipping_address"
+    }
+
+    public init(
+        authorizationToken: String,
+        autoCapture: Bool? = nil,
+        customer: KlarnaNativeCustomerInputDto? = nil,
+        billingAddress: KlarnaNativeAddressInputDto? = nil,
+        shippingAddress: KlarnaNativeAddressInputDto? = nil
+    ) {
+        self.authorizationToken = authorizationToken
+        self.autoCapture = autoCapture
+        self.customer = customer
+        self.billingAddress = billingAddress
+        self.shippingAddress = shippingAddress
     }
 }

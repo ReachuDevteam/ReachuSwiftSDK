@@ -1,3 +1,4 @@
+import KlarnaMobileSDK
 import ReachuCore
 import ReachuDesignSystem
 import SwiftUI
@@ -14,8 +15,7 @@ public struct RCheckoutOverlay: View {
     // MARK: - Environment
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft  // ⬅️ Exponemos estado al contexto
-    @SwiftUI.Environment(\.colorScheme) private var colorScheme:
-        SwiftUI.ColorScheme
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
 
     // MARK: - State
     @State private var checkoutStep: CheckoutStep = .address
@@ -52,12 +52,16 @@ public struct RCheckoutOverlay: View {
     #if os(iOS)
         @State private var paymentSheet: PaymentSheet?
         @State private var shouldPresentStripeSheet = false
+    #endif
 
-        @State private var showKlarnaSheet = false
-        @State private var klarnaStartURL: URL?
-        @State private var klarnaHTML: String?
+    #if os(iOS) && canImport(KlarnaMobileSDK)
+        @State private var showKlarnaNativeSheet = false
+        @State private var klarnaNativeInitData: InitPaymentKlarnaNativeDto?
+        @State private var klarnaNativeContentHeight: CGFloat = 420
+        @State private var klarnaAvailableCategories: [KlarnaNativePaymentMethodCategoryDto] = []
+        @State private var klarnaSelectedCategoryIdentifier: String = ""
         private let klarnaSuccessURLString =
-            "https://www.example.com/confirmation.html"
+            "https://example.com/order-confirmed"
     #endif
 
     private var draftSyncKey: String {
@@ -206,49 +210,85 @@ public struct RCheckoutOverlay: View {
                 loadingOverlay
             }
         }
-        #if os(iOS)
+        #if os(iOS) && canImport(KlarnaMobileSDK)
             .sheet(
-                isPresented: $showKlarnaSheet,
+                isPresented: $showKlarnaNativeSheet,
                 onDismiss: {
+                    klarnaNativeInitData = nil
+                    klarnaNativeContentHeight = 420
+                    klarnaAvailableCategories = []
+                    klarnaSelectedCategoryIdentifier = ""
                     if checkoutStep != .success && checkoutStep != .error {
                         checkoutStep = .orderSummary  // cerrar=cancel
                     }
                 }
             ) {
-                if let html = klarnaHTML {
-                    KlarnaWebViewHTML(
-                        html: html,
-                        successURLPrefix: klarnaSuccessURLString
-                    ) { result in
-                        switch result {
-                        case .success: checkoutStep = .success
-                        case .canceled: checkoutStep = .orderSummary
-                        case .error(_): checkoutStep = .error
+                if let initData = klarnaNativeInitData,
+                    let returnURL = URL(string: klarnaSuccessURLString),
+                    !klarnaAvailableCategories.isEmpty,
+                    !klarnaSelectedCategoryIdentifier.isEmpty
+                {
+                    KlarnaNativePaymentSheet(
+                        initData: initData,
+                        categories: klarnaAvailableCategories,
+                        selectedCategory: $klarnaSelectedCategoryIdentifier,
+                        returnURL: returnURL,
+                        contentHeight: $klarnaNativeContentHeight,
+                        onAuthorized: { authToken, finalizeRequired in
+                            Task { @MainActor in
+                                isLoading = true
+                                let customer = KlarnaNativeCustomerInputDto(
+                                    email: "test.user@example.com",
+                                    phone: "+4798765432"
+                                )
+                                let address = KlarnaNativeAddressInputDto(
+                                    givenName: "John",
+                                    familyName: "Doe",
+                                    email: "john.doe@example.com",
+                                    phone: "+4798765432",
+                                    streetAddress: "Karl Johans gate 1",
+                                    streetAddress2: nil,
+                                    city: "Oslo",
+                                    region: nil,
+                                    postalCode: "0154",
+                                    country: "NO"
+                                )
+                                let result = await cartManager.confirmKlarnaNative(
+                                    authorizationToken: authToken,
+                                    autoCapture: finalizeRequired ? nil : true,
+                                    customer: customer,
+                                    billingAddress: address,
+                                    shippingAddress: address
+                                )
+                                isLoading = false
+
+                                if let confirmation = result {
+                                    checkoutStep = .success
+                                    klarnaNativeInitData = nil
+                                } else {
+                                    checkoutStep = .error
+                                }
+
+                                showKlarnaNativeSheet = false
+                            }
+                        },
+                        onFailed: { message in
+                            Task { @MainActor in
+                                errorMessage = message
+                            }
+                        },
+                        onDismiss: {
+                            showKlarnaNativeSheet = false
                         }
-                        showKlarnaSheet = false
-                    }
-                    .ignoresSafeArea()
-                } else if let url = klarnaStartURL {
-                    KlarnaWebView(
-                        startURL: url,
-                        successURLPrefix: klarnaSuccessURLString,
-                        cancelURLPrefix: ""
-                    ) { result in
-                        switch result {
-                        case .success: checkoutStep = .success
-                        case .canceled: checkoutStep = .orderSummary
-                        case .error(_): checkoutStep = .error
-                        }
-                        showKlarnaSheet = false
-                    }
-                    .ignoresSafeArea()
+                    )
+                    .interactiveDismissDisabled(isLoading)
                 } else {
-                    Text("Unable to start Klarna.")
-                    .padding()
-                    .onAppear {
-                        showKlarnaSheet = false
-                        checkoutStep = .error
-                    }
+                    Text("No Klarna payment methods available.")
+                        .padding()
+                        .onAppear {
+                            showKlarnaNativeSheet = false
+                            checkoutStep = .error
+                        }
                 }
             }
         #endif
@@ -494,12 +534,14 @@ public struct RCheckoutOverlay: View {
                                     checkoutStep = .error
                                     return
                                 }
-                            } else if selectedPaymentMethod == .klarna {
+                            }
+                            if selectedPaymentMethod == .klarna {
                                 isLoading = true
-                                let ok = await prepareKlarna()  // ⬅️ prepara html_snippet
+                                let ok = await prepareKlarnaNative()
                                 isLoading = false
                                 if ok {
-                                    showKlarnaSheet = true  // ⬅️ abre el sheet (como Stripe)
+                                    klarnaNativeContentHeight = 420
+                                    showKlarnaNativeSheet = true
                                     return
                                 } else {
                                     checkoutStep = .error
@@ -755,8 +797,7 @@ public struct RCheckoutOverlay: View {
     }
 
     // Helper function for the simple summary rows
-    private func summaryDetailRow(_ title: String, _ value: String) -> some View
-    {
+    private func summaryDetailRow(_ title: String, _ value: String) -> some View {
         HStack {
             Text(title)
                 .font(.system(size: 16, weight: .regular))
@@ -774,8 +815,7 @@ public struct RCheckoutOverlay: View {
     private var reviewStepView: some View {
         Group {
             #if os(iOS)
-                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet
-                {
+                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet {
                     Color.clear
                         .onAppear {
                             presentStripePaymentSheet()
@@ -1269,27 +1309,72 @@ public struct RCheckoutOverlay: View {
             return vc
         }
 
-        private func prepareKlarna() async -> Bool {
-            guard
-                let dto = await cartManager.initKlarna(
-                    countryCode: cartManager.country,
-                    href: klarnaSuccessURLString,
-                    email: checkoutDraft.email.isEmpty
-                        ? email : checkoutDraft.email
-                )
+        private func prepareKlarnaNative() async -> Bool {
+            guard let returnURL = URL(string: klarnaSuccessURLString) else {
+                errorMessage = "Invalid Klarna return URL"
+                return false
+            }
+
+            klarnaAvailableCategories = []
+            klarnaSelectedCategoryIdentifier = ""
+
+            cartManager.checkoutId = "aff8128b-8df1-4d50-9fc8-9114795fe6c7"
+
+            let hardcodedCustomer = KlarnaNativeCustomerInputDto(
+                email: "test.user@example.com",
+                phone: "+4798765432"
+            )
+
+            let hardcodedAddress = KlarnaNativeAddressInputDto(
+                givenName: "John",
+                familyName: "Doe",
+                email: "john.doe@example.com",
+                phone: "+4798765432",
+                streetAddress: "Karl Johans gate 1",
+                streetAddress2: nil,
+                city: "Oslo",
+                region: nil,
+                postalCode: "0154",
+                country: "NO"
+            )
+
+            let input = KlarnaNativeInitInputDto(
+                countryCode: "NO",
+                currency: "NOK",
+                locale: "nb-NO",
+                returnUrl: returnURL.absoluteString,
+                intent: "buy",
+                autoCapture: true,
+                customer: hardcodedCustomer,
+                billingAddress: hardcodedAddress,
+                shippingAddress: hardcodedAddress
+            )
+
+            guard let dto = await cartManager.initKlarnaNative(input: input)
             else {
                 return false
             }
 
-            let snippet = dto
-                .htmlSnippet 
-            if !snippet.isEmpty {
-                self.klarnaHTML = snippet
-                self.klarnaStartURL = nil
-                return true
+            let categories = dto.paymentMethodCategories ?? []
+            guard !categories.isEmpty else {
+                errorMessage = "No Klarna payment methods available for this checkout."
+                klarnaAvailableCategories = []
+                klarnaSelectedCategoryIdentifier = ""
+                return false
             }
 
-            return false
+            klarnaAvailableCategories = KlarnaCategoryMapper.sorted(categories)
+            klarnaSelectedCategoryIdentifier =
+                KlarnaCategoryMapper.preferredIdentifier(from: klarnaAvailableCategories)
+                ?? ""
+
+            guard !klarnaSelectedCategoryIdentifier.isEmpty else {
+                errorMessage = "Unsupported Klarna payment category."
+                return false
+            }
+
+            klarnaNativeInitData = dto
+            return true
         }
 
     #endif
@@ -2515,8 +2600,7 @@ extension RCheckoutOverlay {
                 }
 
                 if applied {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8))
-                    {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         appliedDiscount = cartManager.cartTotal * 0.10
                         discountMessage = "10% discount applied!"
                     }
@@ -2526,8 +2610,7 @@ extension RCheckoutOverlay {
                         )
                     #endif
                 } else {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8))
-                    {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
                         appliedDiscount = 0.0
                         discountMessage = "Invalid discount code"
                     }
@@ -2742,150 +2825,367 @@ struct ShippingOptionRow: View {
 #endif
 
 #if os(iOS)
-    import WebKit
+    struct KlarnaNativePaymentSheet: View {
+        let initData: InitPaymentKlarnaNativeDto
+        let categories: [KlarnaNativePaymentMethodCategoryDto]
+        @Binding var selectedCategory: String
+        let returnURL: URL
+        @Binding var contentHeight: CGFloat
+        let onAuthorized: (_ authToken: String, _ finalizeRequired: Bool) -> Void
+        let onFailed: (String) -> Void
+        let onDismiss: () -> Void
 
-    enum KlarnaResult {
-        case success, canceled
-        case error(Error?)
-    }
+        @State private var triggerAuthorize = false
+        @State private var localError: String?
 
-    struct KlarnaWebViewHTML: UIViewRepresentable {
-        let html: String
-        let successURLPrefix: String
-        let onFinish: (KlarnaResult) -> Void
+        var body: some View {
+            VStack(spacing: ReachuSpacing.lg) {
+                HStack {
+                    Text("Klarna Checkout")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
 
-        func makeCoordinator() -> Coordinator {
-            Coordinator(successPrefix: successURLPrefix, onFinish: onFinish)
-        }
+                    Spacer()
 
-        func makeUIView(context: Context) -> WKWebView {
-            let web = WKWebView()
-            web.navigationDelegate = context.coordinator
-            web.loadHTMLString(html, baseURL: nil)
-            return web
-        }
+                    Button(role: .cancel) {
+                        onDismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(ReachuColors.textSecondary)
+                            .imageScale(.large)
+                    }
+                    .buttonStyle(.plain)
+                }
 
-        func updateUIView(_ uiView: WKWebView, context: Context) {}
+                if categories.count > 1 {
+                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                        Text("Payment method")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
 
-        final class Coordinator: NSObject, WKNavigationDelegate {
-            let successPrefix: String
-            let onFinish: (KlarnaResult) -> Void
-
-            init(
-                successPrefix: String,
-                onFinish: @escaping (KlarnaResult) -> Void
-            ) {
-                self.successPrefix = successPrefix
-                self.onFinish = onFinish
-            }
-
-            func webView(
-                _ webView: WKWebView,
-                decidePolicyFor navigationAction: WKNavigationAction,
-                decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-            ) {
-                if let url = navigationAction.request.url?.absoluteString {
-                    if url.hasPrefix(successPrefix) {
-                        onFinish(.success)
-                        decisionHandler(.cancel)
-                        return
+                        if categories.count <= 3 {
+                            Picker("Payment method", selection: $selectedCategory) {
+                                ForEach(categories, id: \.identifier) { category in
+                                    Text(
+                                        category.name
+                                            ?? KlarnaCategoryMapper.displayName(for: category)
+                                    )
+                                    .tag(
+                                        KlarnaCategoryMapper
+                                            .normalizedIdentifier(from: category.identifier)
+                                    )
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        } else {
+                            Picker("Payment method", selection: $selectedCategory) {
+                                ForEach(categories, id: \.identifier) { category in
+                                    Text(
+                                        category.name
+                                            ?? KlarnaCategoryMapper.displayName(for: category)
+                                    )
+                                    .tag(
+                                        KlarnaCategoryMapper
+                                            .normalizedIdentifier(from: category.identifier)
+                                    )
+                                }
+                            }
+                            .pickerStyle(.menu)
+                        }
+                    }
+                } else if let category = categories.first {
+                    HStack {
+                        Text("Method:")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(ReachuColors.textSecondary)
+                        Text(
+                            category.name
+                                ?? KlarnaCategoryMapper.displayName(for: category)
+                        )
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        Spacer()
                     }
                 }
-                decisionHandler(.allow)
-            }
 
-            func webView(
-                _ webView: WKWebView,
-                didFail navigation: WKNavigation!,
-                withError error: Error
-            ) {
-                onFinish(.error(error))
-            }
+                if selectedCategory.isEmpty {
+                    Text("Select a payment method to continue")
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .frame(maxWidth: .infinity, minHeight: 200)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.large)
+                } else {
+                    KlarnaPaymentViewContainer(
+                        initData: initData,
+                        categoryIdentifier: selectedCategory,
+                        returnURL: returnURL,
+                        contentHeight: $contentHeight,
+                        triggerAuthorize: $triggerAuthorize,
+                        onAuthorized: { token, finalizeRequired in
+                            localError = nil
+                            onAuthorized(token, finalizeRequired)
+                        },
+                        onFailed: { message in
+                            localError = message
+                            onFailed(message)
+                        }
+                    )
+                    .frame(maxWidth: .infinity)
+                    .frame(height: contentHeight)
+                    .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.large))
+                    .id(selectedCategory)
+                }
 
-            func webView(
-                _ webView: WKWebView,
-                didFailProvisionalNavigation navigation: WKNavigation!,
-                withError error: Error
-            ) {
-                onFinish(.error(error))
+                if let localError {
+                    Text(localError)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(ReachuColors.error)
+                        .multilineTextAlignment(.center)
+                        .transition(.opacity)
+                }
+
+                RButton(
+                    title: "Confirm with Klarna",
+                    style: .primary,
+                    size: .large
+                ) {
+                    triggerAuthorize = true
+                }
+
+                RButton(
+                    title: "Cancel",
+                    style: .secondary,
+                    size: .large
+                ) {
+                    onDismiss()
+                }
+
+                Spacer(minLength: ReachuSpacing.md)
+            }
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.top, ReachuSpacing.lg)
+            .padding(.bottom, ReachuSpacing.xl)
+            .onAppear {
+                if categories.first(where: {
+                    KlarnaCategoryMapper.normalizedIdentifier(from: $0.identifier)
+                        == selectedCategory
+                }) == nil {
+                    if let first = categories.first {
+                        selectedCategory =
+                            KlarnaCategoryMapper
+                            .normalizedIdentifier(from: first.identifier)
+                    }
+                }
+            }
+            .onChange(of: selectedCategory) { _ in
+                triggerAuthorize = false
+                localError = nil
+                contentHeight = 420
             }
         }
     }
 
-    struct KlarnaWebView: UIViewRepresentable {
-        let startURL: URL
-        let successURLPrefix: String
-        let cancelURLPrefix: String
-        let onFinish: (KlarnaResult) -> Void
+    struct KlarnaPaymentViewContainer: UIViewRepresentable {
+        let initData: InitPaymentKlarnaNativeDto
+        let categoryIdentifier: String
+        let returnURL: URL
+        @Binding var contentHeight: CGFloat
+        @Binding var triggerAuthorize: Bool
+        let onAuthorized: (_ authToken: String, _ finalizeRequired: Bool) -> Void
+        let onFailed: (String) -> Void
 
         func makeCoordinator() -> Coordinator {
-            Coordinator(
-                successPrefix: successURLPrefix,
-                cancelPrefix: cancelURLPrefix,
-                onFinish: onFinish
+            Coordinator(parent: self)
+        }
+
+        func makeUIView(context: Context) -> KlarnaPaymentView {
+            let paymentView = KlarnaPaymentView(
+                category: categoryIdentifier,
+                returnUrl: returnURL,
+                eventListener: context.coordinator
             )
-        }
-
-        func makeUIView(context: Context) -> WKWebView {
-            let web = WKWebView()
-            web.navigationDelegate = context.coordinator
-            web.load(URLRequest(url: startURL))
-            return web
-        }
-
-        func updateUIView(_ uiView: WKWebView, context: Context) {}
-
-        final class Coordinator: NSObject, WKNavigationDelegate {
-            let successPrefix: String
-            let cancelPrefix: String
-            let onFinish: (KlarnaResult) -> Void
-
-            init(
-                successPrefix: String,
-                cancelPrefix: String,
-                onFinish: @escaping (KlarnaResult) -> Void
-            ) {
-                self.successPrefix = successPrefix
-                self.cancelPrefix = cancelPrefix
-                self.onFinish = onFinish
+            paymentView.environment = .playground
+            paymentView.region = region(for: initData.purchaseCountry)
+            context.coordinator.attach(paymentView, categoryIdentifier: categoryIdentifier)
+            paymentView.initialize(clientToken: initData.clientToken, returnUrl: returnURL)
+            paymentView.load()
+            DispatchQueue.main.async {
+                contentHeight = max(paymentView.contentHeight, 400)
             }
+            return paymentView
+        }
 
-            func webView(
-                _ webView: WKWebView,
-                decidePolicyFor navigationAction: WKNavigationAction,
-                decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
-            ) {
-                if let url = navigationAction.request.url?.absoluteString {
-                    if url.hasPrefix(successPrefix) {
-                        onFinish(.success)
-                        decisionHandler(.cancel)
-                        return
-                    } else if !cancelPrefix.isEmpty
-                        && url.hasPrefix(cancelPrefix)
-                    {
-                        onFinish(.canceled)
-                        decisionHandler(.cancel)
-                        return
-                    }
+        func updateUIView(_ uiView: KlarnaPaymentView, context: Context) {
+            context.coordinator.update(parent: self)
+            if triggerAuthorize {
+                context.coordinator.authorize(autoFinalize: true)
+                DispatchQueue.main.async {
+                    triggerAuthorize = false
                 }
-                decisionHandler(.allow)
+            }
+        }
+
+        private func region(for purchaseCountry: String) -> KlarnaCore.KlarnaRegion {
+            switch purchaseCountry.uppercased() {
+            case "US", "CA":
+                return .na
+            case "AU", "NZ":
+                return .oc
+            default:
+                return .eu
+            }
+        }
+
+        final class Coordinator: NSObject, KlarnaPaymentEventListener {
+            private var parent: KlarnaPaymentViewContainer
+            weak var paymentView: KlarnaPaymentView?
+            private var categoryIdentifier: String
+
+            init(parent: KlarnaPaymentViewContainer) {
+                self.parent = parent
+                self.categoryIdentifier = parent.categoryIdentifier
             }
 
-            func webView(
-                _ webView: WKWebView,
-                didFail navigation: WKNavigation!,
-                withError error: Error
-            ) {
-                onFinish(.error(error))
+            func update(parent: KlarnaPaymentViewContainer) {
+                self.parent = parent
+                self.categoryIdentifier = parent.categoryIdentifier
             }
 
-            func webView(
-                _ webView: WKWebView,
-                didFailProvisionalNavigation navigation: WKNavigation!,
-                withError error: Error
-            ) {
-                onFinish(.error(error))
+            func attach(_ paymentView: KlarnaPaymentView, categoryIdentifier: String) {
+                self.paymentView = paymentView
+                self.categoryIdentifier = categoryIdentifier
             }
+
+            func authorize(autoFinalize: Bool) {
+                paymentView?.authorize(autoFinalize: autoFinalize, jsonData: nil)
+            }
+
+            func klarnaInitialized(paymentView: KlarnaPaymentView) {}
+
+            func klarnaLoaded(paymentView: KlarnaPaymentView) {}
+
+            func klarnaLoadedPaymentReview(paymentView: KlarnaPaymentView) {}
+
+            func klarnaAuthorized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?,
+                finalizeRequired: Bool
+            ) {
+                guard approved, let token = authToken, !token.isEmpty else {
+                    DispatchQueue.main.async {
+                        self.parent.onFailed("Klarna authorization was declined.")
+                    }
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.parent.onAuthorized(token, finalizeRequired)
+                }
+            }
+
+            func klarnaReauthorized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?
+            ) {
+                guard approved, let token = authToken, !token.isEmpty else {
+                    DispatchQueue.main.async {
+                        self.parent.onFailed("Klarna reauthorization failed.")
+                    }
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.parent.onAuthorized(token, false)
+                }
+            }
+
+            func klarnaFinalized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?
+            ) {
+                guard approved, let token = authToken, !token.isEmpty else { return }
+                DispatchQueue.main.async {
+                    self.parent.onAuthorized(token, false)
+                }
+            }
+
+            func klarnaResized(
+                paymentView: KlarnaPaymentView,
+                to newHeight: CGFloat
+            ) {
+                DispatchQueue.main.async {
+                    self.parent.contentHeight = max(newHeight, 360)
+                }
+            }
+
+            func klarnaFailed(
+                inPaymentView paymentView: KlarnaPaymentView,
+                withError error: KlarnaPaymentError
+            ) {
+                DispatchQueue.main.async {
+                    self.parent.onFailed(error.localizedDescription)
+                }
+            }
+        }
+    }
+
+    enum KlarnaCategoryMapper {
+        static func normalizedIdentifier(from raw: String) -> String {
+            switch raw.lowercased() {
+            case "pay_now":
+                return String.PayNow
+            case "pay_later", "klarna":
+                return String.PayLater
+            case "slice_it":
+                return String.SliceIt
+            case "pay_over_time":
+                return String.PayInParts
+            default:
+                return raw
+            }
+        }
+
+        static func preferredIdentifier(from categories: [KlarnaNativePaymentMethodCategoryDto])
+            -> String?
+        {
+            for key in priorityOrder {
+                if let match = categories.first(where: { $0.identifier.lowercased() == key }) {
+                    return normalizedIdentifier(from: match.identifier)
+                }
+            }
+            return categories.first.map { normalizedIdentifier(from: $0.identifier) }
+        }
+
+        static func sorted(_ categories: [KlarnaNativePaymentMethodCategoryDto])
+            -> [KlarnaNativePaymentMethodCategoryDto]
+        {
+            categories.sorted { lhs, rhs in
+                priorityIndex(for: lhs.identifier) < priorityIndex(for: rhs.identifier)
+            }
+        }
+
+        private static let priorityOrder = [
+            "pay_now", "klarna", "pay_later", "pay_over_time", "slice_it",
+        ]
+
+        private static func priorityIndex(for identifier: String) -> Int {
+            let key = identifier.lowercased()
+            if let idx = priorityOrder.firstIndex(of: key) { return idx }
+            // keep original order for unknown types by placing them after known ones
+            return priorityOrder.count
+        }
+
+        static func displayName(for category: KlarnaNativePaymentMethodCategoryDto) -> String {
+            if let name = category.name, !name.isEmpty { return name }
+            return rawDisplayName(from: category.identifier)
+        }
+
+        private static func rawDisplayName(from identifier: String) -> String {
+            identifier
+                .replacingOccurrences(of: "_", with: " ")
+                .capitalized
         }
     }
 #endif

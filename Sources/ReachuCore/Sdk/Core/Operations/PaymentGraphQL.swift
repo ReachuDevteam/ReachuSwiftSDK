@@ -68,6 +68,7 @@ public enum PaymentGraphQL {
 
   public static let KLARNA_NATIVE_INIT_PAYMENT_MUTATION = #"""
     mutation CreatePaymentKlarnaNative(
+      $shippingAddress: KlarnaNativeAddressInput
       $checkoutId: String!
       $countryCode: String
       $currency: String
@@ -77,10 +78,10 @@ public enum PaymentGraphQL {
       $autoCapture: Boolean
       $customer: KlarnaNativeCustomerInput
       $billingAddress: KlarnaNativeAddressInput
-      $shippingAddress: KlarnaNativeAddressInput
     ) {
       Payment {
         CreatePaymentKlarnaNative(
+          shipping_address: $shippingAddress
           checkout_id: $checkoutId
           country_code: $countryCode
           currency: $currency
@@ -90,29 +91,21 @@ public enum PaymentGraphQL {
           auto_capture: $autoCapture
           customer: $customer
           billing_address: $billingAddress
-          shipping_address: $shippingAddress
         ) {
+          cart_id
+          checkout_id
           client_token
-          session_id
           purchase_country
           purchase_currency
-          order_amount
-          order_tax_amount
+          session_id
           payment_method_categories {
             identifier
             name
+            asset_urls {
+              descriptive
+              standard
+            }
           }
-          order_lines {
-            type
-            name
-            quantity
-            unit_price
-            total_amount
-            tax_rate
-            tax_amount
-          }
-          cart_id
-          checkout_id
         }
       }
     }

@@ -55,7 +55,9 @@ let package = Package(
         // Complete SDK - everything included
         .library(
             name: "ReachuComplete",
-            targets: ["ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI"]
+            targets: [
+                "ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI",
+            ]
         ),
 
     ],
@@ -70,6 +72,10 @@ let package = Package(
         .package(url: "https://github.com/kean/Nuke.git", from: "12.0.0"),
 
         .package(url: "https://github.com/stripe/stripe-ios", .upToNextMajor(from: "24.24.1")),
+
+        .package(
+            url: "https://github.com/klarna/klarna-mobile-sdk-spm.git",
+            .upToNextMajor(from: "2.2.0")),
 
     ],
     targets: [
@@ -110,6 +116,9 @@ let package = Package(
                 "ReachuTesting",  // For previews and mock data
                 .product(
                     name: "StripePaymentSheet", package: "stripe-ios",
+                    condition: .when(platforms: [.iOS])),
+                .product(
+                    name: "KlarnaMobileSDK", package: "klarna-mobile-sdk-spm",
                     condition: .when(platforms: [.iOS])),
 
             ],
