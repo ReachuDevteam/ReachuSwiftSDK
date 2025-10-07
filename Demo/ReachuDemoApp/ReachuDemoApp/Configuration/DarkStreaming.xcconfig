@@ -1,5 +1,0 @@
-// Dark Streaming Theme Configuration
-// Use this configuration for dark-themed streaming apps
-
-REACHU_CONFIG_TYPE = dark-streaming
-REACHU_ENVIRONMENT = production

@@ -1,5 +1,0 @@
-// Automatic Theme Configuration
-// Use this configuration for apps that follow iOS system theme
-
-REACHU_CONFIG_TYPE = automatic
-REACHU_ENVIRONMENT = production

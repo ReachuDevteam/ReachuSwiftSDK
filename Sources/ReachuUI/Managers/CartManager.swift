@@ -31,8 +31,14 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     private var currentCartId: String?
     private var pendingShippingSelections: [String: CartItem.ShippingOption] = [:]
     private let sdk: SdkClient = {
-        let baseURL = URL(string: "https://graph-ql-dev.reachu.io/graphql")!
-        let apiKey = "DKCSRFE-1HA439V-GPK24GY-6CT93HB"
+        let config = ReachuConfiguration.shared
+        let baseURL = URL(string: config.environment.graphQLURL)!
+        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
+        
+        print("🔧 [CartManager] Initializing SDK Client")
+        print("   Base URL: \(baseURL)")
+        print("   API Key: \(apiKey.prefix(8))...")
+        
         return SdkClient(baseUrl: baseURL, apiKey: apiKey)
     }()
 

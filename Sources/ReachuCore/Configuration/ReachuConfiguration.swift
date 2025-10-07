@@ -110,11 +110,14 @@ public class ReachuConfiguration: ObservableObject {
 // MARK: - Environment
 
 public enum ReachuEnvironment: String, CaseIterable {
+    case development = "development"
     case sandbox = "sandbox"
     case production = "production"
     
     public var baseURL: String {
         switch self {
+        case .development:
+            return "https://graph-ql-dev.reachu.io"
         case .sandbox:
             return "https://api-sandbox.reachu.io"
         case .production:
