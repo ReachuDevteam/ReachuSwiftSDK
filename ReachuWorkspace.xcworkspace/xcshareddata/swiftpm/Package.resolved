@@ -1,5 +1,5 @@
 {
-  "originHash" : "a0b27b253d0463c8cc30432f01cb6b2b7fdf8a4b988f4f775b061495d8cb585f",
+  "originHash" : "c059e517836323ce3edf59554cb1cf504904b73eeb28bb325fe88c1ba6266cb5",
   "pins" : [
     {
       "identity" : "apollo-ios",
@@ -42,8 +42,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/stripe/stripe-ios",
       "state" : {
-        "revision" : "c91d1e276b896e64116d2c1d153e4c47e912261c",
-        "version" : "24.24.1"
+        "revision" : "9d6c842c11752ecbb555bafd2b05d53ab6712e95",
+        "version" : "24.24.2"
       }
     }
   ],
