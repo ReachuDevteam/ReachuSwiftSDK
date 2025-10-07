@@ -36,9 +36,6 @@ public struct RCheckoutOverlay: View {
     @State private var country = "United States"
     @State private var zip = ""
 
-    // Shipping Information
-    @State private var selectedShippingOption: ShippingOption = .standard
-
     // Payment Information
     @State private var selectedPaymentMethod: PaymentMethod = .stripe
     @State private var acceptsTerms = true
@@ -68,7 +65,8 @@ public struct RCheckoutOverlay: View {
         [
             firstName, lastName, email, phone, phoneCountryCode,
             address1, address2, city, province, country, zip,
-            selectedShippingOption.rawValue, selectedPaymentMethod.rawValue,
+            cartManager.items.compactMap { $0.shippingId }.joined(separator: ","),
+            selectedPaymentMethod.rawValue,
             String(acceptsTerms), String(acceptsPurchaseConditions),
             String(appliedDiscount), cartManager.currency,
         ].joined(separator: "|")
@@ -89,40 +87,6 @@ public struct RCheckoutOverlay: View {
             case .review: return "Review"
             case .success: return "Complete"
             case .error: return "Error"
-            }
-        }
-    }
-
-    // MARK: - Shipping Options
-    public enum ShippingOption: String, CaseIterable {
-        case standard = "standard"
-        case express = "express"
-
-        var displayName: String {
-            switch self {
-            case .standard: return "Free - Standard"
-            case .express: return "Express Shipping"
-            }
-        }
-
-        var description: String {
-            switch self {
-            case .standard: return "Delivery by Jun 28"
-            case .express: return "Delivery by Jun 25"
-            }
-        }
-
-        var price: Double {
-            switch self {
-            case .standard: return 0.0
-            case .express: return 9.99
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .standard: return "shippingbox"
-            case .express: return "airplane"
             }
         }
     }
@@ -366,8 +330,11 @@ public struct RCheckoutOverlay: View {
                             value: isEditingAddress
                         )
 
-                        // Shipping Options (smaller)
-                        compactShippingOptionsView
+                        // Shipping Options Selection
+                        shippingOptionsSelectionView
+
+                        // Shipping Summary
+                        shippingSummaryView
                     }
 
                     // 3. ORDER SUMMARY SECTION (at bottom)
@@ -383,6 +350,9 @@ public struct RCheckoutOverlay: View {
 
                     Spacer(minLength: 100)
                 }
+            }
+            .task {
+                await cartManager.refreshShippingOptions()
             }
 
             // Bottom Button - Full Width
@@ -410,7 +380,8 @@ public struct RCheckoutOverlay: View {
                         checkoutDraft.countryName = country
                         checkoutDraft.zip = zip
                         checkoutDraft.shippingOptionRaw =
-                            selectedShippingOption.rawValue
+                            cartManager.items.compactMap(\.shippingId)
+                            .joined(separator: ",")
                         checkoutDraft.paymentMethodRaw =
                             selectedPaymentMethod.rawValue
                         checkoutDraft.acceptsTerms = acceptsTerms
@@ -1195,7 +1166,8 @@ public struct RCheckoutOverlay: View {
         checkoutDraft.countryName = country
         checkoutDraft.zip = zip
 
-        checkoutDraft.shippingOptionRaw = selectedShippingOption.rawValue
+        checkoutDraft.shippingOptionRaw =
+            cartManager.items.compactMap(\.shippingId).joined(separator: ",")
         checkoutDraft.paymentMethodRaw = selectedPaymentMethod.rawValue
         checkoutDraft.acceptsTerms = acceptsTerms
         checkoutDraft.acceptsPurchaseConditions = acceptsPurchaseConditions
@@ -2100,11 +2072,7 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text(
-                        selectedShippingOption.price > 0
-                            ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))"
-                            : "Free"
-                    )
+                    Text(shippingAmountText)
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
                 }
@@ -2240,91 +2208,100 @@ extension RCheckoutOverlay {
         .padding(.horizontal, ReachuSpacing.lg)
     }
 
-    private var shippingOptionsView: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            Text("Shipping")
-                .font(ReachuTypography.bodyBold)
-                .foregroundColor(ReachuColors.textPrimary)
-
-            ForEach(ShippingOption.allCases, id: \.self) { option in
-                ShippingOptionRow(
-                    option: option,
-                    isSelected: selectedShippingOption == option
-                ) {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        selectedShippingOption = option
-                    }
-                }
-            }
-        }
-        .padding(.horizontal, ReachuSpacing.lg)
-    }
-
-    // Compact shipping options for address step
-    private var compactShippingOptionsView: some View {
+    // Shipping summary sourced from CartManager
+    private var shippingSummaryView: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             Text("Shipping")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(ReachuColors.textPrimary)
                 .padding(.horizontal, ReachuSpacing.lg)
 
-            VStack(spacing: ReachuSpacing.xs) {
-                ForEach(ShippingOption.allCases, id: \.self) { option in
-                    Button(action: {
-                        selectedShippingOption = option
-                    }) {
-                        HStack(spacing: ReachuSpacing.sm) {
-                            // Selection indicator
-                            Image(
-                                systemName: selectedShippingOption == option
-                                    ? "checkmark.circle.fill" : "circle"
-                            )
-                            .foregroundColor(
-                                selectedShippingOption == option
-                                    ? ReachuColors.primary
-                                    : ReachuColors.textSecondary
-                            )
-                            .font(.system(size: 16))
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                HStack {
+                    Text("Total shipping")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(ReachuColors.textPrimary)
 
-                            // Shipping icon (smaller)
-                            Image(systemName: option.icon)
-                                .foregroundColor(ReachuColors.primary)
-                                .font(.system(size: 14))
-                                .frame(width: 20)
+                    Spacer()
 
-                            // Shipping details
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(option.displayName)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(ReachuColors.textPrimary)
-
-                                Text(option.description)
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundColor(ReachuColors.textSecondary)
-                            }
-
-                            Spacer()
-
-                            // Price
-                            Text(
-                                option.price > 0
-                                    ? "$\(String(format: "%.2f", option.price))"
-                                    : ""
-                            )
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(ReachuColors.textPrimary)
-                        }
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.vertical, ReachuSpacing.sm)
-                        .background(
-                            selectedShippingOption == option
-                                ? ReachuColors.primary.opacity(0.1)
-                                : Color.clear
-                        )
-                        .cornerRadius(ReachuBorderRadius.small)
-                    }
-                    .buttonStyle(PlainButtonStyle())
+                    Text(shippingAmountText)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
                 }
+
+                if cartManager.items.contains(where: {
+                    ($0.shippingName?.isEmpty == false) || $0.shippingAmount != nil
+                }) {
+                    ForEach(cartManager.items) { item in
+                        if (item.shippingName?.isEmpty == false) || item.shippingAmount != nil {
+                            HStack(alignment: .top, spacing: ReachuSpacing.sm) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    if let name = item.shippingName, !name.isEmpty {
+                                        Text(name)
+                                            .font(.system(size: 13, weight: .medium))
+                                            .foregroundColor(ReachuColors.textPrimary)
+                                    }
+
+                                    Text(item.title)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(ReachuColors.textSecondary)
+                                        .lineLimit(1)
+                                }
+
+                                Spacer()
+
+                                Text(
+                                    formattedShipping(
+                                        amount: item.shippingAmount,
+                                        currency: item.shippingCurrency
+                                    )
+                                )
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                            }
+                            .padding(.vertical, ReachuSpacing.xs)
+                        }
+                    }
+                } else {
+                    Text("Shipping is calculated automatically for this order.")
+                        .font(.system(size: 12))
+                        .foregroundColor(ReachuColors.textSecondary)
+                }
+            }
+            .padding(.horizontal, ReachuSpacing.lg)
+            .padding(.vertical, ReachuSpacing.sm)
+            .background(ReachuColors.surfaceSecondary)
+            .cornerRadius(ReachuBorderRadius.medium)
+            .padding(.horizontal, ReachuSpacing.lg)
+        }
+    }
+
+    private var shippingOptionsSelectionView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+            if cartManager.items.contains(where: { !$0.availableShippings.isEmpty }) {
+                Text("Shipping Options")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .padding(.horizontal, ReachuSpacing.lg)
+
+                VStack(spacing: ReachuSpacing.md) {
+                    ForEach(cartManager.items) { item in
+                        if !item.availableShippings.isEmpty {
+                            ItemShippingOptionsView(
+                                item: item,
+                                onSelect: { option in
+                                    cartManager.setShippingOption(for: item.id, optionId: option.id)
+                                }
+                            )
+                        }
+                    }
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+            } else {
+                Text("No shipping methods available for this order yet.")
+                    .font(.system(size: 12))
+                    .foregroundColor(ReachuColors.textSecondary)
+                    .padding(.horizontal, ReachuSpacing.lg)
             }
         }
     }
@@ -2355,11 +2332,7 @@ extension RCheckoutOverlay {
 
                 Spacer()
 
-                Text(
-                    selectedShippingOption.price > 0
-                        ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))"
-                        : "Free"
-                )
+                Text(shippingAmountText)
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(ReachuColors.textPrimary)
             }
@@ -2378,7 +2351,7 @@ extension RCheckoutOverlay {
                 Spacer()
 
                 Text(
-                    "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal + selectedShippingOption.price))"
+                    "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal + shippingAmount))"
                 )
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(ReachuColors.primary)
@@ -2464,14 +2437,10 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text(
-                        selectedShippingOption.price > 0
-                            ? "\(cartManager.currency) \(String(format: "%.2f", selectedShippingOption.price))"
-                            : "Free"
-                    )
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(ReachuColors.textPrimary)
-                }
+                Text(shippingAmountText)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundColor(ReachuColors.textPrimary)
+            }
 
                 // Discount (if applied)
                 if appliedDiscount > 0 {
@@ -2529,10 +2498,101 @@ extension RCheckoutOverlay {
 
     // MARK: - Helper Functions
 
-    private var finalTotal: Double {
-        return cartManager.cartTotal + selectedShippingOption.price
-            - appliedDiscount
+    private var shippingAmount: Double {
+        cartManager.shippingTotal
     }
+
+    private var shippingCurrencySymbol: String {
+        let symbol = cartManager.shippingCurrency
+        return symbol.isEmpty ? cartManager.currency : symbol
+    }
+
+    private var shippingAmountText: String {
+        shippingAmount > 0
+            ? "\(shippingCurrencySymbol) \(String(format: "%.2f", shippingAmount))"
+            : "Free"
+    }
+
+    private var finalTotal: Double {
+        return cartManager.cartTotal + shippingAmount - appliedDiscount
+    }
+
+private func formattedShipping(amount: Double?, currency: String?) -> String {
+    guard let amount = amount else { return "Free" }
+
+    let symbol = (currency?.isEmpty == false) ? currency! : shippingCurrencySymbol
+    return amount > 0
+        ? "\(symbol) \(String(format: "%.2f", amount))"
+        : "Free"
+}
+
+fileprivate struct ItemShippingOptionsView: View {
+    let item: CartManager.CartItem
+    let onSelect: (CartManager.CartItem.ShippingOption) -> Void
+
+    private var title: String { item.title }
+    private var selectedId: String? { item.shippingId }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(ReachuColors.textPrimary)
+
+            VStack(spacing: ReachuSpacing.xs) {
+                ForEach(item.availableShippings) { option in
+                    Button {
+                        onSelect(option)
+                    } label: {
+                        HStack(spacing: ReachuSpacing.sm) {
+                            Image(
+                                systemName: selectedId == option.id
+                                    ? "checkmark.circle.fill"
+                                    : "circle"
+                            )
+                            .foregroundColor(
+                                selectedId == option.id
+                                    ? ReachuColors.primary
+                                    : ReachuColors.textSecondary
+                            )
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(option.name)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(ReachuColors.textPrimary)
+
+                                if let description = option.description, !description.isEmpty {
+                                    Text(description)
+                                        .font(.system(size: 12))
+                                        .foregroundColor(ReachuColors.textSecondary)
+                                }
+                            }
+
+                            Spacer()
+
+                            Text(
+                                option.amount > 0
+                                    ? "\(option.currency) \(String(format: "%.2f", option.amount))"
+                                    : "Free"
+                            )
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(ReachuColors.textPrimary)
+                        }
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(
+                            selectedId == option.id
+                                ? ReachuColors.primary.opacity(0.08)
+                                : ReachuColors.surfaceSecondary
+                        )
+                        .cornerRadius(ReachuBorderRadius.medium)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+    }
+}
 
     private func applyDiscountCode() {
         let code = discountCode.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -2737,69 +2797,6 @@ struct CountryPicker: View {
                     .stroke(ReachuColors.border, lineWidth: 1)
             )
         }
-    }
-}
-
-struct ShippingOptionRow: View {
-    let option: RCheckoutOverlay.ShippingOption
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: ReachuSpacing.md) {
-                // Selection Circle
-                ZStack {
-                    Circle()
-                        .stroke(
-                            isSelected
-                                ? ReachuColors.primary : ReachuColors.border,
-                            lineWidth: 2
-                        )
-                        .frame(width: 20, height: 20)
-
-                    if isSelected {
-                        Circle()
-                            .fill(ReachuColors.primary)
-                            .frame(width: 12, height: 12)
-                    }
-                }
-
-                // Shipping Icon
-                Image(systemName: option.icon)
-                    .font(.title3)
-                    .foregroundColor(ReachuColors.primary)
-                    .frame(width: 25)
-
-                // Shipping Details
-                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    HStack {
-                        Text(option.displayName)
-                            .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textPrimary)
-
-                        Spacer()
-
-                        if option.price > 0 {
-                            Text("$\(String(format: "%.2f", option.price))")
-                                .font(ReachuTypography.bodyBold)
-                                .foregroundColor(ReachuColors.textPrimary)
-                        }
-                    }
-
-                    Text(option.description)
-                        .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
-                }
-            }
-            .padding(.vertical, ReachuSpacing.sm)
-        }
-        .buttonStyle(PlainButtonStyle())
-        .scaleEffect(isSelected ? 1.02 : 1.0)
-        .animation(
-            .spring(response: 0.3, dampingFraction: 0.7),
-            value: isSelected
-        )
     }
 }
 

@@ -186,11 +186,22 @@ struct ProductCatalogDemoView: View {
     @EnvironmentObject var cartManager: CartManager
     @Environment(\.colorScheme) private var colorScheme
     @State private var isSelectedVariant: RProductCard.Variant = .grid
-    private let products = MockDataProvider.shared.sampleProducts
 
     // Colors based on theme and color scheme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
+    }
+
+    private var products: [Product] {
+        cartManager.products
+    }
+
+    private var isLoadingProducts: Bool {
+        cartManager.isProductsLoading
+    }
+
+    private var productsErrorMessage: String? {
+        cartManager.productsErrorMessage
     }
 
     var body: some View {
@@ -225,78 +236,50 @@ struct ProductCatalogDemoView: View {
             // Products Display
             ScrollView {
                 Group {
-                    switch isSelectedVariant {
-                    case .grid:
-                        LazyVGrid(
-                            columns: [
-                                GridItem(.flexible()),
-                                GridItem(.flexible()),
-                            ], spacing: ReachuSpacing.md
-                        ) {
-                            ForEach(products) { product in
-                                RProductCard(
-                                    product: product,
-                                    variant: .grid,
-                                    onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: {
-                                        Task {
-                                            await cartManager.addProduct(product)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(ReachuSpacing.lg)
+                    if isLoadingProducts && products.isEmpty {
+                        ProgressView("Loading products…")
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .tint(adaptiveColors.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(ReachuSpacing.lg)
+                    } else if let errorMessage = productsErrorMessage {
+                        VStack(spacing: ReachuSpacing.sm) {
+                            Text("Unable to load products")
+                                .font(ReachuTypography.bodyBold)
+                                .foregroundColor(adaptiveColors.textPrimary)
 
-                    case .list:
-                        LazyVStack(spacing: ReachuSpacing.sm) {
-                            ForEach(products) { product in
-                                RProductCard(
-                                    product: product,
-                                    variant: .list,
-                                    onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: {
-                                        Task {
-                                            await cartManager.addProduct(product)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(ReachuSpacing.lg)
+                            Text(errorMessage)
+                                .font(ReachuTypography.caption1)
+                                .foregroundColor(adaptiveColors.textSecondary)
+                                .multilineTextAlignment(.center)
 
-                    case .hero:
-                        LazyVStack(spacing: ReachuSpacing.xl) {
-                            ForEach(products) { product in
-                                RProductCard(
-                                    product: product,
-                                    variant: .hero,
-                                    showDescription: true,
-                                    onTap: { print("Tapped: \(product.title)") },
-                                    onAddToCart: {
-                                        Task {
-                                            await cartManager.addProduct(product)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        .padding(ReachuSpacing.lg)
-
-                    case .minimal:
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: ReachuSpacing.sm) {
-                                ForEach(products) { product in
-                                    RProductCard(
-                                        product: product,
-                                        variant: .minimal,
-                                        onTap: { print("Tapped: \(product.title)") }
-                                    )
+                            Button("Retry") {
+                                Task {
+                                    await cartManager.reloadProducts()
                                 }
                             }
-                            .padding(.horizontal, ReachuSpacing.lg)
+                            .font(ReachuTypography.caption1)
+                            .padding(.horizontal, ReachuSpacing.md)
+                            .padding(.vertical, ReachuSpacing.xs)
+                            .background(adaptiveColors.primary.opacity(0.12))
+                            .cornerRadius(ReachuBorderRadius.circle)
                         }
-                        .padding(.vertical, ReachuSpacing.lg)
+                        .padding(ReachuSpacing.lg)
+                        .frame(maxWidth: .infinity)
+                        .background(adaptiveColors.surface)
+                        .cornerRadius(ReachuBorderRadius.large)
+                        .shadow(color: adaptiveColors.textPrimary.opacity(0.08), radius: 8, x: 0, y: 2)
+                    } else if products.isEmpty {
+                        Text("No products available right now.")
+                            .font(ReachuTypography.body)
+                            .foregroundColor(adaptiveColors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(ReachuSpacing.lg)
+                            .background(adaptiveColors.surface)
+                            .cornerRadius(ReachuBorderRadius.large)
+                            .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 6, x: 0, y: 2)
+                    } else {
+                        variantView
                     }
                 }
             }
@@ -304,6 +287,86 @@ struct ProductCatalogDemoView: View {
         .navigationTitle("Product Cards")
         .navigationBarTitleDisplayMode(.inline)
         .background(adaptiveColors.background)
+        .task {
+            await cartManager.loadProductsIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private var variantView: some View {
+        switch isSelectedVariant {
+        case .grid:
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible()),
+                ], spacing: ReachuSpacing.md
+            ) {
+                ForEach(products) { product in
+                    RProductCard(
+                        product: product,
+                        variant: .grid,
+                        onTap: { print("Tapped: \(product.title)") },
+                        onAddToCart: {
+                            Task {
+                                await cartManager.addProduct(product)
+                            }
+                        }
+                    )
+                }
+            }
+            .padding(ReachuSpacing.lg)
+
+        case .list:
+            LazyVStack(spacing: ReachuSpacing.sm) {
+                ForEach(products) { product in
+                    RProductCard(
+                        product: product,
+                        variant: .list,
+                        onTap: { print("Tapped: \(product.title)") },
+                        onAddToCart: {
+                            Task {
+                                await cartManager.addProduct(product)
+                            }
+                        }
+                    )
+                }
+            }
+            .padding(ReachuSpacing.lg)
+
+        case .hero:
+            LazyVStack(spacing: ReachuSpacing.xl) {
+                ForEach(products) { product in
+                    RProductCard(
+                        product: product,
+                        variant: .hero,
+                        showDescription: true,
+                        onTap: { print("Tapped: \(product.title)") },
+                        onAddToCart: {
+                            Task {
+                                await cartManager.addProduct(product)
+                            }
+                        }
+                    )
+                }
+            }
+            .padding(ReachuSpacing.lg)
+
+        case .minimal:
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: ReachuSpacing.sm) {
+                    ForEach(products) { product in
+                        RProductCard(
+                            product: product,
+                            variant: .minimal,
+                            onTap: { print("Tapped: \(product.title)") }
+                        )
+                    }
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
+            }
+            .padding(.vertical, ReachuSpacing.lg)
+        }
     }
 }
 
@@ -624,11 +687,22 @@ struct ProductSliderDemoView: View {
     @EnvironmentObject var cartManager: CartManager
     @Environment(\.colorScheme) private var colorScheme
     @State private var isSelectedLayout: ProductSliderLayout = .featured
-    private let products = MockDataProvider.shared.sampleProducts
 
     // Colors based on theme and color scheme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
+    }
+
+    private var products: [Product] {
+        cartManager.products
+    }
+
+    private var isLoadingProducts: Bool {
+        cartManager.isProductsLoading
+    }
+
+    private var productsErrorMessage: String? {
+        cartManager.productsErrorMessage
     }
 
     var body: some View {
@@ -668,7 +742,51 @@ struct ProductSliderDemoView: View {
             // Selected Layout Display
             ScrollView {
                 VStack(spacing: ReachuSpacing.xl) {
-                    selectedSliderView
+                    if isLoadingProducts && products.isEmpty {
+                        ProgressView("Loading products…")
+                            .progressViewStyle(CircularProgressViewStyle())
+                            .tint(adaptiveColors.primary)
+                            .frame(maxWidth: .infinity)
+                            .padding(ReachuSpacing.lg)
+                    } else if let errorMessage = productsErrorMessage {
+                        VStack(spacing: ReachuSpacing.sm) {
+                            Text("Unable to load products")
+                                .font(ReachuTypography.bodyBold)
+                                .foregroundColor(adaptiveColors.textPrimary)
+
+                            Text(errorMessage)
+                                .font(ReachuTypography.caption1)
+                                .foregroundColor(adaptiveColors.textSecondary)
+                                .multilineTextAlignment(.center)
+
+                            Button("Retry") {
+                                Task {
+                                    await cartManager.reloadProducts()
+                                }
+                            }
+                            .font(ReachuTypography.caption1)
+                            .padding(.horizontal, ReachuSpacing.md)
+                            .padding(.vertical, ReachuSpacing.xs)
+                            .background(adaptiveColors.primary.opacity(0.12))
+                            .cornerRadius(ReachuBorderRadius.circle)
+                        }
+                        .padding(ReachuSpacing.lg)
+                        .frame(maxWidth: .infinity)
+                        .background(adaptiveColors.surface)
+                        .cornerRadius(ReachuBorderRadius.large)
+                        .shadow(color: adaptiveColors.textPrimary.opacity(0.08), radius: 8, x: 0, y: 2)
+                    } else if products.isEmpty {
+                        Text("No products available right now.")
+                            .font(ReachuTypography.body)
+                            .foregroundColor(adaptiveColors.textSecondary)
+                            .frame(maxWidth: .infinity)
+                            .padding(ReachuSpacing.lg)
+                            .background(adaptiveColors.surface)
+                            .cornerRadius(ReachuBorderRadius.large)
+                            .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 6, x: 0, y: 2)
+                    } else {
+                        selectedSliderView
+                    }
                 }
                 .padding(.vertical, ReachuSpacing.lg)
             }
@@ -676,6 +794,9 @@ struct ProductSliderDemoView: View {
         .navigationTitle("Product Sliders")
         .navigationBarTitleDisplayMode(.inline)
         .background(adaptiveColors.background)
+        .task {
+            await cartManager.loadProductsIfNeeded()
+        }
     }
 
     @ViewBuilder
@@ -684,7 +805,7 @@ struct ProductSliderDemoView: View {
         case .showcase:
             RProductSlider(
                 title: "Premium Collection",
-                products: Array(products.prefix(3)),
+                products: productSlice(3),
                 layout: .showcase,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -703,7 +824,7 @@ struct ProductSliderDemoView: View {
         case .wide:
             RProductSlider(
                 title: "Detailed Browse",
-                products: Array(products.prefix(4)),
+                products: productSlice(4),
                 layout: .wide,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -722,7 +843,7 @@ struct ProductSliderDemoView: View {
         case .featured:
             RProductSlider(
                 title: "Featured Products",
-                products: Array(products.prefix(5)),
+                products: productSlice(5),
                 layout: .featured,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -741,7 +862,7 @@ struct ProductSliderDemoView: View {
         case .cards:
             RProductSlider(
                 title: "Electronics",
-                products: Array(products.prefix(6)),
+                products: productSlice(6),
                 layout: .cards,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -760,7 +881,7 @@ struct ProductSliderDemoView: View {
         case .compact:
             RProductSlider(
                 title: "You Might Like",
-                products: Array(products.prefix(8)),
+                products: productSlice(8),
                 layout: .compact,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -774,7 +895,7 @@ struct ProductSliderDemoView: View {
         case .micro:
             RProductSlider(
                 title: "Related Items",
-                products: Array(products.prefix(12)),
+                products: productSlice(12),
                 layout: .micro,
                 showSeeAll: true,
                 onProductTap: { product in
@@ -785,6 +906,10 @@ struct ProductSliderDemoView: View {
                 }
             )
         }
+    }
+
+    private func productSlice(_ limit: Int) -> [Product] {
+        Array(products.prefix(limit))
     }
 
     @ViewBuilder

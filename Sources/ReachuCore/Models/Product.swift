@@ -15,7 +15,7 @@ public struct Product: Identifiable, Codable {
     public let variants: [Variant]
     public let barcode: String?
     public let options: [Option]?
-    public let categories: [Category]?
+    public let categories: [_Category]?
     public let images: [ProductImage]
     public let product_shipping: [ProductShipping]?
     public let supplier: String
@@ -25,7 +25,7 @@ public struct Product: Identifiable, Codable {
     public let options_enabled: Bool
     public let digital: Bool
     public let origin: String
-    public let `return`: ReturnInfo? // 'return' is a reserved keyword, use backticks
+    public let `return`: ReturnInfo?  // 'return' is a reserved keyword, use backticks
 
     public init(
         id: Int,
@@ -39,7 +39,7 @@ public struct Product: Identifiable, Codable {
         variants: [Variant] = [],
         barcode: String? = nil,
         options: [Option]? = nil,
-        categories: [Category]? = nil,
+        categories: [_Category]? = nil,
         images: [ProductImage] = [],
         product_shipping: [ProductShipping]? = nil,
         supplier: String,
@@ -85,7 +85,7 @@ public struct Price: Codable, Equatable {
     public let tax_rate: Float?
     public let compare_at: Float?
     public let compare_at_incl_taxes: Float?
-    
+
     public init(
         amount: Float,
         currency_code: String,
@@ -103,12 +103,12 @@ public struct Price: Codable, Equatable {
         self.compare_at = compare_at
         self.compare_at_incl_taxes = compare_at_incl_taxes
     }
-    
+
     /// Formatted display string for the price
     public var displayAmount: String {
         "\(currency_code) \(String(format: "%.2f", amount))"
     }
-    
+
     /// Formatted display string for compare at price
     public var displayCompareAtAmount: String? {
         if let compareAt = compare_at {
@@ -175,7 +175,7 @@ public struct Option: Codable {
     public let id: String
     public let name: String
     public let order: Int
-    public let values: String // This might be an array of strings in real data, adjust if needed
+    public let values: String  // This might be an array of strings in real data, adjust if needed
 
     public init(id: String, name: String, order: Int, values: String) {
         self.id = id
@@ -186,7 +186,7 @@ public struct Option: Codable {
 }
 
 /// Product category information
-public struct Category: Codable {
+public struct _Category: Codable {
     public let id: Int
     public let name: String
 
@@ -202,7 +202,7 @@ public struct ProductShipping: Codable {
     public let name: String
     public let description: String?
     public let custom_price_enabled: Bool
-    public let `default`: Bool // 'default' is a reserved keyword
+    public let `default`: Bool  // 'default' is a reserved keyword
     public let shipping_country: [ShippingCountry]?
 
     public init(
