@@ -78,7 +78,8 @@ public struct RProductSlider: View {
     
     // MARK: - Properties
     private let title: String?
-    private let products: [Product]
+    private let manualProducts: [Product]?  // Products passed manually
+    private let categoryId: Int?  // Optional category filter for auto-loading
     private let layout: Layout
     private let showSeeAll: Bool
     private let maxItems: Int?
@@ -86,9 +87,11 @@ public struct RProductSlider: View {
     private let onAddToCart: ((Product) -> Void)?
     private let onSeeAllTap: (() -> Void)?
     
+    // ViewModel for automatic product loading
+    @StateObject private var viewModel = RProductSliderViewModel()
+    
     // Environment for adaptive colors
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
-    
     
     // Animation states
     @State private var addedProductId: Int?
@@ -98,6 +101,7 @@ public struct RProductSlider: View {
     public init(
         title: String? = nil,
         products: [Product]? = nil,
+        categoryId: Int? = nil,
         layout: Layout = .cards,
         showSeeAll: Bool = false,
         maxItems: Int? = nil,
@@ -106,12 +110,8 @@ public struct RProductSlider: View {
         onSeeAllTap: (() -> Void)? = nil
     ) {
         self.title = title
-        // Use provided products or fallback to mock data for demos/testing
-        #if DEBUG
-        self.products = products ?? MockDataProvider.shared.sampleProducts
-        #else
-        self.products = products ?? []
-        #endif
+        self.manualProducts = products
+        self.categoryId = categoryId
         self.layout = layout
         self.showSeeAll = showSeeAll
         self.maxItems = maxItems
@@ -120,8 +120,59 @@ public struct RProductSlider: View {
         self.onSeeAllTap = onSeeAllTap
     }
     
+    // MARK: - Computed Properties
+    
+    /// Adaptive colors based on current color scheme
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
+    /// Products to display - either manual or from ViewModel
+    private var products: [Product] {
+        if let manual = manualProducts {
+            return manual
+        }
+        return viewModel.products
+    }
+    
+    /// Should show loading state
+    private var shouldShowLoading: Bool {
+        manualProducts == nil && viewModel.isLoading && viewModel.products.isEmpty
+    }
+    
+    /// Should show error state
+    private var shouldShowError: Bool {
+        manualProducts == nil && viewModel.errorMessage != nil && viewModel.products.isEmpty
+    }
+    
     // MARK: - Body
     public var body: some View {
+        Group {
+            if shouldShowLoading {
+                loadingView
+            } else if shouldShowError {
+                errorView
+            } else if !products.isEmpty {
+                productSliderContent
+            } else {
+                // Empty placeholder to ensure onAppear fires
+                Color.clear.frame(height: 1)
+            }
+        }
+        .onAppear {
+            // Only auto-load if no manual products provided
+            if manualProducts == nil {
+                print("🎯 [RProductSlider] onAppear triggered, loading products...")
+                Task {
+                    await viewModel.loadProducts(categoryId: categoryId)
+                }
+            }
+        }
+    }
+    
+    // MARK: - Content Views
+    
+    private var productSliderContent: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
             // Header with title and see all button
             if let title = title {
@@ -140,7 +191,54 @@ public struct RProductSlider: View {
             .scaleEffect(sliderScale)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
         }
-        
+    }
+    
+    private var loadingView: some View {
+        VStack(spacing: ReachuSpacing.md) {
+            ProgressView()
+                .tint(adaptiveColors.primary)
+            Text("Loading products...")
+                .font(ReachuTypography.caption1)
+                .foregroundColor(adaptiveColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, ReachuSpacing.xl)
+    }
+    
+    private var errorView: some View {
+        VStack(spacing: ReachuSpacing.sm) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.system(size: 32))
+                .foregroundColor(adaptiveColors.error)
+            
+            Text("Unable to load products")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(adaptiveColors.textPrimary)
+            
+            if let error = viewModel.errorMessage {
+                Text(error)
+                    .font(ReachuTypography.caption1)
+                    .foregroundColor(adaptiveColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, ReachuSpacing.lg)
+            }
+            
+            Button {
+                Task {
+                    await viewModel.reload(categoryId: categoryId)
+                }
+            } label: {
+                Text("Retry")
+                    .font(ReachuTypography.caption1.weight(.semibold))
+                    .foregroundColor(adaptiveColors.primary)
+                    .padding(.horizontal, ReachuSpacing.md)
+                    .padding(.vertical, ReachuSpacing.xs)
+                    .background(adaptiveColors.primary.opacity(0.1))
+                    .cornerRadius(ReachuBorderRadius.medium)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, ReachuSpacing.xl)
     }
     
     // MARK: - Header View

@@ -1343,7 +1343,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 // MARK: - Product Mapping Helpers
 
 extension ProductDto {
-    fileprivate func toDomainProduct() -> Product {
+    public func toDomainProduct() -> Product {
         Product(
             id: id,
             title: title,

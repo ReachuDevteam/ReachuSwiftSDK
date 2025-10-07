@@ -42,9 +42,9 @@ struct HomeView: View {
                                 .padding(.vertical, TV2Theme.Spacing.sm)
                             }
                             
-                            // Products Section for Cart Testing
+                            // Products Section - Automatically loads from API
                             RProductSlider(
-                                title: "🛍️ Test Products",
+                                title: "🛍️ Products",
                                 layout: .cards,
                                 maxItems: 6
                             )

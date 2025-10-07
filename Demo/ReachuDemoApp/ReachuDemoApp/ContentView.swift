@@ -39,6 +39,36 @@ struct ContentView: View {
                     }
                     .padding(.top, ReachuSpacing.xl)
 
+                    // NEW: Auto-Loading Product Slider Demo
+                    VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                        Text("🚀 Auto-Loading Products")
+                            .font(ReachuTypography.headline)
+                            .foregroundColor(adaptiveColors.textPrimary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        Text("Products load automatically from the API - no manual code needed!")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(adaptiveColors.textSecondary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Automatically loads products from API
+                        RProductSlider(
+                            title: "Featured Products",
+                            layout: .cards,
+                            showSeeAll: true,
+                            onProductTap: { product in
+                                print("Tapped: \(product.title)")
+                            },
+                            onAddToCart: { product in
+                                Task {
+                                    await cartManager.addProduct(product)
+                                }
+                            }
+                        )
+                        .environmentObject(cartManager)
+                    }
+                    .padding(.vertical, ReachuSpacing.md)
+
                     // Demo Sections
                     VStack(spacing: ReachuSpacing.lg) {
                         DemoSection(
