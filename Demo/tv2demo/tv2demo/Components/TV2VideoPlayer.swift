@@ -64,6 +64,11 @@ struct TV2VideoPlayer: View {
                 
                 Spacer()
             }
+            
+            // Chat Overlay (Twitch-style, horizontal layout)
+            if isLandscape {
+                TV2ChatOverlay()
+            }
         }
         .preferredColorScheme(.dark)
         .statusBar(hidden: true) // Hide status bar for immersive experience
