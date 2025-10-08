@@ -24,8 +24,8 @@ public class TipioApiClient {
         self.init(
             //baseUrl: "https://api.tipio.no",
             //No acepta localhost, hay que buscar la IP de tu Mac
-            baseUrl: "http://192.168.1.3:8000",
-            apiKey: "your-tipio-api-key"
+            baseUrl: "https://stg-dev-microservices.tipioapp.com",
+            apiKey: "DKCSRFE-1HA439V-GPK24GY-6CT93HB"
         )
     }
     
@@ -59,9 +59,9 @@ public class TipioApiClient {
     /// - Returns: Array of active TipioLiveStream objects
     public func getActiveLiveStreams() async throws -> [TipioLiveStream] {
         // Real url
-        //let endpoint = "/api/livestreams/active"
+        let endpoint = "/api/stg/livestreams/active"
         // To localhost
-        let endpoint = "/active"
+        //let endpoint = "/active"
         let url = try buildURL(endpoint: endpoint)
         
         print("🔗 [Tipio] Fetching active livestreams")
@@ -175,7 +175,7 @@ public class TipioApiClient {
         var request = URLRequest(url: url)
         request.httpMethod = method
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("\(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("ReachuSDK/1.0", forHTTPHeaderField: "User-Agent")
         
         if let body = body {
