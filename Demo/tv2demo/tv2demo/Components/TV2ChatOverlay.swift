@@ -1,34 +1,84 @@
 import SwiftUI
 import Combine
 
-/// Twitch-style chat overlay for TV2 match viewing
-/// Features horizontal layout, auto-hide, and simulated messages
+/// Twitch/Kick-style sliding chat panel that splits screen with video
+/// Video shrinks to 60% top, chat takes 40% bottom
+/// Works in both portrait and landscape
 struct TV2ChatOverlay: View {
     @StateObject private var chatManager = ChatManager()
     @State private var isExpanded = false
-    @State private var showChat = true
+    @State private var dragOffset: CGFloat = 0
+    
+    private let expandedHeight: CGFloat = 0.4 // 40% of screen
+    private let collapsedHeight: CGFloat = 60
     
     var body: some View {
-        VStack {
-            Spacer()
-            
-            if showChat {
-                HStack(spacing: 0) {
-                    // Chat messages area
-                    if isExpanded {
-                        chatMessagesView
-                            .frame(width: 350)
-                            .transition(.move(edge: .leading).combined(with: .opacity))
-                    }
+        GeometryReader { geometry in
+            VStack(spacing: 0) {
+                Spacer()
+                
+                // Chat Panel
+                VStack(spacing: 0) {
+                    // Drag Handle
+                    dragHandle
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    let translation = value.translation.height
+                                    if isExpanded {
+                                        // Swiping down when expanded
+                                        dragOffset = max(0, translation)
+                                    } else {
+                                        // Swiping up when collapsed
+                                        dragOffset = min(0, translation)
+                                    }
+                                }
+                                .onEnded { value in
+                                    let threshold: CGFloat = 50
+                                    let velocity = value.predictedEndTranslation.height
+                                    
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                        if isExpanded {
+                                            if dragOffset > threshold || velocity > 500 {
+                                                isExpanded = false
+                                            }
+                                        } else {
+                                            if dragOffset < -threshold || velocity < -500 {
+                                                isExpanded = true
+                                            }
+                                        }
+                                        dragOffset = 0
+                                    }
+                                }
+                        )
                     
-                    // Toggle button
-                    chatToggleButton
+                    // Chat Content
+                    if isExpanded {
+                        chatContent
+                            .frame(height: geometry.size.height * expandedHeight - collapsedHeight)
+                    }
                 }
-                .padding(.bottom, 80) // Above tab bar
-                .padding(.trailing, 16)
+                .frame(height: isExpanded ? geometry.size.height * expandedHeight : collapsedHeight)
+                .offset(y: dragOffset)
+                .background(
+                    RoundedRectangle(cornerRadius: isExpanded ? 0 : 20)
+                        .fill(Color.black.opacity(0.95))
+                        .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: -5)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: isExpanded ? 0 : 20)
+                        .stroke(
+                            LinearGradient(
+                                colors: [TV2Theme.Colors.primary.opacity(0.3), TV2Theme.Colors.secondary.opacity(0.3)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
             }
+            .ignoresSafeArea(edges: .bottom)
         }
-        .frame(maxWidth: .infinity, alignment: .trailing)
         .onAppear {
             chatManager.startSimulation()
         }
@@ -37,27 +87,75 @@ struct TV2ChatOverlay: View {
         }
     }
     
-    // MARK: - Chat Messages View
+    // MARK: - Drag Handle
     
-    private var chatMessagesView: some View {
-        VStack(spacing: 0) {
-            // Header
-            chatHeader
+    private var dragHandle: some View {
+        VStack(spacing: 8) {
+            // Drag indicator
+            RoundedRectangle(cornerRadius: 3)
+                .fill(Color.white.opacity(0.3))
+                .frame(width: 40, height: 5)
+                .padding(.top, 8)
             
+            // Header
+            HStack(spacing: 12) {
+                // Live chat icon
+                HStack(spacing: 6) {
+                    Image(systemName: "bubble.left.and.bubble.right.fill")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(TV2Theme.Colors.primary)
+                    
+                    Text("LIVE CHAT")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                // Viewer count
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 6, height: 6)
+                    
+                    Text("\(chatManager.viewerCount)")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Image(systemName: "person.2.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.6))
+                }
+                
+                // Expand/Collapse indicator
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.leading, 4)
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 8)
+        }
+        .frame(height: collapsedHeight)
+        .contentShape(Rectangle())
+    }
+    
+    // MARK: - Chat Content
+    
+    private var chatContent: some View {
+        VStack(spacing: 0) {
             // Messages
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
+                    LazyVStack(alignment: .leading, spacing: 10) {
                         ForEach(chatManager.messages) { message in
                             ChatMessageRow(message: message)
                                 .id(message.id)
                         }
                     }
-                    .padding(12)
+                    .padding(16)
                 }
-                .background(
-                    Color.black.opacity(0.85)
-                )
+                .background(Color.black.opacity(0.98))
                 .onChange(of: chatManager.messages.count) { _ in
                     if let lastMessage = chatManager.messages.last {
                         withAnimation {
@@ -66,92 +164,54 @@ struct TV2ChatOverlay: View {
                     }
                 }
             }
-            .frame(height: 300)
+            
+            // Chat input (placeholder)
+            chatInputBar
         }
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.9))
-                .shadow(color: Color.black.opacity(0.5), radius: 20, x: -5, y: 0)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-        )
     }
     
-    // MARK: - Chat Header
+    // MARK: - Chat Input Bar
     
-    private var chatHeader: some View {
-        HStack {
-            Image(systemName: "bubble.left.and.bubble.right.fill")
-                .foregroundColor(TV2Theme.Colors.primary)
-                .font(.system(size: 16))
-            
-            Text("LIVE CHAT")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(Color.green)
-                    .frame(width: 6, height: 6)
-                
-                Text("\(chatManager.viewerCount)")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.7))
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(Color.black.opacity(0.95))
-    }
-    
-    // MARK: - Toggle Button
-    
-    private var chatToggleButton: some View {
-        Button {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                isExpanded.toggle()
-            }
-        } label: {
-            ZStack {
-                // Background
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [TV2Theme.Colors.primary, TV2Theme.Colors.secondary],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+    private var chatInputBar: some View {
+        HStack(spacing: 12) {
+            // Avatar placeholder
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [TV2Theme.Colors.primary, TV2Theme.Colors.secondary],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-                    .shadow(color: TV2Theme.Colors.primary.opacity(0.5), radius: 10, x: 0, y: 4)
-                
-                // Icon
-                VStack(spacing: 6) {
-                    Image(systemName: isExpanded ? "chevron.right" : "bubble.left.and.bubble.right.fill")
-                        .font(.system(size: 18, weight: .semibold))
+                )
+                .frame(width: 32, height: 32)
+                .overlay(
+                    Text("A")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
-                    
-                    if !isExpanded {
-                        Text("CHAT")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.white.opacity(0.9))
-                    }
-                    
-                    // Unread indicator
-                    if !isExpanded && chatManager.hasUnreadMessages {
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 6, height: 6)
-                    }
-                }
-                .padding(.vertical, 12)
-                .padding(.horizontal, 14)
+                )
+            
+            // Input field
+            Text("Send a message...")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.4))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(Color.white.opacity(0.1))
+                )
+            
+            // Send button
+            Button(action: {}) {
+                Image(systemName: "paperplane.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(TV2Theme.Colors.primary)
             }
         }
-        .frame(width: 60, height: isExpanded ? 60 : 80)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.95))
     }
 }
 
@@ -161,34 +221,59 @@ struct ChatMessageRow: View {
     let message: ChatMessage
     
     var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            // User badge/icon
-            if message.isModerator {
-                Image(systemName: "shield.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(Color.green)
-            } else if message.isSubscriber {
-                Image(systemName: "star.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(TV2Theme.Colors.secondary)
-            }
+        HStack(alignment: .top, spacing: 10) {
+            // Avatar
+            Circle()
+                .fill(message.usernameColor.opacity(0.3))
+                .frame(width: 32, height: 32)
+                .overlay(
+                    Text(String(message.username.prefix(1)))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(message.usernameColor)
+                )
             
-            VStack(alignment: .leading, spacing: 2) {
-                // Username
-                Text(message.username)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(message.usernameColor)
+            VStack(alignment: .leading, spacing: 3) {
+                // Username and badges
+                HStack(spacing: 6) {
+                    if message.isModerator {
+                        Image(systemName: "shield.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.green)
+                    }
+                    
+                    if message.isSubscriber {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(TV2Theme.Colors.secondary)
+                    }
+                    
+                    Text(message.username)
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(message.usernameColor)
+                    
+                    Text(timeAgo(from: message.timestamp))
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.4))
+                }
                 
                 // Message
                 Text(message.text)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.95))
                     .fixedSize(horizontal: false, vertical: true)
             }
             
-            Spacer()
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+    }
+    
+    private func timeAgo(from date: Date) -> String {
+        let seconds = Int(Date().timeIntervalSince(date))
+        if seconds < 60 { return "\(seconds)s" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m" }
+        let hours = minutes / 60
+        return "\(hours)h"
     }
 }
 
@@ -210,11 +295,10 @@ struct ChatMessage: Identifiable {
 class ChatManager: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var viewerCount: Int = 0
-    @Published var hasUnreadMessages: Bool = false
     
     private var timer: Timer?
     private var viewerTimer: Timer?
-    private let maxMessages = 50
+    private let maxMessages = 100
     
     // Simulated users with colors
     private let simulatedUsers: [(String, Color, Bool, Bool)] = [
@@ -271,28 +355,21 @@ class ChatManager: ObservableObject {
     
     func startSimulation() {
         // Initial viewer count
-        viewerCount = Int.random(in: 1200...2500)
+        viewerCount = Int.random(in: 8000...15000)
         
         // Add initial messages
-        addSimulatedMessage()
-        addSimulatedMessage()
-        addSimulatedMessage()
-        
-        // Start message timer (random interval)
-        timer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2.0...5.0), repeats: true) { [weak self] _ in
-            self?.addSimulatedMessage()
-            // Randomize next interval
-            self?.timer?.invalidate()
-            self?.timer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2.0...5.0), repeats: true) { [weak self] _ in
-                self?.addSimulatedMessage()
-            }
+        for _ in 0..<5 {
+            addSimulatedMessage()
         }
         
+        // Start message timer (random interval)
+        scheduleNextMessage()
+        
         // Start viewer count fluctuation
-        viewerTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+        viewerTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            let change = Int.random(in: -50...100)
-            self.viewerCount = max(1000, self.viewerCount + change)
+            let change = Int.random(in: -100...200)
+            self.viewerCount = max(5000, self.viewerCount + change)
         }
     }
     
@@ -301,6 +378,14 @@ class ChatManager: ObservableObject {
         viewerTimer?.invalidate()
         timer = nil
         viewerTimer = nil
+    }
+    
+    private func scheduleNextMessage() {
+        let interval = Double.random(in: 1.5...4.0)
+        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
+            self?.addSimulatedMessage()
+            self?.scheduleNextMessage()
+        }
     }
     
     private func addSimulatedMessage() {
@@ -317,7 +402,6 @@ class ChatManager: ObservableObject {
         )
         
         messages.append(message)
-        hasUnreadMessages = true
         
         // Keep only last N messages
         if messages.count > maxMessages {
@@ -330,10 +414,11 @@ class ChatManager: ObservableObject {
 
 #Preview {
     ZStack {
-        Color.black
+        // Video placeholder
+        Rectangle()
+            .fill(Color.blue)
             .ignoresSafeArea()
         
         TV2ChatOverlay()
     }
 }
-
