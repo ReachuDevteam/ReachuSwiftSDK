@@ -46,7 +46,9 @@ struct HomeView: View {
                             RProductSlider(
                                 title: "🛍️ Products",
                                 layout: .cards,
-                                maxItems: 6
+                                maxItems: 6,
+                                currency: cartManager.currency,
+                                country: cartManager.country
                             )
                             .environmentObject(cartManager)
                             
@@ -189,5 +191,4 @@ struct HomeView: View {
 #Preview {
     HomeView()
 }
-
 

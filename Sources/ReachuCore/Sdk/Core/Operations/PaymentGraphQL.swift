@@ -6,6 +6,7 @@ public enum PaymentGraphQL {
       Payment {
         GetAvailablePaymentMethods {
           name
+          publishableKey
         }
       }
     }

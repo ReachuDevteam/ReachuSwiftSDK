@@ -84,7 +84,8 @@ public class ConfigurationLoader {
                 mode: .automatic,
                 lightColors: .reachu,
                 darkColors: .reachuDark
-            )
+            ),
+            marketConfig: .default
         )
         print("✅ [Config] Applied default SDK configuration")
     }
@@ -143,7 +144,8 @@ public class ConfigurationLoader {
         if !apiKey.isEmpty {
             ReachuConfiguration.configure(
                 apiKey: apiKey,
-                environment: environment
+                environment: environment,
+                marketConfig: .default
             )
         }
     }
@@ -168,7 +170,8 @@ public class ConfigurationLoader {
         let networkConfig = createNetworkConfiguration(from: config.network)
         let uiConfig = createUIConfiguration(from: config.ui)
         let liveShowConfig = createLiveShowConfiguration(from: config.liveShow)
-        
+        let marketFallback = createMarketConfiguration(from: config.marketFallback)
+
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
             environment: ReachuEnvironment(rawValue: config.environment) ?? .production,
@@ -176,14 +179,16 @@ public class ConfigurationLoader {
             cartConfig: cartConfig,
             networkConfig: networkConfig,
             uiConfig: uiConfig,
-            liveShowConfig: liveShowConfig
+            liveShowConfig: liveShowConfig,
+            marketConfig: marketFallback
         )
     }
     
     private static func applyPlistConfiguration(_ config: PlistConfiguration) {
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
-            environment: ReachuEnvironment(rawValue: config.environment) ?? .production
+            environment: ReachuEnvironment(rawValue: config.environment) ?? .production,
+            marketConfig: .default
         )
     }
     
@@ -322,6 +327,19 @@ public class ConfigurationLoader {
             enableAutoplay: enableAutoplay
         )
     }
+
+    private static func createMarketConfiguration(from marketConfig: JSONMarketFallbackConfiguration?) -> MarketConfiguration {
+        guard let config = marketConfig else { return .default }
+
+        return MarketConfiguration(
+            countryCode: config.countryCode ?? MarketConfiguration.default.countryCode,
+            countryName: config.countryName ?? MarketConfiguration.default.countryName,
+            currencyCode: config.currencyCode ?? MarketConfiguration.default.currencyCode,
+            currencySymbol: config.currencySymbol ?? MarketConfiguration.default.currencySymbol,
+            phoneCode: config.phoneCode ?? MarketConfiguration.default.phoneCode,
+            flagURL: config.flag ?? MarketConfiguration.default.flagURL
+        )
+    }
 }
 
 // MARK: - Configuration Errors
@@ -337,6 +355,7 @@ private struct JSONConfiguration: Codable {
     let network: JSONNetworkConfiguration?
     let ui: JSONUIConfiguration?
     let liveShow: JSONLiveShowConfiguration?
+    let marketFallback: JSONMarketFallbackConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -401,6 +420,15 @@ private struct JSONLiveShowConfiguration: Codable {
     let autoJoinChat: Bool?
     let enableShopping: Bool?
     let enableAutoplay: Bool?
+}
+
+private struct JSONMarketFallbackConfiguration: Codable {
+    let countryCode: String?
+    let countryName: String?
+    let currencyCode: String?
+    let currencySymbol: String?
+    let phoneCode: String?
+    let flag: String?
 }
 
 private struct JSONTipioConfiguration: Codable {

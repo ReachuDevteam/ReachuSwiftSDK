@@ -86,6 +86,8 @@ public struct RProductSlider: View {
     private let onProductTap: ((Product) -> Void)?
     private let onAddToCart: ((Product) -> Void)?
     private let onSeeAllTap: (() -> Void)?
+    private let preferredCurrency: String?
+    private let preferredCountry: String?
     
     // ViewModel for automatic product loading
     @StateObject private var viewModel = RProductSliderViewModel()
@@ -107,7 +109,9 @@ public struct RProductSlider: View {
         maxItems: Int? = nil,
         onProductTap: ((Product) -> Void)? = nil,
         onAddToCart: ((Product) -> Void)? = nil,
-        onSeeAllTap: (() -> Void)? = nil
+        onSeeAllTap: (() -> Void)? = nil,
+        currency: String? = nil,
+        country: String? = nil
     ) {
         self.title = title
         self.manualProducts = products
@@ -118,6 +122,8 @@ public struct RProductSlider: View {
         self.onProductTap = onProductTap
         self.onAddToCart = onAddToCart
         self.onSeeAllTap = onSeeAllTap
+        self.preferredCurrency = currency
+        self.preferredCountry = country
     }
     
     // MARK: - Computed Properties
@@ -125,6 +131,20 @@ public struct RProductSlider: View {
     /// Adaptive colors based on current color scheme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
+    }
+    
+    private var resolvedCurrency: String {
+        preferredCurrency ?? ReachuConfiguration.shared.marketConfiguration.currencyCode
+    }
+
+    private var resolvedCountry: String {
+        preferredCountry ?? ReachuConfiguration.shared.marketConfiguration.countryCode
+    }
+
+    private var autoLoadTaskKey: String {
+        guard manualProducts == nil else { return "manual" }
+        let categoryPart = categoryId.map(String.init) ?? "all"
+        return "\(resolvedCurrency)|\(resolvedCountry)|\(categoryPart)"
     }
     
     /// Products to display - either manual or from ViewModel
@@ -159,14 +179,16 @@ public struct RProductSlider: View {
                 Color.clear.frame(height: 1)
             }
         }
-        .onAppear {
-            // Only auto-load if no manual products provided
-            if manualProducts == nil {
-                print("🎯 [RProductSlider] onAppear triggered, loading products...")
-                Task {
-                    await viewModel.loadProducts(categoryId: categoryId)
-                }
-            }
+        .task(id: autoLoadTaskKey) {
+            guard manualProducts == nil else { return }
+            let key = autoLoadTaskKey
+            print("🎯 [RProductSlider] auto-loading products for key: \(key)")
+            await viewModel.loadProducts(
+                categoryId: categoryId,
+                currency: resolvedCurrency,
+                country: resolvedCountry,
+                forceRefresh: true
+            )
         }
     }
     
@@ -225,7 +247,11 @@ public struct RProductSlider: View {
             
             Button {
                 Task {
-                    await viewModel.reload(categoryId: categoryId)
+                    await viewModel.reload(
+                        categoryId: categoryId,
+                        currency: resolvedCurrency,
+                        country: resolvedCountry
+                    )
                 }
             } label: {
                 Text("Retry")

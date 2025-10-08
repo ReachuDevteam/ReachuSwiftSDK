@@ -2,6 +2,7 @@ import Foundation
 
 public struct GetAvailablePaymentMethodsDto: Codable, Equatable {
     public let name: String
+    public let publishableKey: String?
 }
 
 public struct PaymentIntentStripeDto: Codable, Equatable {

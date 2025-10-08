@@ -28,12 +28,12 @@ public struct RCheckoutOverlay: View {
     @State private var lastName = ""
     @State private var email = ""
     @State private var phone = ""
-    @State private var phoneCountryCode = "+1"
+    @State private var phoneCountryCode = ""
     @State private var address1 = ""
     @State private var address2 = ""
     @State private var city = ""
     @State private var province = ""
-    @State private var country = "United States"
+    @State private var country = ""
     @State private var zip = ""
 
     // Payment Information
@@ -169,6 +169,15 @@ public struct RCheckoutOverlay: View {
                 }
             }
         }
+        .onAppear {
+            syncSelectedMarket()
+        }
+        .onChange(of: cartManager.phoneCode) { newValue in
+            syncPhoneCode(newValue)
+        }
+        .onChange(of: cartManager.selectedMarket) { _ in
+            syncSelectedMarket()
+        }
         .overlay {
             if isLoading {
                 loadingOverlay
@@ -248,11 +257,11 @@ public struct RCheckoutOverlay: View {
                     .interactiveDismissDisabled(isLoading)
                 } else {
                     Text("No Klarna payment methods available.")
-                        .padding()
-                        .onAppear {
-                            showKlarnaNativeSheet = false
-                            checkoutStep = .error
-                        }
+                    .padding()
+                    .onAppear {
+                        showKlarnaNativeSheet = false
+                        checkoutStep = .error
+                    }
                 }
             }
         #endif
@@ -1141,12 +1150,18 @@ public struct RCheckoutOverlay: View {
         lastName = "Doe"
         email = "john.doe@example.com"
         phone = "2125551212"
-        phoneCountryCode = "+1"
+        if let market = cartManager.selectedMarket {
+            phoneCountryCode = market.phoneCode
+            country = market.name
+        } else {
+            phoneCountryCode = "+1"
+            country = "United States"
+        }
         address1 = "82 Melora Street"
         city = "Westbridge"
         province = "California"
-        country = "United States"
         zip = "92841"
+        syncPhoneCode(phoneCountryCode)
     }
 
     private func syncDraftFromState() {
@@ -2073,8 +2088,8 @@ extension RCheckoutOverlay {
                     Spacer()
 
                     Text(shippingAmountText)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(ReachuColors.textPrimary)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(ReachuColors.textPrimary)
                 }
 
                 // Show discount if applied
@@ -2333,8 +2348,8 @@ extension RCheckoutOverlay {
                 Spacer()
 
                 Text(shippingAmountText)
-                .font(.system(size: 14, weight: .regular))
-                .foregroundColor(ReachuColors.textPrimary)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(ReachuColors.textPrimary)
             }
 
             // Divider
@@ -2437,10 +2452,10 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                Text(shippingAmountText)
-                .font(.system(size: 16, weight: .regular))
-                .foregroundColor(ReachuColors.textPrimary)
-            }
+                    Text(shippingAmountText)
+                        .font(.system(size: 16, weight: .regular))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
 
                 // Discount (if applied)
                 if appliedDiscount > 0 {
@@ -2503,8 +2518,7 @@ extension RCheckoutOverlay {
     }
 
     private var shippingCurrencySymbol: String {
-        let symbol = cartManager.shippingCurrency
-        return symbol.isEmpty ? cartManager.currency : symbol
+        return cartManager.currencySymbol
     }
 
     private var shippingAmountText: String {
@@ -2517,82 +2531,96 @@ extension RCheckoutOverlay {
         return cartManager.cartTotal + shippingAmount - appliedDiscount
     }
 
-private func formattedShipping(amount: Double?, currency: String?) -> String {
-    guard let amount = amount else { return "Free" }
+    private func formattedShipping(amount: Double?, currency: String?) -> String {
+        guard let amount = amount else { return "Free" }
 
-    let symbol = (currency?.isEmpty == false) ? currency! : shippingCurrencySymbol
-    return amount > 0
-        ? "\(symbol) \(String(format: "%.2f", amount))"
-        : "Free"
-}
+        let symbol = (currency?.isEmpty == false) ? currency! : shippingCurrencySymbol
+        return amount > 0
+            ? "\(symbol) \(String(format: "%.2f", amount))"
+            : "Free"
+    }
 
-fileprivate struct ItemShippingOptionsView: View {
-    let item: CartManager.CartItem
-    let onSelect: (CartManager.CartItem.ShippingOption) -> Void
+    private func syncSelectedMarket() {
+        if let market = cartManager.selectedMarket {
+            country = market.name
+            syncPhoneCode(market.phoneCode)
+            checkoutDraft.countryName = market.name
+            checkoutDraft.countryCode = market.code
+        }
+    }
 
-    private var title: String { item.title }
-    private var selectedId: String? { item.shippingId }
+    private func syncPhoneCode(_ code: String) {
+        phoneCountryCode = code
+        checkoutDraft.phoneCountryCode = code.replacingOccurrences(of: "+", with: "")
+    }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            Text(title)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(ReachuColors.textPrimary)
+    fileprivate struct ItemShippingOptionsView: View {
+        let item: CartManager.CartItem
+        let onSelect: (CartManager.CartItem.ShippingOption) -> Void
 
-            VStack(spacing: ReachuSpacing.xs) {
-                ForEach(item.availableShippings) { option in
-                    Button {
-                        onSelect(option)
-                    } label: {
-                        HStack(spacing: ReachuSpacing.sm) {
-                            Image(
-                                systemName: selectedId == option.id
-                                    ? "checkmark.circle.fill"
-                                    : "circle"
-                            )
-                            .foregroundColor(
-                                selectedId == option.id
-                                    ? ReachuColors.primary
-                                    : ReachuColors.textSecondary
-                            )
+        private var title: String { item.title }
+        private var selectedId: String? { item.shippingId }
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(option.name)
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(ReachuColors.textPrimary)
+        var body: some View {
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                Text(title)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(ReachuColors.textPrimary)
 
-                                if let description = option.description, !description.isEmpty {
-                                    Text(description)
-                                        .font(.system(size: 12))
-                                        .foregroundColor(ReachuColors.textSecondary)
+                VStack(spacing: ReachuSpacing.xs) {
+                    ForEach(item.availableShippings) { option in
+                        Button {
+                            onSelect(option)
+                        } label: {
+                            HStack(spacing: ReachuSpacing.sm) {
+                                Image(
+                                    systemName: selectedId == option.id
+                                        ? "checkmark.circle.fill"
+                                        : "circle"
+                                )
+                                .foregroundColor(
+                                    selectedId == option.id
+                                        ? ReachuColors.primary
+                                        : ReachuColors.textSecondary
+                                )
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(option.name)
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundColor(ReachuColors.textPrimary)
+
+                                    if let description = option.description, !description.isEmpty {
+                                        Text(description)
+                                            .font(.system(size: 12))
+                                            .foregroundColor(ReachuColors.textSecondary)
+                                    }
                                 }
+
+                                Spacer()
+
+                                Text(
+                                    option.amount > 0
+                                        ? "\(option.currency) \(String(format: "%.2f", option.amount))"
+                                        : "Free"
+                                )
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(ReachuColors.textPrimary)
                             }
-
-                            Spacer()
-
-                            Text(
-                                option.amount > 0
-                                    ? "\(option.currency) \(String(format: "%.2f", option.amount))"
-                                    : "Free"
+                            .padding(.horizontal, ReachuSpacing.md)
+                            .padding(.vertical, ReachuSpacing.sm)
+                            .background(
+                                selectedId == option.id
+                                    ? ReachuColors.primary.opacity(0.08)
+                                    : ReachuColors.surfaceSecondary
                             )
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(ReachuColors.textPrimary)
+                            .cornerRadius(ReachuBorderRadius.medium)
                         }
-                        .padding(.horizontal, ReachuSpacing.md)
-                        .padding(.vertical, ReachuSpacing.sm)
-                        .background(
-                            selectedId == option.id
-                                ? ReachuColors.primary.opacity(0.08)
-                                : ReachuColors.surfaceSecondary
-                        )
-                        .cornerRadius(ReachuBorderRadius.medium)
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
                 }
             }
         }
     }
-}
 
     private func applyDiscountCode() {
         let code = discountCode.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -126,6 +126,14 @@
     "offlineCacheDuration": 86400,
     "syncStrategy": "automatic"
   },
+  "marketFallback": {
+    "countryCode": "US",
+    "countryName": "United States",
+    "currencyCode": "USD",
+    "currencySymbol": "$",
+    "phoneCode": "+1",
+    "flag": "https://flagcdn.com/w320/us.png"
+  },
   "liveShow": {
     "autoJoinChat": true,
     "enableChatModeration": true,
@@ -142,4 +150,3 @@
     "enablePictureInPicture": true
   }
 }
-

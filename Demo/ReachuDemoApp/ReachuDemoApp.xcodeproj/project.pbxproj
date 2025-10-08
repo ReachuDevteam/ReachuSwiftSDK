@@ -7,13 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1762BA462E952A79008E4E6A /* ReachuCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA452E952A79008E4E6A /* ReachuCore */; };
-		1762BA482E952A79008E4E6A /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA472E952A79008E4E6A /* ReachuDesignSystem */; };
-		1762BA4A2E952A79008E4E6A /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA492E952A79008E4E6A /* ReachuLiveShow */; };
-		1762BA4C2E952A79008E4E6A /* ReachuLiveUI in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA4B2E952A79008E4E6A /* ReachuLiveUI */; };
-		1762BA4E2E952A79008E4E6A /* ReachuNetwork in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA4D2E952A79008E4E6A /* ReachuNetwork */; };
-		1762BA502E952A79008E4E6A /* ReachuTesting in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA4F2E952A79008E4E6A /* ReachuTesting */; };
-		1762BA522E952A79008E4E6A /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 1762BA512E952A79008E4E6A /* ReachuUI */; };
 		176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = 176858B72E7D89B300110C55 /* ReachuDesignSystem */; };
 		176858ED2E7F372400110C55 /* ReachuUI in Frameworks */ = {isa = PBXBuildFile; productRef = 176858EC2E7F372400110C55 /* ReachuUI */; };
 		176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = 176859322E82D1E500110C55 /* ReachuLiveShow */; };
@@ -71,14 +64,7 @@
 				176858ED2E7F372400110C55 /* ReachuUI in Frameworks */,
 				176858B82E7D89B300110C55 /* ReachuDesignSystem in Frameworks */,
 				176859332E82D1E500110C55 /* ReachuLiveShow in Frameworks */,
-				1762BA482E952A79008E4E6A /* ReachuDesignSystem in Frameworks */,
-				1762BA4E2E952A79008E4E6A /* ReachuNetwork in Frameworks */,
 				17BD21FC2E84904E00853E53 /* ReachuLiveShow in Frameworks */,
-				1762BA462E952A79008E4E6A /* ReachuCore in Frameworks */,
-				1762BA4A2E952A79008E4E6A /* ReachuLiveShow in Frameworks */,
-				1762BA4C2E952A79008E4E6A /* ReachuLiveUI in Frameworks */,
-				1762BA522E952A79008E4E6A /* ReachuUI in Frameworks */,
-				1762BA502E952A79008E4E6A /* ReachuTesting in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -144,13 +130,6 @@
 				176859322E82D1E500110C55 /* ReachuLiveShow */,
 				17BD21FB2E84904E00853E53 /* ReachuLiveShow */,
 				17BD21FD2E84904E00853E53 /* ReachuLiveUI */,
-				1762BA452E952A79008E4E6A /* ReachuCore */,
-				1762BA472E952A79008E4E6A /* ReachuDesignSystem */,
-				1762BA492E952A79008E4E6A /* ReachuLiveShow */,
-				1762BA4B2E952A79008E4E6A /* ReachuLiveUI */,
-				1762BA4D2E952A79008E4E6A /* ReachuNetwork */,
-				1762BA4F2E952A79008E4E6A /* ReachuTesting */,
-				1762BA512E952A79008E4E6A /* ReachuUI */,
 			);
 			productName = ReachuDemoApp;
 			productReference = 176858862E7D876500110C55 /* ReachuDemoApp.app */;
@@ -235,7 +214,7 @@
 			mainGroup = 1768587D2E7D876400110C55;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
+				176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 176858872E7D876500110C55 /* Products */;
@@ -622,71 +601,31 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
+		176858B62E7D89B300110C55 /* XCLocalSwiftPackageReference "../.." */ = {
 			isa = XCLocalSwiftPackageReference;
-			relativePath = ../../../ReachuSwiftSDK;
+			relativePath = ../..;
 		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		1762BA452E952A79008E4E6A /* ReachuCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuCore;
-		};
-		1762BA472E952A79008E4E6A /* ReachuDesignSystem */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuDesignSystem;
-		};
-		1762BA492E952A79008E4E6A /* ReachuLiveShow */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuLiveShow;
-		};
-		1762BA4B2E952A79008E4E6A /* ReachuLiveUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuLiveUI;
-		};
-		1762BA4D2E952A79008E4E6A /* ReachuNetwork */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuNetwork;
-		};
-		1762BA4F2E952A79008E4E6A /* ReachuTesting */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuTesting;
-		};
-		1762BA512E952A79008E4E6A /* ReachuUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
-			productName = ReachuUI;
-		};
 		176858B72E7D89B300110C55 /* ReachuDesignSystem */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
 			productName = ReachuDesignSystem;
 		};
 		176858EC2E7F372400110C55 /* ReachuUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
 			productName = ReachuUI;
 		};
 		176859322E82D1E500110C55 /* ReachuLiveShow */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
 			productName = ReachuLiveShow;
 		};
 		17BD21FB2E84904E00853E53 /* ReachuLiveShow */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
 			productName = ReachuLiveShow;
 		};
 		17BD21FD2E84904E00853E53 /* ReachuLiveUI */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 1762BA442E952A79008E4E6A /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */;
 			productName = ReachuLiveUI;
 		};
 /* End XCSwiftPackageProductDependency section */

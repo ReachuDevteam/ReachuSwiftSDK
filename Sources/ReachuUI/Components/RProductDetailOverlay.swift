@@ -62,6 +62,20 @@ public struct RProductDetailOverlay: View {
         selectedVariant?.price ?? product.price
     }
     
+    private var displayCurrencySymbol: String {
+        let symbol = cartManager.currencySymbol
+        if !symbol.isEmpty {
+            return symbol
+        }
+        return currentPrice.currency_code
+    }
+
+    private func formatted(amount: Double) -> String {
+        let symbol = displayCurrencySymbol
+        let separator = symbol.count > 1 ? " " : ""
+        return "\(symbol)\(separator)\(String(format: "%.2f", amount))"
+    }
+    
     // MARK: - Initializer
     public init(
         product: Product,
@@ -286,13 +300,13 @@ public struct RProductDetailOverlay: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                     // Current price
-                    Text("$\(String(format: "%.2f", currentPrice.amount))")
+                    Text(formatted(amount: Double(currentPrice.amount)))
                         .font(ReachuTypography.title3)
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     // Compare at price (if available)
                     if let compareAt = currentPrice.compare_at, compareAt > currentPrice.amount {
-                        Text("$\(String(format: "%.2f", compareAt))")
+                        Text(formatted(amount: Double(compareAt)))
                             .font(ReachuTypography.body)
                             .foregroundColor(ReachuColors.textSecondary)
                             .strikethrough()
@@ -430,7 +444,7 @@ public struct RProductDetailOverlay: View {
                     Text("Total")
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
-                    Text("$\(String(format: "%.2f", Double(currentPrice.amount) * Double(quantity)))")
+                    Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
                         .font(ReachuTypography.title3)
                         .foregroundColor(ReachuColors.textPrimary)
                 }
@@ -555,7 +569,7 @@ public struct RProductDetailOverlay: View {
                     
                     // Price
                     if !isAddingToCart && !showCheckmark {
-                        Text("$\(String(format: "%.2f", Double(currentPrice.amount) * Double(quantity)))")
+                        Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(.white)
                     }

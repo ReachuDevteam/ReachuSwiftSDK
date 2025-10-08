@@ -39,6 +39,9 @@ struct ContentView: View {
                     }
                     .padding(.top, ReachuSpacing.xl)
 
+                    RMarketSelector()
+                        .environmentObject(cartManager)
+
                     // NEW: Auto-Loading Product Slider Demo
                     VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                         Text("🚀 Auto-Loading Products")
@@ -63,7 +66,9 @@ struct ContentView: View {
                                 Task {
                                     await cartManager.addProduct(product)
                                 }
-                            }
+                            },
+                            currency: cartManager.currency,
+                            country: cartManager.country
                         )
                         .environmentObject(cartManager)
                     }
@@ -456,7 +461,7 @@ struct ShoppingCartDemoView: View {
                     Spacer()
 
                     Text(
-                        "Total: \(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                        "Total: \(cartManager.currencySymbol) \(String(format: "%.2f", cartManager.cartTotal)) \(cartManager.currency)"
                     )
                     .font(ReachuTypography.headline)
                     .foregroundColor(adaptiveColors.primary)
@@ -612,7 +617,7 @@ struct CheckoutDemoView: View {
                         Text("Total:")
                         Spacer()
                         Text(
-                            "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                            "\(cartManager.currencySymbol) \(String(format: "%.2f", cartManager.cartTotal)) \(cartManager.currency)"
                         )
                         .fontWeight(.semibold)
                         .foregroundColor(adaptiveColors.primary)
@@ -1673,7 +1678,13 @@ struct CartItemRowDemo: View {
                         .foregroundColor(adaptiveColors.textSecondary)
                 }
 
-                Text("\(item.currency) \(String(format: "%.2f", item.price))")
+                if let variant = item.variantTitle, !variant.isEmpty {
+                    Text("Variant: \(variant)")
+                        .font(ReachuTypography.caption2)
+                        .foregroundColor(adaptiveColors.textTertiary)
+                }
+
+                Text("\(cartManager.currencySymbol) \(String(format: "%.2f", item.price)) \(item.currency)")
                     .font(ReachuTypography.body)
                     .foregroundColor(adaptiveColors.primary)
             }

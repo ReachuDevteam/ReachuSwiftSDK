@@ -27,9 +27,18 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     @Published public var productsErrorMessage: String?
     @Published public var shippingTotal: Double = 0.0
     @Published public var shippingCurrency: String = "USD"
+    @Published public var markets: [Market] = []
+    @Published public var selectedMarket: Market?
+    @Published public var currencySymbol: String = "$"
+    @Published public var phoneCode: String = "+1"
+    @Published public var flagURL: String?
 
     private var currentCartId: String?
     private var pendingShippingSelections: [String: CartItem.ShippingOption] = [:]
+    private var didLoadMarkets = false
+    private var activeProductRequestID: UUID?
+    private var lastLoadedProductCurrency: String?
+    private var lastLoadedProductCountry: String?
     private let sdk: SdkClient = {
         let config = ReachuConfiguration.shared
         let baseURL = URL(string: config.environment.graphQLURL)!
@@ -52,11 +61,32 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     public init() {
+        let fallback = ReachuConfiguration.shared.marketConfiguration
+        let fallbackMarket = Market(
+            code: fallback.countryCode,
+            name: fallback.countryName,
+            officialName: fallback.countryName,
+            flagURL: fallback.flagURL,
+            phoneCode: fallback.phoneCode,
+            currencyCode: fallback.currencyCode,
+            currencySymbol: fallback.currencySymbol
+        )
+
+        markets = [fallbackMarket]
+        selectedMarket = fallbackMarket
+        country = fallback.countryCode
+        currency = fallback.currencyCode
+        currencySymbol = fallback.currencySymbol
+        phoneCode = fallback.phoneCode
+        flagURL = fallback.flagURL
+        shippingCurrency = fallback.currencyCode
+
         Task { [currency, country] in
             print(
                 "🛒 [Cart] init → scheduling createCart(currency:\(currency), country:\(country))"
             )
             await createCart(currency: currency, country: country)
+            await loadMarketsIfNeeded()
         }
     }
 
@@ -104,41 +134,154 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     public func reloadProducts() async {
-        await loadProducts()
+        await loadProducts(useCache: false)
     }
 
     private func loadProducts(
         currency: String? = nil,
         shippingCountryCode: String? = nil,
-        imageSize: String = "large"
+        imageSize: String = "large",
+        useCache: Bool = true
     ) async {
-        if isProductsLoading { return }
+        let requestedCurrency = currency ?? self.currency
+        let requestedCountry = shippingCountryCode ?? self.country
+        let shouldUseCache =
+            useCache
+            && lastLoadedProductCurrency == requestedCurrency
+            && lastLoadedProductCountry == requestedCountry
+
+        let requestID = UUID()
+        activeProductRequestID = requestID
         isProductsLoading = true
         productsErrorMessage = nil
 
-        defer {
-            isProductsLoading = false
-        }
-
         do {
             let dtoProducts = try await sdk.channel.product.get(
-                currency: currency ?? self.currency,
+                currency: requestedCurrency,
                 imageSize: imageSize,
                 barcodeList: nil,
                 categoryIds: nil,
                 productIds: nil,
                 skuList: nil,
-                useCache: true,
-                shippingCountryCode: shippingCountryCode ?? self.country
+                useCache: shouldUseCache,
+                shippingCountryCode: requestedCountry
             )
+
+            guard activeProductRequestID == requestID else { return }
+
             products = dtoProducts.map { $0.toDomainProduct() }
+            lastLoadedProductCurrency = requestedCurrency
+            lastLoadedProductCountry = requestedCountry
+            isProductsLoading = false
+            activeProductRequestID = nil
         } catch let sdkError as SdkException {
+            guard activeProductRequestID == requestID else { return }
+
             productsErrorMessage = sdkError.description
             products = []
+            isProductsLoading = false
+            activeProductRequestID = nil
         } catch {
+            guard activeProductRequestID == requestID else { return }
+
             productsErrorMessage = error.localizedDescription
             products = []
+            isProductsLoading = false
+            activeProductRequestID = nil
         }
+    }
+
+    public func loadMarketsIfNeeded() async {
+        if didLoadMarkets { return }
+        await loadMarkets()
+    }
+
+    public func reloadMarkets() async {
+        didLoadMarkets = false
+        await loadMarkets()
+    }
+
+    private func loadMarkets() async {
+        let fallbackConfig = ReachuConfiguration.shared.marketConfiguration
+        let fallbackMarket = Market(
+            code: fallbackConfig.countryCode,
+            name: fallbackConfig.countryName,
+            officialName: fallbackConfig.countryName,
+            flagURL: fallbackConfig.flagURL,
+            phoneCode: fallbackConfig.phoneCode,
+            currencyCode: fallbackConfig.currencyCode,
+            currencySymbol: fallbackConfig.currencySymbol
+        )
+
+        do {
+            let dtos = try await sdk.market.getAvailable()
+            var mapped = dtos.compactMap { $0.toMarket(fallback: fallbackConfig) }
+
+            if mapped.isEmpty {
+                mapped = [fallbackMarket]
+            } else if !mapped.contains(where: { $0.code == fallbackMarket.code }) {
+                mapped.insert(fallbackMarket, at: 0)
+            }
+
+            markets = mapped
+            didLoadMarkets = true
+
+            let currentCode = selectedMarket?.code ?? fallbackMarket.code
+            let target = mapped.first(where: { $0.code == currentCode }) ?? fallbackMarket
+            let shouldRefresh = (country != target.code) || (currency != target.currencyCode)
+
+            await applyMarket(target, refreshData: shouldRefresh)
+        } catch {
+            print("❌ [Markets] Failed to load markets: \(error.localizedDescription)")
+            markets = [fallbackMarket]
+            didLoadMarkets = false
+            await applyMarket(fallbackMarket, refreshData: false)
+        }
+    }
+
+    public func selectMarket(_ market: Market) async {
+        await applyMarket(market, refreshData: true)
+    }
+
+    private func applyMarket(_ market: Market, refreshData: Bool) async {
+        selectedMarket = market
+        country = market.code
+        currency = market.currencyCode
+        currencySymbol = market.currencySymbol
+        phoneCode = market.phoneCode
+        flagURL = market.flagURL
+        shippingCurrency = market.currencyCode
+        pendingShippingSelections.removeAll()
+
+        if refreshData {
+            resetForMarketChange(defaultCurrency: market.currencyCode)
+            await createCart(currency: market.currencyCode, country: market.code)
+            await loadProducts(
+                currency: market.currencyCode,
+                shippingCountryCode: market.code,
+                useCache: false
+            )
+            _ = await refreshShippingOptions()
+        } else {
+            recalcShippingTotalsFromItems()
+        }
+    }
+
+    private func resetForMarketChange(defaultCurrency: String) {
+        items = []
+        products = []
+        cartTotal = 0.0
+        shippingTotal = 0.0
+        shippingCurrency = defaultCurrency
+        isProductsLoading = true
+        currentCartId = nil
+        checkoutId = nil
+        lastDiscountCode = nil
+        lastDiscountId = nil
+        errorMessage = nil
+        lastLoadedProductCurrency = nil
+        lastLoadedProductCountry = nil
+        activeProductRequestID = nil
     }
 
     @discardableResult
@@ -237,6 +380,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 id: line.id,
                 productId: line.productId,
                 variantId: line.variantId.map { String($0) },
+                variantTitle: line.variantTitle,
                 title: line.title ?? "",
                 brand: line.brand,
                 imageUrl: imageUrl,
@@ -260,10 +404,47 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         self.shippingCurrency =
             mappedItems.first(where: { $0.shippingCurrency != nil })?.shippingCurrency
             ?? cart.currency
+
+        if let selected = selectedMarket {
+            currencySymbol = selected.currencySymbol
+            phoneCode = selected.phoneCode
+            flagURL = selected.flagURL
+        }
     }
 
     private func _iso8601(_ date: Date = Date()) -> String {
         ISO8601DateFormatter().string(from: date)
+    }
+
+    // MARK: - Market Model
+    public struct Market: Identifiable, Equatable {
+        public let id: String
+        public let code: String
+        public let name: String
+        public let officialName: String?
+        public let flagURL: String?
+        public let phoneCode: String
+        public let currencyCode: String
+        public let currencySymbol: String
+
+        public init(
+            code: String,
+            name: String,
+            officialName: String? = nil,
+            flagURL: String? = nil,
+            phoneCode: String,
+            currencyCode: String,
+            currencySymbol: String
+        ) {
+            self.id = code
+            self.code = code
+            self.name = name
+            self.officialName = officialName
+            self.flagURL = flagURL
+            self.phoneCode = phoneCode
+            self.currencyCode = currencyCode
+            self.currencySymbol = currencySymbol
+        }
     }
 
     // MARK: - Cart Item Model
@@ -293,6 +474,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         public let id: String
         public let productId: Int
         public let variantId: String?
+        public let variantTitle: String?
         public let title: String
         public let brand: String?
         public let imageUrl: String?
@@ -312,6 +494,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             id: String,
             productId: Int,
             variantId: String? = nil,
+            variantTitle: String? = nil,
             title: String,
             brand: String? = nil,
             imageUrl: String? = nil,
@@ -330,6 +513,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             self.id = id
             self.productId = productId
             self.variantId = variantId
+            self.variantTitle = variantTitle
             self.title = title
             self.brand = brand
             self.imageUrl = imageUrl
@@ -350,16 +534,30 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     // MARK: - Public Methods
 
     /// Add a product to the cart
-    public func addProduct(_ product: Product, quantity: Int = 1) async {
+    public func addProduct(_ product: Product, quantity: Int) async {
+        await addProduct(product, variant: nil, quantity: quantity)
+    }
+
+    public func addProduct(
+        _ product: Product,
+        variant: ReachuCore.Variant? = nil,
+        quantity: Int = 1
+    ) async {
         isLoading = true
         errorMessage = nil
 
         let previousCount = itemCount
-        let hadExistingItem = items.contains { $0.productId == product.id }
+        let selectedVariant = variant ?? product.variants.first
+        let selectedVariantId = selectedVariant?.id
+        let selectedVariantTitle = selectedVariant?.title
+
+        let hadExistingItem = items.contains {
+            $0.productId == product.id && $0.variantId == selectedVariantId
+        }
 
         do {
             guard let cid = await ensureCartIDForCheckout() else {
-                addProductLocally(product, quantity: quantity)
+                addProductLocally(product, variant: selectedVariant, quantity: quantity)
                 updateCartTotal()
                 ToastManager.shared.showSuccess(
                     hadExistingItem
@@ -371,7 +569,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 return
             }
 
-            if let existingItem = items.first(where: { $0.productId == product.id }) {
+            if let existingItem = items.first(where: {
+                $0.productId == product.id && $0.variantId == selectedVariantId
+            }) {
                 let newQuantity = existingItem.quantity + quantity
                 let dto = try await sdk.cart.updateItem(
                     cart_id: cid,
@@ -384,8 +584,10 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                     "Updated \(product.title) quantity in cart"
                 )
             } else {
+                let variantIdInt = selectedVariantId.flatMap { Int($0) }
                 let line = LineItemInput(
                     productId: product.id,
+                    variantId: variantIdInt,
                     quantity: quantity,
                     priceData: nil
                 )
@@ -401,14 +603,14 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         } catch let error as SdkException {
             self.errorMessage = error.description
             print("❌ [Cart] addProduct FAIL \(error.description)")
-            addProductLocally(product, quantity: quantity)
+            addProductLocally(product, variant: selectedVariant, quantity: quantity)
             ToastManager.shared.showWarning(
                 "Using local cart for \(product.title) (sync error)"
             )
         } catch {
             self.errorMessage = error.localizedDescription
             print("❌ [Cart] addProduct FAIL \(error.localizedDescription)")
-            addProductLocally(product, quantity: quantity)
+            addProductLocally(product, variant: selectedVariant, quantity: quantity)
             ToastManager.shared.showWarning(
                 "Added \(product.title) locally due to error"
             )
@@ -547,8 +749,17 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         }
     }
 
-    private func addProductLocally(_ product: Product, quantity: Int) {
-        if let index = items.firstIndex(where: { $0.productId == product.id }) {
+    private func addProductLocally(
+        _ product: Product,
+        variant: ReachuCore.Variant? = nil,
+        quantity: Int
+    ) {
+        let variantId = variant?.id
+        let variantTitle = variant?.title
+
+        if let index = items.firstIndex(where: {
+            $0.productId == product.id && $0.variantId == variantId
+        }) {
             items[index].quantity += quantity
             recalcShippingTotalsFromItems()
             return
@@ -562,7 +773,8 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         let cartItem = CartItem(
             id: UUID().uuidString,
             productId: product.id,
-            variantId: product.variants.first?.id,
+            variantId: variantId,
+            variantTitle: variantTitle,
             title: product.title,
             brand: product.brand,
             imageUrl: imageUrl,
@@ -613,6 +825,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             id: item.id,
             productId: item.productId,
             variantId: item.variantId,
+            variantTitle: item.variantTitle,
             title: item.title,
             brand: item.brand,
             imageUrl: item.imageUrl,
@@ -663,6 +876,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                 id: item.id,
                 productId: item.productId,
                 variantId: item.variantId,
+                variantTitle: item.variantTitle,
                 title: item.title,
                 brand: item.brand,
                 imageUrl: item.imageUrl,
@@ -684,6 +898,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
                     id: updated.id,
                     productId: updated.productId,
                     variantId: updated.variantId,
+                    variantTitle: updated.variantTitle,
                     title: updated.title,
                     brand: updated.brand,
                     imageUrl: updated.imageUrl,
@@ -1479,6 +1694,25 @@ extension ReturnAddressDto {
             address_2: address2,
             post_code: postCode,
             return_city: returnCity
+        )
+    }
+}
+
+extension GetAvailableGlobalMarketsDto {
+    fileprivate func toMarket(fallback: MarketConfiguration) -> CartManager.Market? {
+        guard let code = code, !code.isEmpty else { return nil }
+        let marketName = name ?? fallback.countryName
+        let symbol = currency?.symbol ?? fallback.currencySymbol
+        let currencyCode = currency?.code ?? fallback.currencyCode
+        let phone = phoneCode ?? fallback.phoneCode
+        return CartManager.Market(
+            code: code,
+            name: marketName,
+            officialName: official,
+            flagURL: flag,
+            phoneCode: phone,
+            currencyCode: currencyCode,
+            currencySymbol: symbol
         )
     }
 }

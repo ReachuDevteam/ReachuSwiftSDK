@@ -42,6 +42,11 @@ class RProductSliderViewModel: ObservableObject {
         // Skip if already loading
         guard !isLoading else { return }
         
+        if forceRefresh {
+            products = []
+            hasLoaded = false
+        }
+
         isLoading = true
         errorMessage = nil
         

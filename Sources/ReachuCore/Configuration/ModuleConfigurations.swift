@@ -82,6 +82,36 @@ public enum FloatingCartSize: String, CaseIterable {
     case large = "large"
 }
 
+// MARK: - Market Configuration
+
+/// Fallback configuration for markets and currency
+public struct MarketConfiguration {
+    public let countryCode: String
+    public let countryName: String
+    public let currencyCode: String
+    public let currencySymbol: String
+    public let phoneCode: String
+    public let flagURL: String?
+
+    public init(
+        countryCode: String = "US",
+        countryName: String = "United States",
+        currencyCode: String = "USD",
+        currencySymbol: String = "$",
+        phoneCode: String = "+1",
+        flagURL: String? = "https://flagcdn.com/w320/us.png"
+    ) {
+        self.countryCode = countryCode
+        self.countryName = countryName
+        self.currencyCode = currencyCode
+        self.currencySymbol = currencySymbol
+        self.phoneCode = phoneCode
+        self.flagURL = flagURL
+    }
+
+    public static let `default` = MarketConfiguration()
+}
+
 // MARK: - Network Configuration
 
 /// Configuration for network requests and API behavior
