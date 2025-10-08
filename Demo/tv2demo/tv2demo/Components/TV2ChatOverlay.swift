@@ -9,6 +9,9 @@ struct TV2ChatOverlay: View {
     @State private var isExpanded = false
     @State private var dragOffset: CGFloat = 0
     
+    // Binding to communicate with parent
+    var onExpandedChange: ((Bool) -> Void)?
+    
     private let expandedHeight: CGFloat = 0.4 // 40% of screen
     private let collapsedHeight: CGFloat = 60
     
@@ -41,10 +44,12 @@ struct TV2ChatOverlay: View {
                                         if isExpanded {
                                             if dragOffset > threshold || velocity > 500 {
                                                 isExpanded = false
+                                                onExpandedChange?(false)
                                             }
                                         } else {
                                             if dragOffset < -threshold || velocity < -500 {
                                                 isExpanded = true
+                                                onExpandedChange?(true)
                                             }
                                         }
                                         dragOffset = 0

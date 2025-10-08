@@ -13,6 +13,7 @@ struct TV2VideoPlayer: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @State private var isChatExpanded = false
     
     // Detect landscape orientation
     private var isLandscape: Bool {
@@ -20,23 +21,34 @@ struct TV2VideoPlayer: View {
     }
     
     var body: some View {
-        ZStack {
-            // Video Player Layer (Custom - no native controls)
-            if let player = playerViewModel.player {
-                CustomVideoPlayerView(player: player)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        playerViewModel.toggleControlsVisibility()
+        GeometryReader { geometry in
+            ZStack {
+                // Video Player Layer (adjusts to 60% when chat is expanded)
+                VStack(spacing: 0) {
+                    ZStack {
+                        if let player = playerViewModel.player {
+                            CustomVideoPlayerView(player: player)
+                                .aspectRatio(16/9, contentMode: .fit)
+                                .onTapGesture {
+                                    playerViewModel.toggleControlsVisibility()
+                                }
+                        } else {
+                            // Loading or placeholder
+                            Color.black
+                            
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.5)
+                        }
                     }
-            } else {
-                // Loading or placeholder
-                Color.black
-                    .ignoresSafeArea()
-                
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
-            }
+                    .frame(height: isChatExpanded ? geometry.size.height * 0.6 : geometry.size.height)
+                    .background(Color.black)
+                    
+                    if isChatExpanded {
+                        Spacer()
+                    }
+                }
+                .ignoresSafeArea()
             
             // Overlay Controls
             if playerViewModel.showControls {
@@ -65,8 +77,13 @@ struct TV2VideoPlayer: View {
                 Spacer()
             }
             
-            // Chat Overlay (Twitch/Kick style sliding panel)
-            TV2ChatOverlay()
+                // Chat Overlay (Twitch/Kick style sliding panel)
+                TV2ChatOverlay(onExpandedChange: { expanded in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isChatExpanded = expanded
+                    }
+                })
+            }
         }
         .preferredColorScheme(.dark)
         .statusBar(hidden: true) // Hide status bar for immersive experience
