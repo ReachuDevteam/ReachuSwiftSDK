@@ -10,6 +10,8 @@ struct TV2PollOverlay: View {
     
     @State private var selectedOption: String?
     @State private var hasVoted = false
+    @State private var showResults = false
+    @State private var dragOffset: CGFloat = 0
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     
@@ -28,6 +30,24 @@ struct TV2PollOverlay: View {
                         .frame(width: 280)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
+                        .offset(x: dragOffset)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    if value.translation.width > 0 {
+                                        dragOffset = value.translation.width
+                                    }
+                                }
+                                .onEnded { value in
+                                    if value.translation.width > 100 {
+                                        onDismiss()
+                                    } else {
+                                        withAnimation(.spring()) {
+                                            dragOffset = 0
+                                        }
+                                    }
+                                }
+                        )
                 }
             } else {
                 // Vertical: sobre el chat, más compacto
@@ -35,25 +55,43 @@ struct TV2PollOverlay: View {
                 pollCard
                     .padding(.horizontal, 16)
                     .padding(.bottom, 80) // Espacio para el chat
+                    .offset(y: dragOffset)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if value.translation.height > 0 {
+                                    dragOffset = value.translation.height
+                                }
+                            }
+                            .onEnded { value in
+                                if value.translation.height > 100 {
+                                    onDismiss()
+                                } else {
+                                    withAnimation(.spring()) {
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
             }
         }
     }
     
     private var pollCard: some View {
         VStack(spacing: isLandscape ? 12 : 8) {
+            // Drag indicator
+            Capsule()
+                .fill(Color.white.opacity(0.3))
+                .frame(width: 32, height: 4)
+                .padding(.top, 8)
+            
             // Header
             HStack {
-                Text("📊 ENCUESTA")
+                Text("📊 AVSTEMNING")
                     .font(.system(size: isLandscape ? 11 : 10, weight: .bold))
                     .foregroundColor(TV2Theme.Colors.primary)
                 
                 Spacer()
-                
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: isLandscape ? 16 : 14))
-                        .foregroundColor(.white.opacity(0.6))
-                }
             }
             
             // Question
@@ -72,10 +110,18 @@ struct TV2PollOverlay: View {
             
             // Timer o mensaje de votación
             if hasVoted {
-                Text("¡Gracias por votar!")
-                    .font(.system(size: isLandscape ? 11 : 10))
-                    .foregroundColor(TV2Theme.Colors.primary)
-                    .padding(.top, 4)
+                if showResults {
+                    // Resultados
+                    Text("Takk for at du stemte!")
+                        .font(.system(size: isLandscape ? 11 : 10))
+                        .foregroundColor(TV2Theme.Colors.primary)
+                        .padding(.top, 4)
+                } else {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: TV2Theme.Colors.primary))
+                        .scaleEffect(0.8)
+                        .padding(.top, 4)
+                }
             } else {
                 HStack(spacing: 4) {
                     Image(systemName: "clock.fill")
@@ -92,21 +138,11 @@ struct TV2PollOverlay: View {
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(hex: "120019"))
         )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .strokeBorder(
-                    LinearGradient(
-                        colors: [
-                            TV2Theme.Colors.primary.opacity(0.5),
-                            TV2Theme.Colors.secondary.opacity(0.5)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 2
-                )
-        )
         .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
+        .rotation3DEffect(
+            .degrees(showResults ? 180 : 0),
+            axis: (x: 0, y: 1, z: 0)
+        )
     }
     
     private func pollOptionButton(option: String, index: Int) -> some View {
@@ -115,6 +151,13 @@ struct TV2PollOverlay: View {
             selectedOption = option
             hasVoted = true
             onVote(option)
+            
+            // Simular delay para "obtener resultados"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    showResults = true
+                }
+            }
         }) {
             HStack(spacing: 8) {
                 // Letter indicator
