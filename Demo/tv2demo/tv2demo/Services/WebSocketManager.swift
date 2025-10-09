@@ -153,7 +153,7 @@ struct PollEvent: Codable {
     let timestamp: Int64
 }
 
-struct PollEventData: Codable, Identifiable {
+struct PollEventData: Codable, Identifiable, Equatable {
     let id: String
     let question: String
     let options: [String]
