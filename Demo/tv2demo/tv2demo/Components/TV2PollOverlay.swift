@@ -221,6 +221,7 @@ struct TV2PollOverlay: View {
                 options: ["iPhone", "Samsung", "Google Pixel", "Otro"],
                 duration: 60
             ),
+            isChatExpanded: false,
             onVote: { option in
                 print("Votado: \(option)")
             },

@@ -356,6 +356,7 @@ struct TV2TwoProductsOverlay: View {
                 currency: "USD",
                 imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f"
             ),
+            isChatExpanded: false,
             onAddToCart: {
                 print("Agregado al carrito")
             },

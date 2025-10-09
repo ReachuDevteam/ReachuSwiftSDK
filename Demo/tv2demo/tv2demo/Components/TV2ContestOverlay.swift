@@ -455,6 +455,7 @@ struct Triangle: Shape {
                 deadline: "2024-12-31",
                 maxParticipants: 1000
             ),
+            isChatExpanded: false,
             onJoin: {
                 print("Usuario se unió")
             },
