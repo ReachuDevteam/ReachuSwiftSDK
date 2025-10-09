@@ -1,4 +1,6 @@
-import KlarnaMobileSDK
+#if canImport(KlarnaMobileSDK)
+    import KlarnaMobileSDK
+#endif
 import ReachuCore
 import ReachuDesignSystem
 import SwiftUI

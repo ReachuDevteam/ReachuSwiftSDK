@@ -217,7 +217,16 @@ let package = Package(
             ],
             path: "Demo/ReachuDemoSdk/Sdk"
         ),
-        // MARK: - Test Targets (TODO: Create test directories)
-        // Tests temporarily removed until directories are created
+        // MARK: - Test Targets
+        .testTarget(
+            name: "ReachuUITests",
+            dependencies: [
+                "ReachuUI",
+                "ReachuCore",
+                "ReachuDesignSystem",
+                "ReachuLiveShow"
+            ],
+            path: "Tests/ReachuUITests"
+        )
     ]
 )
