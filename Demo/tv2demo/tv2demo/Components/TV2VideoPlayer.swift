@@ -10,9 +10,14 @@ struct TV2VideoPlayer: View {
     let onDismiss: () -> Void
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
+    @StateObject private var webSocketManager = WebSocketManager()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @State private var isChatExpanded = false
+    @State private var showPoll = false
+    @State private var showProduct = false
+    @State private var showContest = false
     
     // Detect landscape orientation
     private var isLandscape: Bool {
@@ -20,23 +25,34 @@ struct TV2VideoPlayer: View {
     }
     
     var body: some View {
-        ZStack {
-            // Video Player Layer (Custom - no native controls)
-            if let player = playerViewModel.player {
-                CustomVideoPlayerView(player: player)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        playerViewModel.toggleControlsVisibility()
+        GeometryReader { geometry in
+            ZStack {
+                // Video Player Layer (adjusts to 60% when chat is expanded)
+                VStack(spacing: 0) {
+                    ZStack {
+                        if let player = playerViewModel.player {
+                            CustomVideoPlayerView(player: player)
+                                .aspectRatio(16/9, contentMode: .fit)
+                                .onTapGesture {
+                                    playerViewModel.toggleControlsVisibility()
+                                }
+                        } else {
+                            // Loading or placeholder
+                            Color.black
+                            
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(1.5)
+                        }
                     }
-            } else {
-                // Loading or placeholder
-                Color.black
-                    .ignoresSafeArea()
-                
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                    .scaleEffect(1.5)
-            }
+                    .frame(height: isChatExpanded ? geometry.size.height * 0.6 : geometry.size.height)
+                    .background(Color.black)
+                    
+                    if isChatExpanded {
+                        Spacer()
+                    }
+                }
+                .ignoresSafeArea()
             
             // Overlay Controls
             if playerViewModel.showControls {
@@ -64,6 +80,65 @@ struct TV2VideoPlayer: View {
                 
                 Spacer()
             }
+            
+            // Contest Overlay (máxima prioridad)
+            if let contest = webSocketManager.currentContest, showContest {
+                TV2ContestOverlay(
+                    contest: contest,
+                    isChatExpanded: isChatExpanded,
+                    onJoin: {
+                        print("🎁 [Contest] Usuario se unió: \(contest.name)")
+                        // Aquí se enviará la participación al servidor después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showContest = false
+                        }
+                    }
+                )
+            }
+            
+            // Product Overlay (sobre el chat y poll)
+            if let product = webSocketManager.currentProduct, showProduct {
+                TV2ProductOverlay(
+                    product: product,
+                    isChatExpanded: isChatExpanded,
+                    onAddToCart: {
+                        print("🛍️ [Product] Agregado al carrito: \(product.name)")
+                        // Aquí se agregará al carrito de Reachu después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showProduct = false
+                        }
+                    }
+                )
+            }
+            
+            // Poll Overlay (sobre el chat)
+            if let poll = webSocketManager.currentPoll, showPoll {
+                TV2PollOverlay(
+                    poll: poll,
+                    isChatExpanded: isChatExpanded,
+                    onVote: { option in
+                        print("📊 [Poll] Votado: \(option)")
+                        // Aquí se enviará el voto al servidor después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showPoll = false
+                        }
+                    }
+                )
+            }
+            
+            // Chat Overlay (Twitch/Kick style sliding panel)
+            TV2ChatOverlay(onExpandedChange: { expanded in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                    isChatExpanded = expanded
+                }
+            })
+            }
         }
         .preferredColorScheme(.dark)
         .statusBar(hidden: true) // Hide status bar for immersive experience
@@ -73,11 +148,71 @@ struct TV2VideoPlayer: View {
             playerViewModel.setupPlayer()
             // Enable all orientations for video playback
             setOrientation(.allButUpsideDown)
+            
+            // Conectar WebSocket
+            webSocketManager.connect()
         }
         .onDisappear {
             playerViewModel.cleanup()
             // Return to portrait when dismissed
             setOrientation(.portrait)
+            
+            // Desconectar WebSocket
+            webSocketManager.disconnect()
+        }
+        .onReceive(webSocketManager.$currentPoll) { newPoll in
+            print("🎯 [VideoPlayer] Poll recibido: \(newPoll?.question ?? "nil")")
+            if newPoll != nil {
+                print("🎯 [VideoPlayer] Mostrando poll")
+                withAnimation {
+                    showPoll = true
+                }
+                
+                // Auto-ocultar después de la duración del poll
+                if let duration = newPoll?.duration {
+                    print("🎯 [VideoPlayer] Auto-ocultar en \(duration)s")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(duration)) {
+                        withAnimation {
+                            print("🎯 [VideoPlayer] Ocultando poll")
+                            showPoll = false
+                        }
+                    }
+                }
+            }
+        }
+        .onReceive(webSocketManager.$currentProduct) { newProduct in
+            print("🎯 [VideoPlayer] Producto recibido: \(newProduct?.name ?? "nil")")
+            if newProduct != nil {
+                print("🎯 [VideoPlayer] Mostrando producto")
+                withAnimation {
+                    showProduct = true
+                }
+                
+                // Auto-ocultar después de 30 segundos
+                DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                    withAnimation {
+                        print("🎯 [VideoPlayer] Ocultando producto")
+                        showProduct = false
+                    }
+                }
+            }
+        }
+        .onReceive(webSocketManager.$currentContest) { newContest in
+            print("🎯 [VideoPlayer] Concurso recibido: \(newContest?.name ?? "nil")")
+            if newContest != nil {
+                print("🎯 [VideoPlayer] Mostrando concurso")
+                withAnimation {
+                    showContest = true
+                }
+                
+                // Auto-ocultar después de 45 segundos (tiempo para countdown + wheel)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
+                    withAnimation {
+                        print("🎯 [VideoPlayer] Ocultando concurso")
+                        showContest = false
+                    }
+                }
+            }
         }
     }
     
