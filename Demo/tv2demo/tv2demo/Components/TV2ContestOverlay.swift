@@ -227,46 +227,82 @@ struct TV2ContestOverlay: View {
     // MARK: - Wheel View
     
     private var wheelView: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             // Header
             Text(isSpinning ? "Snurrer..." : "Gratulerer!")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 20, weight: .bold))
                 .foregroundColor(.white)
             
             // Wheel
             ZStack {
                 // Pointer at top
                 Triangle()
-                    .fill(Color.red)
-                    .frame(width: 20, height: 25)
-                    .offset(y: -140)
+                    .fill(TV2Theme.Colors.primary)
+                    .frame(width: 24, height: 30)
+                    .offset(y: -125)
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .zIndex(10)
                 
                 // Wheel circle
+                Circle()
+                    .fill(Color.white.opacity(0.05))
+                    .frame(width: 260, height: 260)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                    )
+                
+                // Wheel segments
                 ZStack {
                     ForEach(0..<prizes.count, id: \.self) { index in
                         wheelSegment(index: index)
                     }
                 }
                 .rotationEffect(.degrees(wheelRotation))
-                .frame(width: 280, height: 280)
+                .frame(width: 250, height: 250)
+                
+                // Center circle
+                Circle()
+                    .fill(Color(hex: "120019"))
+                    .frame(width: 60, height: 60)
+                    .overlay(
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [TV2Theme.Colors.primary, TV2Theme.Colors.secondary],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 3
+                            )
+                    )
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
             }
+            .frame(width: 280, height: 280)
             
             // Prize result
             if !isSpinning && !finalPrize.isEmpty {
                 VStack(spacing: 8) {
                     Text("Du vant:")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.7))
                     
                     Text(finalPrize)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(TV2Theme.Colors.primary)
                         .multilineTextAlignment(.center)
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.1))
+                        .fill(
+                            LinearGradient(
+                                colors: [TV2Theme.Colors.primary.opacity(0.2), TV2Theme.Colors.secondary.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                 )
             }
         }
@@ -274,24 +310,49 @@ struct TV2ContestOverlay: View {
     
     private func wheelSegment(index: Int) -> some View {
         let angle = 360.0 / Double(prizes.count)
-        let startAngle = angle * Double(index)
+        let startAngle = angle * Double(index) - 90 // Start from top
         
-        return ZStack {
-            // Segment background
-            Circle()
-                .trim(from: CGFloat(startAngle / 360.0), to: CGFloat((startAngle + angle) / 360.0))
-                .stroke(segmentColor(index: index), lineWidth: 45)
-                .frame(width: 235, height: 235)
+        return WheelSegmentShape(startAngle: startAngle, angle: angle)
+            .fill(segmentColor(index: index))
+            .overlay(
+                WheelSegmentShape(startAngle: startAngle, angle: angle)
+                    .stroke(Color.black.opacity(0.3), lineWidth: 1)
+            )
+            .overlay(
+                // Premio text
+                Text(prizes[index])
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
+                    .rotationEffect(.degrees(startAngle + angle / 2 + 90))
+                    .offset(y: -95)
+                    .rotationEffect(.degrees(-(startAngle + angle / 2 + 90)))
+            )
+            .rotationEffect(.degrees(startAngle + angle / 2 + 90))
+    }
+    
+    // Custom wheel segment shape
+    struct WheelSegmentShape: Shape {
+        let startAngle: Double
+        let angle: Double
+        
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+            let center = CGPoint(x: rect.midX, y: rect.midY)
+            let radius = min(rect.width, rect.height) / 2
             
-            // Segment text
-            Text(prizes[index])
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundColor(.white)
-                .rotationEffect(.degrees(startAngle + angle / 2))
-                .offset(y: -117)
-                .rotationEffect(.degrees(-(startAngle + angle / 2)))
+            path.move(to: center)
+            path.addArc(
+                center: center,
+                radius: radius,
+                startAngle: .degrees(startAngle),
+                endAngle: .degrees(startAngle + angle),
+                clockwise: false
+            )
+            path.closeSubpath()
+            
+            return path
         }
-        .rotationEffect(.degrees(startAngle + angle / 2))
     }
     
     private func segmentColor(index: Int) -> Color {
