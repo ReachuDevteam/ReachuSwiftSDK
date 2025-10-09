@@ -85,6 +85,7 @@ struct TV2VideoPlayer: View {
             if let contest = webSocketManager.currentContest, showContest {
                 TV2ContestOverlay(
                     contest: contest,
+                    isChatExpanded: isChatExpanded,
                     onJoin: {
                         print("🎁 [Contest] Usuario se unió: \(contest.name)")
                         // Aquí se enviará la participación al servidor después
@@ -101,6 +102,7 @@ struct TV2VideoPlayer: View {
             if let product = webSocketManager.currentProduct, showProduct {
                 TV2ProductOverlay(
                     product: product,
+                    isChatExpanded: isChatExpanded,
                     onAddToCart: {
                         print("🛍️ [Product] Agregado al carrito: \(product.name)")
                         // Aquí se agregará al carrito de Reachu después
@@ -117,6 +119,7 @@ struct TV2VideoPlayer: View {
             if let poll = webSocketManager.currentPoll, showPoll {
                 TV2PollOverlay(
                     poll: poll,
+                    isChatExpanded: isChatExpanded,
                     onVote: { option in
                         print("📊 [Poll] Votado: \(option)")
                         // Aquí se enviará el voto al servidor después

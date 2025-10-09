@@ -4,6 +4,7 @@ import SwiftUI
 /// Estilo basado en las cards del SDK de Reachu
 struct TV2ProductOverlay: View {
     let product: ProductEventData
+    let isChatExpanded: Bool
     let onAddToCart: () -> Void
     let onDismiss: () -> Void
     
@@ -14,6 +15,15 @@ struct TV2ProductOverlay: View {
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
+    }
+    
+    // Ajustar bottom padding basado en si el chat está expandido
+    private var bottomPadding: CGFloat {
+        if isLandscape {
+            return 16
+        } else {
+            return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
+        }
     }
     
     var body: some View {
@@ -35,7 +45,7 @@ struct TV2ProductOverlay: View {
                 Spacer()
                 productCard
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 80)
+                    .padding(.bottom, bottomPadding)
                     .offset(y: dragOffset)
                     .gesture(dragGesture)
             }

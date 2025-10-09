@@ -4,6 +4,7 @@ import SwiftUI
 /// Usuario se une con "Bli med", cuando termina el contador muestra ruleta giratoria
 struct TV2ContestOverlay: View {
     let contest: ContestEventData
+    let isChatExpanded: Bool
     let onJoin: () -> Void
     let onDismiss: () -> Void
     
@@ -19,6 +20,15 @@ struct TV2ContestOverlay: View {
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
+    }
+    
+    // Ajustar bottom padding basado en si el chat está expandido
+    private var bottomPadding: CGFloat {
+        if isLandscape {
+            return 16
+        } else {
+            return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
+        }
     }
     
     // Premios de la ruleta
@@ -50,7 +60,7 @@ struct TV2ContestOverlay: View {
                 Spacer()
                 contestCard
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 80)
+                    .padding(.bottom, bottomPadding)
                     .offset(y: dragOffset)
                     .gesture(dragGesture)
             }
