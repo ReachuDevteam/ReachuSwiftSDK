@@ -17,6 +17,7 @@ struct TV2VideoPlayer: View {
     @State private var isChatExpanded = false
     @State private var showPoll = false
     @State private var showProduct = false
+    @State private var showContest = false
     
     // Detect landscape orientation
     private var isLandscape: Bool {
@@ -78,6 +79,22 @@ struct TV2VideoPlayer: View {
                 }
                 
                 Spacer()
+            }
+            
+            // Contest Overlay (máxima prioridad)
+            if let contest = webSocketManager.currentContest, showContest {
+                TV2ContestOverlay(
+                    contest: contest,
+                    onJoin: {
+                        print("🎁 [Contest] Usuario se unió: \(contest.name)")
+                        // Aquí se enviará la participación al servidor después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showContest = false
+                        }
+                    }
+                )
             }
             
             // Product Overlay (sobre el chat y poll)
@@ -173,6 +190,23 @@ struct TV2VideoPlayer: View {
                     withAnimation {
                         print("🎯 [VideoPlayer] Ocultando producto")
                         showProduct = false
+                    }
+                }
+            }
+        }
+        .onReceive(webSocketManager.$currentContest) { newContest in
+            print("🎯 [VideoPlayer] Concurso recibido: \(newContest?.name ?? "nil")")
+            if newContest != nil {
+                print("🎯 [VideoPlayer] Mostrando concurso")
+                withAnimation {
+                    showContest = true
+                }
+                
+                // Auto-ocultar después de 45 segundos (tiempo para countdown + wheel)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 45) {
+                    withAnimation {
+                        print("🎯 [VideoPlayer] Ocultando concurso")
+                        showContest = false
                     }
                 }
             }
