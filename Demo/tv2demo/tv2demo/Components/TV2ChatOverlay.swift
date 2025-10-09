@@ -1,18 +1,18 @@
 import SwiftUI
 import Combine
 
-/// Twitch/Kick-style sliding chat panel that splits screen with video
-/// Video shrinks to 60% top, chat takes 40% bottom
-/// Works in both portrait and landscape
+/// Panel de chat deslizante estilo Twitch/Kick que divide la pantalla con el video
+/// Video se reduce al 60% arriba, chat ocupa 40% abajo
+/// Funciona tanto en vertical como horizontal
 struct TV2ChatOverlay: View {
     @StateObject private var chatManager = ChatManager()
     @State private var isExpanded = false
     @State private var dragOffset: CGFloat = 0
     
-    // Binding to communicate with parent
+    // Binding para comunicarse con el padre
     var onExpandedChange: ((Bool) -> Void)?
     
-    private let expandedHeight: CGFloat = 0.4 // 40% of screen
+    private let expandedHeight: CGFloat = 0.4 // 40% de la pantalla
     private let collapsedHeight: CGFloat = 60
     
     var body: some View {
@@ -66,20 +66,9 @@ struct TV2ChatOverlay: View {
                 .frame(height: isExpanded ? geometry.size.height * expandedHeight : collapsedHeight)
                 .offset(y: dragOffset)
                 .background(
-                    RoundedRectangle(cornerRadius: isExpanded ? 0 : 20)
-                        .fill(Color.black.opacity(0.95))
+                    RoundedRectangle(cornerRadius: isExpanded ? 20 : 20)
+                        .fill(Color(hex: "120019"))
                         .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: -5)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: isExpanded ? 0 : 20)
-                        .stroke(
-                            LinearGradient(
-                                colors: [TV2Theme.Colors.primary.opacity(0.3), TV2Theme.Colors.secondary.opacity(0.3)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
                 )
             }
             .ignoresSafeArea(edges: .bottom)
@@ -95,51 +84,44 @@ struct TV2ChatOverlay: View {
     // MARK: - Drag Handle
     
     private var dragHandle: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 4) {
             // Drag indicator
-            RoundedRectangle(cornerRadius: 3)
+            RoundedRectangle(cornerRadius: 2)
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 40, height: 5)
-                .padding(.top, 8)
+                .frame(width: 32, height: 4)
+                .padding(.top, 6)
             
             // Header
-            HStack(spacing: 12) {
-                // Live chat icon
-                HStack(spacing: 6) {
-                    Image(systemName: "bubble.left.and.bubble.right.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(TV2Theme.Colors.primary)
-                    
-                    Text("LIVE CHAT")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                }
+            HStack(spacing: 8) {
+                Text("LIVE CHAT")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
                 
                 Spacer()
                 
                 // Viewer count
-                HStack(spacing: 6) {
+                HStack(spacing: 4) {
                     Circle()
                         .fill(Color.green)
-                        .frame(width: 6, height: 6)
+                        .frame(width: 5, height: 5)
                     
                     Text("\(chatManager.viewerCount)")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(.white.opacity(0.8))
                     
                     Image(systemName: "person.2.fill")
-                        .font(.system(size: 12))
+                        .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.6))
                 }
                 
                 // Expand/Collapse indicator
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 10, weight: .semibold))
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.leading, 4)
+                    .padding(.leading, 2)
             }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 6)
         }
         .frame(height: collapsedHeight)
         .contentShape(Rectangle())
@@ -152,15 +134,15 @@ struct TV2ChatOverlay: View {
             // Messages
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 10) {
+                    LazyVStack(alignment: .leading, spacing: 4) {
                         ForEach(chatManager.messages) { message in
                             ChatMessageRow(message: message)
                                 .id(message.id)
                         }
                     }
-                    .padding(16)
+                    .padding(8)
                 }
-                .background(Color.black.opacity(0.98))
+                .background(Color(hex: "120019"))
                 .onChange(of: chatManager.messages.count) { _ in
                     if let lastMessage = chatManager.messages.last {
                         withAnimation {
@@ -178,7 +160,7 @@ struct TV2ChatOverlay: View {
     // MARK: - Chat Input Bar
     
     private var chatInputBar: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 8) {
             // Avatar placeholder
             Circle()
                 .fill(
@@ -188,35 +170,35 @@ struct TV2ChatOverlay: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 32, height: 32)
+                .frame(width: 24, height: 24)
                 .overlay(
                     Text("A")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.white)
                 )
             
             // Input field
             Text("Send a message...")
-                .font(.system(size: 14))
+                .font(.system(size: 11))
                 .foregroundColor(.white.opacity(0.4))
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: 16)
                         .fill(Color.white.opacity(0.1))
                 )
             
             // Send button
             Button(action: {}) {
                 Image(systemName: "paperplane.fill")
-                    .font(.system(size: 16))
+                    .font(.system(size: 13))
                     .foregroundColor(TV2Theme.Colors.primary)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.95))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(hex: "120019"))
     }
 }
 
@@ -226,44 +208,44 @@ struct ChatMessageRow: View {
     let message: ChatMessage
     
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .top, spacing: 6) {
             // Avatar
             Circle()
                 .fill(message.usernameColor.opacity(0.3))
-                .frame(width: 32, height: 32)
+                .frame(width: 22, height: 22)
                 .overlay(
                     Text(String(message.username.prefix(1)))
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 10, weight: .semibold))
                         .foregroundColor(message.usernameColor)
                 )
             
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 1) {
                 // Username and badges
-                HStack(spacing: 6) {
+                HStack(spacing: 3) {
                     if message.isModerator {
                         Image(systemName: "shield.fill")
-                            .font(.system(size: 11))
+                            .font(.system(size: 8))
                             .foregroundColor(Color.green)
                     }
                     
                     if message.isSubscriber {
                         Image(systemName: "star.fill")
-                            .font(.system(size: 11))
+                            .font(.system(size: 8))
                             .foregroundColor(TV2Theme.Colors.secondary)
                     }
                     
                     Text(message.username)
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(message.usernameColor)
                     
                     Text(timeAgo(from: message.timestamp))
-                        .font(.system(size: 11))
+                        .font(.system(size: 8))
                         .foregroundColor(.white.opacity(0.4))
                 }
                 
                 // Message
                 Text(message.text)
-                    .font(.system(size: 14))
+                    .font(.system(size: 11))
                     .foregroundColor(.white.opacity(0.95))
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -324,38 +306,38 @@ class ChatManager: ObservableObject {
         ("UltrasGroup", .red, false, true),
     ]
     
-    // Simulated messages (football-themed, Spanish/English mix)
+    // Mensajes simulados (temática de fútbol, noruego)
     private let simulatedMessages: [String] = [
-        "¡Qué golazo! 🔥",
-        "What a save!",
-        "INCREDIBLE PLAY!!!",
-        "La defensa está dormida...",
-        "This ref is terrible",
-        "¡VAMOS! 💪",
-        "Beautiful pass",
-        "That should've been a penalty",
-        "El portero está en otro nivel",
-        "SHOOT!",
-        "¿Por qué no tiró?",
-        "Great positioning",
-        "Este partido está loco",
-        "Need a goal here",
-        "La táctica está funcionando",
-        "Come on, wake up!",
-        "¡Casi! So close!",
-        "Best match of the season",
-        "El árbitro no vio nada",
-        "WHAT A PASS!",
-        "Increíble control de balón",
-        "That was offside!",
-        "¡A por ellos!",
-        "Perfect timing",
-        "Esta va a ser épica",
-        "LET'S GO!!!",
-        "¡Qué jugada!",
-        "Amazing teamwork",
-        "El público está encendido 🔥",
-        "THIS IS IT!",
+        "Hvilket mål! 🔥",
+        "For en redning!",
+        "UTROLIG SPILL!!!",
+        "Forsvaret sover...",
+        "Dommeren er forferdelig",
+        "KOM IGJEN! 💪",
+        "Nydelig pasning",
+        "Det burde vært straffe",
+        "Keeperen er på et annet nivå",
+        "SKYT!",
+        "Hvorfor skjøt han ikke?",
+        "Perfekt posisjonering",
+        "Denne kampen er gal",
+        "Vi trenger mål nå",
+        "Taktikken fungerer",
+        "Kom igjen, våkn opp!",
+        "Nesten! Så nært!",
+        "Beste kampen denne sesongen",
+        "Dommeren så ingenting",
+        "FOR EN PASNING!",
+        "Utrolig ballkontroll",
+        "Det var offside!",
+        "Kom igjen da!",
+        "Perfekt timing",
+        "Dette blir episk",
+        "KJØR PÅ!!!",
+        "Hvilken spilling!",
+        "Fantastisk lagspill",
+        "Publikum er tent 🔥",
+        "NÅ SKJER DET!",
     ]
     
     func startSimulation() {

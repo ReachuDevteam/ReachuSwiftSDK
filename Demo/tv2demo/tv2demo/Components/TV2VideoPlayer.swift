@@ -10,10 +10,12 @@ struct TV2VideoPlayer: View {
     let onDismiss: () -> Void
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
+    @StateObject private var webSocketManager = WebSocketManager()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var isChatExpanded = false
+    @State private var showPoll = false
     
     // Detect landscape orientation
     private var isLandscape: Bool {
@@ -77,12 +79,28 @@ struct TV2VideoPlayer: View {
                 Spacer()
             }
             
-                // Chat Overlay (Twitch/Kick style sliding panel)
-                TV2ChatOverlay(onExpandedChange: { expanded in
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        isChatExpanded = expanded
+            // Poll Overlay (sobre el chat)
+            if let poll = webSocketManager.currentPoll, showPoll {
+                TV2PollOverlay(
+                    poll: poll,
+                    onVote: { option in
+                        print("📊 [Poll] Votado: \(option)")
+                        // Aquí se enviará el voto al servidor después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showPoll = false
+                        }
                     }
-                })
+                )
+            }
+            
+            // Chat Overlay (Twitch/Kick style sliding panel)
+            TV2ChatOverlay(onExpandedChange: { expanded in
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                    isChatExpanded = expanded
+                }
+            })
             }
         }
         .preferredColorScheme(.dark)
@@ -93,11 +111,33 @@ struct TV2VideoPlayer: View {
             playerViewModel.setupPlayer()
             // Enable all orientations for video playback
             setOrientation(.allButUpsideDown)
+            
+            // Conectar WebSocket
+            webSocketManager.connect()
         }
         .onDisappear {
             playerViewModel.cleanup()
             // Return to portrait when dismissed
             setOrientation(.portrait)
+            
+            // Desconectar WebSocket
+            webSocketManager.disconnect()
+        }
+        .onChange(of: webSocketManager.currentPoll) { newPoll in
+            if newPoll != nil {
+                withAnimation {
+                    showPoll = true
+                }
+                
+                // Auto-ocultar después de la duración del poll
+                if let duration = newPoll?.duration {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(duration)) {
+                        withAnimation {
+                            showPoll = false
+                        }
+                    }
+                }
+            }
         }
     }
     
