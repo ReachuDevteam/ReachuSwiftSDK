@@ -123,16 +123,20 @@ struct TV2VideoPlayer: View {
             // Desconectar WebSocket
             webSocketManager.disconnect()
         }
-        .onChange(of: webSocketManager.currentPoll) { newPoll in
+        .onReceive(webSocketManager.$currentPoll) { newPoll in
+            print("🎯 [VideoPlayer] Poll recibido: \(newPoll?.question ?? "nil")")
             if newPoll != nil {
+                print("🎯 [VideoPlayer] Mostrando poll")
                 withAnimation {
                     showPoll = true
                 }
                 
                 // Auto-ocultar después de la duración del poll
                 if let duration = newPoll?.duration {
+                    print("🎯 [VideoPlayer] Auto-ocultar en \(duration)s")
                     DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(duration)) {
                         withAnimation {
+                            print("🎯 [VideoPlayer] Ocultando poll")
                             showPoll = false
                         }
                     }
