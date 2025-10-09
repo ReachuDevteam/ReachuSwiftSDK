@@ -16,6 +16,7 @@ struct TV2VideoPlayer: View {
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     @State private var isChatExpanded = false
     @State private var showPoll = false
+    @State private var showProduct = false
     
     // Detect landscape orientation
     private var isLandscape: Bool {
@@ -79,6 +80,22 @@ struct TV2VideoPlayer: View {
                 Spacer()
             }
             
+            // Product Overlay (sobre el chat y poll)
+            if let product = webSocketManager.currentProduct, showProduct {
+                TV2ProductOverlay(
+                    product: product,
+                    onAddToCart: {
+                        print("🛍️ [Product] Agregado al carrito: \(product.name)")
+                        // Aquí se agregará al carrito de Reachu después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showProduct = false
+                        }
+                    }
+                )
+            }
+            
             // Poll Overlay (sobre el chat)
             if let poll = webSocketManager.currentPoll, showPoll {
                 TV2PollOverlay(
@@ -139,6 +156,23 @@ struct TV2VideoPlayer: View {
                             print("🎯 [VideoPlayer] Ocultando poll")
                             showPoll = false
                         }
+                    }
+                }
+            }
+        }
+        .onReceive(webSocketManager.$currentProduct) { newProduct in
+            print("🎯 [VideoPlayer] Producto recibido: \(newProduct?.name ?? "nil")")
+            if newProduct != nil {
+                print("🎯 [VideoPlayer] Mostrando producto")
+                withAnimation {
+                    showProduct = true
+                }
+                
+                // Auto-ocultar después de 30 segundos
+                DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                    withAnimation {
+                        print("🎯 [VideoPlayer] Ocultando producto")
+                        showProduct = false
                     }
                 }
             }
