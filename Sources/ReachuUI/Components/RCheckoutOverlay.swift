@@ -191,6 +191,59 @@ public struct RCheckoutOverlay: View {
             if isLoading {
                 loadingOverlay
             }
+            
+            // Overlay invisible para auto-autorización de Klarna
+            #if os(iOS) && canImport(KlarnaMobileSDK)
+            if klarnaAutoAuthorize,
+               let initData = klarnaNativeInitData,
+               let returnURL = URL(string: klarnaSuccessURLString),
+               !klarnaSelectedCategoryIdentifier.isEmpty {
+                HiddenKlarnaAutoAuthorize(
+                    initData: initData,
+                    categoryIdentifier: klarnaSelectedCategoryIdentifier,
+                    returnURL: returnURL,
+                    onAuthorized: { authToken, finalizeRequired in
+                        Task { @MainActor in
+                            isLoading = true
+                            klarnaAutoAuthorize = false // Reset flag
+                            
+                            guard let service = klarnaDirectService else {
+                                errorMessage = "Direct Klarna service unavailable"
+                                checkoutStep = .error
+                                isLoading = false
+                                return
+                            }
+                            
+                            do {
+                                let order = try await service.createOrder(
+                                    authorizationToken: authToken,
+                                    country: "NO",
+                                    currency: "NOK",
+                                    locale: "nb-NO",
+                                    amount: klarnaDirectAmount,
+                                    productName: klarnaDirectProductName
+                                )
+                                klarnaDirectStatusMessage = "Order created: \(order.order_id)"
+                                klarnaDirectService = nil
+                                checkoutStep = .success
+                                klarnaNativeInitData = nil
+                            } catch {
+                                errorMessage = error.localizedDescription
+                                checkoutStep = .error
+                            }
+                            isLoading = false
+                        }
+                    },
+                    onFailed: { message in
+                        Task { @MainActor in
+                            klarnaAutoAuthorize = false
+                            errorMessage = message
+                            checkoutStep = .error
+                        }
+                    }
+                )
+            }
+            #endif
         }
         #if os(iOS) && canImport(KlarnaMobileSDK)
             .sheet(
@@ -1335,9 +1388,10 @@ public struct RCheckoutOverlay: View {
                         
                         self.isLoading = false
                         
-                        // Activate auto-authorize and show sheet
+                        // Para flujo directo, NO mostrar sheet, solo setear flag
                         self.klarnaAutoAuthorize = true
-                        self.showKlarnaNativeSheet = true
+                        // NO mostrar el sheet, lo manejamos con overlay invisible
+                        // self.showKlarnaNativeSheet = true
                     } catch {
                         self.isLoading = false
                         self.errorMessage = "Failed to parse Klarna response: \(error.localizedDescription)"
@@ -3111,25 +3165,42 @@ struct CountryPicker: View {
                         .background(ReachuColors.surfaceSecondary)
                         .cornerRadius(ReachuBorderRadius.large)
                 } else {
-                    KlarnaPaymentViewContainer(
-                        initData: initData,
-                        categoryIdentifier: selectedCategory,
-                        returnURL: returnURL,
-                        contentHeight: $contentHeight,
-                        triggerAuthorize: $triggerAuthorize,
-                        onAuthorized: { token, finalizeRequired in
-                            localError = nil
-                            onAuthorized(token, finalizeRequired)
-                        },
-                        onFailed: { message in
-                            localError = message
-                            onFailed(message)
+                    ZStack {
+                        KlarnaPaymentViewContainer(
+                            initData: initData,
+                            categoryIdentifier: selectedCategory,
+                            returnURL: returnURL,
+                            contentHeight: $contentHeight,
+                            triggerAuthorize: $triggerAuthorize,
+                            onAuthorized: { token, finalizeRequired in
+                                localError = nil
+                                onAuthorized(token, finalizeRequired)
+                            },
+                            onFailed: { message in
+                                localError = message
+                                onFailed(message)
+                            }
+                        )
+                        .frame(maxWidth: .infinity)
+                        .frame(height: contentHeight)
+                        .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.large))
+                        .id(selectedCategory)
+                        .opacity(autoAuthorize && !triggerAuthorize ? 0 : 1) // Ocultar mientras inicializa
+                        
+                        // Mostrar loading mientras se inicializa en modo auto
+                        if autoAuthorize && !triggerAuthorize {
+                            VStack(spacing: ReachuSpacing.md) {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: ReachuColors.primary))
+                                    .scaleEffect(1.5)
+                                Text("Conectando con Klarna...")
+                                    .font(ReachuTypography.body)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200)
                         }
-                    )
-                    .frame(maxWidth: .infinity)
-                    .frame(height: contentHeight)
-                    .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.large))
-                    .id(selectedCategory)
+                    }
                 }
 
                 if let localError {
@@ -3179,8 +3250,9 @@ struct CountryPicker: View {
                 // Disparar autorización automáticamente si está activado
                 if autoAuthorize && !hasTriggeredAutoAuthorize {
                     hasTriggeredAutoAuthorize = true
-                    // Dar un pequeño delay para que el KlarnaPaymentView se inicialice
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    // Dar un delay MUY corto para que el KlarnaPaymentView se inicialice
+                    // pero disparar authorize() antes de que se renderice su UI
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         triggerAuthorize = true
                     }
                 }
@@ -3395,6 +3467,122 @@ struct CountryPicker: View {
             identifier
                 .replacingOccurrences(of: "_", with: " ")
                 .capitalized
+        }
+    }
+
+    // MARK: - Hidden Klarna Auto-Authorize
+    /// Componente invisible que crea un KlarnaPaymentView y llama a authorize() automáticamente
+    struct HiddenKlarnaAutoAuthorize: UIViewRepresentable {
+        let initData: InitPaymentKlarnaNativeDto
+        let categoryIdentifier: String
+        let returnURL: URL
+        let onAuthorized: (_ authToken: String, _ finalizeRequired: Bool) -> Void
+        let onFailed: (String) -> Void
+        
+        func makeCoordinator() -> Coordinator {
+            Coordinator(parent: self)
+        }
+        
+        func makeUIView(context: Context) -> UIView {
+            let containerView = UIView()
+            containerView.isHidden = true // Completamente invisible
+            containerView.frame = .zero
+            
+            let paymentView = KlarnaPaymentView(
+                category: categoryIdentifier,
+                returnUrl: returnURL,
+                eventListener: context.coordinator
+            )
+            paymentView.environment = .production
+            paymentView.region = .eu // Europa para Noruega
+            paymentView.frame = .zero
+            paymentView.isHidden = true
+            
+            context.coordinator.paymentView = paymentView
+            containerView.addSubview(paymentView)
+            
+            // Inicializar y autorizar inmediatamente
+            paymentView.initialize(clientToken: initData.clientToken, returnUrl: returnURL)
+            
+            // Esperar un momento mínimo y autorizar
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                paymentView.authorize(autoFinalize: true, jsonData: nil)
+            }
+            
+            return containerView
+        }
+        
+        func updateUIView(_ uiView: UIView, context: Context) {
+            // No updates needed
+        }
+        
+        class Coordinator: NSObject, KlarnaPaymentEventListener {
+            let parent: HiddenKlarnaAutoAuthorize
+            var paymentView: KlarnaPaymentView?
+            
+            init(parent: HiddenKlarnaAutoAuthorize) {
+                self.parent = parent
+            }
+            
+            func klarnaInitialized(paymentView: KlarnaPaymentView) {
+                print("🔵 [Klarna Auto] Initialized")
+            }
+            
+            func klarnaLoaded(paymentView: KlarnaPaymentView) {
+                print("🔵 [Klarna Auto] Loaded")
+            }
+            
+            func klarnaLoadedPaymentReview(paymentView: KlarnaPaymentView) {
+                print("🔵 [Klarna Auto] Loaded payment review")
+            }
+            
+            func klarnaAuthorized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?,
+                finalizeRequired: Bool
+            ) {
+                print("🔵 [Klarna Auto] Authorized - approved: \(approved), token: \(authToken != nil)")
+                guard approved, let token = authToken, !token.isEmpty else {
+                    DispatchQueue.main.async {
+                        self.parent.onFailed("Authorization not approved")
+                    }
+                    return
+                }
+                DispatchQueue.main.async {
+                    self.parent.onAuthorized(token, finalizeRequired)
+                }
+            }
+            
+            func klarnaReauthorized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?
+            ) {
+                print("🔵 [Klarna Auto] Reauthorized")
+            }
+            
+            func klarnaFinalized(
+                paymentView: KlarnaPaymentView,
+                approved: Bool,
+                authToken: String?
+            ) {
+                print("🔵 [Klarna Auto] Finalized")
+            }
+            
+            func klarnaResized(paymentView: KlarnaPaymentView, to newHeight: CGFloat) {
+                // No-op for hidden view
+            }
+            
+            func klarnaFailed(
+                inPaymentView paymentView: KlarnaPaymentView,
+                withError error: KlarnaPaymentError
+            ) {
+                print("🔴 [Klarna Auto] Failed: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.parent.onFailed(error.localizedDescription)
+                }
+            }
         }
     }
 #endif
