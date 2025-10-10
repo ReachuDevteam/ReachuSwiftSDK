@@ -1281,35 +1281,65 @@ public struct RCheckoutOverlay: View {
                 )
 
                 await MainActor.run {
-                    // Store session data
-                    self.klarnaNativeInitData = InitPaymentKlarnaNativeDto(
-                        client_token: response.client_token,
-                        payment_method_categories: response.payment_method_categories?.map { category in
-                            KlarnaNativePaymentMethodCategoryDto(
-                                identifier: category.identifier,
-                                name: category.name ?? "",
-                                asset_urls: category.asset_urls.map { urls in
-                                    KlarnaNativeAssetUrlsDto(
-                                        standard: urls.standard,
-                                        descriptive: urls.descriptive
-                                    )
+                    do {
+                        // Map response to DTOs using JSONEncoder/Decoder
+                        let encoder = JSONEncoder()
+                        encoder.keyEncodingStrategy = .convertToSnakeCase
+                        
+                        // Create categories array
+                        var categoriesArray: [[String: Any]] = []
+                        if let categories = response.payment_method_categories {
+                            for category in categories {
+                                var categoryDict: [String: Any] = [
+                                    "identifier": category.identifier,
+                                    "name": category.name ?? ""
+                                ]
+                                
+                                if let assetUrls = category.asset_urls {
+                                    categoryDict["asset_urls"] = [
+                                        "descriptive": assetUrls.descriptive ?? "",
+                                        "standard": assetUrls.standard ?? ""
+                                    ]
                                 }
-                            )
-                        } ?? []
-                    )
-
-                    // Set available categories
-                    self.klarnaAvailableCategories = self.klarnaNativeInitData?.payment_method_categories ?? []
-
-                    // Select first category automatically
-                    if let firstCategory = self.klarnaAvailableCategories.first {
-                        self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                                
+                                categoriesArray.append(categoryDict)
+                            }
+                        }
+                        
+                        // Decode categories
+                        let categoriesData = try JSONSerialization.data(withJSONObject: categoriesArray)
+                        let mappedCategories = try JSONDecoder().decode([KlarnaNativePaymentMethodCategoryDto].self, from: categoriesData)
+                        
+                        self.klarnaAvailableCategories = mappedCategories
+                        
+                        // Select first category automatically
+                        if let firstCategory = mappedCategories.first {
+                            self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                        }
+                        
+                        // Create InitPaymentKlarnaNativeDto
+                        let initDict: [String: Any] = [
+                            "client_token": response.client_token,
+                            "session_id": response.session_id,
+                            "purchase_country": "NO",
+                            "purchase_currency": "NOK",
+                            "cart_id": cartManager.cartId ?? "",
+                            "checkout_id": "",
+                            "payment_method_categories": categoriesArray
+                        ]
+                        
+                        let initData = try JSONSerialization.data(withJSONObject: initDict)
+                        self.klarnaNativeInitData = try JSONDecoder().decode(InitPaymentKlarnaNativeDto.self, from: initData)
+                        
+                        self.isLoading = false
+                        
+                        // Show Klarna native sheet
+                        self.showKlarnaNativeSheet = true
+                    } catch {
+                        self.isLoading = false
+                        self.errorMessage = "Failed to parse Klarna response: \(error.localizedDescription)"
+                        self.checkoutStep = .error
                     }
-
-                    self.isLoading = false
-
-                    // Show Klarna native sheet
-                    self.showKlarnaNativeSheet = true
                 }
             } catch {
                 await MainActor.run {
