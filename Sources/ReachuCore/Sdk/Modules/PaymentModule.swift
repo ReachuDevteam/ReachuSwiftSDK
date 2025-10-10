@@ -175,7 +175,11 @@ public final class PaymentRepositoryGQL: PaymentRepository {
         )
         
         print("🌐 [ReachuCore] Backend respondió")
-        print("🌐 Response data keys: \(res.data.keys)")
+        if let dataKeys = res.data?.keys {
+            print("🌐 Response data keys: \(dataKeys)")
+        } else {
+            print("🌐 Response data es nil")
+        }
         
         guard
             let obj: [String: Any] = GraphQLPick.pickPath(
