@@ -69,11 +69,19 @@ extension CartManager {
         }
 
         guard let checkout = id, !checkout.isEmpty else {
-            print("ℹ️ [Payment] KlarnaNativeInit: missing checkoutId")
+            print("❌❌❌ [Payment] KlarnaNativeInit: missing checkoutId")
+            print("❌❌❌ [Payment] checkoutId actual: \(String(describing: checkoutId))")
+            print("❌❌❌ [Payment] id después de createCheckout: \(String(describing: id))")
             return nil
         }
 
-        print("💳 [Payment] KlarnaNativeInit START checkoutId=\(checkout)")
+        print("💳💳💳 [Payment] KlarnaNativeInit START")
+        print("💳 checkoutId: \(checkout)")
+        print("💳 input.countryCode: \(input.countryCode)")
+        print("💳 input.currency: \(input.currency)")
+        print("💳 input.locale: \(input.locale)")
+        print("💳 input.customer.email: \(input.customer?.email ?? "nil")")
+        print("💳 input.customer.phone: \(input.customer?.phone ?? "nil")")
         do {
             logRequest(
                 "sdk.payment.klarnaNativeInit",
@@ -97,7 +105,13 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.klarnaNativeInit", error: error)
-            print("❌ [Payment] KlarnaNativeInit FAIL \(msg)")
+            print("❌❌❌ [Payment] KlarnaNativeInit FAIL")
+            print("❌ Error type: \(type(of: error))")
+            print("❌ Error message: \(msg)")
+            print("❌ Full error: \(error)")
+            if let sdkError = error as? SdkException {
+                print("❌ SdkException description: \(sdkError.description)")
+            }
             return nil
         }
     }

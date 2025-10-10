@@ -141,6 +141,7 @@ public struct RCheckoutOverlay: View {
         NavigationView {
             VStack(spacing: 0) {
                 // Content based on step
+                let _ = print("🟣 [RCheckoutOverlay] Current checkoutStep: \(checkoutStep)")
                 switch checkoutStep {
                 case .address:
                     addressStepView
@@ -179,8 +180,11 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Body
     public var body: some View {
-        mainContent
+        let _ = print("🟣 [RCheckoutOverlay] body rendered - checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
+        
+        return mainContent
             .onAppear {
+                print("🟣 [RCheckoutOverlay] onAppear triggered")
                 syncSelectedMarket()
             }
             .onChange(of: cartManager.phoneCode) { newValue in
@@ -288,6 +292,7 @@ public struct RCheckoutOverlay: View {
                                 print("   1. AuthToken es válido?")
                                 print("   2. Backend de Reachu respondió?")
                                 print("   3. Klarna API respondió correctamente?")
+                                print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Klarna confirm failed)")
                                 errorMessage = "Failed to confirm Klarna payment"
                                 checkoutStep = .error
                                 isLoading = false
@@ -378,6 +383,7 @@ public struct RCheckoutOverlay: View {
                                     checkoutStep = .success
                                     klarnaNativeInitData = nil
                                 } else {
+                                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (proceedToNext failed)")
                                     checkoutStep = .error
                                 }
 
@@ -398,6 +404,7 @@ public struct RCheckoutOverlay: View {
                     Text("No Klarna payment methods available.")
                     .padding()
                     .onAppear {
+                        print("❌ [ERROR SOURCE] Setting checkoutStep to .error (KlarnaNativePaymentSheet onAppear)")
                         showKlarnaNativeSheet = false
                         checkoutStep = .error
                     }
@@ -641,6 +648,8 @@ public struct RCheckoutOverlay: View {
                     isDisabled: !canProceedToNext
                 ) {
                     Task { @MainActor in
+                        print("🟢 [Checkout] ========== Botón 'Initiate Payment' presionado ==========")
+                        print("🟢 [Checkout] selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
                         #if os(iOS)
                             if selectedPaymentMethod == .stripe {
                                 isLoading = true
@@ -651,11 +660,14 @@ public struct RCheckoutOverlay: View {
                                     presentStripePaymentSheet()
                                     return
                                 } else {
+                                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Stripe prepareStripePaymentSheet failed)")
                                     checkoutStep = .error
                                     return
                                 }
                             }
                             if selectedPaymentMethod == .klarna {
+                                print("🟢 [Checkout] Botón 'Initiate Payment' presionado con Klarna seleccionado")
+                                print("🟢 [Checkout] Llamando a initiateKlarnaDirectFlow()...")
                                 // Usar flujo directo de Klarna sin UI intermedia
                                 await initiateKlarnaDirectFlow()
                                 return
@@ -1448,6 +1460,7 @@ public struct RCheckoutOverlay: View {
                 print("   2. Backend de Reachu respondió?")
                 print("   3. Credenciales de Klarna configuradas?")
                 await MainActor.run {
+                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (initKlarnaNative returned nil)")
                     self.isLoading = false
                     self.errorMessage = "Failed to initialize Klarna payment"
                     self.checkoutStep = .error
@@ -1465,6 +1478,7 @@ public struct RCheckoutOverlay: View {
                 let categories = dto.paymentMethodCategories ?? []
                 guard !categories.isEmpty else {
                     print("❌ [Klarna Flow] ERROR: No hay métodos de pago disponibles")
+                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (No Klarna payment methods)")
                     self.isLoading = false
                     self.errorMessage = "No Klarna payment methods available for this checkout."
                     self.checkoutStep = .error
@@ -1573,6 +1587,7 @@ public struct RCheckoutOverlay: View {
                 case .canceled:
                     withAnimation { checkoutStep = .orderSummary }  // ↩️ back to summary
                 case .failed(let error):
+                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Stripe payment failed: \(error.localizedDescription))")
                     self.errorMessage = error.localizedDescription
                     withAnimation { checkoutStep = .error }  // ❌ error
                 }

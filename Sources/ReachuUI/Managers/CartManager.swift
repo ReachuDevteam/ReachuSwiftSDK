@@ -112,10 +112,9 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     internal func logRequest(_ action: String, payload: Any? = nil) {
+        print("➡️➡️➡️ [CartManager] REQUEST: \(action)")
         if let payload = payload {
-            print("➡️ [CartManager] \(action) request: \(payload)")
-        } else {
-            print("➡️ [CartManager] \(action) request")
+            print("➡️ Payload: \(payload)")
         }
     }
 
@@ -128,7 +127,10 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     internal func logError(_ action: String, error: Error) {
-        print("❌ [CartManager] \(action) error: \(error.localizedDescription)")
+        print("❌❌❌ [CartManager] ERROR: \(action)")
+        print("❌ Error type: \(type(of: error))")
+        print("❌ Error message: \(error.localizedDescription)")
+        print("❌ Full error: \(error)")
     }
 }
 
