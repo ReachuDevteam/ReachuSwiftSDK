@@ -332,44 +332,10 @@ public struct RCheckoutOverlay: View {
                         autoAuthorize: $klarnaAutoAuthorize,
                         onAuthorized: { authToken, finalizeRequired in
                             Task { @MainActor in
-                                isLoading = true
-
-                                if isUsingKlarnaDirectFlow {
-                                    defer {
-                                        isLoading = false
-                                        showKlarnaNativeSheet = false
-                                    }
-
-                                    guard let service = klarnaDirectService else {
-                                        klarnaDirectStatusMessage = "Missing direct service instance"
-                                        errorMessage = "Direct Klarna service unavailable"
-                                        checkoutStep = .error
-                                        return
-                                    }
-
-                                    do {
-                                        let order = try await service.createOrder(
-                                            authorizationToken: authToken,
-                                            country: "NO",
-                                            currency: "NOK",
-                                            locale: "nb-NO",
-                                            amount: klarnaDirectAmount,
-                                            productName: klarnaDirectProductName
-                                        )
-                                        klarnaDirectStatusMessage =
-                                            "Order created: \(order.order_id) (fraud: \(order.fraud_status))"
-                                        klarnaDirectService = nil
-                                        checkoutStep = .success
-                                        klarnaNativeInitData = nil
-                                    } catch {
-                                        klarnaDirectStatusMessage =
-                                            "Error creating order: \(error.localizedDescription)"
-                                        errorMessage = error.localizedDescription
-                                        checkoutStep = .error
-                                    }
-
-                                    return
-                                }
+                                // Este callback ya no se usa (flujo antiguo con sheet)
+                                // El flujo actual usa HiddenKlarnaAutoAuthorize con su propio callback
+                                isLoading = false
+                                return
 
                                 let customer = klarnaTestCustomer()
                                 let address = klarnaTestAddress()
