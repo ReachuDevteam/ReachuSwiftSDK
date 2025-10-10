@@ -67,6 +67,7 @@ public struct RCheckoutOverlay: View {
         @State private var klarnaDirectAmount: Int = 0
         @State private var klarnaDirectProductName: String = "iPhone 15 Pro Max"
         @State private var klarnaDirectStatusMessage: String?
+        @State private var klarnaAutoAuthorize = false // Para disparar autorización automáticamente
     #endif
 
     private var draftSyncKey: String {
@@ -215,6 +216,7 @@ public struct RCheckoutOverlay: View {
                         selectedCategory: $klarnaSelectedCategoryIdentifier,
                         returnURL: returnURL,
                         contentHeight: $klarnaNativeContentHeight,
+                        autoAuthorize: $klarnaAutoAuthorize,
                         onAuthorized: { authToken, finalizeRequired in
                             Task { @MainActor in
                                 isLoading = true
@@ -1333,7 +1335,8 @@ public struct RCheckoutOverlay: View {
                         
                         self.isLoading = false
                         
-                        // Show Klarna native sheet
+                        // Activate auto-authorize and show sheet
+                        self.klarnaAutoAuthorize = true
                         self.showKlarnaNativeSheet = true
                     } catch {
                         self.isLoading = false
@@ -3018,33 +3021,38 @@ struct CountryPicker: View {
         @Binding var selectedCategory: String
         let returnURL: URL
         @Binding var contentHeight: CGFloat
+        @Binding var autoAuthorize: Bool
         let onAuthorized: (_ authToken: String, _ finalizeRequired: Bool) -> Void
         let onFailed: (String) -> Void
         let onDismiss: () -> Void
 
         @State private var triggerAuthorize = false
         @State private var localError: String?
+        @State private var hasTriggeredAutoAuthorize = false
 
         var body: some View {
             VStack(spacing: ReachuSpacing.lg) {
-                HStack {
-                    Text("Klarna Checkout")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(ReachuColors.textPrimary)
+                // Solo mostrar header y selector si NO es auto-authorize
+                if !autoAuthorize {
+                    HStack {
+                        Text("Klarna Checkout")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(ReachuColors.textPrimary)
 
-                    Spacer()
+                        Spacer()
 
-                    Button(role: .cancel) {
-                        onDismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(ReachuColors.textSecondary)
-                            .imageScale(.large)
+                        Button(role: .cancel) {
+                            onDismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(ReachuColors.textSecondary)
+                                .imageScale(.large)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
 
-                if categories.count > 1 {
+                if !autoAuthorize && categories.count > 1 {
                     VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
                         Text("Payment method")
                             .font(ReachuTypography.caption1)
@@ -3080,7 +3088,7 @@ struct CountryPicker: View {
                             .pickerStyle(.menu)
                         }
                     }
-                } else if let category = categories.first {
+                } else if !autoAuthorize, let category = categories.first {
                     HStack {
                         Text("Method:")
                             .font(ReachuTypography.caption1)
@@ -3132,27 +3140,30 @@ struct CountryPicker: View {
                         .transition(.opacity)
                 }
 
-                RButton(
-                    title: "Confirm with Klarna",
-                    style: .primary,
-                    size: .large
-                ) {
-                    triggerAuthorize = true
-                }
+                // Solo mostrar botones si NO es auto-authorize
+                if !autoAuthorize {
+                    RButton(
+                        title: "Confirm with Klarna",
+                        style: .primary,
+                        size: .large
+                    ) {
+                        triggerAuthorize = true
+                    }
 
-                RButton(
-                    title: "Cancel",
-                    style: .secondary,
-                    size: .large
-                ) {
-                    onDismiss()
+                    RButton(
+                        title: "Cancel",
+                        style: .secondary,
+                        size: .large
+                    ) {
+                        onDismiss()
+                    }
                 }
 
                 Spacer(minLength: ReachuSpacing.md)
             }
-            .padding(.horizontal, ReachuSpacing.lg)
-            .padding(.top, ReachuSpacing.lg)
-            .padding(.bottom, ReachuSpacing.xl)
+            .padding(.horizontal, autoAuthorize ? 0 : ReachuSpacing.lg)
+            .padding(.top, autoAuthorize ? 0 : ReachuSpacing.lg)
+            .padding(.bottom, autoAuthorize ? 0 : ReachuSpacing.xl)
             .onAppear {
                 if categories.first(where: {
                     KlarnaCategoryMapper.normalizedIdentifier(from: $0.identifier)
@@ -3164,11 +3175,22 @@ struct CountryPicker: View {
                             .normalizedIdentifier(from: first.identifier)
                     }
                 }
+                
+                // Disparar autorización automáticamente si está activado
+                if autoAuthorize && !hasTriggeredAutoAuthorize {
+                    hasTriggeredAutoAuthorize = true
+                    // Dar un pequeño delay para que el KlarnaPaymentView se inicialice
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        triggerAuthorize = true
+                    }
+                }
             }
             .onChange(of: selectedCategory) { _ in
-                triggerAuthorize = false
-                localError = nil
-                contentHeight = 420
+                if !autoAuthorize {
+                    triggerAuthorize = false
+                    localError = nil
+                    contentHeight = 420
+                }
             }
         }
     }
