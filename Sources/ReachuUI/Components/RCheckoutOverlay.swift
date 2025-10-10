@@ -253,7 +253,8 @@ public struct RCheckoutOverlay: View {
                     onAuthorized: { authToken, finalizeRequired in
                         Task { @MainActor in
                             print("🔵 [Klarna Flow] Step 5: Usuario autorizó el pago en Klarna")
-                            print("   - AuthToken: \(authToken.prefix(20))...")
+                            print("   - AuthToken (primeros 20): \(authToken.prefix(20))...")
+                            print("   - AuthToken (completo): \(authToken)")
                             print("   - FinalizeRequired: \(finalizeRequired)")
                             print("🔵 [Klarna Flow] Step 6: Llamando a backend para confirmar pago")
                             
