@@ -1455,10 +1455,8 @@ public struct RCheckoutOverlay: View {
             print("🔵 [Klarna Flow] About to call: cartManager.initKlarnaNative(input:)")
             
             // Call backend to initialize Klarna session
-            let dto = await cartManager.initKlarnaNative(input: input)
-            print("🔵 [Klarna Flow] initKlarnaNative returned: \(dto == nil ? "NIL" : "DTO")")
-            
-            guard dto != nil else {
+            guard let dto = await cartManager.initKlarnaNative(input: input) else {
+                print("🔵 [Klarna Flow] initKlarnaNative returned: NIL")
                 print("❌ [Klarna Flow] ERROR: Backend retornó nil")
                 print("❌ [Klarna Flow] Verificar:")
                 print("   1. CheckoutId existe?")
@@ -1472,7 +1470,8 @@ public struct RCheckoutOverlay: View {
                 }
                 return
             }
-
+            
+            print("🔵 [Klarna Flow] initKlarnaNative returned: DTO")
             print("✅ [Klarna Flow] Step 3: Backend respondió correctamente")
             print("   - SessionId: \(dto.sessionId)")
             print("   - ClientToken: \(dto.clientToken.prefix(20))...")

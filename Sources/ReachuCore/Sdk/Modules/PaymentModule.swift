@@ -129,6 +129,14 @@ public final class PaymentRepositoryGQL: PaymentRepository {
         checkoutId: String,
         input: KlarnaNativeInitInputDto
     ) async throws -> InitPaymentKlarnaNativeDto {
+        print("🌐🌐🌐 [ReachuCore.PaymentModule] klarnaNativeInit LLAMADO")
+        print("🌐 checkoutId: \(checkoutId)")
+        print("🌐 countryCode: \(input.countryCode ?? "nil")")
+        print("🌐 currency: \(input.currency ?? "nil")")
+        print("🌐 locale: \(input.locale ?? "nil")")
+        print("🌐 returnUrl: \(input.returnUrl ?? "nil")")
+        print("🌐 customer.email: \(input.customer?.email ?? "nil")")
+        
         try Validation.requireNonEmpty(checkoutId, field: "checkoutId")
         if let country = input.countryCode { try Validation.requireCountry(country) }
         if let currency = input.currency { try Validation.requireCurrency(currency) }
@@ -158,17 +166,32 @@ public final class PaymentRepositoryGQL: PaymentRepository {
             vars["shippingAddress"] = try encodeToDictionary(shipping)
         }
 
+        print("🌐 [ReachuCore] Enviando mutation a backend Reachu...")
+        print("🌐 Variables: \(vars.compactMapValues { $0 })")
+        
         let res = try await client.runMutationSafe(
             query: PaymentGraphQL.KLARNA_NATIVE_INIT_PAYMENT_MUTATION,
             variables: vars.compactMapValues { $0 }
         )
+        
+        print("🌐 [ReachuCore] Backend respondió")
+        print("🌐 Response data keys: \(res.data.keys)")
+        
         guard
             let obj: [String: Any] = GraphQLPick.pickPath(
                 res.data, path: ["Payment", "CreatePaymentKlarnaNative"])
         else {
+            print("❌❌❌ [ReachuCore] ERROR: Empty response from backend")
+            print("❌ res.data: \(res.data)")
             throw SdkException("Empty response in Payment.klarnaNativeInit", code: "EMPTY_RESPONSE")
         }
-        return try GraphQLPick.decodeJSON(obj, as: InitPaymentKlarnaNativeDto.self)
+        
+        print("✅ [ReachuCore] Decodificando respuesta...")
+        let dto = try GraphQLPick.decodeJSON(obj, as: InitPaymentKlarnaNativeDto.self)
+        print("✅✅✅ [ReachuCore] DTO decodificado correctamente")
+        print("✅ sessionId: \(dto.sessionId)")
+        print("✅ checkoutId: \(dto.checkoutId)")
+        return dto
     }
 
     public func klarnaNativeConfirm(
