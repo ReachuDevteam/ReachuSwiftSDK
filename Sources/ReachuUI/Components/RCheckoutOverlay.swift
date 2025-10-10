@@ -603,17 +603,9 @@ public struct RCheckoutOverlay: View {
                                 }
                             }
                             if selectedPaymentMethod == .klarna {
-                                isLoading = true
-                                let ok = await prepareKlarnaNative()
-                                isLoading = false
-                                if ok {
-                                    klarnaNativeContentHeight = 420
-                                    showKlarnaNativeSheet = true
-                                    return
-                                } else {
-                                    checkoutStep = .error
-                                    return
-                                }
+                                // Usar flujo directo de Klarna sin UI intermedia
+                                await initiateKlarnaDirectFlow()
+                                return
                             }
                         #endif
                         proceedToNext()
