@@ -136,8 +136,8 @@ public struct RCheckoutOverlay: View {
     // MARK: - Initialization
     public init() {}
 
-    // MARK: - Body
-    public var body: some View {
+    // MARK: - Main Content
+    private var mainContent: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // Content based on step
@@ -175,16 +175,21 @@ public struct RCheckoutOverlay: View {
                 }
             }
         }
-        .onAppear {
-            syncSelectedMarket()
-        }
-        .onChange(of: cartManager.phoneCode) { newValue in
-            syncPhoneCode(newValue)
-        }
-        .onChange(of: cartManager.selectedMarket) { _ in
-            syncSelectedMarket()
-        }
-        .overlay {
+    }
+
+    // MARK: - Body
+    public var body: some View {
+        mainContent
+            .onAppear {
+                syncSelectedMarket()
+            }
+            .onChange(of: cartManager.phoneCode) { newValue in
+                syncPhoneCode(newValue)
+            }
+            .onChange(of: cartManager.selectedMarket) { _ in
+                syncSelectedMarket()
+            }
+            .overlay {
             if isLoading {
                 loadingOverlay
             }
@@ -1399,39 +1404,38 @@ public struct RCheckoutOverlay: View {
                 shippingAddress: shippingAddress
             )
 
-            do {
-                // Call backend to initialize Klarna session
-                let dto = try await cartManager.initKlarnaNative(input: input)
-
-                await MainActor.run {
-                    // Backend already returns the correct DTO structure
-                    let categories = dto.paymentMethodCategories ?? []
-                    guard !categories.isEmpty else {
-                        self.isLoading = false
-                        self.errorMessage = "No Klarna payment methods available for this checkout."
-                        self.checkoutStep = .error
-                        return
-                    }
-                    
-                    // Store categories and select first one
-                    self.klarnaAvailableCategories = categories
-                    if let firstCategory = categories.first {
-                        self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
-                    }
-                    
-                    // Store init data (ya viene del backend correctamente)
-                    self.klarnaNativeInitData = dto
-                    self.isLoading = false
-                    
-                    // Activar auto-authorize flow
-                    self.klarnaAutoAuthorize = true
-                }
-            } catch {
+            // Call backend to initialize Klarna session
+            guard let dto = await cartManager.initKlarnaNative(input: input) else {
                 await MainActor.run {
                     self.isLoading = false
-                    self.errorMessage = "Failed to initialize Klarna: \(error.localizedDescription)"
+                    self.errorMessage = "Failed to initialize Klarna payment"
                     self.checkoutStep = .error
                 }
+                return
+            }
+
+            await MainActor.run {
+                // Backend already returns the correct DTO structure
+                let categories = dto.paymentMethodCategories ?? []
+                guard !categories.isEmpty else {
+                    self.isLoading = false
+                    self.errorMessage = "No Klarna payment methods available for this checkout."
+                    self.checkoutStep = .error
+                    return
+                }
+                
+                // Store categories and select first one
+                self.klarnaAvailableCategories = categories
+                if let firstCategory = categories.first {
+                    self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                }
+                
+                // Store init data (ya viene del backend correctamente)
+                self.klarnaNativeInitData = dto
+                self.isLoading = false
+                
+                // Activar auto-authorize flow
+                self.klarnaAutoAuthorize = true
             }
         }
     #endif
