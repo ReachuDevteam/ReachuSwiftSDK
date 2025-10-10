@@ -1,9 +1,10 @@
-#if canImport(KlarnaMobileSDK)
-    import KlarnaMobileSDK
-#endif
 import ReachuCore
 import ReachuDesignSystem
 import SwiftUI
+
+#if canImport(KlarnaMobileSDK)
+    import KlarnaMobileSDK
+#endif
 
 #if os(iOS)
     import UIKit
@@ -60,7 +61,12 @@ public struct RCheckoutOverlay: View {
         @State private var klarnaAvailableCategories: [KlarnaNativePaymentMethodCategoryDto] = []
         @State private var klarnaSelectedCategoryIdentifier: String = ""
         private let klarnaSuccessURLString =
-            "https://example.com/order-confirmed"
+            "https://tuapp.com/checkout/klarna-return"
+        @State private var isUsingKlarnaDirectFlow = true
+        @State private var klarnaDirectService: KlarnaAPIService?
+        @State private var klarnaDirectAmount: Int = 0
+        @State private var klarnaDirectProductName: String = "iPhone 15 Pro Max"
+        @State private var klarnaDirectStatusMessage: String?
     #endif
 
     private var draftSyncKey: String {
@@ -212,22 +218,46 @@ public struct RCheckoutOverlay: View {
                         onAuthorized: { authToken, finalizeRequired in
                             Task { @MainActor in
                                 isLoading = true
-                                let customer = KlarnaNativeCustomerInputDto(
-                                    email: "test.user@example.com",
-                                    phone: "+4798765432"
-                                )
-                                let address = KlarnaNativeAddressInputDto(
-                                    givenName: "John",
-                                    familyName: "Doe",
-                                    email: "john.doe@example.com",
-                                    phone: "+4798765432",
-                                    streetAddress: "Karl Johans gate 1",
-                                    streetAddress2: nil,
-                                    city: "Oslo",
-                                    region: nil,
-                                    postalCode: "0154",
-                                    country: "NO"
-                                )
+
+                                if isUsingKlarnaDirectFlow {
+                                    defer {
+                                        isLoading = false
+                                        showKlarnaNativeSheet = false
+                                    }
+
+                                    guard let service = klarnaDirectService else {
+                                        klarnaDirectStatusMessage = "Missing direct service instance"
+                                        errorMessage = "Direct Klarna service unavailable"
+                                        checkoutStep = .error
+                                        return
+                                    }
+
+                                    do {
+                                        let order = try await service.createOrder(
+                                            authorizationToken: authToken,
+                                            country: "NO",
+                                            currency: "NOK",
+                                            locale: "nb-NO",
+                                            amount: klarnaDirectAmount,
+                                            productName: klarnaDirectProductName
+                                        )
+                                        klarnaDirectStatusMessage =
+                                            "Order created: \(order.order_id) (fraud: \(order.fraud_status))"
+                                        klarnaDirectService = nil
+                                        checkoutStep = .success
+                                        klarnaNativeInitData = nil
+                                    } catch {
+                                        klarnaDirectStatusMessage =
+                                            "Error creating order: \(error.localizedDescription)"
+                                        errorMessage = error.localizedDescription
+                                        checkoutStep = .error
+                                    }
+
+                                    return
+                                }
+
+                                let customer = klarnaTestCustomer()
+                                let address = klarnaTestAddress()
                                 let result = await cartManager.confirmKlarnaNative(
                                     authorizationToken: authToken,
                                     autoCapture: finalizeRequired ? nil : true,
@@ -237,7 +267,7 @@ public struct RCheckoutOverlay: View {
                                 )
                                 isLoading = false
 
-                                if let confirmation = result {
+                                if result != nil {
                                     checkoutStep = .success
                                     klarnaNativeInitData = nil
                                 } else {
@@ -250,6 +280,9 @@ public struct RCheckoutOverlay: View {
                         onFailed: { message in
                             Task { @MainActor in
                                 errorMessage = message
+                                if isUsingKlarnaDirectFlow {
+                                    klarnaDirectStatusMessage = message
+                                }
                             }
                         },
                         onDismiss: {
@@ -275,6 +308,15 @@ public struct RCheckoutOverlay: View {
         .onChange(of: draftSyncKey) { _ in
             syncDraftFromState()
         }
+
+        #if os(iOS) && canImport(KlarnaMobileSDK)
+        .onChange(of: isUsingKlarnaDirectFlow) { newValue in
+            if !newValue {
+                klarnaDirectStatusMessage = nil
+                klarnaDirectService = nil
+            }
+        }
+        #endif
     }
 
     // MARK: - Address Step View
@@ -476,10 +518,29 @@ public struct RCheckoutOverlay: View {
 
                     // Klarna installments Details
                     if selectedPaymentMethod == .klarna {
-                        PaymentScheduleCompact(
-                            total: finalTotal,
-                            currency: cartManager.currency
-                        )
+                        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                            PaymentScheduleCompact(
+                                total: finalTotal,
+                                currency: cartManager.currency
+                            )
+
+                            klarnaFlowSwitchView
+
+                            if let directMessage = klarnaDirectStatusMessage,
+                                isUsingKlarnaDirectFlow,
+                                !directMessage.isEmpty
+                            {
+                                Text(directMessage)
+                                    .font(ReachuTypography.caption1)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                                    .accessibilityIdentifier("klarnaDirectStatusMessage")
+                            } else if !isUsingKlarnaDirectFlow {
+                                Text("Using Reachu cart checkout integration.")
+                                    .font(ReachuTypography.caption1)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                                    .accessibilityIdentifier("klarnaCartStatusMessage")
+                            }
+                        }
                         .padding(.horizontal, ReachuSpacing.lg)
                     }
 
@@ -519,7 +580,11 @@ public struct RCheckoutOverlay: View {
                             }
                             if selectedPaymentMethod == .klarna {
                                 isLoading = true
-                                let ok = await prepareKlarnaNative()
+                                let ok = await (
+                                    isUsingKlarnaDirectFlow
+                                        ? prepareKlarnaDirectFlow()
+                                        : prepareKlarnaNative()
+                                )
                                 isLoading = false
                                 if ok {
                                     klarnaNativeContentHeight = 420
@@ -741,6 +806,23 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
 
                     completeOrderSummaryView
+                    #if os(iOS) && canImport(KlarnaMobileSDK)
+                        if selectedPaymentMethod == .klarna, let directMessage = klarnaDirectStatusMessage, isUsingKlarnaDirectFlow {
+                            Text(directMessage)
+                                .font(ReachuTypography.caption1)
+                                .foregroundColor(ReachuColors.textSecondary)
+                                .padding(.horizontal, ReachuSpacing.lg)
+                        }
+                    #endif
+
+                    #if DEBUG && os(iOS) && canImport(KlarnaMobileSDK)
+                        if selectedPaymentMethod == .klarna {
+                            Toggle("Use direct Klarna API flow", isOn: $isUsingKlarnaDirectFlow)
+                                .padding(.horizontal, ReachuSpacing.lg)
+                                .toggleStyle(SwitchToggleStyle(tint: ReachuColors.primary))
+                        }
+                    #endif
+
 
                     // Payment Schedule (if Klarna installments selected)
                     if selectedPaymentMethod == .klarna {
@@ -1307,25 +1389,8 @@ public struct RCheckoutOverlay: View {
             klarnaAvailableCategories = []
             klarnaSelectedCategoryIdentifier = ""
 
-            cartManager.checkoutId = "aff8128b-8df1-4d50-9fc8-9114795fe6c7"
-
-            let hardcodedCustomer = KlarnaNativeCustomerInputDto(
-                email: "test.user@example.com",
-                phone: "+4798765432"
-            )
-
-            let hardcodedAddress = KlarnaNativeAddressInputDto(
-                givenName: "John",
-                familyName: "Doe",
-                email: "john.doe@example.com",
-                phone: "+4798765432",
-                streetAddress: "Karl Johans gate 1",
-                streetAddress2: nil,
-                city: "Oslo",
-                region: nil,
-                postalCode: "0154",
-                country: "NO"
-            )
+            let customer = klarnaTestCustomer()
+            let address = klarnaTestAddress()
 
             let input = KlarnaNativeInitInputDto(
                 countryCode: "NO",
@@ -1333,10 +1398,9 @@ public struct RCheckoutOverlay: View {
                 locale: "nb-NO",
                 returnUrl: returnURL.absoluteString,
                 intent: "buy",
-                autoCapture: true,
-                customer: hardcodedCustomer,
-                billingAddress: hardcodedAddress,
-                shippingAddress: hardcodedAddress
+                customer: customer,
+                billingAddress: address,
+                shippingAddress: address
             )
 
             guard let dto = await cartManager.initKlarnaNative(input: input)
@@ -1364,6 +1428,161 @@ public struct RCheckoutOverlay: View {
 
             klarnaNativeInitData = dto
             return true
+        }
+
+        private func prepareKlarnaDirectFlow() async -> Bool {
+            klarnaDirectStatusMessage = "Creating Klarna session…"
+            klarnaAvailableCategories = []
+            klarnaSelectedCategoryIdentifier = ""
+            isUsingKlarnaDirectFlow = true
+
+            let service = KlarnaAPIService()
+            klarnaDirectService = service
+            let amountMinor = Int((finalTotal * 100).rounded())
+            klarnaDirectAmount = max(amountMinor, 1)
+            klarnaDirectProductName = cartManager.items.first?.title ?? klarnaDirectProductName
+
+            do {
+                let session = try await service.createSession(
+                    country: "NO",
+                    currency: "NOK",
+                    locale: "nb-NO",
+                    amount: klarnaDirectAmount,
+                    productName: klarnaDirectProductName
+                )
+
+                let mappedCategories = mapDirectCategories(session.payment_method_categories ?? [])
+                guard !mappedCategories.isEmpty else {
+                    klarnaDirectStatusMessage = "No Klarna payment methods returned"
+                    errorMessage = "No Klarna payment methods available for this checkout."
+                    return false
+                }
+
+                klarnaAvailableCategories = mappedCategories
+                klarnaSelectedCategoryIdentifier =
+                    KlarnaCategoryMapper.preferredIdentifier(from: mappedCategories)
+                    ?? ""
+
+                guard !klarnaSelectedCategoryIdentifier.isEmpty else {
+                    klarnaDirectStatusMessage = "Unsupported Klarna payment category"
+                    errorMessage = "Unsupported Klarna payment category."
+                    return false
+                }
+
+                guard let initDto = decodeInitPaymentDto(
+                    clientToken: session.client_token,
+                    sessionId: session.session_id,
+                    purchaseCountry: "NO",
+                    purchaseCurrency: "NOK",
+                    cartId: session.session_id,
+                    checkoutId: session.session_id,
+                    categories: mappedCategories
+                ) else {
+                    klarnaDirectStatusMessage = "Unable to decode Klarna session data"
+                    errorMessage = "Failed to parse Klarna session response."
+                    return false
+                }
+
+                klarnaNativeInitData = initDto
+
+                klarnaDirectStatusMessage = "Session ready (\(session.session_id))"
+                return true
+            } catch {
+                klarnaDirectStatusMessage = "Error: \(error.localizedDescription)"
+                errorMessage = error.localizedDescription
+                return false
+            }
+        }
+
+        private func mapDirectCategories(
+            _ categories: [KlarnaAPIService.CreateSessionResponse.PaymentMethodCategory]
+        ) -> [KlarnaNativePaymentMethodCategoryDto] {
+            categories.compactMap { category in
+                var payload: [String: Any] = [
+                    "identifier": category.identifier
+                ]
+                if let name = category.name {
+                    payload["name"] = name
+                }
+                if let assets = category.asset_urls {
+                    var assetDict: [String: Any] = [:]
+                    if let descriptive = assets.descriptive {
+                        assetDict["descriptive"] = descriptive
+                    }
+                    if let standard = assets.standard {
+                        assetDict["standard"] = standard
+                    }
+                    if !assetDict.isEmpty {
+                        payload["asset_urls"] = assetDict
+                    }
+                }
+
+                return decodeCategory(from: payload)
+            }
+        }
+
+        private func klarnaTestCustomer() -> KlarnaNativeCustomerInputDto {
+            KlarnaNativeCustomerInputDto(
+                email: "kari.nordmann@example.com",
+                phone: "+4740123456",
+                dob: "1988-04-16",
+                type: "person",
+                organizationRegistrationId: nil
+            )
+        }
+
+        private func klarnaTestAddress() -> KlarnaNativeAddressInputDto {
+            KlarnaNativeAddressInputDto(
+                givenName: "Kari",
+                familyName: "Nordmann",
+                email: "kari.nordmann@example.com",
+                phone: "+4740123456",
+                streetAddress: "Karl Johans gate 15",
+                streetAddress2: "Leilighet 4B",
+                city: "Oslo",
+                region: "Oslo",
+                postalCode: "0154",
+                country: "NO"
+            )
+        }
+
+        private func decodeCategory(
+            from payload: [String: Any]
+        ) -> KlarnaNativePaymentMethodCategoryDto? {
+            guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+                return nil
+            }
+            return try? JSONDecoder().decode(KlarnaNativePaymentMethodCategoryDto.self, from: data)
+        }
+
+        private func decodeInitPaymentDto(
+            clientToken: String,
+            sessionId: String,
+            purchaseCountry: String,
+            purchaseCurrency: String,
+            cartId: String,
+            checkoutId: String,
+            categories: [KlarnaNativePaymentMethodCategoryDto]
+        ) -> InitPaymentKlarnaNativeDto? {
+            let payload: [String: Any?] = [
+                "client_token": clientToken,
+                "session_id": sessionId,
+                "purchase_country": purchaseCountry,
+                "purchase_currency": purchaseCurrency,
+                "cart_id": cartId,
+                "checkout_id": checkoutId,
+                "payment_method_categories": categories.compactMap { category in
+                    try? JSONSerialization.jsonObject(
+                        with: JSONEncoder().encode(category),
+                        options: []
+                    ) as? [String: Any]
+                }
+            ]
+
+            guard let data = try? JSONSerialization.data(withJSONObject: payload, options: []) else {
+                return nil
+            }
+            return try? JSONDecoder().decode(InitPaymentKlarnaNativeDto.self, from: data)
         }
 
     #endif
@@ -2834,6 +3053,10 @@ struct CountryPicker: View {
 #if DEBUG
     import ReachuTesting
 
+    #Preview("Klarna Direct Test") {
+        KlarnaTestView()
+    }
+
     #Preview("Checkout - Address Step") {
         RCheckoutOverlay()
             .environmentObject(
@@ -2849,6 +3072,24 @@ struct CountryPicker: View {
             )
             .environmentObject(CheckoutDraft())
     }
+#endif
+
+#if os(iOS) && canImport(KlarnaMobileSDK)
+extension RCheckoutOverlay {
+    fileprivate var klarnaFlowSwitchView: some View {
+        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+            Text("Integration mode")
+                .font(ReachuTypography.caption1)
+                .foregroundColor(ReachuColors.textSecondary)
+            Picker("Integration mode", selection: $isUsingKlarnaDirectFlow) {
+                Text("Direct API").tag(true)
+                Text("Cart Flow").tag(false)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("klarnaFlowModePicker")
+        }
+    }
+}
 #endif
 
 #if os(iOS)
