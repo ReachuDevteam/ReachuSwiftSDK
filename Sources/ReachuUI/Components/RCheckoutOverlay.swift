@@ -180,7 +180,9 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Body
     public var body: some View {
-        let _ = print("🟣 [RCheckoutOverlay] body rendered - checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
+        let timestamp = Date().timeIntervalSince1970
+        let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
+        let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
         
         return mainContent
             .onAppear {
@@ -651,6 +653,7 @@ public struct RCheckoutOverlay: View {
                         print("🟢 [Checkout] ========== Botón 'Initiate Payment' presionado ==========")
                         print("🟢 [Checkout] selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
                         #if os(iOS)
+                            print("🟢 [Checkout] Platform: iOS detected")
                             if selectedPaymentMethod == .stripe {
                                 isLoading = true
                                 let ok = await prepareStripePaymentSheet()
@@ -672,7 +675,10 @@ public struct RCheckoutOverlay: View {
                                 await initiateKlarnaDirectFlow()
                                 return
                             }
+                        #else
+                            print("⚠️⚠️⚠️ [Checkout] Platform: NO ES iOS - saltando lógica de pago")
                         #endif
+                        print("🟢 [Checkout] Llamando a proceedToNext()...")
                         proceedToNext()
                     }
                 }
@@ -1252,6 +1258,8 @@ public struct RCheckoutOverlay: View {
                 // Handle Klarna direct flow
                 if selectedPaymentMethod == .klarna {
                     #if os(iOS) && canImport(KlarnaMobileSDK)
+                        print("🔶🔶🔶 [proceedToNext] Klarna detectado en orderSummary")
+                        print("🔶 Llamando a initiateKlarnaDirectFlow()...")
                         Task {
                             await initiateKlarnaDirectFlow()
                         }
