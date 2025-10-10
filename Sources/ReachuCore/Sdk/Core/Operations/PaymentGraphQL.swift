@@ -149,7 +149,6 @@ public enum PaymentGraphQL {
               unit_price
               total_amount
               tax_rate
-              tax_amount
             }
           }
         }
