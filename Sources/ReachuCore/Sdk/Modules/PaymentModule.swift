@@ -181,20 +181,48 @@ public final class PaymentRepositoryGQL: PaymentRepository {
             print("🌐 Response data es nil")
         }
         
+        // Mostrar respuesta completa del backend
+        if let data = res.data {
+            print("📦📦📦 [ReachuCore] RESPUESTA COMPLETA DEL BACKEND:")
+            if let jsonData = try? JSONSerialization.data(withJSONObject: data, options: .prettyPrinted),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                print(jsonString)
+            } else {
+                print("📦 \(data)")
+            }
+        }
+        
+        // Mostrar errores si los hay
+        if let errors = res.errors, !errors.isEmpty {
+            print("⚠️⚠️⚠️ [ReachuCore] ERRORES EN LA RESPUESTA:")
+            for error in errors {
+                print("⚠️ \(error)")
+            }
+        }
+        
         guard
             let obj: [String: Any] = GraphQLPick.pickPath(
                 res.data, path: ["Payment", "CreatePaymentKlarnaNative"])
         else {
             print("❌❌❌ [ReachuCore] ERROR: Empty response from backend")
-            print("❌ res.data: \(res.data)")
+            print("❌ Path esperado: Payment -> CreatePaymentKlarnaNative")
+            print("❌ res.data completo: \(String(describing: res.data))")
+            if let errors = res.errors {
+                print("❌ GraphQL errors: \(errors)")
+            }
             throw SdkException("Empty response in Payment.klarnaNativeInit", code: "EMPTY_RESPONSE")
         }
+        
+        print("✅ [ReachuCore] Objeto extraído correctamente del path")
+        print("📦 Objeto a decodificar: \(obj)")
         
         print("✅ [ReachuCore] Decodificando respuesta...")
         let dto = try GraphQLPick.decodeJSON(obj, as: InitPaymentKlarnaNativeDto.self)
         print("✅✅✅ [ReachuCore] DTO decodificado correctamente")
         print("✅ sessionId: \(dto.sessionId)")
         print("✅ checkoutId: \(dto.checkoutId)")
+        print("✅ clientToken: \(dto.clientToken.prefix(30))...")
+        print("✅ paymentMethodCategories count: \(dto.paymentMethodCategories?.count ?? 0)")
         return dto
     }
 
