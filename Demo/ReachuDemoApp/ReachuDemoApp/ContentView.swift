@@ -126,6 +126,15 @@ struct ContentView: View {
                                 .environmentObject(cartManager)
                                 .environmentObject(checkoutDraft)
                         }
+
+                        #if os(iOS) && canImport(KlarnaMobileSDK)
+                        DemoSection(
+                            title: "Klarna Payment",
+                            description: "Test Klarna payment integration"
+                        ) {
+                            KlarnaPaymentDemoView()
+                        }
+                        #endif
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
