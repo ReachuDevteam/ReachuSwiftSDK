@@ -142,10 +142,6 @@ public enum PaymentGraphQL {
             purchase_currency
             order_amount
             order_tax_amount
-            payment_method_categories {
-              identifier
-              name
-            }
             order_lines {
               type
               name
