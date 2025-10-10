@@ -144,14 +144,17 @@ public struct RCheckoutOverlay: View {
                 let _ = print("🟣 [RCheckoutOverlay] Current checkoutStep: \(checkoutStep)")
                 switch checkoutStep {
                 case .address:
+                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: addressStepView")
                     addressStepView
                 case .orderSummary:
+                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: orderSummaryStepView")
                     orderSummaryStepView
                 case .review:
                     reviewStepView
                 case .success:
                     successStepView
                 case .error:
+                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: errorStepView - errorMessage: \(errorMessage ?? "nil")")
                     errorStepView
                 }
             }
@@ -643,6 +646,7 @@ public struct RCheckoutOverlay: View {
 
             // Bottom Button - Full Width
             VStack {
+                let _ = print("🔵🔵🔵 [OrderSummary] Renderizando botón 'Initiate Payment' - isDisabled: \(!canProceedToNext)")
                 RButton(
                     title: "Initiate Payment",
                     style: .primary,
@@ -1250,6 +1254,8 @@ public struct RCheckoutOverlay: View {
     }
 
     private func proceedToNext() {
+        print("🔶🔶🔶 [proceedToNext] FUNCIÓN LLAMADA - checkoutStep actual: \(checkoutStep)")
+        print("🔶 selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
         withAnimation(.easeInOut(duration: 0.3)) {
             switch checkoutStep {
             case .address:
@@ -1407,8 +1413,13 @@ public struct RCheckoutOverlay: View {
         }
 
         private func initiateKlarnaDirectFlow() async {
-            print("🔵 [Klarna Flow] ========== INICIO ==========")
+            NSLog("🔵🔵🔵 [Klarna Flow LINE 1415] ========== INICIO CÓDIGO NUEVO f6e6c82 ==========")
+            NSLog("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
+            print("🔵🔵🔵 [Klarna Flow LINE 1415] ========== INICIO CÓDIGO NUEVO f6e6c82 ==========")
             print("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
+            
+            // TEMPORAL: Forzar que se vea este punto
+            assertionFailure("⚠️⚠️⚠️ SI VES ESTO, initiateKlarnaDirectFlow() SE ESTÁ EJECUTANDO")
             
             await MainActor.run {
                 isLoading = true
@@ -1471,9 +1482,10 @@ public struct RCheckoutOverlay: View {
                 print("   2. Backend de Reachu respondió?")
                 print("   3. Credenciales de Klarna configuradas?")
                 await MainActor.run {
-                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (initKlarnaNative returned nil)")
+                    print("❌❌❌ [ERROR SOURCE LINE 1466] CÓDIGO NUEVO - COMMIT: f6e6c82")
+                    print("❌ Setting checkoutStep to .error (initKlarnaNative returned nil)")
                     self.isLoading = false
-                    self.errorMessage = "Failed to initialize Klarna payment"
+                    self.errorMessage = "Failed to initialize Klarna payment - CODE: f6e6c82"
                     self.checkoutStep = .error
                 }
                 return

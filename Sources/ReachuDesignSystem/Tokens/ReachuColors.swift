@@ -156,7 +156,6 @@ public struct AdaptiveColors {
         self.colorScheme = colorScheme
         let theme = ReachuConfiguration.shared.theme
         self.themeColors = theme.colors(for: colorScheme)
-        print("🎨 [AdaptiveColors] Created for \(colorScheme == .dark ? "dark" : "light") mode, theme: \(theme.name)")
     }
     
     // MARK: - Brand Colors
