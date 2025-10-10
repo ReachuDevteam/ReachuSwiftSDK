@@ -1413,13 +1413,8 @@ public struct RCheckoutOverlay: View {
         }
 
         private func initiateKlarnaDirectFlow() async {
-            NSLog("🔵🔵🔵 [Klarna Flow LINE 1415] ========== INICIO CÓDIGO NUEVO f6e6c82 ==========")
-            NSLog("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
-            print("🔵🔵🔵 [Klarna Flow LINE 1415] ========== INICIO CÓDIGO NUEVO f6e6c82 ==========")
+            print("🔵 [Klarna Flow] ========== INICIO ==========")
             print("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
-            
-            // TEMPORAL: Forzar que se vea este punto
-            assertionFailure("⚠️⚠️⚠️ SI VES ESTO, initiateKlarnaDirectFlow() SE ESTÁ EJECUTANDO")
             
             await MainActor.run {
                 isLoading = true
@@ -1482,10 +1477,9 @@ public struct RCheckoutOverlay: View {
                 print("   2. Backend de Reachu respondió?")
                 print("   3. Credenciales de Klarna configuradas?")
                 await MainActor.run {
-                    print("❌❌❌ [ERROR SOURCE LINE 1466] CÓDIGO NUEVO - COMMIT: f6e6c82")
-                    print("❌ Setting checkoutStep to .error (initKlarnaNative returned nil)")
+                    print("❌ [Klarna Flow] Setting checkoutStep to .error (initKlarnaNative returned nil)")
                     self.isLoading = false
-                    self.errorMessage = "Failed to initialize Klarna payment - CODE: f6e6c82"
+                    self.errorMessage = "Failed to initialize Klarna payment"
                     self.checkoutStep = .error
                 }
                 return
