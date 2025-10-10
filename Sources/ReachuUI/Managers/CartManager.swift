@@ -130,4 +130,44 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     internal func logError(_ action: String, error: Error) {
         print("❌ [CartManager] \(action) error: \(error.localizedDescription)")
     }
+    
+    // MARK: - Klarna Payment Methods
+    
+    /// Initialize Klarna Native payment
+    public func initKlarnaNative(input: KlarnaNativeInitInputDto) async -> InitPaymentKlarnaNativeDto? {
+        guard let checkoutId = checkoutId else {
+            print("❌ [CartManager] initKlarnaNative: No checkout ID")
+            return nil
+        }
+        
+        do {
+            let dto = try await sdk.payment.klarnaNativeInit(
+                checkoutId: checkoutId,
+                input: input
+            )
+            print("✅ [CartManager] Klarna Native initialized: \(dto.sessionId)")
+            return dto
+        } catch {
+            print("❌ [CartManager] initKlarnaNative error: \(error.localizedDescription)")
+            return nil
+        }
+    }
+    
+    /// Confirm Klarna Native payment
+    public func klarnaNativeConfirm(
+        checkoutId: String,
+        input: KlarnaNativeConfirmInputDto
+    ) async throws -> ConfirmPaymentKlarnaNativeDto {
+        do {
+            let dto = try await sdk.payment.klarnaNativeConfirm(
+                checkoutId: checkoutId,
+                input: input
+            )
+            print("✅ [CartManager] Klarna Native confirmed: \(dto.orderId)")
+            return dto
+        } catch {
+            print("❌ [CartManager] klarnaNativeConfirm error: \(error.localizedDescription)")
+            throw error
+        }
+    }
 }

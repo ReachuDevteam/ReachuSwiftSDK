@@ -267,28 +267,23 @@ public struct RCheckoutOverlay: View {
                             
                             let billingAddress = shippingAddress
                             
-                            let confirmInput = KlarnaNativeConfirmInputDto(
+                            // Call backend to confirm payment
+                            guard let result = await cartManager.confirmKlarnaNative(
                                 authorizationToken: authToken,
                                 autoCapture: true,
                                 customer: customer,
                                 billingAddress: billingAddress,
                                 shippingAddress: shippingAddress
-                            )
-                            
-                            do {
-                                // Call backend to confirm payment
-                                let result = try await cartManager.klarnaNativeConfirm(
-                                    checkoutId: cartManager.checkoutId ?? "",
-                                    input: confirmInput
-                                )
-                                
-                                print("✅ [Klarna] Order created: \(result.orderId), Fraud: \(result.fraudStatus)")
-                                klarnaNativeInitData = nil
-                                checkoutStep = .success
-                            } catch {
-                                errorMessage = "Failed to confirm payment: \(error.localizedDescription)"
+                            ) else {
+                                errorMessage = "Failed to confirm Klarna payment"
                                 checkoutStep = .error
+                                isLoading = false
+                                return
                             }
+                            
+                            print("✅ [Klarna] Order created: \(result.orderId), Fraud: \(result.fraudStatus)")
+                            klarnaNativeInitData = nil
+                            checkoutStep = .success
                             isLoading = false
                         }
                     },
