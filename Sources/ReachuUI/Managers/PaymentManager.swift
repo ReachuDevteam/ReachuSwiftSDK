@@ -57,6 +57,8 @@ extension CartManager {
     public func initKlarnaNative(
         input: KlarnaNativeInitInputDto
     ) async -> InitPaymentKlarnaNativeDto? {
+        print("🚀🚀🚀 [PaymentManager.initKlarnaNative] MÉTODO LLAMADO")
+        print("🚀 Thread: \(Thread.current)")
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
