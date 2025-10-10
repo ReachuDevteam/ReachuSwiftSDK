@@ -130,4 +130,5 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     internal func logError(_ action: String, error: Error) {
         print("❌ [CartManager] \(action) error: \(error.localizedDescription)")
     }
-    
+}
+
