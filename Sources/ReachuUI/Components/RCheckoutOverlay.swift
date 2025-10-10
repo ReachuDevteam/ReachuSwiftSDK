@@ -68,6 +68,8 @@ public struct RCheckoutOverlay: View {
         @State private var klarnaDirectProductName: String = "iPhone 15 Pro Max"
         @State private var klarnaDirectStatusMessage: String?
         @State private var klarnaAutoAuthorize = false // Para disparar autorización automáticamente
+        @State private var showKlarnaErrorToast = false
+        @State private var klarnaErrorMessage = ""
     #endif
 
     private var draftSyncKey: String {
@@ -192,6 +194,43 @@ public struct RCheckoutOverlay: View {
                 loadingOverlay
             }
             
+            // Toast de error de Klarna
+            #if os(iOS) && canImport(KlarnaMobileSDK)
+            if showKlarnaErrorToast {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 12) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(.white)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Payment Failed")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Text(klarnaErrorMessage)
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(2)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.red)
+                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showKlarnaErrorToast)
+            }
+            #endif
+            
             // Overlay invisible para auto-autorización de Klarna
             #if os(iOS) && canImport(KlarnaMobileSDK)
             if klarnaAutoAuthorize,
@@ -237,8 +276,16 @@ public struct RCheckoutOverlay: View {
                     onFailed: { message in
                         Task { @MainActor in
                             klarnaAutoAuthorize = false
-                            errorMessage = message
-                            checkoutStep = .error
+                            klarnaNativeInitData = nil
+                            klarnaDirectService = nil
+                            // Volver a orderSummary y mostrar toast
+                            checkoutStep = .orderSummary
+                            klarnaErrorMessage = message.isEmpty ? "Payment was cancelled or failed. Please try again." : message
+                            showKlarnaErrorToast = true
+                            // Auto-hide toast después de 4 segundos
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+                                showKlarnaErrorToast = false
+                            }
                         }
                     }
                 )
@@ -559,14 +606,15 @@ public struct RCheckoutOverlay: View {
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
 
-                    // Klarna installments Details
-                    if selectedPaymentMethod == .klarna {
-                        PaymentScheduleCompact(
-                            total: finalTotal,
-                            currency: cartManager.currency
-                        )
-                        .padding(.horizontal, ReachuSpacing.lg)
-                    }
+                    // Klarna installments Details - REMOVED
+                    // No mostrar opciones de cuotas en el checkout
+                    // if selectedPaymentMethod == .klarna {
+                    //     PaymentScheduleCompact(
+                    //         total: finalTotal,
+                    //         currency: cartManager.currency
+                    //     )
+                    //     .padding(.horizontal, ReachuSpacing.lg)
+                    // }
 
                     // Discount Code Section
                     discountCodeSection
