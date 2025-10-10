@@ -243,6 +243,11 @@ public struct RCheckoutOverlay: View {
                     returnURL: returnURL,
                     onAuthorized: { authToken, finalizeRequired in
                         Task { @MainActor in
+                            print("🔵 [Klarna Flow] Step 5: Usuario autorizó el pago en Klarna")
+                            print("   - AuthToken: \(authToken.prefix(20))...")
+                            print("   - FinalizeRequired: \(finalizeRequired)")
+                            print("🔵 [Klarna Flow] Step 6: Llamando a backend para confirmar pago")
+                            
                             isLoading = true
                             klarnaAutoAuthorize = false
                             
@@ -267,6 +272,9 @@ public struct RCheckoutOverlay: View {
                             
                             let billingAddress = shippingAddress
                             
+                            print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
+                            print("   - Email: \(email)")
+                            
                             // Call backend to confirm payment
                             guard let result = await cartManager.confirmKlarnaNative(
                                 authorizationToken: authToken,
@@ -275,13 +283,22 @@ public struct RCheckoutOverlay: View {
                                 billingAddress: billingAddress,
                                 shippingAddress: shippingAddress
                             ) else {
+                                print("❌ [Klarna Flow] ERROR: Backend no pudo confirmar el pago")
+                                print("❌ [Klarna Flow] Verificar:")
+                                print("   1. AuthToken es válido?")
+                                print("   2. Backend de Reachu respondió?")
+                                print("   3. Klarna API respondió correctamente?")
                                 errorMessage = "Failed to confirm Klarna payment"
                                 checkoutStep = .error
                                 isLoading = false
                                 return
                             }
                             
-                            print("✅ [Klarna] Order created: \(result.orderId), Fraud: \(result.fraudStatus)")
+                            print("✅ [Klarna Flow] Step 7: ¡PAGO EXITOSO!")
+                            print("   - OrderId: \(result.orderId)")
+                            print("   - FraudStatus: \(result.fraudStatus)")
+                            print("🔵 [Klarna Flow] ========== FIN ==========")
+                            
                             klarnaNativeInitData = nil
                             checkoutStep = .success
                             isLoading = false
@@ -289,6 +306,15 @@ public struct RCheckoutOverlay: View {
                     },
                     onFailed: { message in
                         Task { @MainActor in
+                            print("❌ [Klarna Flow] ERROR: Pago falló o fue cancelado")
+                            print("   - Mensaje: \(message)")
+                            print("❌ [Klarna Flow] Razones posibles:")
+                            print("   1. Usuario canceló el pago")
+                            print("   2. Klarna rechazó la transacción")
+                            print("   3. Error de red con Klarna")
+                            print("   4. Token de sesión expiró")
+                            print("🔵 [Klarna Flow] ========== FIN (Error) ==========")
+                            
                             klarnaAutoAuthorize = false
                             klarnaNativeInitData = nil
                             // Volver a orderSummary y mostrar toast
@@ -1361,6 +1387,9 @@ public struct RCheckoutOverlay: View {
         }
 
         private func initiateKlarnaDirectFlow() async {
+            print("🔵 [Klarna Flow] ========== INICIO ==========")
+            print("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
+            
             await MainActor.run {
                 isLoading = true
                 errorMessage = nil
@@ -1385,12 +1414,22 @@ public struct RCheckoutOverlay: View {
                 country: getCountryCode(from: country)
             )
             
-            let billingAddress = shippingAddress // Same as shipping for now
+            let billingAddress = shippingAddress
+            
+            let countryCode = getCountryCode(from: country)
+            let locale = getLocale(for: countryCode)
+            
+            print("🔵 [Klarna Flow] Datos preparados:")
+            print("   - Email: \(email)")
+            print("   - País: \(country) → \(countryCode)")
+            print("   - Moneda: \(cartManager.currency)")
+            print("   - Locale: \(locale)")
+            print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
             
             let input = KlarnaNativeInitInputDto(
-                countryCode: getCountryCode(from: country),
+                countryCode: countryCode,
                 currency: cartManager.currency,
-                locale: getLocale(for: getCountryCode(from: country)),
+                locale: locale,
                 returnUrl: klarnaSuccessURLString,
                 intent: "buy",
                 autoCapture: true,
@@ -1399,8 +1438,15 @@ public struct RCheckoutOverlay: View {
                 shippingAddress: shippingAddress
             )
 
+            print("🔵 [Klarna Flow] Step 2: Llamando a backend Reachu (initKlarnaNative)")
+            
             // Call backend to initialize Klarna session
             guard let dto = await cartManager.initKlarnaNative(input: input) else {
+                print("❌ [Klarna Flow] ERROR: Backend retornó nil")
+                print("❌ [Klarna Flow] Verificar:")
+                print("   1. CheckoutId existe?")
+                print("   2. Backend de Reachu respondió?")
+                print("   3. Credenciales de Klarna configuradas?")
                 await MainActor.run {
                     self.isLoading = false
                     self.errorMessage = "Failed to initialize Klarna payment"
@@ -1409,26 +1455,39 @@ public struct RCheckoutOverlay: View {
                 return
             }
 
+            print("✅ [Klarna Flow] Step 3: Backend respondió correctamente")
+            print("   - SessionId: \(dto.sessionId)")
+            print("   - ClientToken: \(dto.clientToken.prefix(20))...")
+            print("   - Categorías: \(dto.paymentMethodCategories?.count ?? 0)")
+
             await MainActor.run {
                 // Backend already returns the correct DTO structure
                 let categories = dto.paymentMethodCategories ?? []
                 guard !categories.isEmpty else {
+                    print("❌ [Klarna Flow] ERROR: No hay métodos de pago disponibles")
                     self.isLoading = false
                     self.errorMessage = "No Klarna payment methods available for this checkout."
                     self.checkoutStep = .error
                     return
                 }
                 
+                print("🔵 [Klarna Flow] Métodos de pago disponibles:")
+                for category in categories {
+                    print("   - \(category.identifier): \(category.name ?? "sin nombre")")
+                }
+                
                 // Store categories and select first one
                 self.klarnaAvailableCategories = categories
                 if let firstCategory = categories.first {
                     self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                    print("🔵 [Klarna Flow] Categoría seleccionada: \(firstCategory.identifier)")
                 }
                 
                 // Store init data (ya viene del backend correctamente)
                 self.klarnaNativeInitData = dto
                 self.isLoading = false
                 
+                print("🔵 [Klarna Flow] Step 4: Activando auto-authorize (modal Klarna)")
                 // Activar auto-authorize flow
                 self.klarnaAutoAuthorize = true
             }
