@@ -97,7 +97,7 @@ struct TV2PollOverlay: View {
             
             // Header
             HStack {
-                Text("📊 AVSTEMNING")
+                Text("AVSTEMNING")
                     .font(.system(size: isLandscape ? 11 : 10, weight: .bold))
                     .foregroundColor(TV2Theme.Colors.primary)
                 

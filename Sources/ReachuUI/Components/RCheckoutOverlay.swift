@@ -1137,7 +1137,16 @@ public struct RCheckoutOverlay: View {
             case .address:
                 checkoutStep = .orderSummary
             case .orderSummary:
-                checkoutStep = .review
+                // Handle Klarna direct flow
+                if selectedPaymentMethod == .klarna {
+                    #if os(iOS) && canImport(KlarnaMobileSDK)
+                        Task {
+                            await initiateKlarnaDirectFlow()
+                        }
+                    #endif
+                } else {
+                    checkoutStep = .review
+                }
             case .review:
                 if selectedPaymentMethod == .stripe {
                     #if os(iOS)
@@ -1242,6 +1251,73 @@ public struct RCheckoutOverlay: View {
                 postalCode: "0154",
                 country: "NO"
             )
+        }
+
+        private func initiateKlarnaDirectFlow() async {
+            await MainActor.run {
+                isLoading = true
+                errorMessage = nil
+            }
+
+            // Calculate total amount in minor units (cents/øre)
+            let totalAmount = Int(finalTotal * 100)
+
+            // Initialize Klarna service
+            let service = KlarnaAPIService()
+            await MainActor.run {
+                klarnaDirectService = service
+                klarnaDirectAmount = totalAmount
+                klarnaDirectProductName = cartManager.items.first?.title ?? "Order"
+            }
+
+            do {
+                // Create Klarna session
+                let response = try await service.createSession(
+                    country: "NO",
+                    currency: "NOK",
+                    locale: "nb-NO",
+                    amount: totalAmount,
+                    productName: klarnaDirectProductName
+                )
+
+                await MainActor.run {
+                    // Store session data
+                    self.klarnaNativeInitData = InitPaymentKlarnaNativeDto(
+                        client_token: response.client_token,
+                        payment_method_categories: response.payment_method_categories?.map { category in
+                            KlarnaNativePaymentMethodCategoryDto(
+                                identifier: category.identifier,
+                                name: category.name ?? "",
+                                asset_urls: category.asset_urls.map { urls in
+                                    KlarnaNativeAssetUrlsDto(
+                                        standard: urls.standard,
+                                        descriptive: urls.descriptive
+                                    )
+                                }
+                            )
+                        } ?? []
+                    )
+
+                    // Set available categories
+                    self.klarnaAvailableCategories = self.klarnaNativeInitData?.payment_method_categories ?? []
+
+                    // Select first category automatically
+                    if let firstCategory = self.klarnaAvailableCategories.first {
+                        self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                    }
+
+                    self.isLoading = false
+
+                    // Show Klarna native sheet
+                    self.showKlarnaNativeSheet = true
+                }
+            } catch {
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = "Failed to initialize Klarna: \(error.localizedDescription)"
+                    self.checkoutStep = .error
+                }
+            }
         }
     #endif
 
