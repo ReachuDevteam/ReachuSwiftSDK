@@ -62,11 +62,6 @@ public struct RCheckoutOverlay: View {
         @State private var klarnaSelectedCategoryIdentifier: String = ""
         private let klarnaSuccessURLString =
             "https://tuapp.com/checkout/klarna-return"
-        @State private var isUsingKlarnaDirectFlow = true
-        @State private var klarnaDirectService: KlarnaAPIService?
-        @State private var klarnaDirectAmount: Int = 0
-        @State private var klarnaDirectProductName: String = "iPhone 15 Pro Max"
-        @State private var klarnaDirectStatusMessage: String?
         @State private var klarnaAutoAuthorize = false // Para disparar autorización automáticamente
         @State private var showKlarnaErrorToast = false
         @State private var klarnaErrorMessage = ""
@@ -244,30 +239,49 @@ public struct RCheckoutOverlay: View {
                     onAuthorized: { authToken, finalizeRequired in
                         Task { @MainActor in
                             isLoading = true
-                            klarnaAutoAuthorize = false // Reset flag
+                            klarnaAutoAuthorize = false
                             
-                            guard let service = klarnaDirectService else {
-                                errorMessage = "Direct Klarna service unavailable"
-                                checkoutStep = .error
-                                isLoading = false
-                                return
-                            }
+                            // Build input for confirm
+                            let customer = KlarnaNativeCustomerInputDto(
+                                email: email,
+                                phone: phoneCountryCode + phone
+                            )
+                            
+                            let shippingAddress = KlarnaNativeAddressInputDto(
+                                givenName: firstName,
+                                familyName: lastName,
+                                email: email,
+                                phone: phoneCountryCode + phone,
+                                streetAddress: address1,
+                                streetAddress2: address2.isEmpty ? nil : address2,
+                                city: city,
+                                region: province.isEmpty ? nil : province,
+                                postalCode: zip,
+                                country: getCountryCode(from: country)
+                            )
+                            
+                            let billingAddress = shippingAddress
+                            
+                            let confirmInput = KlarnaNativeConfirmInputDto(
+                                authorizationToken: authToken,
+                                autoCapture: true,
+                                customer: customer,
+                                billingAddress: billingAddress,
+                                shippingAddress: shippingAddress
+                            )
                             
                             do {
-                                let order = try await service.createOrder(
-                                    authorizationToken: authToken,
-                                    country: "NO",
-                                    currency: "NOK",
-                                    locale: "nb-NO",
-                                    amount: klarnaDirectAmount,
-                                    productName: klarnaDirectProductName
+                                // Call backend to confirm payment
+                                let result = try await cartManager.klarnaNativeConfirm(
+                                    checkoutId: cartManager.checkoutId ?? "",
+                                    input: confirmInput
                                 )
-                                klarnaDirectStatusMessage = "Order created: \(order.order_id)"
-                                klarnaDirectService = nil
-                                checkoutStep = .success
+                                
+                                print("✅ [Klarna] Order created: \(result.orderId), Fraud: \(result.fraudStatus)")
                                 klarnaNativeInitData = nil
+                                checkoutStep = .success
                             } catch {
-                                errorMessage = error.localizedDescription
+                                errorMessage = "Failed to confirm payment: \(error.localizedDescription)"
                                 checkoutStep = .error
                             }
                             isLoading = false
@@ -277,7 +291,6 @@ public struct RCheckoutOverlay: View {
                         Task { @MainActor in
                             klarnaAutoAuthorize = false
                             klarnaNativeInitData = nil
-                            klarnaDirectService = nil
                             // Volver a orderSummary y mostrar toast
                             checkoutStep = .orderSummary
                             klarnaErrorMessage = message.isEmpty ? "Payment was cancelled or failed. Please try again." : message
@@ -1347,6 +1360,39 @@ public struct RCheckoutOverlay: View {
                 country: "NO"
             )
         }
+        
+        private func getCountryCode(from countryName: String) -> String {
+            // Map common country names to ISO codes
+            let mapping: [String: String] = [
+                "Norway": "NO",
+                "United States": "US",
+                "United Kingdom": "GB",
+                "Sweden": "SE",
+                "Denmark": "DK",
+                "Finland": "FI",
+                "Germany": "DE",
+                "France": "FR",
+                "Spain": "ES",
+                "Italy": "IT"
+            ]
+            return mapping[countryName] ?? "NO" // Default to Norway
+        }
+        
+        private func getLocale(for countryCode: String) -> String {
+            switch countryCode {
+            case "NO": return "nb-NO"
+            case "US": return "en-US"
+            case "GB": return "en-GB"
+            case "SE": return "sv-SE"
+            case "DK": return "da-DK"
+            case "FI": return "fi-FI"
+            case "DE": return "de-DE"
+            case "FR": return "fr-FR"
+            case "ES": return "es-ES"
+            case "IT": return "it-IT"
+            default: return "en-US"
+            }
+        }
 
         private func initiateKlarnaDirectFlow() async {
             await MainActor.run {
@@ -1354,89 +1400,65 @@ public struct RCheckoutOverlay: View {
                 errorMessage = nil
             }
 
-            // Calculate total amount in minor units (cents/øre)
-            let totalAmount = Int(finalTotal * 100)
-
-            // Initialize Klarna service
-            let service = KlarnaAPIService()
-            await MainActor.run {
-                klarnaDirectService = service
-                klarnaDirectAmount = totalAmount
-                klarnaDirectProductName = cartManager.items.first?.title ?? "Order"
-            }
+            // Build input data from checkout form
+            let customer = KlarnaNativeCustomerInputDto(
+                email: email,
+                phone: phoneCountryCode + phone
+            )
+            
+            let shippingAddress = KlarnaNativeAddressInputDto(
+                givenName: firstName,
+                familyName: lastName,
+                email: email,
+                phone: phoneCountryCode + phone,
+                streetAddress: address1,
+                streetAddress2: address2.isEmpty ? nil : address2,
+                city: city,
+                region: province.isEmpty ? nil : province,
+                postalCode: zip,
+                country: getCountryCode(from: country)
+            )
+            
+            let billingAddress = shippingAddress // Same as shipping for now
+            
+            let input = KlarnaNativeInitInputDto(
+                countryCode: getCountryCode(from: country),
+                currency: cartManager.currency,
+                locale: getLocale(for: getCountryCode(from: country)),
+                returnUrl: klarnaSuccessURLString,
+                intent: "buy",
+                autoCapture: true,
+                customer: customer,
+                billingAddress: billingAddress,
+                shippingAddress: shippingAddress
+            )
 
             do {
-                // Create Klarna session
-                let response = try await service.createSession(
-                    country: "NO",
-                    currency: "NOK",
-                    locale: "nb-NO",
-                    amount: totalAmount,
-                    productName: klarnaDirectProductName
-                )
+                // Call backend to initialize Klarna session
+                let dto = try await cartManager.initKlarnaNative(input: input)
 
                 await MainActor.run {
-                    do {
-                        // Map response to DTOs using JSONEncoder/Decoder
-                        let encoder = JSONEncoder()
-                        encoder.keyEncodingStrategy = .convertToSnakeCase
-                        
-                        // Create categories array
-                        var categoriesArray: [[String: Any]] = []
-                        if let categories = response.payment_method_categories {
-                            for category in categories {
-                                var categoryDict: [String: Any] = [
-                                    "identifier": category.identifier,
-                                    "name": category.name ?? ""
-                                ]
-                                
-                                if let assetUrls = category.asset_urls {
-                                    categoryDict["asset_urls"] = [
-                                        "descriptive": assetUrls.descriptive ?? "",
-                                        "standard": assetUrls.standard ?? ""
-                                    ]
-                                }
-                                
-                                categoriesArray.append(categoryDict)
-                            }
-                        }
-                        
-                        // Decode categories
-                        let categoriesData = try JSONSerialization.data(withJSONObject: categoriesArray)
-                        let mappedCategories = try JSONDecoder().decode([KlarnaNativePaymentMethodCategoryDto].self, from: categoriesData)
-                        
-                        self.klarnaAvailableCategories = mappedCategories
-                        
-                        // Select first category automatically
-                        if let firstCategory = mappedCategories.first {
-                            self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
-                        }
-                        
-                        // Create InitPaymentKlarnaNativeDto
-                        let initDict: [String: Any] = [
-                            "client_token": response.client_token,
-                            "session_id": response.session_id,
-                            "purchase_country": "NO",
-                            "purchase_currency": "NOK",
-                            "cart_id": cartManager.cartId ?? "",
-                            "checkout_id": "",
-                            "payment_method_categories": categoriesArray
-                        ]
-                        
-                        let initData = try JSONSerialization.data(withJSONObject: initDict)
-                        self.klarnaNativeInitData = try JSONDecoder().decode(InitPaymentKlarnaNativeDto.self, from: initData)
-                        
+                    // Backend already returns the correct DTO structure
+                    let categories = dto.paymentMethodCategories ?? []
+                    guard !categories.isEmpty else {
                         self.isLoading = false
-                        
-                        // Para flujo directo, NO mostrar sheet, solo setear flag
-                        self.klarnaAutoAuthorize = true
-                        // NO mostrar el sheet, lo manejamos con overlay invisible
-                        // self.showKlarnaNativeSheet = true
-                    } catch {
-                        self.isLoading = false
-                        self.errorMessage = "Failed to parse Klarna response: \(error.localizedDescription)"
+                        self.errorMessage = "No Klarna payment methods available for this checkout."
                         self.checkoutStep = .error
+                        return
                     }
+                    
+                    // Store categories and select first one
+                    self.klarnaAvailableCategories = categories
+                    if let firstCategory = categories.first {
+                        self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
+                    }
+                    
+                    // Store init data (ya viene del backend correctamente)
+                    self.klarnaNativeInitData = dto
+                    self.isLoading = false
+                    
+                    // Activar auto-authorize flow
+                    self.klarnaAutoAuthorize = true
                 }
             } catch {
                 await MainActor.run {
