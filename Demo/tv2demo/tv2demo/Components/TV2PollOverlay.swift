@@ -88,9 +88,7 @@ struct TV2PollOverlay: View {
     }
     
     private var pollCard: some View {
-        let _ = print("🏷️ [PollCard] Renderizando con campaignLogo: \(poll.campaignLogo ?? "nil")")
-        
-        return ZStack(alignment: .bottomTrailing) {
+        VStack(spacing: 0) {
             VStack(spacing: isLandscape ? 12 : 10) {
                 // Drag indicator
                 Capsule()
@@ -145,33 +143,30 @@ struct TV2PollOverlay: View {
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 4)
             }
-        }
-        .padding(isLandscape ? 16 : 14)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.6))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-        )
-        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
-        .rotation3DEffect(
-            .degrees(showResults ? 180 : 0),
-            axis: (x: 0, y: 1, z: 0)
-        )
+            }
+            .padding(isLandscape ? 16 : 14)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.4))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                    )
+            )
+            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
+            .rotation3DEffect(
+                .degrees(showResults ? 180 : 0),
+                axis: (x: 0, y: 1, z: 0)
+            )
             
-            // Sponsor badge en esquina inferior derecha
+            // Sponsor badge debajo del contenido principal
             if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
-                VStack {
+                HStack {
+                    Spacer()
                     TV2SponsorBadge(logoUrl: campaignLogo)
-                    Text("AQUI ESTA")
-                        .foregroundColor(.yellow)
-                        .background(Color.red)
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
                 }
-                .padding(.trailing, 12)
-                .padding(.bottom, 12)
-                .background(Color.green.opacity(0.5))
             }
         }
     }

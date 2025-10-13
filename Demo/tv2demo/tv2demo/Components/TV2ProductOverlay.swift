@@ -190,8 +190,8 @@ struct TV2ProductOverlay: View {
             // Sponsor badge en esquina inferior derecha
             if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
                 TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 12)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 8)
             }
         }
     }
@@ -285,8 +285,8 @@ struct TV2TwoProductsOverlay: View {
             // Sponsor badge en esquina inferior derecha (usando el logo del primer producto)
             if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
                 TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 12)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 8)
             }
         }
     }

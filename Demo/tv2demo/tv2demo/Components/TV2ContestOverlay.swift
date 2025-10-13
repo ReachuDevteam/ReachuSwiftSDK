@@ -124,8 +124,8 @@ struct TV2ContestOverlay: View {
             // Sponsor badge en esquina inferior derecha
             if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty, !showWheel {
                 TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 12)
+                    .padding(.trailing, 8)
+                    .padding(.bottom, 8)
             }
         }
     }
