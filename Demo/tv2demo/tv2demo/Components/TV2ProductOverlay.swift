@@ -88,11 +88,12 @@ struct TV2ProductOverlay: View {
     }
     
     private var productCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             // Drag indicator
             Capsule()
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
+                .frame(width: 40, height: 4)
+                .padding(.top, 8)
             
             // Imagen del producto
             AsyncImage(url: URL(string: product.imageUrl)) { phase in
@@ -154,32 +155,36 @@ struct TV2ProductOverlay: View {
                 HStack(spacing: 8) {
                     if showCheckmark {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                         Text("Lagt til!")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                     } else {
                         Image(systemName: "cart.fill")
-                            .font(.system(size: 16))
+                            .font(.system(size: 18))
                         Text("Legg til i handlekurv")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                     }
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
+                .padding(.vertical, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(showCheckmark ? Color.green : TV2Theme.Colors.primary)
+                    RoundedRectangle(cornerRadius: 22)
+                        .fill(showCheckmark ? Color.green : Color(hex: "5B5FCF"))
                 )
             }
             .disabled(showCheckmark)
         }
-        .padding(16)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(hex: "120019"))
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.black.opacity(0.85))
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.ultraThinMaterial)
+                )
         )
-        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 10)
     }
 }
 

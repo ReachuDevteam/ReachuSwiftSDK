@@ -88,28 +88,28 @@ struct TV2PollOverlay: View {
     }
     
     private var pollCard: some View {
-        VStack(spacing: isLandscape ? 12 : 8) {
+        VStack(spacing: isLandscape ? 20 : 16) {
             // Drag indicator
             Capsule()
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
-                .padding(.top, 8)
+                .frame(width: 40, height: 4)
+                .padding(.top, 12)
             
-            // Header
-            HStack {
-                Text("AVSTEMNING")
-                    .font(.system(size: isLandscape ? 11 : 10, weight: .bold))
-                    .foregroundColor(TV2Theme.Colors.primary)
-                
-                Spacer()
-            }
-            
-            // Question
+            // Title (main question)
             Text(poll.question)
-                .font(.system(size: isLandscape ? 14 : 12, weight: .semibold))
+                .font(.system(size: isLandscape ? 22 : 18, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .lineLimit(3)
+                .lineLimit(2)
+                .padding(.horizontal, 20)
+            
+            // Subtitle (optional helper text)
+            Text("Få raskere tilgang til kampene fra forsiden")
+                .font(.system(size: isLandscape ? 14 : 12, weight: .regular))
+                .foregroundColor(.white.opacity(0.7))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .padding(.horizontal, 20)
             
             // Options
             VStack(spacing: isLandscape ? 8 : 6) {
@@ -143,12 +143,16 @@ struct TV2PollOverlay: View {
                 .padding(.top, 4)
             }
         }
-        .padding(isLandscape ? 16 : 12)
+        .padding(isLandscape ? 24 : 20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(hex: "120019"))
+            RoundedRectangle(cornerRadius: 24)
+                .fill(Color.black.opacity(0.85))
+                .background(
+                    RoundedRectangle(cornerRadius: 24)
+                        .fill(.ultraThinMaterial)
+                )
         )
-        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 10)
         .rotation3DEffect(
             .degrees(showResults ? 180 : 0),
             axis: (x: 0, y: 1, z: 0)
@@ -169,40 +173,36 @@ struct TV2PollOverlay: View {
                 }
             }
         }) {
-            HStack(spacing: 8) {
-                // Letter indicator
-                Text("\(["A", "B", "C", "D", "E"][index])")
-                    .font(.system(size: isLandscape ? 12 : 10, weight: .bold))
-                    .foregroundColor(selectedOption == option ? .white : TV2Theme.Colors.primary)
-                    .frame(width: isLandscape ? 24 : 20, height: isLandscape ? 24 : 20)
-                    .background(
-                        Circle()
-                            .fill(selectedOption == option ? TV2Theme.Colors.primary : Color.white.opacity(0.1))
+            HStack(spacing: 12) {
+                // Flag/Icon circle (simulado con gradiente)
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: isLandscape ? 50 : 44, height: isLandscape ? 50 : 44)
+                    .overlay(
+                        Text(String(option.prefix(1)).uppercased())
+                            .font(.system(size: isLandscape ? 20 : 18, weight: .bold))
+                            .foregroundColor(.white)
                     )
                 
                 Text(option)
-                    .font(.system(size: isLandscape ? 13 : 11, weight: .medium))
+                    .font(.system(size: isLandscape ? 16 : 14, weight: .semibold))
                     .foregroundColor(.white)
-                    .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                
-                if selectedOption == option {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: isLandscape ? 16 : 14))
-                        .foregroundColor(TV2Theme.Colors.primary)
-                }
             }
-            .padding(.horizontal, isLandscape ? 12 : 10)
-            .padding(.vertical, isLandscape ? 10 : 8)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(selectedOption == option ? TV2Theme.Colors.primary.opacity(0.2) : Color.white.opacity(0.05))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        selectedOption == option ? TV2Theme.Colors.primary : Color.white.opacity(0.1),
-                        lineWidth: selectedOption == option ? 2 : 1
+                RoundedRectangle(cornerRadius: isLandscape ? 25 : 22)
+                    .fill(
+                        selectedOption == option 
+                        ? Color(hex: "5B5FCF")
+                        : Color(hex: "3A3D5C")
                     )
             )
         }
