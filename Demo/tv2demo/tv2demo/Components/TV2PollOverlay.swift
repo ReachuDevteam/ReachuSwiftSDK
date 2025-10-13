@@ -37,7 +37,7 @@ struct TV2PollOverlay: View {
                 HStack(spacing: 0) {
                     Spacer()
                     pollCard
-                        .frame(width: 280)
+                        .frame(width: 240)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
@@ -88,28 +88,28 @@ struct TV2PollOverlay: View {
     }
     
     private var pollCard: some View {
-        VStack(spacing: isLandscape ? 20 : 16) {
+        VStack(spacing: isLandscape ? 12 : 10) {
             // Drag indicator
             Capsule()
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 40, height: 4)
-                .padding(.top, 12)
+                .frame(width: 32, height: 4)
+                .padding(.top, 8)
             
             // Title (main question)
             Text(poll.question)
-                .font(.system(size: isLandscape ? 22 : 18, weight: .bold))
+                .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
             
             // Subtitle (optional helper text)
             Text("Få raskere tilgang til kampene fra forsiden")
-                .font(.system(size: isLandscape ? 14 : 12, weight: .regular))
+                .font(.system(size: isLandscape ? 12 : 10, weight: .regular))
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .padding(.horizontal, 20)
+                .lineLimit(1)
+                .padding(.horizontal, 16)
             
             // Options
             VStack(spacing: isLandscape ? 8 : 6) {
@@ -143,16 +143,16 @@ struct TV2PollOverlay: View {
                 .padding(.top, 4)
             }
         }
-        .padding(isLandscape ? 24 : 20)
+        .padding(isLandscape ? 16 : 14)
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Color.black.opacity(0.85))
                 .background(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                 )
         )
-        .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         .rotation3DEffect(
             .degrees(showResults ? 180 : 0),
             axis: (x: 0, y: 1, z: 0)
@@ -173,7 +173,7 @@ struct TV2PollOverlay: View {
                 }
             }
         }) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 // Flag/Icon circle (simulado con gradiente)
                 Circle()
                     .fill(
@@ -183,22 +183,22 @@ struct TV2PollOverlay: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: isLandscape ? 50 : 44, height: isLandscape ? 50 : 44)
+                    .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
                     .overlay(
                         Text(String(option.prefix(1)).uppercased())
-                            .font(.system(size: isLandscape ? 20 : 18, weight: .bold))
+                            .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                             .foregroundColor(.white)
                     )
                 
                 Text(option)
-                    .font(.system(size: isLandscape ? 16 : 14, weight: .semibold))
+                    .font(.system(size: isLandscape ? 14 : 12, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: isLandscape ? 25 : 22)
+                RoundedRectangle(cornerRadius: isLandscape ? 20 : 18)
                     .fill(
                         selectedOption == option 
                         ? Color(hex: "5B5FCF")

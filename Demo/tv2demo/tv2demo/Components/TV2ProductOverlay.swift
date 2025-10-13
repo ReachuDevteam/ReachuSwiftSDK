@@ -34,7 +34,7 @@ struct TV2ProductOverlay: View {
                 HStack(spacing: 0) {
                     Spacer()
                     productCard
-                        .frame(width: 280)
+                        .frame(width: 220)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
@@ -100,21 +100,21 @@ struct TV2ProductOverlay: View {
                 switch phase {
                 case .empty:
                     ProgressView()
-                        .frame(height: isLandscape ? 140 : 180)
+                        .frame(height: isLandscape ? 100 : 120)
                 case .success(let image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(height: isLandscape ? 140 : 180)
+                        .frame(height: isLandscape ? 100 : 120)
                         .clipped()
                         .cornerRadius(12)
                 case .failure:
                     Color.gray.opacity(0.3)
-                        .frame(height: isLandscape ? 140 : 180)
+                        .frame(height: isLandscape ? 100 : 120)
                         .cornerRadius(12)
                         .overlay(
                             Image(systemName: "photo")
-                                .font(.system(size: 40))
+                                .font(.system(size: 30))
                                 .foregroundColor(.white.opacity(0.5))
                         )
                 @unknown default:
@@ -123,23 +123,23 @@ struct TV2ProductOverlay: View {
             }
             
             // Información del producto
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(product.name)
-                    .font(.system(size: isLandscape ? 14 : 15, weight: .semibold))
+                    .font(.system(size: isLandscape ? 13 : 14, weight: .semibold))
                     .foregroundColor(.white)
                     .lineLimit(2)
                 
                 if !product.description.isEmpty {
                     Text(product.description)
-                        .font(.system(size: isLandscape ? 11 : 12))
+                        .font(.system(size: isLandscape ? 10 : 11))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(2)
                 }
                 
                 // Precio
                 Text(product.price)
-                    .font(.system(size: isLandscape ? 16 : 18, weight: .bold))
-                    .foregroundColor(TV2Theme.Colors.primary)
+                    .font(.system(size: isLandscape ? 14 : 16, weight: .bold))
+                    .foregroundColor(Color(hex: "5B5FCF"))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             
@@ -152,39 +152,39 @@ struct TV2ProductOverlay: View {
                     showCheckmark = false
                 }
             }) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     if showCheckmark {
                         Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 18))
+                            .font(.system(size: 14))
                         Text("Lagt til!")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                     } else {
                         Image(systemName: "cart.fill")
-                            .font(.system(size: 18))
-                        Text("Legg til i handlekurv")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 14))
+                        Text("Legg til")
+                            .font(.system(size: 13, weight: .semibold))
                     }
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
+                .padding(.vertical, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 22)
+                    RoundedRectangle(cornerRadius: 18)
                         .fill(showCheckmark ? Color.green : Color(hex: "5B5FCF"))
                 )
             }
             .disabled(showCheckmark)
         }
-        .padding(20)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 20)
                 .fill(Color.black.opacity(0.85))
                 .background(
-                    RoundedRectangle(cornerRadius: 24)
+                    RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                 )
         )
-        .shadow(color: .black.opacity(0.6), radius: 30, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
     }
 }
 
@@ -261,12 +261,16 @@ struct TV2TwoProductsOverlay: View {
                 }
             }
         }
-        .padding(16)
+        .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(hex: "120019"))
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.85))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
         )
-        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
+        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
     }
     
     private func productMiniCard(_ product: ProductEventData) -> some View {
@@ -331,7 +335,7 @@ struct TV2TwoProductsOverlay: View {
                     .padding(.vertical, 6)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(addedProducts.contains(product.id) ? Color.green : TV2Theme.Colors.primary)
+                            .fill(addedProducts.contains(product.id) ? Color.green : Color(hex: "5B5FCF"))
                     )
                 }
                 .disabled(addedProducts.contains(product.id))
