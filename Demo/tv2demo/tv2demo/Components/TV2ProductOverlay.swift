@@ -95,13 +95,13 @@ struct TV2ProductOverlay: View {
                 .frame(width: 40, height: 4)
                 .padding(.top, 8)
             
-            // Sponsor badge (si existe)
+            // Sponsor badge en esquina superior izquierda
             if let campaignLogo = product.campaignLogo {
                 HStack {
-                    Spacer()
                     TV2SponsorBadge(logoUrl: campaignLogo)
+                    Spacer()
                 }
-                .padding(.trailing, 8)
+                .padding(.leading, 8)
             }
             
             // Imagen del producto
@@ -249,13 +249,13 @@ struct TV2TwoProductsOverlay: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
             
-            // Sponsor badge (si existe, usando el logo del primer producto)
+            // Sponsor badge en esquina superior izquierda (usando el logo del primer producto)
             if let campaignLogo = product1.campaignLogo {
                 HStack {
-                    Spacer()
                     TV2SponsorBadge(logoUrl: campaignLogo)
+                    Spacer()
                 }
-                .padding(.trailing, 8)
+                .padding(.leading, 8)
             }
             
             // Header

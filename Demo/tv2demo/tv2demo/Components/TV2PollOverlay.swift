@@ -95,13 +95,13 @@ struct TV2PollOverlay: View {
                 .frame(width: 32, height: 4)
                 .padding(.top, 8)
             
-            // Sponsor badge (si existe)
+            // Sponsor badge en esquina superior izquierda
             if let campaignLogo = poll.campaignLogo {
                 HStack {
-                    Spacer()
                     TV2SponsorBadge(logoUrl: campaignLogo)
+                    Spacer()
                 }
-                .padding(.trailing, 8)
+                .padding(.leading, 8)
                 .padding(.top, 4)
             }
             
