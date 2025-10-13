@@ -462,7 +462,8 @@ struct Triangle: Shape {
                 name: "Gran Sorteo Tech 2024",
                 prize: "Gana un MacBook Pro M3, AirPods Pro y más",
                 deadline: "2024-12-31",
-                maxParticipants: 1000
+                maxParticipants: 1000,
+                campaignLogo: nil
             ),
             isChatExpanded: false,
             onJoin: {
