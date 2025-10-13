@@ -88,6 +88,14 @@
     "showCartNotifications": true,
     "enableGuestCheckout": true
   },
+  "marketFallback": {
+    "countryCode": "NO",
+    "countryName": "Norway",
+    "currencyCode": "NOK",
+    "currencySymbol": "kr",
+    "phoneCode": "+47",
+    "flag": "https://flagcdn.com/w320/no.png"
+  },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",
     "floatingCartPosition": ["topLeft", "topCenter", "topRight", "centerLeft", "centerRight", "bottomLeft", "bottomCenter", "bottomRight"],
