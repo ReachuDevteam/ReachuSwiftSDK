@@ -77,7 +77,7 @@ struct OfferBanner: View {
                 .padding(.leading, TV2Theme.Spacing.xl)
             }
             .frame(height: 180)
-            .cornerRadius(TV2Theme.BorderRadius.medium)
+            .cornerRadius(TV2Theme.CornerRadius.medium)
             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(ScaleButtonStyle())
