@@ -463,7 +463,7 @@ struct Triangle: Shape {
                 prize: "Gana un MacBook Pro M3, AirPods Pro y más",
                 deadline: "2024-12-31",
                 maxParticipants: 1000,
-                campaignLogo: nil
+                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             isChatExpanded: false,
             onJoin: {

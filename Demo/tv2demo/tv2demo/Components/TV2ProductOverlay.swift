@@ -382,7 +382,7 @@ struct TV2TwoProductsOverlay: View {
                 price: "$1,199",
                 currency: "USD",
                 imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
-                campaignLogo: nil
+                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             isChatExpanded: false,
             onAddToCart: {
@@ -407,7 +407,7 @@ struct TV2TwoProductsOverlay: View {
                 price: "$999",
                 currency: "USD",
                 imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
-                campaignLogo: nil
+                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             product2: ProductEventData(
                 id: "prod_2",
@@ -416,7 +416,7 @@ struct TV2TwoProductsOverlay: View {
                 price: "$249",
                 currency: "USD",
                 imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb",
-                campaignLogo: nil
+                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             onAddToCart: { product in
                 print("Agregado: \(product.name)")
