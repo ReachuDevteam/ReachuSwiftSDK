@@ -53,15 +53,40 @@ public final class ProductRepositoryGQL: ProductRepository {
             "shippingCountryCode": shippingCountryCode as Any,
         ].compactMapValues { $0 }
 
+        print("🔍 [ProductModule] Fetching products with parameters:")
+        print("   Currency: \(currency ?? "nil")")
+        print("   Country: \(shippingCountryCode ?? "nil")")
+        print("   CategoryIds: \(categoryIds ?? [])")
+        print("   ProductIds: \(productIds ?? [])")
+        print("   UseCache: \(useCache)")
+
         let res = try await client.runQuerySafe(
             query: ChannelGraphQL.GET_PRODUCTS_CHANNEL_QUERY,
             variables: vars
         )
+        
+        print("🔍 [ProductModule] Response received:")
+        if let data = res.data {
+            print("   Data keys: \(data.keys)")
+            if let channel = data["Channel"] as? [String: Any] {
+                print("   Channel keys: \(channel.keys)")
+                if let products = channel["Products"] as? [Any] {
+                    print("   ✅ Products count: \(products.count)")
+                } else {
+                    print("   ❌ No Products array found")
+                }
+            } else {
+                print("   ❌ No Channel object found")
+            }
+        }
+        
         guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "Products"]) else {
             throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
         }
         let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        return try JSONDecoder().decode([ProductDto].self, from: data)
+        let products = try JSONDecoder().decode([ProductDto].self, from: data)
+        print("   ✅ [ProductModule] Decoded \(products.count) products successfully")
+        return products
     }
 
     // ---------- Public API (unchanged signatures) ----------
