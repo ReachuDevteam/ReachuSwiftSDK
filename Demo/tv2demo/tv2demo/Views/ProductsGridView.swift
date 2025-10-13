@@ -14,7 +14,7 @@ struct ProductsGridView: View {
     
     let title: String
     
-    init(title: String = "Uken tilbud") {
+    init(title: String = "Ukens tilbud") {
         self.title = title
     }
     

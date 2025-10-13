@@ -66,10 +66,11 @@ struct HomeView: View {
                             
                             // Offer Banner Section
                             VStack(spacing: TV2Theme.Spacing.md) {
-                                NavigationLink(destination: ProductsGridView()) {
-                                    OfferBanner {
-                                        // Navigation is handled by NavigationLink
-                                    }
+                                NavigationLink(destination: ProductsGridView()
+                                    .environmentObject(cartManager)
+                                    .environmentObject(checkoutDraft)
+                                ) {
+                                    OfferBannerView()
                                 }
                                 .buttonStyle(PlainButtonStyle())
                             }
