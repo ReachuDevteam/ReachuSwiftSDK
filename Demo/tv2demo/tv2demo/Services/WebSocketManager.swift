@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 /// Manager para conexión WebSocket con servidor de eventos
-/// URL: wss://e4d56829-19ba-4132-b17a-ec94e24acb9e-00-2507f3k4nmffg.worf.replit.dev/ws/3
+/// URL: wss://event-streamer-angelo100.replit.app/ws
 class WebSocketManager: NSObject, ObservableObject {
     @Published var isConnected = false
     @Published var currentPoll: PollEventData?
@@ -18,7 +18,7 @@ class WebSocketManager: NSObject, ObservableObject {
     }
     
     func connect() {
-        let url = URL(string: "wss://e4d56829-19ba-4132-b17a-ec94e24acb9e-00-2507f3k4nmffg.worf.replit.dev/ws/3")!
+        let url = URL(string: "wss://event-streamer-angelo100.replit.app/ws")!
         webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
         
