@@ -19,18 +19,48 @@ struct MatchDetailView: View {
                         Image(match.backgroundImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(height: 400)
+                            .frame(width: UIScreen.main.bounds.width, height: 400)
                             .clipped()
+                            .blur(radius: 0.5) // Slight blur for better text readability
                         
-                        // Dark gradient overlay for better text readability
-                        LinearGradient(
-                            colors: [
-                                Color.black.opacity(0.3),
-                                Color.black.opacity(0.7)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                        // Multi-layered gradient overlay for depth
+                        ZStack {
+                            // Vertical gradient (top to bottom)
+                            LinearGradient(
+                                colors: [
+                                    Color.clear,
+                                    Color.black.opacity(0.4),
+                                    Color.black.opacity(0.8)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            
+                            // Horizontal gradient from sides
+                            HStack(spacing: 0) {
+                                LinearGradient(
+                                    colors: [
+                                        Color.black.opacity(0.6),
+                                        Color.clear
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .frame(width: 60)
+                                
+                                Spacer()
+                                
+                                LinearGradient(
+                                    colors: [
+                                        Color.clear,
+                                        Color.black.opacity(0.6)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .frame(width: 60)
+                            }
+                        }
                         .frame(height: 400)
                         
                         // Top bar buttons
