@@ -106,19 +106,28 @@ struct TV2ContestOverlay: View {
     }
     
     private var contestCard: some View {
-        VStack(spacing: 0) {
-            if showWheel {
-                wheelView
-            } else {
-                contestInfoView
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: 0) {
+                if showWheel {
+                    wheelView
+                } else {
+                    contestInfoView
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(hex: "120019"))
+            )
+            .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
+            
+            // Sponsor badge en esquina inferior derecha
+            if let campaignLogo = contest.campaignLogo, !showWheel {
+                TV2SponsorBadge(logoUrl: campaignLogo)
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 12)
             }
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(hex: "120019"))
-        )
-        .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
     }
     
     // MARK: - Contest Info View
@@ -129,15 +138,6 @@ struct TV2ContestOverlay: View {
             Capsule()
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
-            
-            // Sponsor badge en esquina superior izquierda
-            if let campaignLogo = contest.campaignLogo {
-                HStack {
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                    Spacer()
-                }
-                .padding(.leading, 8)
-            }
             
             // Header
             HStack {

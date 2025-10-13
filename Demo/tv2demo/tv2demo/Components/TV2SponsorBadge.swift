@@ -1,41 +1,43 @@
 import SwiftUI
 
-/// Badge de sponsor para mostrar en la esquina superior izquierda de los overlays
+/// Badge de sponsor para mostrar en la esquina inferior derecha de los overlays
 struct TV2SponsorBadge: View {
     let logoUrl: String
     
     var body: some View {
-        VStack(spacing: 2) {
-            Text("Sponset av")
-                .font(.system(size: 8, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-            
+        VStack(spacing: 4) {
+            // Logo arriba
             AsyncImage(url: URL(string: logoUrl)) { phase in
                 switch phase {
                 case .empty:
                     ProgressView()
-                        .scaleEffect(0.5)
-                        .frame(width: 40, height: 20)
+                        .scaleEffect(0.7)
+                        .frame(width: 80, height: 40)
                 case .success(let image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 50, maxHeight: 24)
+                        .frame(maxWidth: 100, maxHeight: 50)
                 case .failure:
                     Image(systemName: "photo")
-                        .font(.system(size: 10))
+                        .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.4))
-                        .frame(width: 40, height: 20)
+                        .frame(width: 80, height: 40)
                 @unknown default:
                     EmptyView()
                 }
             }
+            
+            // Texto "Sponset av" abajo
+            Text("Sponset av")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundColor(.white.opacity(0.8))
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(Color.black.opacity(0.5))
+                .fill(Color.black.opacity(0.6))
         )
     }
 }

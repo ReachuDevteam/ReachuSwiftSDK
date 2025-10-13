@@ -88,24 +88,15 @@ struct TV2PollOverlay: View {
     }
     
     private var pollCard: some View {
-        VStack(spacing: isLandscape ? 12 : 10) {
-            // Drag indicator
-            Capsule()
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
-                .padding(.top, 8)
-            
-            // Sponsor badge en esquina superior izquierda
-            if let campaignLogo = poll.campaignLogo {
-                HStack {
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                    Spacer()
-                }
-                .padding(.leading, 8)
-                .padding(.top, 4)
-            }
-            
-            // Title (main question)
+        ZStack(alignment: .bottomTrailing) {
+            VStack(spacing: isLandscape ? 12 : 10) {
+                // Drag indicator
+                Capsule()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 32, height: 4)
+                    .padding(.top, 8)
+                
+                // Title (main question)
             Text(poll.question)
                 .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                 .foregroundColor(.white)
@@ -167,6 +158,14 @@ struct TV2PollOverlay: View {
             .degrees(showResults ? 180 : 0),
             axis: (x: 0, y: 1, z: 0)
         )
+            
+            // Sponsor badge en esquina inferior derecha
+            if let campaignLogo = poll.campaignLogo {
+                TV2SponsorBadge(logoUrl: campaignLogo)
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 12)
+            }
+        }
     }
     
     private func pollOptionButton(option: String, index: Int) -> some View {
