@@ -229,7 +229,8 @@ struct TV2PollOverlay: View {
                 id: "poll_test",
                 question: "¿Cuál es tu smartphone favorito?",
                 options: ["iPhone", "Samsung", "Google Pixel", "Otro"],
-                duration: 60
+                duration: 60,
+                campaignLogo: nil
             ),
             isChatExpanded: false,
             onVote: { option in

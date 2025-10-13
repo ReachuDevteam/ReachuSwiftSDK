@@ -381,7 +381,8 @@ struct TV2TwoProductsOverlay: View {
                 description: "El último modelo con titanio y cámara de 48MP",
                 price: "$1,199",
                 currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f"
+                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
+                campaignLogo: nil
             ),
             isChatExpanded: false,
             onAddToCart: {
@@ -405,7 +406,8 @@ struct TV2TwoProductsOverlay: View {
                 description: "Titanio azul",
                 price: "$999",
                 currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f"
+                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
+                campaignLogo: nil
             ),
             product2: ProductEventData(
                 id: "prod_2",
@@ -413,7 +415,8 @@ struct TV2TwoProductsOverlay: View {
                 description: "Con USB-C",
                 price: "$249",
                 currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb"
+                imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb",
+                campaignLogo: nil
             ),
             onAddToCart: { product in
                 print("Agregado: \(product.name)")
