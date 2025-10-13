@@ -96,6 +96,32 @@ struct TV2PollOverlay: View {
                     .frame(width: 32, height: 4)
                     .padding(.top, 8)
                 
+                // Sponsor logo arriba a la izquierda
+                if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
+                    HStack {
+                        AsyncImage(url: URL(string: campaignLogo)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 30)
+                            case .empty:
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 80, height: 30)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 4)
+                }
+                
                 // Title (main question)
             Text(poll.question)
                 .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
