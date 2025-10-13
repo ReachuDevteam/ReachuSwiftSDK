@@ -106,7 +106,7 @@ struct TV2ContestOverlay: View {
     }
     
     private var contestCard: some View {
-        ZStack(alignment: .bottomTrailing) {
+        VStack(spacing: 0) {
             VStack(spacing: 0) {
                 if showWheel {
                     wheelView
@@ -117,15 +117,18 @@ struct TV2ContestOverlay: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(hex: "120019"))
+                    .fill(Color(hex: "120019").opacity(0.85))
             )
             .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
             
-            // Sponsor badge en esquina inferior derecha
+            // Sponsor badge debajo del contenido principal
             if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty, !showWheel {
-                TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
+                }
             }
         }
     }
@@ -138,6 +141,32 @@ struct TV2ContestOverlay: View {
             Capsule()
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
+            
+            // Sponsor logo arriba a la izquierda
+            if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty {
+                HStack {
+                    AsyncImage(url: URL(string: campaignLogo)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 80, maxHeight: 30)
+                        case .empty:
+                            ProgressView()
+                                .scaleEffect(0.5)
+                                .frame(width: 80, height: 30)
+                        case .failure:
+                            EmptyView()
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+            }
             
             // Header
             HStack {

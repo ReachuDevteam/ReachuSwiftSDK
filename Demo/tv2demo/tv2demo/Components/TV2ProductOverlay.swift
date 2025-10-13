@@ -88,13 +88,39 @@ struct TV2ProductOverlay: View {
     }
     
     private var productCard: some View {
-        ZStack(alignment: .bottomTrailing) {
+        VStack(spacing: 0) {
             VStack(spacing: 16) {
                 // Drag indicator
                 Capsule()
                     .fill(Color.white.opacity(0.3))
                     .frame(width: 40, height: 4)
                     .padding(.top, 8)
+                
+                // Sponsor logo arriba a la izquierda
+                if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
+                    HStack {
+                        AsyncImage(url: URL(string: campaignLogo)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 30)
+                            case .empty:
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 80, height: 30)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 4)
+                }
                 
                 // Imagen del producto
             AsyncImage(url: URL(string: product.imageUrl)) { phase in
@@ -175,23 +201,26 @@ struct TV2ProductOverlay: View {
                 )
             }
             .disabled(showCheckmark)
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.6))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-        )
-        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.4))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                    )
+            )
+            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
             
-            // Sponsor badge en esquina inferior derecha
+            // Sponsor badge debajo del contenido principal
             if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
-                TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
+                }
             }
         }
     }
@@ -243,12 +272,38 @@ struct TV2TwoProductsOverlay: View {
     }
     
     private var productsCard: some View {
-        ZStack(alignment: .bottomTrailing) {
+        VStack(spacing: 0) {
             VStack(spacing: 12) {
                 // Drag indicator
                 Capsule()
                     .fill(Color.white.opacity(0.3))
                     .frame(width: 32, height: 4)
+                
+                // Sponsor logo arriba a la izquierda
+                if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
+                    HStack {
+                        AsyncImage(url: URL(string: campaignLogo)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 30)
+                            case .empty:
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 80, height: 30)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.top, 4)
+                }
                 
                 // Header
             HStack {
@@ -270,23 +325,26 @@ struct TV2TwoProductsOverlay: View {
                     productMiniCard(product2)
                 }
             }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.6))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-        )
-        .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.4))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                    )
+            )
+            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
             
-            // Sponsor badge en esquina inferior derecha (usando el logo del primer producto)
+            // Sponsor badge debajo del contenido principal
             if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
-                TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 8)
-                    .padding(.bottom, 8)
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                        .padding(.top, 8)
+                        .padding(.trailing, 12)
+                }
             }
         }
     }
