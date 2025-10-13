@@ -14,6 +14,7 @@ struct Match: Identifiable {
     let backgroundImage: String
     let availability: MatchAvailability
     let relatedContent: [RelatedTeam]
+    let campaignLogo: String?
     
     init(
         homeTeam: Team,
@@ -26,7 +27,8 @@ struct Match: Identifiable {
         isLive: Bool = false,
         backgroundImage: String,
         availability: MatchAvailability,
-        relatedContent: [RelatedTeam] = []
+        relatedContent: [RelatedTeam] = [],
+        campaignLogo: String? = nil
     ) {
         self.homeTeam = homeTeam
         self.awayTeam = awayTeam
@@ -39,6 +41,7 @@ struct Match: Identifiable {
         self.backgroundImage = backgroundImage
         self.availability = availability
         self.relatedContent = relatedContent
+        self.campaignLogo = campaignLogo
     }
 }
 
@@ -116,7 +119,8 @@ extension Match {
                 team: Team(name: "Paris Saint-Germain", shortName: "PSG", logo: "psg_logo"),
                 description: nil
             )
-        ]
+        ],
+        campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
     )
     
     // Keep old match for reference

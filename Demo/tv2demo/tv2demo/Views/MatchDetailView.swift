@@ -64,41 +64,49 @@ struct MatchDetailView: View {
                         .frame(height: 400)
                         
                         // Top bar buttons
-                        HStack {
-                            Button(action: { dismiss() }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 44, height: 44)
-                                    .background(Color.black.opacity(0.3))
-                                    .clipShape(Circle())
+                        VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
+                            HStack {
+                                Button(action: { dismiss() }) {
+                                    Image(systemName: "chevron.left")
+                                        .font(.system(size: 20, weight: .semibold))
+                                        .foregroundColor(.white)
+                                        .frame(width: 44, height: 44)
+                                        .background(Color.black.opacity(0.3))
+                                        .clipShape(Circle())
+                                }
+                                
+                                Spacer()
+                                
+                                HStack(spacing: TV2Theme.Spacing.md) {
+                                    Button(action: {}) {
+                                        Image(systemName: "square.and.arrow.up")
+                                            .font(.system(size: 20, weight: .medium))
+                                            .foregroundColor(.white)
+                                            .frame(width: 44, height: 44)
+                                    }
+                                    
+                                    Button(action: {}) {
+                                        Image(systemName: "airplayvideo")
+                                            .font(.system(size: 20, weight: .medium))
+                                            .foregroundColor(.white)
+                                            .frame(width: 44, height: 44)
+                                    }
+                                    
+                                    Circle()
+                                        .fill(TV2Theme.Colors.secondary)
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            Text("A")
+                                                .font(.system(size: 16, weight: .semibold))
+                                                .foregroundColor(.white)
+                                        )
+                                }
                             }
                             
-                            Spacer()
-                            
-                            HStack(spacing: TV2Theme.Spacing.md) {
-                                Button(action: {}) {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(.white)
-                                        .frame(width: 44, height: 44)
-                                }
-                                
-                                Button(action: {}) {
-                                    Image(systemName: "airplayvideo")
-                                        .font(.system(size: 20, weight: .medium))
-                                        .foregroundColor(.white)
-                                        .frame(width: 44, height: 44)
-                                }
-                                
-                                Circle()
-                                    .fill(TV2Theme.Colors.secondary)
-                                    .frame(width: 40, height: 40)
-                                    .overlay(
-                                        Text("A")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.white)
-                                    )
+                            // Sponsor badge in top left
+                            if let campaignLogo = match.campaignLogo {
+                                TV2SponsorBadge(logoUrl: campaignLogo)
+                                    .padding(.leading, TV2Theme.Spacing.xs)
                             }
                         }
                         .padding(.horizontal, TV2Theme.Spacing.md)
