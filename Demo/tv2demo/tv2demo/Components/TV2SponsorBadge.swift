@@ -33,11 +33,11 @@ struct TV2SponsorBadge: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.white.opacity(0.8))
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
         .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.black.opacity(0.6))
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color.black.opacity(0.3))
         )
     }
 }

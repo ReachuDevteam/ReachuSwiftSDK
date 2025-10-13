@@ -147,7 +147,7 @@ struct TV2PollOverlay: View {
         .padding(isLandscape ? 16 : 14)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.85))
+                .fill(Color.black.opacity(0.6))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
@@ -160,7 +160,7 @@ struct TV2PollOverlay: View {
         )
             
             // Sponsor badge en esquina inferior derecha
-            if let campaignLogo = poll.campaignLogo {
+            if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
                 TV2SponsorBadge(logoUrl: campaignLogo)
                     .padding(.trailing, 12)
                     .padding(.bottom, 12)

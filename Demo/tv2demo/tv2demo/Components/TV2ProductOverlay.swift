@@ -179,7 +179,7 @@ struct TV2ProductOverlay: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.85))
+                .fill(Color.black.opacity(0.6))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
@@ -188,7 +188,7 @@ struct TV2ProductOverlay: View {
         .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
             
             // Sponsor badge en esquina inferior derecha
-            if let campaignLogo = product.campaignLogo {
+            if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
                 TV2SponsorBadge(logoUrl: campaignLogo)
                     .padding(.trailing, 12)
                     .padding(.bottom, 12)
@@ -274,7 +274,7 @@ struct TV2TwoProductsOverlay: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.85))
+                .fill(Color.black.opacity(0.6))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
@@ -283,7 +283,7 @@ struct TV2TwoProductsOverlay: View {
         .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
             
             // Sponsor badge en esquina inferior derecha (usando el logo del primer producto)
-            if let campaignLogo = product1.campaignLogo {
+            if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
                 TV2SponsorBadge(logoUrl: campaignLogo)
                     .padding(.trailing, 12)
                     .padding(.bottom, 12)
