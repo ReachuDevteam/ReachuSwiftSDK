@@ -88,6 +88,38 @@ struct RelatedTeam: Identifiable {
 
 // MARK: - Mock Data
 extension Match {
+    static let barcelonaPSG = Match(
+        homeTeam: Team(
+            name: "FC Barcelona",
+            shortName: "Barcelona",
+            logo: "barcelona_logo"
+        ),
+        awayTeam: Team(
+            name: "Paris Saint-Germain",
+            shortName: "PSG",
+            logo: "psg_logo"
+        ),
+        title: "Barcelona - PSG",
+        subtitle: "UEFA Champions League • Fotball",
+        competition: "UEFA Champions League",
+        venue: "Camp Nou",
+        commentator: "Magnus Drivenes",
+        isLive: false,
+        backgroundImage: "barcelona_psg_bg",
+        availability: .upcoming(date: "Kommer 12. november"),
+        relatedContent: [
+            RelatedTeam(
+                team: Team(name: "FC Barcelona", shortName: "Barcelona", logo: "barcelona_logo"),
+                description: nil
+            ),
+            RelatedTeam(
+                team: Team(name: "Paris Saint-Germain", shortName: "PSG", logo: "psg_logo"),
+                description: nil
+            )
+        ]
+    )
+    
+    // Keep old match for reference
     static let dortmundAtletico = Match(
         homeTeam: Team(
             name: "Borussia Dortmund",
@@ -120,6 +152,7 @@ extension Match {
     )
     
     static let mockMatches: [Match] = [
+        barcelonaPSG,
         dortmundAtletico,
         Match(
             homeTeam: Team(name: "Manchester City", shortName: "City", logo: "city_logo"),

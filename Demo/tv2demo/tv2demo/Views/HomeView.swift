@@ -158,7 +158,7 @@ struct HomeView: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: TV2Theme.Spacing.md) {
                         ForEach(items) { item in
-                            NavigationLink(destination: MatchDetailView(match: Match.dortmundAtletico)) {
+                            NavigationLink(destination: MatchDetailView(match: Match.barcelonaPSG)) {
                                 ContentCard(
                                     item: item,
                                     width: 280,

@@ -230,10 +230,10 @@ struct TeamCard: View {
                 .fill(Color.white)
                 .frame(width: 120, height: 120)
                 .overlay(
-                    // Mock logo - would be image in production
-                    Text(String(team.shortName.prefix(3)))
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.black)
+                    Image(team.logo)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 80, height: 80)
                 )
         }
         .frame(width: 160, height: 160)
@@ -243,6 +243,6 @@ struct TeamCard: View {
 }
 
 #Preview {
-    MatchDetailView(match: Match.dortmundAtletico)
+    MatchDetailView(match: Match.barcelonaPSG)
 }
 
