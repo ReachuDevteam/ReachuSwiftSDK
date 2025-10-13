@@ -145,6 +145,7 @@ struct ProductEventData: Codable {
     let price: String
     let currency: String
     let imageUrl: String
+    let campaignLogo: String?
 }
 
 struct PollEvent: Codable {
@@ -158,6 +159,7 @@ struct PollEventData: Codable, Identifiable, Equatable {
     let question: String
     let options: [String]
     let duration: Int
+    let campaignLogo: String?
 }
 
 struct ContestEvent: Codable {
@@ -172,5 +174,6 @@ struct ContestEventData: Codable {
     let prize: String
     let deadline: String
     let maxParticipants: Int
+    let campaignLogo: String?
 }
 

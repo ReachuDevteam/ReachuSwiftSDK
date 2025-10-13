@@ -130,6 +130,15 @@ struct TV2ContestOverlay: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
             
+            // Sponsor badge (si existe)
+            if let campaignLogo = contest.campaignLogo {
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                }
+                .padding(.trailing, 8)
+            }
+            
             // Header
             HStack {
                 Text("🎁 KONKURRANSE")

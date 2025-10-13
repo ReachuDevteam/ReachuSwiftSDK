@@ -95,6 +95,16 @@ struct TV2PollOverlay: View {
                 .frame(width: 32, height: 4)
                 .padding(.top, 8)
             
+            // Sponsor badge (si existe)
+            if let campaignLogo = poll.campaignLogo {
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                }
+                .padding(.trailing, 8)
+                .padding(.top, 4)
+            }
+            
             // Title (main question)
             Text(poll.question)
                 .font(.system(size: isLandscape ? 16 : 14, weight: .bold))

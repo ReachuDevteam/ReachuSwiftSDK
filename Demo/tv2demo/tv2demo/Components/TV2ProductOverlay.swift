@@ -95,6 +95,15 @@ struct TV2ProductOverlay: View {
                 .frame(width: 40, height: 4)
                 .padding(.top, 8)
             
+            // Sponsor badge (si existe)
+            if let campaignLogo = product.campaignLogo {
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                }
+                .padding(.trailing, 8)
+            }
+            
             // Imagen del producto
             AsyncImage(url: URL(string: product.imageUrl)) { phase in
                 switch phase {
@@ -240,11 +249,20 @@ struct TV2TwoProductsOverlay: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
             
+            // Sponsor badge (si existe, usando el logo del primer producto)
+            if let campaignLogo = product1.campaignLogo {
+                HStack {
+                    Spacer()
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                }
+                .padding(.trailing, 8)
+            }
+            
             // Header
             HStack {
                 Text("🛍️ ANBEFALTE PRODUKTER")
                     .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(TV2Theme.Colors.primary)
+                    .foregroundColor(Color(hex: "5B5FCF"))
                 Spacer()
             }
             
