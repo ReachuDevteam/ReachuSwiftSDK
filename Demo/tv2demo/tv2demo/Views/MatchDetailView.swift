@@ -15,28 +15,22 @@ struct MatchDetailView: View {
                 VStack(spacing: 0) {
                     // Hero Image with gradient overlay
                     ZStack(alignment: .topLeading) {
-                        // Background image placeholder
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color(hex: "#F4D03F"),
-                                        Color(hex: "#1A1625").opacity(0.9)
-                                    ],
-                                    startPoint: .top,
-                                    endPoint: .bottom
-                                )
-                            )
+                        // Background image
+                        Image(match.backgroundImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
                             .frame(height: 400)
+                            .clipped()
                         
-                        // Player image placeholder (would be AsyncImage in production)
-                        VStack {
-                            Spacer()
-                            Text("🏃")
-                                .font(.system(size: 100))
-                            Spacer()
-                        }
-                        .frame(maxWidth: .infinity)
+                        // Dark gradient overlay for better text readability
+                        LinearGradient(
+                            colors: [
+                                Color.black.opacity(0.3),
+                                Color.black.opacity(0.7)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                         .frame(height: 400)
                         
                         // Top bar buttons
