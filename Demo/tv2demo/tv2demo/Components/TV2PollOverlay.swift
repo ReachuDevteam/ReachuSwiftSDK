@@ -88,7 +88,9 @@ struct TV2PollOverlay: View {
     }
     
     private var pollCard: some View {
-        ZStack(alignment: .bottomTrailing) {
+        let _ = print("🏷️ [PollCard] Renderizando con campaignLogo: \(poll.campaignLogo ?? "nil")")
+        
+        return ZStack(alignment: .bottomTrailing) {
             VStack(spacing: isLandscape ? 12 : 10) {
                 // Drag indicator
                 Capsule()
@@ -161,9 +163,15 @@ struct TV2PollOverlay: View {
             
             // Sponsor badge en esquina inferior derecha
             if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
-                TV2SponsorBadge(logoUrl: campaignLogo)
-                    .padding(.trailing, 12)
-                    .padding(.bottom, 12)
+                VStack {
+                    TV2SponsorBadge(logoUrl: campaignLogo)
+                    Text("AQUI ESTA")
+                        .foregroundColor(.yellow)
+                        .background(Color.red)
+                }
+                .padding(.trailing, 12)
+                .padding(.bottom, 12)
+                .background(Color.green.opacity(0.5))
             }
         }
     }

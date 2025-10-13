@@ -93,21 +93,39 @@ class WebSocketManager: NSObject, ObservableObject {
     private func handleProductEvent(_ event: ProductEvent) {
         DispatchQueue.main.async {
             print("🛍️ [WebSocket] Producto recibido: \(event.data.name)")
-            self.currentProduct = event.data
+            var productData = event.data
+            // Copiar campaignLogo del evento al data si existe
+            if productData.campaignLogo == nil && event.campaignLogo != nil {
+                productData.campaignLogo = event.campaignLogo
+            }
+            print("🛍️ [WebSocket] Product campaignLogo: \(productData.campaignLogo ?? "nil")")
+            self.currentProduct = productData
         }
     }
     
     private func handlePollEvent(_ event: PollEvent) {
         DispatchQueue.main.async {
             print("📊 [WebSocket] Poll recibido: \(event.data.question)")
-            self.currentPoll = event.data
+            var pollData = event.data
+            // Copiar campaignLogo del evento al data si existe
+            if pollData.campaignLogo == nil && event.campaignLogo != nil {
+                pollData.campaignLogo = event.campaignLogo
+            }
+            print("📊 [WebSocket] Poll campaignLogo: \(pollData.campaignLogo ?? "nil")")
+            self.currentPoll = pollData
         }
     }
     
     private func handleContestEvent(_ event: ContestEvent) {
         DispatchQueue.main.async {
             print("🎁 [WebSocket] Concurso recibido: \(event.data.name)")
-            self.currentContest = event.data
+            var contestData = event.data
+            // Copiar campaignLogo del evento al data si existe
+            if contestData.campaignLogo == nil && event.campaignLogo != nil {
+                contestData.campaignLogo = event.campaignLogo
+            }
+            print("🎁 [WebSocket] Contest campaignLogo: \(contestData.campaignLogo ?? "nil")")
+            self.currentContest = contestData
         }
     }
 }
@@ -135,6 +153,7 @@ extension WebSocketManager: URLSessionWebSocketDelegate {
 struct ProductEvent: Codable {
     let type: String
     let data: ProductEventData
+    let campaignLogo: String?
     let timestamp: Int64
 }
 
@@ -145,12 +164,13 @@ struct ProductEventData: Codable {
     let price: String
     let currency: String
     let imageUrl: String
-    let campaignLogo: String?
+    var campaignLogo: String?
 }
 
 struct PollEvent: Codable {
     let type: String
     let data: PollEventData
+    let campaignLogo: String?
     let timestamp: Int64
 }
 
@@ -159,12 +179,13 @@ struct PollEventData: Codable, Identifiable, Equatable {
     let question: String
     let options: [String]
     let duration: Int
-    let campaignLogo: String?
+    var campaignLogo: String?
 }
 
 struct ContestEvent: Codable {
     let type: String
     let data: ContestEventData
+    let campaignLogo: String?
     let timestamp: Int64
 }
 
@@ -174,6 +195,6 @@ struct ContestEventData: Codable {
     let prize: String
     let deadline: String
     let maxParticipants: Int
-    let campaignLogo: String?
+    var campaignLogo: String?
 }
 
