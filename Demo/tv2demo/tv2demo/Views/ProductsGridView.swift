@@ -201,17 +201,7 @@ struct ProductsGridView: View {
     private func addToCart(product: Product) async {
         print("🛒 [ProductsGridView] Adding to cart: \(product.title)")
         
-        // Get first variant
-        guard let variant = product.variants.first else {
-            print("❌ No variants available")
-            return
-        }
-        
-        await cartManager.addItem(
-            productId: product.id,
-            variantId: variant.id,
-            quantity: 1
-        )
+        await cartManager.addProduct(product, quantity: 1)
     }
 }
 
