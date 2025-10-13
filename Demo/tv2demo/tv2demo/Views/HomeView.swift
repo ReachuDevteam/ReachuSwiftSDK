@@ -63,6 +63,19 @@ struct HomeView: View {
                                 title: "Nylig",
                                 items: filteredContent.filter { !$0.isLive }
                             )
+                            
+                            // Offer Banner Section
+                            VStack(spacing: TV2Theme.Spacing.md) {
+                                NavigationLink(destination: ProductsGridView()) {
+                                    OfferBanner {
+                                        // Navigation is handled by NavigationLink
+                                    }
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                            .padding(.horizontal, TV2Theme.Spacing.md)
+                            .padding(.top, TV2Theme.Spacing.lg)
+                            .padding(.bottom, TV2Theme.Spacing.xl)
                         }
                     }
                     
