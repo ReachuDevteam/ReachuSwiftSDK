@@ -22,6 +22,13 @@ struct TV2VideoPlayer: View {
     @State private var showProduct = false
     @State private var showContest = false
     
+    // SDK Client para fetch de productos
+    private var sdkClient: SdkClient {
+        let config = ReachuConfiguration.shared
+        let baseURL = URL(string: config.environment.graphQLURL)!
+        return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
+    }
+    
     // Detect landscape orientation
     private var isLandscape: Bool {
         verticalSizeClass == .compact
@@ -106,7 +113,7 @@ struct TV2VideoPlayer: View {
                 TV2ProductOverlay(
                     productEvent: productEvent,
                     isChatExpanded: isChatExpanded,
-                    sdk: cartManager.sdk,
+                    sdk: sdkClient,
                     currency: cartManager.currency,
                     country: cartManager.country,
                     onAddToCart: { productDto in
@@ -234,8 +241,86 @@ struct TV2VideoPlayer: View {
     
     // MARK: - Helpers
     
+    /// Convierte PriceDto a Price
+    private func convertPrice(_ priceDto: PriceDto) -> Price {
+        return Price(
+            amount: Float(priceDto.amount),
+            currency_code: priceDto.currencyCode,
+            amount_incl_taxes: priceDto.amountInclTaxes.map { Float($0) },
+            tax_amount: priceDto.taxAmount.map { Float($0) },
+            tax_rate: priceDto.taxRate.map { Float($0) },
+            compare_at: priceDto.compareAt.map { Float($0) },
+            compare_at_incl_taxes: priceDto.compareAtInclTaxes.map { Float($0) }
+        )
+    }
+    
+    /// Convierte ProductImageDto a ProductImage
+    private func convertImages(_ imageDtos: [ProductImageDto]) -> [ProductImage] {
+        return imageDtos.map { 
+            ProductImage(
+                id: $0.id, 
+                url: $0.url, 
+                width: $0.width, 
+                height: $0.height, 
+                order: $0.order ?? 0
+            ) 
+        }
+    }
+    
+    /// Convierte VariantDto a Variant
+    private func convertVariants(_ variantDtos: [VariantDto]) -> [Variant] {
+        return variantDtos.map { variantDto in
+            Variant(
+                id: variantDto.id,
+                barcode: variantDto.barcode,
+                price: convertPrice(variantDto.price),
+                quantity: variantDto.quantity,
+                sku: variantDto.sku,
+                title: variantDto.title,
+                images: convertImages(variantDto.images)
+            )
+        }
+    }
+    
     /// Convierte ProductDto a Product para el CartManager
     private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        let price = convertPrice(dto.price)
+        let variants = convertVariants(dto.variants)
+        let images = convertImages(dto.images)
+        
+        let options = dto.options.map { 
+            Option(
+                id: $0.id, 
+                name: $0.name, 
+                order: $0.order, 
+                values: $0.values.joined(separator: ",")
+            ) 
+        }
+        
+        let categories = dto.categories?.map { 
+            _Category(id: $0.id, name: $0.name) 
+        }
+        
+        let shipping = dto.productShipping?.map { s in
+            ProductShipping(
+                id: s.id,
+                productId: s.productId,
+                shippingCountryId: s.shippingCountryId,
+                price: Float(s.price),
+                taxAmount: s.taxAmount.map { Float($0) },
+                taxRate: s.taxRate.map { Float($0) }
+            )
+        }
+        
+        let returnInfo = dto.returnInfo.map { r in
+            ReturnInfo(
+                id: r.id,
+                productId: r.productId,
+                days: r.days,
+                cost: Float(r.cost)
+            )
+        }
+        
         return Product(
             id: dto.id,
             title: dto.title,
@@ -244,48 +329,13 @@ struct TV2VideoPlayer: View {
             tags: dto.tags,
             sku: dto.sku,
             quantity: dto.quantity,
-            price: Price(
-                amount: Float(dto.price.amount),
-                currency_code: dto.price.currencyCode,
-                amount_incl_taxes: dto.price.amountInclTaxes.map { Float($0) },
-                tax_amount: dto.price.taxAmount.map { Float($0) },
-                tax_rate: dto.price.taxRate.map { Float($0) },
-                compare_at: dto.price.compareAt.map { Float($0) },
-                compare_at_incl_taxes: dto.price.compareAtInclTaxes.map { Float($0) }
-            ),
-            variants: dto.variants.map { variantDto in
-                Variant(
-                    id: variantDto.id,
-                    barcode: variantDto.barcode,
-                    price: Price(
-                        amount: Float(variantDto.price.amount),
-                        currency_code: variantDto.price.currencyCode,
-                        amount_incl_taxes: variantDto.price.amountInclTaxes.map { Float($0) },
-                        tax_amount: variantDto.price.taxAmount.map { Float($0) },
-                        tax_rate: variantDto.price.taxRate.map { Float($0) },
-                        compare_at: variantDto.price.compareAt.map { Float($0) },
-                        compare_at_incl_taxes: variantDto.price.compareAtInclTaxes.map { Float($0) }
-                    ),
-                    quantity: variantDto.quantity,
-                    sku: variantDto.sku,
-                    title: variantDto.title,
-                    images: variantDto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) }
-                )
-            },
+            price: price,
+            variants: variants,
             barcode: dto.barcode,
-            options: dto.options.map { Option(id: $0.id, name: $0.name, order: $0.order, values: $0.values.joined(separator: ",")) },
-            categories: dto.categories?.map { _Category(id: $0.id, name: $0.name) },
-            images: dto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) },
-            product_shipping: dto.productShipping?.map { shipping in
-                ProductShipping(
-                    id: shipping.id,
-                    productId: shipping.productId,
-                    shippingCountryId: shipping.shippingCountryId,
-                    price: Float(shipping.price),
-                    taxAmount: shipping.taxAmount.map { Float($0) },
-                    taxRate: shipping.taxRate.map { Float($0) }
-                )
-            },
+            options: options,
+            categories: categories,
+            images: images,
+            product_shipping: shipping,
             supplier: dto.supplier,
             supplier_id: dto.supplierId,
             imported_product: dto.importedProduct,
@@ -293,14 +343,7 @@ struct TV2VideoPlayer: View {
             options_enabled: dto.optionsEnabled,
             digital: dto.digital,
             origin: dto.origin,
-            return: dto.returnInfo.map { returnDto in
-                ReturnInfo(
-                    id: returnDto.id,
-                    productId: returnDto.productId,
-                    days: returnDto.days,
-                    cost: Float(returnDto.cost)
-                )
-            }
+            return: returnInfo
         )
     }
     
