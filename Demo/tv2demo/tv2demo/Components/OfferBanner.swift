@@ -1,5 +1,18 @@
 import SwiftUI
 
+/// Triangle Shape para el badge de descuento
+struct TriangleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        // Triángulo en esquina superior derecha
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.closeSubpath()
+        return path
+    }
+}
+
 /// Offer Banner View (for NavigationLink)
 /// Version without internal button for use with NavigationLink
 struct OfferBannerView: View {
@@ -112,26 +125,30 @@ struct OfferBannerView: View {
     // MARK: - Discount Badge (top-right)
     
     private var discountBadge: some View {
-        VStack {
-            HStack {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
                 Spacer()
                 
-                Text("OPPTIL -30%")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(
-                        Color(hex: "E93CAC") // TV2 pink
-                    )
-                    .rotationEffect(.degrees(-10))
-                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                    .padding(.top, 12)
-                    .padding(.trailing, 12)
+                ZStack(alignment: .topTrailing) {
+                    // Triángulo grande en la esquina
+                    TriangleShape()
+                        .fill(Color(hex: "E93CAC"))
+                        .frame(width: 140, height: 140)
+                    
+                    // Texto del descuento
+                    Text("OPPTIL\n-30%")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(-2)
+                        .padding(.top, 16)
+                        .padding(.trailing, 20)
+                }
             }
             
             Spacer()
         }
+        .allowsHitTesting(false)
     }
     
     // MARK: - Analog Countdown
@@ -324,26 +341,30 @@ struct OfferBanner: View {
     // MARK: - Discount Badge (top-right)
     
     private var discountBadge: some View {
-        VStack {
-            HStack {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
                 Spacer()
                 
-                Text("OPPTIL -30%")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
-                    .background(
-                        Color(hex: "E93CAC") // TV2 pink
-                    )
-                    .rotationEffect(.degrees(-10))
-                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                    .padding(.top, 12)
-                    .padding(.trailing, 12)
+                ZStack(alignment: .topTrailing) {
+                    // Triángulo grande en la esquina
+                    TriangleShape()
+                        .fill(Color(hex: "E93CAC"))
+                        .frame(width: 140, height: 140)
+                    
+                    // Texto del descuento
+                    Text("OPPTIL\n-30%")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .lineSpacing(-2)
+                        .padding(.top, 16)
+                        .padding(.trailing, 20)
+                }
             }
             
             Spacer()
         }
+        .allowsHitTesting(false)
     }
     
     // MARK: - Analog Countdown
