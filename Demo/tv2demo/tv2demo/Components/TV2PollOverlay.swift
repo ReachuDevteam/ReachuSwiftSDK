@@ -32,12 +32,12 @@ struct TV2PollOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             if isLandscape {
-                // Horizontal: lado derecho, más ancho
+                // Horizontal: ocupa lado derecho
                 Spacer()
                 HStack(spacing: 0) {
                     Spacer()
                     pollCard
-                        .frame(width: 320) // Más ancho en horizontal
+                        .frame(width: 240)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
@@ -89,33 +89,19 @@ struct TV2PollOverlay: View {
     
     private var pollCard: some View {
         VStack(spacing: 0) {
-            VStack(spacing: isLandscape ? 10 : 10) {
+            VStack(spacing: isLandscape ? 12 : 10) {
                 // Drag indicator
-                HStack {
-                    if isLandscape {
-                        // En horizontal: indicador vertical a la izquierda
-                        Capsule()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(width: 4, height: 32)
-                            .padding(.leading, 8)
-                        Spacer()
-                    } else {
-                        // En vertical: indicador horizontal centrado
-                        Spacer()
-                        Capsule()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(width: 32, height: 4)
-                        Spacer()
-                    }
-                }
-                .padding(.top, 8)
+                Capsule()
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 32, height: 4)
+                    .padding(.top, 8)
                 
                 // Sponsor badge arriba a la izquierda
                 if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sponset av")
-                                .font(.system(size: isLandscape ? 8 : 9, weight: .medium))
+                                .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                             
                             AsyncImage(url: URL(string: campaignLogo)) { phase in
@@ -124,11 +110,11 @@ struct TV2PollOverlay: View {
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: isLandscape ? 70 : 80, maxHeight: isLandscape ? 20 : 24)
+                                        .frame(maxWidth: 80, maxHeight: 24)
                                 case .empty:
                                     ProgressView()
                                         .scaleEffect(0.5)
-                                        .frame(width: isLandscape ? 70 : 80, height: isLandscape ? 20 : 24)
+                                        .frame(width: 80, height: 24)
                                 case .failure:
                                     EmptyView()
                                 @unknown default:
@@ -138,25 +124,25 @@ struct TV2PollOverlay: View {
                         }
                         Spacer()
                     }
-                    .padding(.horizontal, isLandscape ? 10 : 12)
+                    .padding(.horizontal, 12)
                     .padding(.top, 4)
                 }
                 
                 // Title (main question)
             Text(poll.question)
-                .font(.system(size: isLandscape ? 14 : 14, weight: .bold))
+                .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .lineLimit(isLandscape ? 3 : 2)
-                .padding(.horizontal, isLandscape ? 12 : 16)
+                .lineLimit(2)
+                .padding(.horizontal, 16)
             
             // Subtitle (optional helper text)
             Text("Få raskere tilgang til kampene fra forsiden")
-                .font(.system(size: isLandscape ? 10 : 10, weight: .regular))
+                .font(.system(size: isLandscape ? 12 : 10, weight: .regular))
                 .foregroundColor(.white.opacity(0.7))
                 .multilineTextAlignment(.center)
-                .lineLimit(isLandscape ? 2 : 1)
-                .padding(.horizontal, isLandscape ? 12 : 16)
+                .lineLimit(1)
+                .padding(.horizontal, 16)
             
             // Options
             VStack(spacing: isLandscape ? 8 : 6) {
