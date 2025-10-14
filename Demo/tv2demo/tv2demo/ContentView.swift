@@ -18,9 +18,9 @@ struct ContentView: View {
             // Main app content
             HomeView()
             
-            // Mini player de casting (cuando está casteando y minimizado)
-            if castingManager.isCasting && !showCastingView {
-                CastingMiniPlayer(match: Match.barcelonaPSG) {
+            // Mini player de casting - SIEMPRE visible cuando hay casting (persistente)
+            if castingManager.isCasting {
+                CastingMiniPlayer {
                     showCastingView = true
                 }
             }
@@ -30,7 +30,7 @@ struct ContentView: View {
                 customPadding: EdgeInsets(
                     top: 0,
                     leading: 0,
-                    bottom: 100, // Above tab bar
+                    bottom: castingManager.isCasting ? 180 : 100, // Más arriba si hay casting
                     trailing: TV2Theme.Spacing.md
                 )
             )

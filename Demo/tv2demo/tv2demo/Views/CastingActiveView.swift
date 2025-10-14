@@ -15,16 +15,16 @@ struct CastingActiveView: View {
     
     var body: some View {
         ZStack {
-            // Background gradient
-            LinearGradient(
-                colors: [
-                    Color(hex: "1a0033"),
-                    Color(hex: "0a0015")
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // Background - imagen del campo de fútbol (como en TV2)
+            Image("football_field_bg")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .ignoresSafeArea()
+                .blur(radius: 20) // Blur para que no distraiga del contenido
+            
+            // Overlay oscuro para mejor contraste
+            Color.black.opacity(0.5)
+                .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header con info de casting
@@ -32,8 +32,8 @@ struct CastingActiveView: View {
                 
                 Spacer()
                 
-                // Placeholder del TV (simulación de lo que se ve en la TV)
-                tvPreview
+                // Info del partido
+                matchInfo
                 
                 Spacer()
                 
@@ -102,112 +102,77 @@ struct CastingActiveView: View {
     // MARK: - Components
     
     private var castingHeader: some View {
-        VStack(spacing: 12) {
-            HStack {
-                // Back button
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                }
-                
-                Spacer()
-                
-                // Stop casting button
-                Button(action: {
-                    castingManager.stopCasting()
-                    dismiss()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Stop Casting")
-                            .font(.system(size: 16, weight: .semibold))
-                    }
+        HStack(alignment: .top) {
+            // Back button
+            Button(action: { dismiss() }) {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule()
-                            .fill(Color.red.opacity(0.8))
-                    )
-                }
+                    .frame(width: 44, height: 44)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 50)
             
-            // Casting info
-            HStack(spacing: 12) {
-                Image(systemName: castingManager.selectedDevice?.type.icon ?? "tv")
-                    .font(.system(size: 20))
-                    .foregroundColor(TV2Theme.Colors.primary)
+            // Casting info centrada
+            VStack(spacing: 4) {
+                Text(castingManager.selectedDevice?.name ?? "Living TV")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white)
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Casting to \(castingManager.selectedDevice?.name ?? "TV")")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    if let location = castingManager.selectedDevice?.location {
-                        Text(location)
-                            .font(.system(size: 12))
-                            .foregroundColor(.gray)
-                    }
-                }
-                
-                Spacer()
+                Text("4. divisjon, menn Fotball")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.7))
             }
-            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            
+            // Cast icon
+            Image(systemName: "tv.and.hifispeaker.fill")
+                .font(.system(size: 22))
+                .foregroundColor(.white)
+                .frame(width: 44, height: 44)
         }
-        .background(Color.black.opacity(0.3))
+        .padding(.horizontal, 16)
+        .padding(.top, 50)
     }
     
-    private var tvPreview: some View {
-        VStack(spacing: 16) {
-            // Simulación de lo que se ve en la TV
-            ZStack {
-                // Frame del TV
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.black)
-                    .aspectRatio(16/9, contentMode: .fit)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.1), lineWidth: 2)
-                    )
-                
-                // Match info en el TV
-                VStack(spacing: 8) {
-                    Text(match.title)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Text(match.subtitle)
-                        .font(.system(size: 11))
-                        .foregroundColor(.gray)
-                    
-                    // Play indicator
-                    if isPlaying {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(.white.opacity(0.3))
-                            .padding(.top, 20)
-                    } else {
-                        Image(systemName: "pause.fill")
-                            .font(.system(size: 40))
-                            .foregroundColor(.white.opacity(0.3))
-                            .padding(.top, 20)
-                    }
-                }
-            }
-            .padding(.horizontal, 24)
-            
-            Text("Kolbotn - Nordstrand 2")
-                .font(.system(size: 16, weight: .medium))
+    private var matchInfo: some View {
+        VStack(spacing: 20) {
+            // Mensaje de "Casting to..."
+            Text("Casting to \(castingManager.selectedDevice?.name ?? "Living TV")")
+                .font(.system(size: 17))
                 .foregroundColor(.white)
             
-            Text("4. divisjon, menn Fotball")
-                .font(.system(size: 13))
-                .foregroundColor(.gray)
+            // Progreso/tiempo
+            VStack(spacing: 16) {
+                // Barra de progreso
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background
+                        Capsule()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(height: 4)
+                        
+                        // Progress (simulado al 50%)
+                        Capsule()
+                            .fill(Color.white)
+                            .frame(width: geometry.size.width * 0.5, height: 4)
+                    }
+                }
+                .frame(height: 4)
+                .padding(.horizontal, 40)
+                
+                // Tiempo
+                HStack {
+                    Text("3:24:39")
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text("LIVE")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .padding(.horizontal, 40)
+            }
         }
     }
     
