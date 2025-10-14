@@ -129,21 +129,18 @@ struct OfferBannerView: View {
             HStack(spacing: 0) {
                 Spacer()
                 
-                ZStack(alignment: .topTrailing) {
-                    // Triángulo grande en la esquina
+                ZStack(alignment: .center) {
+                    // Triángulo grande en la esquina (color TV2 violeta)
                     TriangleShape()
-                        .fill(Color(hex: "E93CAC"))
-                        .frame(width: 140, height: 140)
+                        .fill(Color(hex: "7B5FFF")) // TV2 primary color
+                        .frame(width: 150, height: 150)
                     
-                    // Texto del descuento (inclinado)
-                    Text("OPPTIL\n-30%")
-                        .font(.system(size: 11, weight: .bold))
+                    // Texto del descuento (inclinado en la banda)
+                    Text("Opp til 30%")
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(-2)
                         .rotationEffect(.degrees(-45))
-                        .padding(.top, 32)
-                        .padding(.trailing, 32)
+                        .offset(x: 30, y: 5)
                 }
             }
             
@@ -346,21 +343,18 @@ struct OfferBanner: View {
             HStack(spacing: 0) {
                 Spacer()
                 
-                ZStack(alignment: .topTrailing) {
-                    // Triángulo grande en la esquina
+                ZStack(alignment: .center) {
+                    // Triángulo grande en la esquina (color TV2 violeta)
                     TriangleShape()
-                        .fill(Color(hex: "E93CAC"))
-                        .frame(width: 140, height: 140)
+                        .fill(Color(hex: "7B5FFF")) // TV2 primary color
+                        .frame(width: 150, height: 150)
                     
-                    // Texto del descuento (inclinado)
-                    Text("OPPTIL\n-30%")
-                        .font(.system(size: 11, weight: .bold))
+                    // Texto del descuento (inclinado en la banda)
+                    Text("Opp til 30%")
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white)
-                        .multilineTextAlignment(.center)
-                        .lineSpacing(-2)
                         .rotationEffect(.degrees(-45))
-                        .padding(.top, 32)
-                        .padding(.trailing, 32)
+                        .offset(x: 30, y: 5)
                 }
             }
             
