@@ -65,28 +65,23 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge (diagonal tag style)
+    // MARK: - Discount Badge (diagonal tag style - más visible, centrado verticalmente)
     
     private var discountBadge: some View {
-        VStack {
-            HStack {
-                Spacer()
-                
-                Text("OPPTIL -30%")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Color(hex: "E93CAC") // TV2 pink
-                    )
-                    .rotationEffect(.degrees(-10))
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .padding(.top, 16)
-                    .padding(.trailing, 12)
-            }
-            
+        HStack {
             Spacer()
+            
+            Text("OPPTIL -30%")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    Color(hex: "E93CAC") // TV2 pink
+                )
+                .rotationEffect(.degrees(-10))
+                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                .padding(.trailing, 16)
         }
     }
     
@@ -280,28 +275,23 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge (diagonal tag style)
+    // MARK: - Discount Badge (diagonal tag style - más visible, centrado verticalmente)
     
     private var discountBadge: some View {
-        VStack {
-            HStack {
-                Spacer()
-                
-                Text("OPPTIL -30%")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Color(hex: "E93CAC") // TV2 pink
-                    )
-                    .rotationEffect(.degrees(-10))
-                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .padding(.top, 16)
-                    .padding(.trailing, 12)
-            }
-            
+        HStack {
             Spacer()
+            
+            Text("OPPTIL -30%")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(
+                    Color(hex: "E93CAC") // TV2 pink
+                )
+                .rotationEffect(.degrees(-10))
+                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                .padding(.trailing, 16)
         }
     }
     
