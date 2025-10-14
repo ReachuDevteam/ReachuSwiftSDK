@@ -44,12 +44,12 @@ struct TV2ContestOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             if isLandscape {
-                // Horizontal: lado derecho
+                // Horizontal: lado derecho, más ancho para la ruleta
                 Spacer()
                 HStack(spacing: 0) {
                     Spacer()
                     contestCard
-                        .frame(width: 320)
+                        .frame(width: 350) // Más ancho para la ruleta en horizontal
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
@@ -130,18 +130,32 @@ struct TV2ContestOverlay: View {
     // MARK: - Contest Info View
     
     private var contestInfoView: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: isLandscape ? 10 : 12) {
             // Drag indicator
-            Capsule()
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
+            HStack {
+                if isLandscape {
+                    // En horizontal: indicador vertical a la izquierda
+                    Capsule()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 4, height: 32)
+                        .padding(.leading, 8)
+                    Spacer()
+                } else {
+                    // En vertical: indicador horizontal centrado
+                    Spacer()
+                    Capsule()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 32, height: 4)
+                    Spacer()
+                }
+            }
             
             // Sponsor badge arriba a la izquierda
             if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Sponset av")
-                            .font(.system(size: 9, weight: .medium))
+                            .font(.system(size: isLandscape ? 8 : 9, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                         
                         AsyncImage(url: URL(string: campaignLogo)) { phase in
@@ -150,11 +164,11 @@ struct TV2ContestOverlay: View {
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 80, maxHeight: 24)
+                                    .frame(maxWidth: isLandscape ? 70 : 80, maxHeight: isLandscape ? 20 : 24)
                             case .empty:
                                 ProgressView()
                                     .scaleEffect(0.5)
-                                    .frame(width: 80, height: 24)
+                                    .frame(width: isLandscape ? 70 : 80, height: isLandscape ? 20 : 24)
                             case .failure:
                                 EmptyView()
                             @unknown default:
@@ -164,7 +178,7 @@ struct TV2ContestOverlay: View {
                     }
                     Spacer()
                 }
-                .padding(.horizontal, 12)
+                .padding(.horizontal, isLandscape ? 10 : 12)
                 .padding(.top, 4)
             }
             
@@ -253,26 +267,50 @@ struct TV2ContestOverlay: View {
     // MARK: - Wheel View
     
     private var wheelView: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: isLandscape ? 12 : 20) {
+            // Drag indicator
+            HStack {
+                if isLandscape {
+                    // En horizontal: indicador vertical a la izquierda
+                    Capsule()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 4, height: 32)
+                        .padding(.leading, 8)
+                    Spacer()
+                } else {
+                    // En vertical: indicador horizontal centrado
+                    Spacer()
+                    Capsule()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 32, height: 4)
+                    Spacer()
+                }
+            }
+            
             // Header
             Text(isSpinning ? "Snurrer..." : "Gratulerer!")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: isLandscape ? 16 : 20, weight: .bold))
                 .foregroundColor(.white)
             
             // Wheel
             ZStack {
+                let wheelSize: CGFloat = isLandscape ? 200 : 260
+                let segmentSize: CGFloat = isLandscape ? 190 : 250
+                let centerSize: CGFloat = isLandscape ? 50 : 60
+                let pointerOffset: CGFloat = isLandscape ? -95 : -125
+                
                 // Pointer at top
                 Triangle()
                     .fill(TV2Theme.Colors.primary)
-                    .frame(width: 24, height: 30)
-                    .offset(y: -125)
+                    .frame(width: isLandscape ? 20 : 24, height: isLandscape ? 24 : 30)
+                    .offset(y: pointerOffset)
                     .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     .zIndex(10)
                 
                 // Wheel circle
                 Circle()
                     .fill(Color.white.opacity(0.05))
-                    .frame(width: 260, height: 260)
+                    .frame(width: wheelSize, height: wheelSize)
                     .overlay(
                         Circle()
                             .stroke(Color.white.opacity(0.1), lineWidth: 1)
@@ -285,12 +323,12 @@ struct TV2ContestOverlay: View {
                     }
                 }
                 .rotationEffect(.degrees(wheelRotation))
-                .frame(width: 250, height: 250)
+                .frame(width: segmentSize, height: segmentSize)
                 
                 // Center circle
                 Circle()
                     .fill(Color(hex: "120019"))
-                    .frame(width: 60, height: 60)
+                    .frame(width: centerSize, height: centerSize)
                     .overlay(
                         Circle()
                             .stroke(

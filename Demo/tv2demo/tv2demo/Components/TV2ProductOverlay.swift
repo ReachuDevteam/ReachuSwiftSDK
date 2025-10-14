@@ -59,12 +59,12 @@ struct TV2ProductOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             if isLandscape {
-                // Horizontal: lado derecho
+                // Horizontal: lado derecho con más ancho
                 Spacer()
                 HStack(spacing: 0) {
                     Spacer()
                     productCard
-                        .frame(width: 220)
+                        .frame(width: 300) // Más ancho en horizontal
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
@@ -263,12 +263,26 @@ struct TV2ProductOverlay: View {
     
     private var productCard: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 12) {
+            VStack(spacing: isLandscape ? 8 : 12) {
                 // Drag indicator
-                Capsule()
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: 40, height: 4)
-                    .padding(.top, 4)
+                HStack {
+                    if isLandscape {
+                        // En horizontal: indicador vertical a la izquierda
+                        Capsule()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: 4, height: 32)
+                            .padding(.leading, 8)
+                        Spacer()
+                    } else {
+                        // En vertical: indicador horizontal centrado
+                        Spacer()
+                        Capsule()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(width: 40, height: 4)
+                        Spacer()
+                    }
+                }
+                .padding(.top, isLandscape ? 2 : 4)
                 
                 // Loading indicator sutil mientras se carga
                 if viewModel.isLoading {
@@ -277,7 +291,7 @@ struct TV2ProductOverlay: View {
                             .scaleEffect(0.7)
                             .tint(.white)
                         Text("Cargando producto...")
-                            .font(.system(size: 10))
+                            .font(.system(size: isLandscape ? 9 : 10))
                             .foregroundColor(.white.opacity(0.6))
                     }
                     .padding(.vertical, 4)
@@ -288,7 +302,7 @@ struct TV2ProductOverlay: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sponset av")
-                                .font(.system(size: 9, weight: .medium))
+                                .font(.system(size: isLandscape ? 8 : 9, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                             
                             AsyncImage(url: URL(string: campaignLogo)) { phase in
@@ -297,11 +311,11 @@ struct TV2ProductOverlay: View {
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: 80, maxHeight: 24)
+                                        .frame(maxWidth: isLandscape ? 60 : 80, maxHeight: isLandscape ? 18 : 24)
                                 case .empty:
                                     ProgressView()
                                         .scaleEffect(0.5)
-                                        .frame(width: 80, height: 24)
+                                        .frame(width: isLandscape ? 60 : 80, height: isLandscape ? 18 : 24)
                                 case .failure:
                                     EmptyView()
                                 @unknown default:
@@ -311,29 +325,30 @@ struct TV2ProductOverlay: View {
                         }
                         Spacer()
                     }
-                    .padding(.horizontal, 12)
+                    .padding(.horizontal, isLandscape ? 8 : 12)
                     .padding(.top, 2)
                 }
                 
                 // Producto con imagen pequeña a la izquierda
-                HStack(alignment: .top, spacing: 12) {
+                HStack(alignment: .top, spacing: isLandscape ? 10 : 12) {
                     // Imagen del producto pequeña
                     ZStack(alignment: .topTrailing) {
+                        let imageSize: CGFloat = isLandscape ? 80 : 90
                         AsyncImage(url: URL(string: displayImageUrl)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
-                                    .frame(width: 90, height: 90)
+                                    .frame(width: imageSize, height: imageSize)
                             case .success(let image):
                                 image
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: 90, height: 90)
+                                    .frame(width: imageSize, height: imageSize)
                                     .clipped()
                                     .cornerRadius(12)
                             case .failure:
                                 Color.gray.opacity(0.3)
-                                    .frame(width: 90, height: 90)
+                                    .frame(width: imageSize, height: imageSize)
                                     .cornerRadius(12)
                                     .overlay(
                                         Image(systemName: "photo")
@@ -347,35 +362,37 @@ struct TV2ProductOverlay: View {
                         
                         // Tag de descuento diagonal
                         Text("30% OFF")
-                            .font(.system(size: 10, weight: .bold))
+                            .font(.system(size: isLandscape ? 9 : 10, weight: .bold))
                             .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, isLandscape ? 6 : 8)
+                            .padding(.vertical, 3)
                             .background(
                                 Color(hex: "E93CAC")
                             )
                             .rotationEffect(.degrees(-10))
-                            .offset(x: 8, y: -8)
+                            .offset(x: 6, y: -6)
                             .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
                     
                     // Información del producto a la derecha
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: isLandscape ? 4 : 6) {
                         Text(displayName)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: isLandscape ? 12 : 14, weight: .semibold))
                             .foregroundColor(.white)
-                            .lineLimit(2)
+                            .lineLimit(isLandscape ? 1 : 2)
                         
                         if !displayDescription.isEmpty {
                             Text(displayDescription)
-                                .font(.system(size: 11))
+                                .font(.system(size: isLandscape ? 10 : 11))
                                 .foregroundColor(.white.opacity(0.7))
-                                .lineLimit(2)
+                                .lineLimit(isLandscape ? 1 : 2)
                         }
+                        
+                        Spacer()
                         
                         // Precio
                         Text(displayPrice)
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: isLandscape ? 14 : 16, weight: .bold))
                             .foregroundColor(TV2Theme.Colors.primary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -399,17 +416,17 @@ struct TV2ProductOverlay: View {
                     HStack(spacing: 6) {
                         if showCheckmark {
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 14))
+                                .font(.system(size: isLandscape ? 12 : 14))
                             Text("Lagt til!")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: isLandscape ? 11 : 13, weight: .semibold))
                         } else {
                             Text("Legg til")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: isLandscape ? 11 : 13, weight: .semibold))
                         }
                     }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, isLandscape ? 10 : 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(showCheckmark ? Color.green : Color(hex: "2C0D65"))
@@ -417,7 +434,7 @@ struct TV2ProductOverlay: View {
                 }
                 .disabled(showCheckmark)
             }
-            .padding(14)
+            .padding(isLandscape ? 10 : 14)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
