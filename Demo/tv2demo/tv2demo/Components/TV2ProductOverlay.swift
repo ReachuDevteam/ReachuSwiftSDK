@@ -59,12 +59,12 @@ struct TV2ProductOverlay: View {
     var body: some View {
         VStack(spacing: 0) {
             if isLandscape {
-                // Horizontal: lado derecho
+                // Horizontal: lado derecho, ancho suficiente para contenido
                 Spacer()
                 HStack(spacing: 0) {
                     Spacer()
                     productCard
-                        .frame(width: 220)
+                        .frame(width: 280)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)
