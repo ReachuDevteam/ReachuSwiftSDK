@@ -116,20 +116,14 @@ struct TV2ContestOverlay: View {
             }
             .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color(hex: "120019").opacity(0.85))
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.black.opacity(0.4))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                    )
             )
-            .shadow(color: .black.opacity(0.5), radius: 20, x: 0, y: 5)
-            
-            // Sponsor badge debajo del contenido principal
-            if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty, !showWheel {
-                HStack {
-                    Spacer()
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                        .padding(.top, 8)
-                        .padding(.trailing, 12)
-                }
-            }
+            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         }
     }
     
@@ -142,38 +136,36 @@ struct TV2ContestOverlay: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
             
-            // Sponsor logo arriba a la izquierda
+            // Sponsor badge arriba a la izquierda
             if let campaignLogo = contest.campaignLogo, !campaignLogo.isEmpty {
                 HStack {
-                    AsyncImage(url: URL(string: campaignLogo)) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 80, maxHeight: 30)
-                        case .empty:
-                            ProgressView()
-                                .scaleEffect(0.5)
-                                .frame(width: 80, height: 30)
-                        case .failure:
-                            EmptyView()
-                        @unknown default:
-                            EmptyView()
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sponset av")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        AsyncImage(url: URL(string: campaignLogo)) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            case .empty:
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 80, height: 24)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
                         }
                     }
                     Spacer()
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
-            }
-            
-            // Header
-            HStack {
-                Text("🎁 KONKURRANSE")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(TV2Theme.Colors.primary)
-                Spacer()
             }
             
             // Contest name
@@ -205,9 +197,6 @@ struct TV2ContestOverlay: View {
             // Info
             VStack(spacing: 8) {
                 HStack {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
                     Text("Frist: \(contest.deadline)")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.8))
@@ -215,9 +204,6 @@ struct TV2ContestOverlay: View {
                 }
                 
                 HStack {
-                    Image(systemName: "person.3.fill")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.6))
                     Text("Maks deltakere: \(contest.maxParticipants)")
                         .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.8))
@@ -328,31 +314,7 @@ struct TV2ContestOverlay: View {
             }
             .frame(width: 280, height: 280)
             
-            // Prize result
-            if !isSpinning && !finalPrize.isEmpty {
-                VStack(spacing: 8) {
-                    Text("Du vant:")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    Text(finalPrize)
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(TV2Theme.Colors.primary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [TV2Theme.Colors.primary.opacity(0.2), TV2Theme.Colors.secondary.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                )
-            }
+            // Prize result (oculto, ya se muestra en la ruleta)
         }
     }
     
@@ -405,12 +367,12 @@ struct TV2ContestOverlay: View {
     
     private func segmentColor(index: Int) -> Color {
         let colors: [Color] = [
-            Color(red: 0.48, green: 0.37, blue: 1.0), // Purple
-            Color(red: 1.0, green: 0.4, blue: 0.6),   // Pink
-            Color(red: 0.3, green: 0.7, blue: 1.0),   // Blue
-            Color(red: 1.0, green: 0.6, blue: 0.2),   // Orange
-            Color(red: 0.4, green: 0.9, blue: 0.6),   // Green
-            Color(red: 0.9, green: 0.3, blue: 0.3)    // Red
+            Color(hex: "7B5FFF"), // TV2 Primary Purple
+            Color(hex: "E893CF"), // TV2 Secondary Pink
+            Color(hex: "5E5CE6"), // Deep Blue
+            Color(hex: "00D9FF"), // TV2 Accent Cyan
+            Color(hex: "9D4EDD"), // Light Purple
+            Color(hex: "FF6B9D")  // Bright Pink
         ]
         return colors[index % colors.count]
     }
