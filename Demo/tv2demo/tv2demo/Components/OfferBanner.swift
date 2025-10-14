@@ -135,14 +135,15 @@ struct OfferBannerView: View {
                         .fill(Color(hex: "E93CAC"))
                         .frame(width: 140, height: 140)
                     
-                    // Texto del descuento
+                    // Texto del descuento (inclinado)
                     Text("OPPTIL\n-30%")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-2)
-                        .padding(.top, 16)
-                        .padding(.trailing, 20)
+                        .rotationEffect(.degrees(-45))
+                        .padding(.top, 32)
+                        .padding(.trailing, 32)
                 }
             }
             
@@ -351,14 +352,15 @@ struct OfferBanner: View {
                         .fill(Color(hex: "E93CAC"))
                         .frame(width: 140, height: 140)
                     
-                    // Texto del descuento
+                    // Texto del descuento (inclinado)
                     Text("OPPTIL\n-30%")
                         .font(.system(size: 11, weight: .bold))
                         .foregroundColor(.white)
                         .multilineTextAlignment(.center)
                         .lineSpacing(-2)
-                        .padding(.top, 16)
-                        .padding(.trailing, 20)
+                        .rotationEffect(.degrees(-45))
+                        .padding(.top, 32)
+                        .padding(.trailing, 32)
                 }
             }
             
