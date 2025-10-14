@@ -22,11 +22,62 @@ struct OfferBannerView: View {
             // Background layer
             backgroundLayer
             
-            // Discount badge (top-right, más abajo para mayor visibilidad)
+            // Discount badge (top-left - rosa)
             discountBadge
             
-            // Content (left side)
-            contentLayer
+            // Content in two columns
+            HStack(alignment: .center, spacing: 16) {
+                // Left column: Logo, title, subtitle, countdown
+                VStack(alignment: .leading, spacing: 4) {
+                    // Logo
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 16)
+                    
+                    // Title
+                    Text(title)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    // Subtitle
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    
+                    // Countdown analógico
+                    analogCountdown
+                }
+                
+                Spacer()
+                
+                // Right column: Button
+                VStack {
+                    Spacer()
+                    
+                    HStack(spacing: 6) {
+                        Text("Se alle tilbud")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(TV2Theme.Colors.primary)
+                    )
+                    
+                    Spacer()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
         }
         .frame(height: 160)
         .cornerRadius(TV2Theme.CornerRadius.medium)
@@ -50,12 +101,11 @@ struct OfferBannerView: View {
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                 
-                // Dark overlay solo en el lado izquierdo para legibilidad del texto
+                // Dark overlay para legibilidad
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.5),
-                        Color.black.opacity(0.2),
-                        Color.clear
+                        Color.black.opacity(0.4),
+                        Color.black.opacity(0.2)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -65,13 +115,11 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge (top-right, más abajo)
+    // MARK: - Discount Badge (top-left - rosa claro)
     
     private var discountBadge: some View {
-        VStack(spacing: 0) {
+        VStack {
             HStack {
-                Spacer()
-                
                 Text("OPPTIL -30%")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
@@ -82,59 +130,14 @@ struct OfferBannerView: View {
                     )
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                    .padding(.top, 40) // Más abajo para no estar pegado arriba
-                    .padding(.trailing, 16)
+                    .padding(.top, 12)
+                    .padding(.leading, 12)
+                
+                Spacer()
             }
             
             Spacer()
         }
-    }
-    
-    // MARK: - Content
-    
-    private var contentLayer: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Logo
-            Image("logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 16)
-            
-            // Title
-            Text(title)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-            
-            // Subtitle
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            
-            // Countdown analógico
-            analogCountdown
-            
-            // Arrow indicator
-            HStack(spacing: 6) {
-                Text("Se alle tilbud")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(TV2Theme.Colors.primary)
-            )
-        }
-        .padding(.leading, 16)
-        .padding(.top, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     // MARK: - Analog Countdown
@@ -235,11 +238,62 @@ struct OfferBanner: View {
                 // Background layer
                 backgroundLayer
                 
-                // Discount badge (top-right, más abajo para mayor visibilidad)
+                // Discount badge (top-left - rosa)
                 discountBadge
                 
-                // Content (left side)
-                contentLayer
+                // Content in two columns
+                HStack(alignment: .center, spacing: 16) {
+                    // Left column: Logo, title, subtitle, countdown
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Logo
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 16)
+                        
+                        // Title
+                        Text(title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        // Subtitle
+                        if let subtitle = subtitle {
+                            Text(subtitle)
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        
+                        // Countdown analógico
+                        analogCountdown
+                    }
+                    
+                    Spacer()
+                    
+                    // Right column: Button
+                    VStack {
+                        Spacer()
+                        
+                        HStack(spacing: 6) {
+                            Text("Se alle tilbud")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(TV2Theme.Colors.primary)
+                        )
+                        
+                        Spacer()
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
             }
             .frame(height: 160)
             .cornerRadius(TV2Theme.CornerRadius.medium)
@@ -265,12 +319,11 @@ struct OfferBanner: View {
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                     
-                    // Dark overlay solo en el lado izquierdo para legibilidad del texto
+                    // Dark overlay para legibilidad
                     LinearGradient(
                         colors: [
-                            Color.black.opacity(0.5),
-                            Color.black.opacity(0.2),
-                            Color.clear
+                            Color.black.opacity(0.4),
+                            Color.black.opacity(0.2)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -280,13 +333,11 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge (top-right, más abajo)
+    // MARK: - Discount Badge (top-left - rosa claro)
     
     private var discountBadge: some View {
-        VStack(spacing: 0) {
+        VStack {
             HStack {
-                Spacer()
-                
                 Text("OPPTIL -30%")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
@@ -297,59 +348,14 @@ struct OfferBanner: View {
                     )
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                    .padding(.top, 40) // Más abajo para no estar pegado arriba
-                    .padding(.trailing, 16)
+                    .padding(.top, 12)
+                    .padding(.leading, 12)
+                
+                Spacer()
             }
             
             Spacer()
         }
-    }
-    
-    // MARK: - Content
-    
-    private var contentLayer: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Logo
-            Image("logo")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 16)
-            
-            // Title
-            Text(title)
-                .font(.system(size: 24, weight: .bold))
-                .foregroundColor(.white)
-            
-            // Subtitle
-            if let subtitle = subtitle {
-                Text(subtitle)
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundColor(.white.opacity(0.9))
-            }
-            
-            // Countdown analógico
-            analogCountdown
-            
-            // Arrow indicator
-            HStack(spacing: 6) {
-                Text("Se alle tilbud")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(
-                Capsule()
-                    .fill(TV2Theme.Colors.primary)
-            )
-        }
-        .padding(.leading, 16)
-        .padding(.top, 10)
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     // MARK: - Analog Countdown
