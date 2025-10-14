@@ -1,5 +1,6 @@
 import SwiftUI
 import ReachuCore
+import ReachuUI
 
 /// Componente para mostrar un producto individual
 /// Estilo basado en las cards del SDK de Reachu
@@ -16,6 +17,7 @@ struct TV2ProductOverlay: View {
     @StateObject private var viewModel: ProductFetchViewModel
     @State private var dragOffset: CGFloat = 0
     @State private var showCheckmark = false
+    @State private var showProductDetail = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     
@@ -82,6 +84,25 @@ struct TV2ProductOverlay: View {
             // Fetch del producto cuando aparece el componente usando productId
             await viewModel.fetchProduct(productId: productEvent.productId)
         }
+        .sheet(isPresented: $showProductDetail) {
+            if let apiProduct = viewModel.product {
+                // Convertir ProductDto a Product para el sheet
+                RProductDetailSheet(
+                    product: convertDtoToProduct(apiProduct),
+                    isPresented: $showProductDetail,
+                    onAddToCart: { product, quantity in
+                        // Cerrar el overlay principal después de agregar
+                        showProductDetail = false
+                        onAddToCart(apiProduct)
+                        showCheckmark = true
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showCheckmark = false
+                        }
+                    }
+                )
+            }
+        }
     }
     
     // MARK: - Computed Properties
@@ -96,10 +117,30 @@ struct TV2ProductOverlay: View {
     
     /// Descripción del producto (API > WebSocket fallback)
     private var displayDescription: String {
+        let rawDescription: String
         if let apiProduct = viewModel.product {
-            return apiProduct.description ?? ""
+            rawDescription = apiProduct.description ?? ""
+        } else {
+            rawDescription = productEvent.description
         }
-        return productEvent.description
+        // Limpiar HTML tags
+        return cleanHTMLString(rawDescription)
+    }
+    
+    /// Limpia tags HTML de un string
+    private func cleanHTMLString(_ html: String) -> String {
+        // Remover tags HTML
+        var cleaned = html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Decodificar entidades HTML comunes
+        cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
+        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
+        cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
+        cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
+        cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
+        cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
+        // Limpiar espacios múltiples y saltos de línea
+        cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     /// Precio formateado del producto (API > WebSocket fallback)
@@ -122,6 +163,62 @@ struct TV2ProductOverlay: View {
     /// campaignLogo siempre viene del WebSocket
     private var displayCampaignLogo: String? {
         return productEvent.campaignLogo
+    }
+    
+    // MARK: - Conversion Helper
+    
+    /// Convierte ProductDto a Product para usar con RProductDetailSheet
+    private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        return Product(
+            id: dto.id,
+            title: dto.title,
+            brand: dto.brand,
+            description: dto.description,
+            tags: dto.tags,
+            sku: dto.sku,
+            quantity: dto.quantity,
+            price: Price(
+                amount: Float(dto.price.amount),
+                currency_code: dto.price.currencyCode,
+                amount_incl_taxes: dto.price.amountInclTaxes.map { Float($0) },
+                tax_amount: dto.price.taxAmount.map { Float($0) },
+                tax_rate: dto.price.taxRate.map { Float($0) },
+                compare_at: dto.price.compareAt.map { Float($0) },
+                compare_at_incl_taxes: dto.price.compareAtInclTaxes.map { Float($0) }
+            ),
+            variants: dto.variants.map { v in
+                Variant(
+                    id: v.id,
+                    barcode: v.barcode,
+                    price: Price(
+                        amount: Float(v.price.amount),
+                        currency_code: v.price.currencyCode,
+                        amount_incl_taxes: v.price.amountInclTaxes.map { Float($0) },
+                        tax_amount: v.price.taxAmount.map { Float($0) },
+                        tax_rate: v.price.taxRate.map { Float($0) },
+                        compare_at: v.price.compareAt.map { Float($0) },
+                        compare_at_incl_taxes: v.price.compareAtInclTaxes.map { Float($0) }
+                    ),
+                    quantity: v.quantity,
+                    sku: v.sku,
+                    title: v.title,
+                    images: v.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) }
+                )
+            },
+            barcode: dto.barcode,
+            options: dto.options.map { Option(id: $0.id, name: $0.name, order: $0.order, values: $0.values) },
+            categories: dto.categories?.map { _Category(id: $0.id, name: $0.name) },
+            images: dto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) },
+            product_shipping: nil,
+            supplier: dto.supplier,
+            supplier_id: dto.supplierId,
+            imported_product: dto.importedProduct,
+            referral_fee: dto.referralFee,
+            options_enabled: dto.optionsEnabled,
+            digital: dto.digital,
+            origin: dto.origin,
+            return: nil
+        )
     }
     
     private var dragGesture: some Gesture {
@@ -166,7 +263,7 @@ struct TV2ProductOverlay: View {
                 Capsule()
                     .fill(Color.white.opacity(0.3))
                     .frame(width: 40, height: 4)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
                 
                 // Loading indicator sutil mientras se carga
                 if viewModel.isLoading {
@@ -210,7 +307,7 @@ struct TV2ProductOverlay: View {
                         Spacer()
                     }
                     .padding(.horizontal, 12)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
                 }
                 
                 // Producto con imagen pequeña a la izquierda
@@ -279,14 +376,19 @@ struct TV2ProductOverlay: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                // Botón de agregar al carrito
+                // Botón para ver detalles y agregar al carrito
                 Button(action: {
-                    // Pasar el producto real de la API al callback
-                    onAddToCart(viewModel.product)
-                    showCheckmark = true
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showCheckmark = false
+                    if viewModel.product != nil {
+                        // Si el producto de la API está listo, mostrar el sheet de detalles
+                        showProductDetail = true
+                    } else {
+                        // Si aún no está listo, usar el producto del WebSocket
+                        onAddToCart(nil)
+                        showCheckmark = true
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showCheckmark = false
+                        }
                     }
                 }) {
                     HStack(spacing: 6) {
@@ -313,13 +415,13 @@ struct TV2ProductOverlay: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.4))
+                    .fill(Color(hex: "7B5FFF").opacity(0.15))
                     .background(
                         RoundedRectangle(cornerRadius: 20)
                             .fill(.ultraThinMaterial)
                     )
             )
-            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
+            .shadow(color: Color(hex: "7B5FFF").opacity(0.3), radius: 20, x: 0, y: 8)
         }
     }
 }
