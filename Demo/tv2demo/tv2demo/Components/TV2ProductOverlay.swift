@@ -533,7 +533,7 @@ struct TV2TwoProductsOverlay: View {
     let baseURL = URL(string: "https://api.reachu.io/graphql")!
     let sdk = SdkClient(baseUrl: baseURL, apiKey: "DEMO_KEY")
     
-    return ZStack {
+    ZStack {
         Color.black.ignoresSafeArea()
         
         TV2ProductOverlay(
