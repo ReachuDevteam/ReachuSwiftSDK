@@ -6,6 +6,9 @@ struct OfferBannerView: View {
     let title: String
     let subtitle: String?
     
+    @State private var timeRemaining: TimeInterval = 2 * 24 * 3600 + 2 * 3600 // 2 días, 2 horas
+    @State private var timer: Timer?
+    
     init(
         title: String = "Ukens tilbud",
         subtitle: String? = "Se denne ukes beste tilbud"
@@ -15,66 +18,191 @@ struct OfferBannerView: View {
     }
     
     var body: some View {
-        ZStack(alignment: .leading) {
-            // Background with vibrant gradient
-            ZStack {
-                // Vibrant gradient background (TV2 colors)
-                LinearGradient(
-                    colors: [
-                        Color(hex: "7B5FFF"), // TV2 primary purple
-                        Color(hex: "E893CF"), // TV2 secondary pink
-                        Color(hex: "5E5CE6")  // Deep blue
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                
-                // Dark overlay for text readability
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.5),
-                        Color.black.opacity(0.2),
-                        Color.clear
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            }
+        ZStack {
+            // Background layer
+            backgroundLayer
             
-            // Content
-            VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
-                Text(title)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                
-                if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(TV2Theme.Typography.body)
-                        .foregroundColor(.white.opacity(0.9))
+            // Content in two columns
+            HStack(alignment: .bottom, spacing: 16) {
+                // Left column: Logo, title, subtitle, countdown
+                VStack(alignment: .leading, spacing: 4) {
+                    // Logo
+                    Image("logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 16)
+                    
+                    // Title
+                    Text(title)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    // Subtitle
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(.system(size: 11, weight: .regular))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    
+                    // Countdown analógico
+                    analogCountdown
                 }
                 
-                // Arrow indicator
-                HStack(spacing: TV2Theme.Spacing.xs) {
+                Spacer()
+                
+                // Right column: Button (aligned to bottom)
+                HStack(spacing: 6) {
                     Text("Se alle tilbud")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                     
                     Image(systemName: "arrow.right")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                .padding(.horizontal, TV2Theme.Spacing.md)
-                .padding(.vertical, TV2Theme.Spacing.sm)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
                 .background(
                     Capsule()
                         .fill(TV2Theme.Colors.primary)
                 )
             }
-            .padding(.leading, TV2Theme.Spacing.xl)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            
+            // Discount badge (top-right - overlay absoluto)
+            discountBadge
         }
-        .frame(height: 180)
+        .frame(height: 160)
         .cornerRadius(TV2Theme.CornerRadius.medium)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .onAppear {
+            startTimer()
+        }
+        .onDisappear {
+            timer?.invalidate()
+        }
+    }
+    
+    // MARK: - Background
+    
+    private var backgroundLayer: some View {
+        ZStack(alignment: .leading) {
+            // Background with image and overlays
+            ZStack {
+                // Background image (football field)
+                Image("football_field_bg")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                
+                // Dark overlay para legibilidad
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.4),
+                        Color.black.opacity(0.2)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .clipped()
+        }
+    }
+    
+    // MARK: - Discount Badge (top-right)
+    
+    private var discountBadge: some View {
+        VStack {
+            HStack {
+                Spacer()
+                
+                Text("OPPTIL -30%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                    .padding(.top, 12)
+                    .padding(.trailing, 12)
+            }
+            
+            Spacer()
+        }
+    }
+    
+    // MARK: - Analog Countdown
+    
+    private var analogCountdown: some View {
+        let days = Int(timeRemaining) / 86400
+        let hours = (Int(timeRemaining) % 86400) / 3600
+        let minutes = (Int(timeRemaining) % 3600) / 60
+        let seconds = Int(timeRemaining) % 60
+        
+        return HStack(spacing: 4) {
+            // Días
+            if days > 0 {
+                CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
+            }
+            
+            // Horas
+            if days > 0 || hours > 0 {
+                CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
+            }
+            
+            // Minutos
+            CountdownUnit(value: minutes, label: "min")
+            
+            // Segundos
+            CountdownUnit(value: seconds, label: "sek")
+        }
+        .padding(.vertical, 3)
+    }
+    
+    // MARK: - Countdown Logic
+    
+    private func startTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if timeRemaining > 0 {
+                timeRemaining -= 1
+            } else {
+                timer?.invalidate()
+            }
+        }
+    }
+}
+
+/// Countdown Unit Component (estilo analógico)
+struct CountdownUnit: View {
+    let value: Int
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 1) {
+            // Dígitos
+            Text(String(format: "%02d", value))
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white)
+                .frame(minWidth: 24)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.15))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            
+            // Label
+            Text(label)
+                .font(.system(size: 7, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
+        }
     }
 }
 
@@ -84,6 +212,9 @@ struct OfferBanner: View {
     let title: String
     let subtitle: String?
     let onTap: () -> Void
+    
+    @State private var timeRemaining: TimeInterval = 2 * 24 * 3600 + 2 * 3600 // 2 días, 2 horas
+    @State private var timer: Timer?
     
     init(
         title: String = "Ukens tilbud",
@@ -97,68 +228,162 @@ struct OfferBanner: View {
     
     var body: some View {
         Button(action: onTap) {
-            ZStack(alignment: .leading) {
-                // Background with vibrant gradient
-                ZStack {
-                    // Vibrant gradient background (TV2 colors)
-                    LinearGradient(
-                        colors: [
-                            Color(hex: "7B5FFF"), // TV2 primary purple
-                            Color(hex: "E893CF"), // TV2 secondary pink
-                            Color(hex: "5E5CE6")  // Deep blue
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    
-                    // Dark overlay for text readability
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.5),
-                            Color.black.opacity(0.2),
-                            Color.clear
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                }
+            ZStack {
+                // Background layer
+                backgroundLayer
                 
-                // Content
-                VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
-                    Text(title)
-                        .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    if let subtitle = subtitle {
-                        Text(subtitle)
-                            .font(TV2Theme.Typography.body)
-                            .foregroundColor(.white.opacity(0.9))
+                // Content in two columns
+                HStack(alignment: .bottom, spacing: 16) {
+                    // Left column: Logo, title, subtitle, countdown
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Logo
+                        Image("logo")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 16)
+                        
+                        // Title
+                        Text(title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        // Subtitle
+                        if let subtitle = subtitle {
+                            Text(subtitle)
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                        
+                        // Countdown analógico
+                        analogCountdown
                     }
                     
-                    // Arrow indicator
-                    HStack(spacing: TV2Theme.Spacing.xs) {
+                    Spacer()
+                    
+                    // Right column: Button (aligned to bottom)
+                    HStack(spacing: 6) {
                         Text("Se alle tilbud")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white)
                         
                         Image(systemName: "arrow.right")
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(.white)
                     }
-                    .padding(.horizontal, TV2Theme.Spacing.md)
-                    .padding(.vertical, TV2Theme.Spacing.sm)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
                         Capsule()
                             .fill(TV2Theme.Colors.primary)
                     )
                 }
-                .padding(.leading, TV2Theme.Spacing.xl)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                
+                // Discount badge (top-right - overlay absoluto)
+                discountBadge
             }
-            .frame(height: 180)
+            .frame(height: 160)
             .cornerRadius(TV2Theme.CornerRadius.medium)
             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(ScaleButtonStyle())
+        .onAppear {
+            startTimer()
+        }
+        .onDisappear {
+            timer?.invalidate()
+        }
+    }
+    
+    // MARK: - Background
+    
+    private var backgroundLayer: some View {
+        ZStack(alignment: .leading) {
+                // Background with image and overlays
+                ZStack {
+                    // Background image (football field)
+                    Image("football_field_bg")
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                    
+                    // Dark overlay para legibilidad
+                    LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.4),
+                            Color.black.opacity(0.2)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                }
+                .clipped()
+        }
+    }
+    
+    // MARK: - Discount Badge (top-right)
+    
+    private var discountBadge: some View {
+        VStack {
+            HStack {
+                Spacer()
+                
+                Text("OPPTIL -30%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                    .padding(.top, 12)
+                    .padding(.trailing, 12)
+            }
+            
+            Spacer()
+        }
+    }
+    
+    // MARK: - Analog Countdown
+    
+    private var analogCountdown: some View {
+        let days = Int(timeRemaining) / 86400
+        let hours = (Int(timeRemaining) % 86400) / 3600
+        let minutes = (Int(timeRemaining) % 3600) / 60
+        let seconds = Int(timeRemaining) % 60
+        
+        return HStack(spacing: 4) {
+            // Días
+            if days > 0 {
+                CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
+            }
+            
+            // Horas
+            if days > 0 || hours > 0 {
+                CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
+            }
+            
+            // Minutos
+            CountdownUnit(value: minutes, label: "min")
+            
+            // Segundos
+            CountdownUnit(value: seconds, label: "sek")
+        }
+        .padding(.vertical, 3)
+    }
+    
+    // MARK: - Countdown Logic
+    
+    private func startTimer() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if timeRemaining > 0 {
+                timeRemaining -= 1
+            } else {
+                timer?.invalidate()
+            }
+        }
     }
 }
 
@@ -191,4 +416,3 @@ struct ScaleButtonStyle: ButtonStyle {
     }
     .preferredColorScheme(.dark)
 }
-

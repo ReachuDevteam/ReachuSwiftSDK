@@ -1,17 +1,47 @@
 import SwiftUI
+import ReachuCore
+import ReachuUI
 
 /// Componente para mostrar un producto individual
 /// Estilo basado en las cards del SDK de Reachu
+/// Los productos se fetchean desde la API de Reachu usando el ID del WebSocket
 struct TV2ProductOverlay: View {
-    let product: ProductEventData
+    let productEvent: ProductEventData  // Datos del WebSocket (incluye ID y fallback)
     let isChatExpanded: Bool
-    let onAddToCart: () -> Void
+    let sdk: SdkClient
+    let currency: String
+    let country: String
+    let onAddToCart: (ProductDto?) -> Void  // Pasa el producto real de la API si está disponible
     let onDismiss: () -> Void
     
+    @StateObject private var viewModel: ProductFetchViewModel
     @State private var dragOffset: CGFloat = 0
     @State private var showCheckmark = false
+    @State private var showProductDetail = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
+    init(
+        productEvent: ProductEventData,
+        isChatExpanded: Bool,
+        sdk: SdkClient,
+        currency: String,
+        country: String,
+        onAddToCart: @escaping (ProductDto?) -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.productEvent = productEvent
+        self.isChatExpanded = isChatExpanded
+        self.sdk = sdk
+        self.currency = currency
+        self.country = country
+        self.onAddToCart = onAddToCart
+        self.onDismiss = onDismiss
+        
+        // Inicializar el ViewModel
+        let vm = ProductFetchViewModel(sdk: sdk, currency: currency, country: country)
+        _viewModel = StateObject(wrappedValue: vm)
+    }
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
@@ -50,6 +80,150 @@ struct TV2ProductOverlay: View {
                     .gesture(dragGesture)
             }
         }
+        .task {
+            // Fetch del producto cuando aparece el componente usando productId
+            await viewModel.fetchProduct(productId: productEvent.productId)
+        }
+        .sheet(isPresented: $showProductDetail) {
+            if let apiProduct = viewModel.product {
+                // Convertir ProductDto a Product para el overlay
+                RProductDetailOverlay(
+                    product: convertDtoToProduct(apiProduct),
+                    onDismiss: {
+                        showProductDetail = false
+                    },
+                    onAddToCart: { product in
+                        // Agregar al carrito y mostrar feedback
+                        onAddToCart(apiProduct)
+                        showProductDetail = false
+                        showCheckmark = true
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showCheckmark = false
+                        }
+                    }
+                )
+            }
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Nombre del producto (API > WebSocket fallback)
+    private var displayName: String {
+        if let apiProduct = viewModel.product {
+            return apiProduct.title
+        }
+        return productEvent.name
+    }
+    
+    /// Descripción del producto (API > WebSocket fallback)
+    private var displayDescription: String {
+        let rawDescription: String
+        if let apiProduct = viewModel.product {
+            rawDescription = apiProduct.description ?? ""
+        } else {
+            rawDescription = productEvent.description
+        }
+        // Limpiar HTML tags
+        return cleanHTMLString(rawDescription)
+    }
+    
+    /// Limpia tags HTML de un string
+    private func cleanHTMLString(_ html: String) -> String {
+        // Remover tags HTML
+        var cleaned = html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Decodificar entidades HTML comunes
+        cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
+        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
+        cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
+        cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
+        cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
+        cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
+        // Limpiar espacios múltiples y saltos de línea
+        cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    /// Precio formateado del producto (API > WebSocket fallback)
+    private var displayPrice: String {
+        if let apiProduct = viewModel.product {
+            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", apiProduct.price.amount))"
+        }
+        return productEvent.price
+    }
+    
+    /// URL de la imagen del producto (API > WebSocket fallback)
+    private var displayImageUrl: String {
+        if let apiProduct = viewModel.product,
+           let firstImage = apiProduct.images.first {
+            return firstImage.url
+        }
+        return productEvent.imageUrl
+    }
+    
+    /// campaignLogo siempre viene del WebSocket
+    private var displayCampaignLogo: String? {
+        return productEvent.campaignLogo
+    }
+    
+    // MARK: - Conversion Helper
+    
+    /// Convierte ProductDto a Product para usar con RProductDetailOverlay
+    private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        // Limpiar HTML de la descripción
+        let cleanDescription = dto.description.map { cleanHTMLString($0) }
+        
+        return Product(
+            id: dto.id,
+            title: dto.title,
+            brand: dto.brand,
+            description: cleanDescription,
+            tags: dto.tags,
+            sku: dto.sku,
+            quantity: dto.quantity,
+            price: Price(
+                amount: Float(dto.price.amount),
+                currency_code: dto.price.currencyCode,
+                amount_incl_taxes: dto.price.amountInclTaxes.map { Float($0) },
+                tax_amount: dto.price.taxAmount.map { Float($0) },
+                tax_rate: dto.price.taxRate.map { Float($0) },
+                compare_at: dto.price.compareAt.map { Float($0) },
+                compare_at_incl_taxes: dto.price.compareAtInclTaxes.map { Float($0) }
+            ),
+            variants: dto.variants.map { v in
+                Variant(
+                    id: v.id,
+                    barcode: v.barcode,
+                    price: Price(
+                        amount: Float(v.price.amount),
+                        currency_code: v.price.currencyCode,
+                        amount_incl_taxes: v.price.amountInclTaxes.map { Float($0) },
+                        tax_amount: v.price.taxAmount.map { Float($0) },
+                        tax_rate: v.price.taxRate.map { Float($0) },
+                        compare_at: v.price.compareAt.map { Float($0) },
+                        compare_at_incl_taxes: v.price.compareAtInclTaxes.map { Float($0) }
+                    ),
+                    quantity: v.quantity,
+                    sku: v.sku,
+                    title: v.title,
+                    images: v.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) }
+                )
+            },
+            barcode: dto.barcode,
+            options: dto.options.map { Option(id: $0.id, name: $0.name, order: $0.order, values: $0.values) },
+            categories: dto.categories?.map { _Category(id: $0.id, name: $0.name) },
+            images: dto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) },
+            product_shipping: nil,
+            supplier: dto.supplier,
+            supplier_id: dto.supplierId,
+            imported_product: dto.importedProduct,
+            referral_fee: dto.referralFee,
+            options_enabled: dto.optionsEnabled,
+            digital: dto.digital,
+            origin: dto.origin,
+            return: nil
+        )
     }
     
     private var dragGesture: some Gesture {
@@ -94,10 +268,23 @@ struct TV2ProductOverlay: View {
                 Capsule()
                     .fill(Color.white.opacity(0.3))
                     .frame(width: 40, height: 4)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
+                
+                // Loading indicator sutil mientras se carga
+                if viewModel.isLoading {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .tint(.white)
+                        Text("Cargando producto...")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .padding(.vertical, 4)
+                }
                 
                 // Sponsor badge arriba a la izquierda
-                if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
+                if let campaignLogo = displayCampaignLogo, !campaignLogo.isEmpty {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sponset av")
@@ -125,14 +312,14 @@ struct TV2ProductOverlay: View {
                         Spacer()
                     }
                     .padding(.horizontal, 12)
-                    .padding(.top, 4)
+                    .padding(.top, 2)
                 }
                 
                 // Producto con imagen pequeña a la izquierda
                 HStack(alignment: .top, spacing: 12) {
                     // Imagen del producto pequeña
                     ZStack(alignment: .topTrailing) {
-                        AsyncImage(url: URL(string: product.imageUrl)) { phase in
+                        AsyncImage(url: URL(string: displayImageUrl)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -174,33 +361,39 @@ struct TV2ProductOverlay: View {
                     
                     // Información del producto a la derecha
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(product.name)
+                        Text(displayName)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(2)
                         
-                        if !product.description.isEmpty {
-                            Text(product.description)
+                        if !displayDescription.isEmpty {
+                            Text(displayDescription)
                                 .font(.system(size: 11))
                                 .foregroundColor(.white.opacity(0.7))
                                 .lineLimit(2)
                         }
                         
                         // Precio
-                        Text(product.price)
+                        Text(displayPrice)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(TV2Theme.Colors.primary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                // Botón de agregar al carrito
+                // Botón para ver detalles y agregar al carrito
                 Button(action: {
-                    onAddToCart()
-                    showCheckmark = true
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        showCheckmark = false
+                    if viewModel.product != nil {
+                        // Si el producto de la API está listo, mostrar el sheet de detalles
+                        showProductDetail = true
+                    } else {
+                        // Si aún no está listo, usar el producto del WebSocket
+                        onAddToCart(nil)
+                        showCheckmark = true
+                        
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            showCheckmark = false
+                        }
                     }
                 }) {
                     HStack(spacing: 6) {
@@ -243,7 +436,7 @@ struct TV2ProductOverlay: View {
 struct TV2TwoProductsOverlay: View {
     let product1: ProductEventData
     let product2: ProductEventData
-    let onAddToCart: (ProductEventData) -> Void
+    let onAddToCart: () -> Void
     let onDismiss: () -> Void
     
     @State private var dragOffset: CGFloat = 0
@@ -405,7 +598,7 @@ struct TV2TwoProductsOverlay: View {
                 
                 // Botón compacto
                 Button(action: {
-                    onAddToCart(product)
+                    onAddToCart()
                     addedProducts.insert(product.id)
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -441,13 +634,17 @@ struct TV2TwoProductsOverlay: View {
 // MARK: - Previews
 
 #Preview("Single Product") {
+    let baseURL = URL(string: "https://api.reachu.io/graphql")!
+    let sdk = SdkClient(baseUrl: baseURL, apiKey: "DEMO_KEY")
+    
     ZStack {
         Color.black.ignoresSafeArea()
         
         TV2ProductOverlay(
-            product: ProductEventData(
+            productEvent: ProductEventData(
                 id: "prod_123",
-                name: "iPhone 15 Pro Max",
+                productId: "408841",  // ID numérico real de Reachu
+                name: "iPhone 15 Pro Max (WebSocket Fallback)",
                 description: "El último modelo con titanio y cámara de 48MP",
                 price: "$1,199",
                 currency: "USD",
@@ -455,8 +652,15 @@ struct TV2TwoProductsOverlay: View {
                 campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             isChatExpanded: false,
-            onAddToCart: {
-                print("Agregado al carrito")
+            sdk: sdk,
+            currency: "USD",
+            country: "US",
+            onAddToCart: { product in
+                if let p = product {
+                    print("Agregado al carrito (API): \(p.title)")
+                } else {
+                    print("Agregado al carrito (WebSocket fallback)")
+                }
             },
             onDismiss: {
                 print("Cerrado")
@@ -472,6 +676,7 @@ struct TV2TwoProductsOverlay: View {
         TV2TwoProductsOverlay(
             product1: ProductEventData(
                 id: "prod_1",
+                productId: "408841",
                 name: "iPhone 15 Pro",
                 description: "Titanio azul",
                 price: "$999",
@@ -481,6 +686,7 @@ struct TV2TwoProductsOverlay: View {
             ),
             product2: ProductEventData(
                 id: "prod_2",
+                productId: "408842",
                 name: "AirPods Pro",
                 description: "Con USB-C",
                 price: "$249",
@@ -488,8 +694,8 @@ struct TV2TwoProductsOverlay: View {
                 imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb",
                 campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
-            onAddToCart: { product in
-                print("Agregado: \(product.name)")
+            onAddToCart: {
+                print("Agregado")
             },
             onDismiss: {
                 print("Cerrado")

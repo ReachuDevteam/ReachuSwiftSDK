@@ -162,6 +162,7 @@ struct ProductEvent: Codable {
 
 struct ProductEventData: Codable {
     let id: String
+    let productId: String  // El ID numérico real del producto en Reachu
     let name: String
     let description: String
     let price: String
@@ -180,9 +181,21 @@ struct PollEvent: Codable {
 struct PollEventData: Codable, Identifiable, Equatable {
     let id: String
     let question: String
-    let options: [String]
+    let options: [PollOption]
     let duration: Int
+    let imageUrl: String?
     var campaignLogo: String?
+}
+
+struct PollOption: Codable, Identifiable, Equatable {
+    let id = UUID()
+    let text: String
+    let avatarUrl: String?
+    
+    enum CodingKeys: String, CodingKey {
+        case text
+        case avatarUrl
+    }
 }
 
 struct ContestEvent: Codable {

@@ -193,12 +193,12 @@ struct TV2PollOverlay: View {
         }
     }
     
-    private func pollOptionButton(option: String, index: Int) -> some View {
+    private func pollOptionButton(option: PollOption, index: Int) -> some View {
         Button(action: {
             guard !hasVoted else { return }
-            selectedOption = option
+            selectedOption = option.text
             hasVoted = true
-            onVote(option)
+            onVote(option.text)
             
             // Simular delay para "obtener resultados"
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
@@ -208,23 +208,69 @@ struct TV2PollOverlay: View {
             }
         }) {
             HStack(spacing: 10) {
-                // Flag/Icon circle (simulado con gradiente)
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                // Avatar/Icon circle
+                if let avatarUrl = option.avatarUrl {
+                    // Mostrar imagen/logo si hay avatarUrl
+                    AsyncImage(url: URL(string: avatarUrl)) { phase in
+                        switch phase {
+                        case .success(let image):
+                            // Logo/escudo sobre fondo circular
+                            Circle()
+                                .fill(Color.white.opacity(0.1))
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
+                                .overlay(
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: isLandscape ? 32 : 28, height: isLandscape ? 32 : 28)
+                                )
+                        case .empty:
+                            Circle()
+                                .fill(Color.gray.opacity(0.3))
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
+                                .overlay(
+                                    ProgressView()
+                                        .scaleEffect(0.6)
+                                )
+                        case .failure:
+                            // Fallback: primera letra
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
+                                .overlay(
+                                    Text(String(option.text.prefix(1)).uppercased())
+                                        .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                } else {
+                    // Sin avatarUrl: mostrar círculo con primera letra
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
-                    .overlay(
-                        Text(String(option.prefix(1)).uppercased())
-                            .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
-                            .foregroundColor(.white)
-                    )
+                        .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
+                        .overlay(
+                            Text(String(option.text.prefix(1)).uppercased())
+                                .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
+                                .foregroundColor(.white)
+                        )
+                }
                 
-                Text(option)
+                Text(option.text)
                     .font(.system(size: isLandscape ? 14 : 12, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -234,7 +280,7 @@ struct TV2PollOverlay: View {
             .background(
                 RoundedRectangle(cornerRadius: isLandscape ? 20 : 18)
                     .fill(
-                        selectedOption == option 
+                        selectedOption == option.text 
                         ? Color(hex: "5B5FCF")
                         : Color(hex: "3A3D5C")
                     )
@@ -251,10 +297,16 @@ struct TV2PollOverlay: View {
         TV2PollOverlay(
             poll: PollEventData(
                 id: "poll_test",
-                question: "¿Cuál es tu smartphone favorito?",
-                options: ["iPhone", "Samsung", "Google Pixel", "Otro"],
-                duration: 60,
-                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
+                question: "Hvem scorer i denne andre omgangen?",
+                options: [
+                    PollOption(text: "Lamine Yamal", avatarUrl: "http://event-streamer-angelo100.replit.app/@fs/home/runner/workspace/attached_assets/barcelona_1760348072481.png"),
+                    PollOption(text: "Raphina", avatarUrl: nil),
+                    PollOption(text: "Dembélé", avatarUrl: nil),
+                    PollOption(text: "Vitinha", avatarUrl: nil)
+                ],
+                duration: 90,
+                imageUrl: "http://event-streamer-angelo100.replit.app/@fs/home/runner/workspace/attached_assets/barcelona_1760348072481.png",
+                campaignLogo: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858"
             ),
             isChatExpanded: false,
             onVote: { option in
