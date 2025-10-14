@@ -28,7 +28,7 @@ struct OfferBannerView: View {
             // Content (left side)
             contentLayer
         }
-        .frame(height: 200)
+        .frame(height: 220)
         .cornerRadius(TV2Theme.CornerRadius.medium)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
@@ -65,31 +65,25 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge
+    // MARK: - Discount Badge (diagonal tag style)
     
     private var discountBadge: some View {
         VStack {
             HStack {
                 Spacer()
                 
-                VStack(spacing: 2) {
-                    Text("Opptil")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text("-30%")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red)
-                        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                )
-                .padding(.top, TV2Theme.Spacing.md)
-                .padding(.trailing, TV2Theme.Spacing.md)
+                Text("OPPTIL -30%")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .padding(.top, 24)
+                    .padding(.trailing, 16)
             }
             
             Spacer()
@@ -104,7 +98,7 @@ struct OfferBannerView: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 30)
+                .frame(height: 22)
             
             // Title
             Text(title)
@@ -118,11 +112,8 @@ struct OfferBannerView: View {
                     .foregroundColor(.white.opacity(0.9))
             }
             
-            // Countdown
-            Text(countdownText)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.95))
-                .padding(.vertical, 4)
+            // Countdown analógico
+            analogCountdown
             
             // Arrow indicator
             HStack(spacing: TV2Theme.Spacing.xs) {
@@ -146,31 +137,35 @@ struct OfferBannerView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Countdown Logic
+    // MARK: - Analog Countdown
     
-    private var countdownText: String {
+    private var analogCountdown: some View {
         let days = Int(timeRemaining) / 86400
         let hours = (Int(timeRemaining) % 86400) / 3600
         let minutes = (Int(timeRemaining) % 3600) / 60
         let seconds = Int(timeRemaining) % 60
         
-        var components: [String] = []
-        
-        if days > 0 {
-            components.append("\(days) \(days == 1 ? "dag" : "dager")")
+        return HStack(spacing: 6) {
+            // Días
+            if days > 0 {
+                CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
+            }
+            
+            // Horas
+            if days > 0 || hours > 0 {
+                CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
+            }
+            
+            // Minutos
+            CountdownUnit(value: minutes, label: "min")
+            
+            // Segundos
+            CountdownUnit(value: seconds, label: "sek")
         }
-        if hours > 0 {
-            components.append("\(hours) \(hours == 1 ? "time" : "timer")")
-        }
-        if minutes > 0 {
-            components.append("\(minutes) \(minutes == 1 ? "minutt" : "minutter")")
-        }
-        if seconds > 0 || components.isEmpty {
-            components.append("\(seconds) \(seconds == 1 ? "sekund" : "sekunder")")
-        }
-        
-        return components.joined(separator: " og ")
+        .padding(.vertical, 4)
     }
+    
+    // MARK: - Countdown Logic
     
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -179,6 +174,37 @@ struct OfferBannerView: View {
             } else {
                 timer?.invalidate()
             }
+        }
+    }
+}
+
+/// Countdown Unit Component (estilo analógico)
+struct CountdownUnit: View {
+    let value: Int
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 1) {
+            // Dígitos
+            Text(String(format: "%02d", value))
+                .font(.system(size: 16, weight: .bold))
+                .foregroundColor(.white)
+                .frame(minWidth: 28)
+                .padding(.vertical, 3)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.white.opacity(0.15))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 5)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            
+            // Label
+            Text(label)
+                .font(.system(size: 8, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
         }
     }
 }
@@ -215,7 +241,7 @@ struct OfferBanner: View {
                 // Content (left side)
                 contentLayer
             }
-            .frame(height: 200)
+            .frame(height: 220)
             .cornerRadius(TV2Theme.CornerRadius.medium)
             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
@@ -254,31 +280,25 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge
+    // MARK: - Discount Badge (diagonal tag style)
     
     private var discountBadge: some View {
         VStack {
             HStack {
                 Spacer()
                 
-                VStack(spacing: 2) {
-                    Text("Opptil")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text("-30%")
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.red)
-                        .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                )
-                .padding(.top, TV2Theme.Spacing.md)
-                .padding(.trailing, TV2Theme.Spacing.md)
+                Text("OPPTIL -30%")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                    .padding(.top, 24)
+                    .padding(.trailing, 16)
             }
             
             Spacer()
@@ -293,7 +313,7 @@ struct OfferBanner: View {
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 30)
+                .frame(height: 22)
             
             // Title
             Text(title)
@@ -307,11 +327,8 @@ struct OfferBanner: View {
                     .foregroundColor(.white.opacity(0.9))
             }
             
-            // Countdown
-            Text(countdownText)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.95))
-                .padding(.vertical, 4)
+            // Countdown analógico
+            analogCountdown
             
             // Arrow indicator
             HStack(spacing: TV2Theme.Spacing.xs) {
@@ -335,31 +352,35 @@ struct OfferBanner: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Countdown Logic
+    // MARK: - Analog Countdown
     
-    private var countdownText: String {
+    private var analogCountdown: some View {
         let days = Int(timeRemaining) / 86400
         let hours = (Int(timeRemaining) % 86400) / 3600
         let minutes = (Int(timeRemaining) % 3600) / 60
         let seconds = Int(timeRemaining) % 60
         
-        var components: [String] = []
-        
-        if days > 0 {
-            components.append("\(days) \(days == 1 ? "dag" : "dager")")
+        return HStack(spacing: 6) {
+            // Días
+            if days > 0 {
+                CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
+            }
+            
+            // Horas
+            if days > 0 || hours > 0 {
+                CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
+            }
+            
+            // Minutos
+            CountdownUnit(value: minutes, label: "min")
+            
+            // Segundos
+            CountdownUnit(value: seconds, label: "sek")
         }
-        if hours > 0 {
-            components.append("\(hours) \(hours == 1 ? "time" : "timer")")
-        }
-        if minutes > 0 {
-            components.append("\(minutes) \(minutes == 1 ? "minutt" : "minutter")")
-        }
-        if seconds > 0 || components.isEmpty {
-            components.append("\(seconds) \(seconds == 1 ? "sekund" : "sekunder")")
-        }
-        
-        return components.joined(separator: " og ")
+        .padding(.vertical, 4)
     }
+    
+    // MARK: - Countdown Logic
     
     private func startTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
@@ -401,4 +422,3 @@ struct ScaleButtonStyle: ButtonStyle {
     }
     .preferredColorScheme(.dark)
 }
-
