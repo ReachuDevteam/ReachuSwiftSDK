@@ -10,7 +10,7 @@ struct TV2ProductOverlay: View {
     let sdk: SdkClient
     let currency: String
     let country: String
-    let onAddToCart: (Product?) -> Void  // Pasa el producto real de la API si está disponible
+    let onAddToCart: (ProductDto?) -> Void  // Pasa el producto real de la API si está disponible
     let onDismiss: () -> Void
     
     @StateObject private var viewModel: ProductFetchViewModel
@@ -25,7 +25,7 @@ struct TV2ProductOverlay: View {
         sdk: SdkClient,
         currency: String,
         country: String,
-        onAddToCart: @escaping () -> Void,
+        onAddToCart: @escaping (ProductDto?) -> Void,
         onDismiss: @escaping () -> Void
     ) {
         self.productEvent = productEvent
@@ -105,7 +105,7 @@ struct TV2ProductOverlay: View {
     /// Precio formateado del producto (API > WebSocket fallback)
     private var displayPrice: String {
         if let apiProduct = viewModel.product {
-            return apiProduct.price.displayAmount
+            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", apiProduct.price.amount))"
         }
         return productEvent.price
     }

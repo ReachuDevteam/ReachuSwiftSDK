@@ -109,11 +109,13 @@ struct TV2VideoPlayer: View {
                     sdk: cartManager.sdk,
                     currency: cartManager.currency,
                     country: cartManager.country,
-                    onAddToCart: { product in
-                        if let apiProduct = product {
+                    onAddToCart: { productDto in
+                        if let apiProduct = productDto {
                             print("🛍️ [Product] Agregando producto de la API al carrito: \(apiProduct.title)")
+                            // Convertir ProductDto a Product para el CartManager
+                            let product = convertDtoToProduct(apiProduct)
                             Task {
-                                await cartManager.addProduct(apiProduct, quantity: 1)
+                                await cartManager.addProduct(product, quantity: 1)
                                 print("✅ [Product] Producto agregado al carrito")
                             }
                         } else {
@@ -228,6 +230,78 @@ struct TV2VideoPlayer: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Helpers
+    
+    /// Convierte ProductDto a Product para el CartManager
+    private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        return Product(
+            id: dto.id,
+            title: dto.title,
+            brand: dto.brand,
+            description: dto.description,
+            tags: dto.tags,
+            sku: dto.sku,
+            quantity: dto.quantity,
+            price: Price(
+                amount: Float(dto.price.amount),
+                currency_code: dto.price.currencyCode,
+                amount_incl_taxes: dto.price.amountInclTaxes.map { Float($0) },
+                tax_amount: dto.price.taxAmount.map { Float($0) },
+                tax_rate: dto.price.taxRate.map { Float($0) },
+                compare_at: dto.price.compareAt.map { Float($0) },
+                compare_at_incl_taxes: dto.price.compareAtInclTaxes.map { Float($0) }
+            ),
+            variants: dto.variants.map { variantDto in
+                Variant(
+                    id: variantDto.id,
+                    barcode: variantDto.barcode,
+                    price: Price(
+                        amount: Float(variantDto.price.amount),
+                        currency_code: variantDto.price.currencyCode,
+                        amount_incl_taxes: variantDto.price.amountInclTaxes.map { Float($0) },
+                        tax_amount: variantDto.price.taxAmount.map { Float($0) },
+                        tax_rate: variantDto.price.taxRate.map { Float($0) },
+                        compare_at: variantDto.price.compareAt.map { Float($0) },
+                        compare_at_incl_taxes: variantDto.price.compareAtInclTaxes.map { Float($0) }
+                    ),
+                    quantity: variantDto.quantity,
+                    sku: variantDto.sku,
+                    title: variantDto.title,
+                    images: variantDto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) }
+                )
+            },
+            barcode: dto.barcode,
+            options: dto.options.map { Option(id: $0.id, name: $0.name, order: $0.order, values: $0.values.joined(separator: ",")) },
+            categories: dto.categories?.map { _Category(id: $0.id, name: $0.name) },
+            images: dto.images.map { ProductImage(id: $0.id, url: $0.url, width: $0.width, height: $0.height, order: $0.order ?? 0) },
+            product_shipping: dto.productShipping?.map { shipping in
+                ProductShipping(
+                    id: shipping.id,
+                    productId: shipping.productId,
+                    shippingCountryId: shipping.shippingCountryId,
+                    price: Float(shipping.price),
+                    taxAmount: shipping.taxAmount.map { Float($0) },
+                    taxRate: shipping.taxRate.map { Float($0) }
+                )
+            },
+            supplier: dto.supplier,
+            supplier_id: dto.supplierId,
+            imported_product: dto.importedProduct,
+            referral_fee: dto.referralFee,
+            options_enabled: dto.optionsEnabled,
+            digital: dto.digital,
+            origin: dto.origin,
+            return: dto.returnInfo.map { returnDto in
+                ReturnInfo(
+                    id: returnDto.id,
+                    productId: returnDto.productId,
+                    days: returnDto.days,
+                    cost: Float(returnDto.cost)
+                )
+            }
+        )
     }
     
     // MARK: - Orientation Helper

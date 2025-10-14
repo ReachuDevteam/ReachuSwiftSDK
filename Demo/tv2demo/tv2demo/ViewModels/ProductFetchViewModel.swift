@@ -7,7 +7,7 @@ import ReachuCore
 /// Usado por los overlays de productos del WebSocket
 @MainActor
 class ProductFetchViewModel: ObservableObject {
-    @Published var product: Product?
+    @Published var product: ProductDto?
     @Published var isLoading = false
     @Published var errorMessage: String?
     
@@ -37,17 +37,29 @@ class ProductFetchViewModel: ObservableObject {
         print("   Country: \(country)")
         
         do {
-            let products = try await sdk.product.fetchProducts(
+            // Convertir String ID a Int
+            guard let productId = Int(id) else {
+                self.errorMessage = "ID de producto inválido"
+                print("❌ [ProductFetch] ID no es un número válido: \(id)")
+                isLoading = false
+                return
+            }
+            
+            let products = try await sdk.product.get(
                 currency: currency,
-                shippingCountryCode: country,
-                productIds: [id],
-                useCache: false
+                imageSize: "large",
+                barcodeList: nil,
+                categoryIds: nil,
+                productIds: [productId],
+                skuList: nil,
+                useCache: false,
+                shippingCountryCode: country
             )
             
             if let fetchedProduct = products.first {
                 self.product = fetchedProduct
                 print("✅ [ProductFetch] Producto obtenido: \(fetchedProduct.title)")
-                print("   Precio: \(fetchedProduct.price.displayAmount)")
+                print("   Precio: \(formatPrice(fetchedProduct.price))")
                 if let imageUrl = fetchedProduct.images.first?.url {
                     print("   Imagen: \(imageUrl)")
                 }
@@ -80,16 +92,29 @@ class ProductFetchViewModel: ObservableObject {
         print("   Country: \(country)")
         
         do {
-            let products = try await sdk.product.fetchProducts(
+            // Convertir String IDs a Int
+            let productIds = ids.compactMap { Int($0) }
+            guard productIds.count == ids.count else {
+                self.errorMessage = "Algunos IDs de producto son inválidos"
+                print("❌ [ProductFetch] Algunos IDs no son números válidos")
+                isLoading = false
+                return
+            }
+            
+            let products = try await sdk.product.get(
                 currency: currency,
-                shippingCountryCode: country,
-                productIds: ids,
-                useCache: false
+                imageSize: "large",
+                barcodeList: nil,
+                categoryIds: nil,
+                productIds: productIds,
+                skuList: nil,
+                useCache: false,
+                shippingCountryCode: country
             )
             
             print("✅ [ProductFetch] \(products.count) productos obtenidos")
             for product in products {
-                print("   - \(product.title) (\(product.price.displayAmount))")
+                print("   - \(product.title) (\(formatPrice(product.price)))")
             }
             
             // Para múltiples productos, el componente padre manejará el array
@@ -105,6 +130,13 @@ class ProductFetchViewModel: ObservableObject {
             isLoading = false
             print("❌ [ProductFetch] Error fetching productos: \(error)")
         }
+    }
+    
+    // MARK: - Helpers
+    
+    /// Formatea el precio para display
+    private func formatPrice(_ price: PriceDto) -> String {
+        return "\(price.currencyCode) \(String(format: "%.2f", price.amount))"
     }
 }
 
