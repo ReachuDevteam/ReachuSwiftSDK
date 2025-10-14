@@ -79,8 +79,8 @@ struct TV2ProductOverlay: View {
             }
         }
         .task {
-            // Fetch del producto cuando aparece el componente
-            await viewModel.fetchProduct(id: productEvent.id)
+            // Fetch del producto cuando aparece el componente usando productId
+            await viewModel.fetchProduct(productId: productEvent.productId)
         }
     }
     
@@ -536,6 +536,7 @@ struct TV2TwoProductsOverlay: View {
         TV2ProductOverlay(
             productEvent: ProductEventData(
                 id: "prod_123",
+                productId: "408841",  // ID numérico real de Reachu
                 name: "iPhone 15 Pro Max (WebSocket Fallback)",
                 description: "El último modelo con titanio y cámara de 48MP",
                 price: "$1,199",
@@ -568,6 +569,7 @@ struct TV2TwoProductsOverlay: View {
         TV2TwoProductsOverlay(
             product1: ProductEventData(
                 id: "prod_1",
+                productId: "408841",
                 name: "iPhone 15 Pro",
                 description: "Titanio azul",
                 price: "$999",
@@ -577,6 +579,7 @@ struct TV2TwoProductsOverlay: View {
             ),
             product2: ProductEventData(
                 id: "prod_2",
+                productId: "408842",
                 name: "AirPods Pro",
                 description: "Con USB-C",
                 price: "$249",

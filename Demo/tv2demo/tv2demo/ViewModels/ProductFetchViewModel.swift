@@ -22,10 +22,10 @@ class ProductFetchViewModel: ObservableObject {
         self.country = country
     }
     
-    /// Fetch un producto por su ID
-    func fetchProduct(id: String) async {
-        guard !id.isEmpty else {
-            print("⚠️ [ProductFetch] ID vacío, no se puede fetch")
+    /// Fetch un producto por su productId (ID numérico de Reachu)
+    func fetchProduct(productId: String) async {
+        guard !productId.isEmpty else {
+            print("⚠️ [ProductFetch] productId vacío, no se puede fetch")
             return
         }
         
@@ -33,26 +33,24 @@ class ProductFetchViewModel: ObservableObject {
         errorMessage = nil
         product = nil
         
-        print("🔍 [ProductFetch] Fetching producto con ID: \(id)")
+        print("🔍 [ProductFetch] Fetching producto con productId: \(productId)")
         print("   Currency: \(currency)")
         print("   Country: \(country)")
         
         do {
-            // Convertir String ID a Int
-            guard let productId = Int(id) else {
-                self.errorMessage = "ID de producto inválido"
-                print("❌ [ProductFetch] ID no es un número válido: \(id)")
+            // Convertir String productId a Int
+            guard let productIdInt = Int(productId) else {
+                self.errorMessage = "productId inválido: \(productId)"
+                print("❌ [ProductFetch] productId no es un número válido: \(productId)")
                 isLoading = false
                 return
             }
             
-            let products = try await sdk.product.get(
+            // Usar getByIds que es el método optimizado para buscar por IDs
+            let products = try await sdk.product.getByIds(
+                productIds: [productIdInt],
                 currency: currency,
                 imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
-                productIds: [productId],
-                skuList: nil,
                 useCache: false,
                 shippingCountryCode: country
             )
@@ -66,7 +64,7 @@ class ProductFetchViewModel: ObservableObject {
                 }
             } else {
                 self.errorMessage = "Producto no encontrado"
-                print("❌ [ProductFetch] Producto con ID \(id) no encontrado en la respuesta")
+                print("❌ [ProductFetch] Producto con productId \(productId) no encontrado en la respuesta")
             }
             
             isLoading = false
@@ -102,13 +100,11 @@ class ProductFetchViewModel: ObservableObject {
                 return
             }
             
-            let products = try await sdk.product.get(
+            // Usar getByIds que es el método optimizado para buscar por IDs
+            let products = try await sdk.product.getByIds(
+                productIds: productIds,
                 currency: currency,
                 imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
-                productIds: productIds,
-                skuList: nil,
                 useCache: false,
                 shippingCountryCode: country
             )

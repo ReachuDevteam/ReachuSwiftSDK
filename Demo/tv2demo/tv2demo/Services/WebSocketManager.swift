@@ -162,6 +162,7 @@ struct ProductEvent: Codable {
 
 struct ProductEventData: Codable {
     let id: String
+    let productId: String  // El ID numérico real del producto en Reachu
     let name: String
     let description: String
     let price: String
