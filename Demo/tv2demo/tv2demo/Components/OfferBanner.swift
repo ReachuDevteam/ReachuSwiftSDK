@@ -28,7 +28,7 @@ struct OfferBannerView: View {
             // Content (left side)
             contentLayer
         }
-        .frame(height: 220)
+        .frame(height: 160)
         .cornerRadius(TV2Theme.CornerRadius.medium)
         .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
@@ -73,17 +73,17 @@ struct OfferBannerView: View {
                 Spacer()
                 
                 Text("OPPTIL -30%")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
                         Color(hex: "E93CAC") // TV2 pink
                     )
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .padding(.top, 24)
-                    .padding(.trailing, 16)
+                    .padding(.top, 16)
+                    .padding(.trailing, 12)
             }
             
             Spacer()
@@ -93,22 +93,22 @@ struct OfferBannerView: View {
     // MARK: - Content
     
     private var contentLayer: some View {
-        VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 4) {
             // Logo
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 22)
+                .frame(height: 16)
             
             // Title
             Text(title)
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
             
             // Subtitle
             if let subtitle = subtitle {
                 Text(subtitle)
-                    .font(TV2Theme.Typography.body)
+                    .font(.system(size: 11, weight: .regular))
                     .foregroundColor(.white.opacity(0.9))
             }
             
@@ -116,24 +116,24 @@ struct OfferBannerView: View {
             analogCountdown
             
             // Arrow indicator
-            HStack(spacing: TV2Theme.Spacing.xs) {
+            HStack(spacing: 6) {
                 Text("Se alle tilbud")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
             }
-            .padding(.horizontal, TV2Theme.Spacing.md)
-            .padding(.vertical, TV2Theme.Spacing.sm)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
                     .fill(TV2Theme.Colors.primary)
             )
         }
-        .padding(.leading, TV2Theme.Spacing.xl)
-        .padding(.top, TV2Theme.Spacing.md)
+        .padding(.leading, 16)
+        .padding(.top, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
@@ -145,7 +145,7 @@ struct OfferBannerView: View {
         let minutes = (Int(timeRemaining) % 3600) / 60
         let seconds = Int(timeRemaining) % 60
         
-        return HStack(spacing: 6) {
+        return HStack(spacing: 4) {
             // Días
             if days > 0 {
                 CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
@@ -162,7 +162,7 @@ struct OfferBannerView: View {
             // Segundos
             CountdownUnit(value: seconds, label: "sek")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
     }
     
     // MARK: - Countdown Logic
@@ -187,23 +187,23 @@ struct CountdownUnit: View {
         VStack(spacing: 1) {
             // Dígitos
             Text(String(format: "%02d", value))
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 13, weight: .bold))
                 .foregroundColor(.white)
-                .frame(minWidth: 28)
-                .padding(.vertical, 3)
-                .padding(.horizontal, 6)
+                .frame(minWidth: 24)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 5)
                 .background(
-                    RoundedRectangle(cornerRadius: 5)
+                    RoundedRectangle(cornerRadius: 4)
                         .fill(Color.white.opacity(0.15))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 5)
+                            RoundedRectangle(cornerRadius: 4)
                                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
                         )
                 )
             
             // Label
             Text(label)
-                .font(.system(size: 8, weight: .medium))
+                .font(.system(size: 7, weight: .medium))
                 .foregroundColor(.white.opacity(0.85))
         }
     }
@@ -241,7 +241,7 @@ struct OfferBanner: View {
                 // Content (left side)
                 contentLayer
             }
-            .frame(height: 220)
+            .frame(height: 160)
             .cornerRadius(TV2Theme.CornerRadius.medium)
             .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
@@ -288,17 +288,17 @@ struct OfferBanner: View {
                 Spacer()
                 
                 Text("OPPTIL -30%")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(
                         Color(hex: "E93CAC") // TV2 pink
                     )
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                    .padding(.top, 24)
-                    .padding(.trailing, 16)
+                    .padding(.top, 16)
+                    .padding(.trailing, 12)
             }
             
             Spacer()
@@ -308,22 +308,22 @@ struct OfferBanner: View {
     // MARK: - Content
     
     private var contentLayer: some View {
-        VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
+        VStack(alignment: .leading, spacing: 4) {
             // Logo
             Image("logo")
                 .resizable()
                 .scaledToFit()
-                .frame(height: 22)
+                .frame(height: 16)
             
             // Title
             Text(title)
-                .font(.system(size: 32, weight: .bold))
+                .font(.system(size: 24, weight: .bold))
                 .foregroundColor(.white)
             
             // Subtitle
             if let subtitle = subtitle {
                 Text(subtitle)
-                    .font(TV2Theme.Typography.body)
+                    .font(.system(size: 11, weight: .regular))
                     .foregroundColor(.white.opacity(0.9))
             }
             
@@ -331,24 +331,24 @@ struct OfferBanner: View {
             analogCountdown
             
             // Arrow indicator
-            HStack(spacing: TV2Theme.Spacing.xs) {
+            HStack(spacing: 6) {
                 Text("Se alle tilbud")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white)
                 
                 Image(systemName: "arrow.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 11, weight: .semibold))
                     .foregroundColor(.white)
             }
-            .padding(.horizontal, TV2Theme.Spacing.md)
-            .padding(.vertical, TV2Theme.Spacing.sm)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
             .background(
                 Capsule()
                     .fill(TV2Theme.Colors.primary)
             )
         }
-        .padding(.leading, TV2Theme.Spacing.xl)
-        .padding(.top, TV2Theme.Spacing.md)
+        .padding(.leading, 16)
+        .padding(.top, 10)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
@@ -360,7 +360,7 @@ struct OfferBanner: View {
         let minutes = (Int(timeRemaining) % 3600) / 60
         let seconds = Int(timeRemaining) % 60
         
-        return HStack(spacing: 6) {
+        return HStack(spacing: 4) {
             // Días
             if days > 0 {
                 CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
@@ -377,7 +377,7 @@ struct OfferBanner: View {
             // Segundos
             CountdownUnit(value: seconds, label: "sek")
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 3)
     }
     
     // MARK: - Countdown Logic
