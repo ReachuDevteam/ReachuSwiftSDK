@@ -169,13 +169,16 @@ struct TV2ProductOverlay: View {
     
     // MARK: - Conversion Helper
     
-    /// Convierte ProductDto a Product para usar con RProductDetailSheet
+    /// Convierte ProductDto a Product para usar con RProductDetailOverlay
     private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        // Limpiar HTML de la descripción
+        let cleanDescription = dto.description.map { cleanHTMLString($0) }
+        
         return Product(
             id: dto.id,
             title: dto.title,
             brand: dto.brand,
-            description: dto.description,
+            description: cleanDescription,
             tags: dto.tags,
             sku: dto.sku,
             quantity: dto.quantity,
