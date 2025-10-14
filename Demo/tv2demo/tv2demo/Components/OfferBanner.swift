@@ -22,7 +22,7 @@ struct OfferBannerView: View {
             // Background layer
             backgroundLayer
             
-            // Discount badge (top-right)
+            // Discount badge (top-right, más abajo para mayor visibilidad)
             discountBadge
             
             // Content (left side)
@@ -65,23 +65,28 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge (diagonal tag style - más visible, centrado verticalmente)
+    // MARK: - Discount Badge (top-right, más abajo)
     
     private var discountBadge: some View {
-        HStack {
-            Spacer()
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                
+                Text("OPPTIL -30%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                    .padding(.top, 40) // Más abajo para no estar pegado arriba
+                    .padding(.trailing, 16)
+            }
             
-            Text("OPPTIL -30%")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    Color(hex: "E93CAC") // TV2 pink
-                )
-                .rotationEffect(.degrees(-10))
-                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                .padding(.trailing, 16)
+            Spacer()
         }
     }
     
@@ -230,7 +235,7 @@ struct OfferBanner: View {
                 // Background layer
                 backgroundLayer
                 
-                // Discount badge (top-right)
+                // Discount badge (top-right, más abajo para mayor visibilidad)
                 discountBadge
                 
                 // Content (left side)
@@ -275,23 +280,28 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge (diagonal tag style - más visible, centrado verticalmente)
+    // MARK: - Discount Badge (top-right, más abajo)
     
     private var discountBadge: some View {
-        HStack {
-            Spacer()
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                
+                Text("OPPTIL -30%")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 7)
+                    .background(
+                        Color(hex: "E93CAC") // TV2 pink
+                    )
+                    .rotationEffect(.degrees(-10))
+                    .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
+                    .padding(.top, 40) // Más abajo para no estar pegado arriba
+                    .padding(.trailing, 16)
+            }
             
-            Text("OPPTIL -30%")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 7)
-                .background(
-                    Color(hex: "E93CAC") // TV2 pink
-                )
-                .rotationEffect(.degrees(-10))
-                .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
-                .padding(.trailing, 16)
+            Spacer()
         }
     }
     
