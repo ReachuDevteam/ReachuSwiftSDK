@@ -47,8 +47,8 @@ class ProductFetchViewModel: ObservableObject {
             if let fetchedProduct = products.first {
                 self.product = fetchedProduct
                 print("✅ [ProductFetch] Producto obtenido: \(fetchedProduct.title)")
-                print("   Precio: \(fetchedProduct.price.display)")
-                if let imageUrl = fetchedProduct.images.first?.src {
+                print("   Precio: \(fetchedProduct.price.displayAmount)")
+                if let imageUrl = fetchedProduct.images.first?.url {
                     print("   Imagen: \(imageUrl)")
                 }
             } else {
@@ -89,7 +89,7 @@ class ProductFetchViewModel: ObservableObject {
             
             print("✅ [ProductFetch] \(products.count) productos obtenidos")
             for product in products {
-                print("   - \(product.title) (\(product.price.display))")
+                print("   - \(product.title) (\(product.price.displayAmount))")
             }
             
             // Para múltiples productos, el componente padre manejará el array

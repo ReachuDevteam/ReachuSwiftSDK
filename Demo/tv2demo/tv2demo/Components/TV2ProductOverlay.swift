@@ -37,11 +37,8 @@ struct TV2ProductOverlay: View {
         self.onDismiss = onDismiss
         
         // Inicializar el ViewModel
-        _viewModel = StateObject(wrappedValue: ProductFetchViewModel(
-            sdk: sdk,
-            currency: currency,
-            country: country
-        ))
+        let vm = ProductFetchViewModel(sdk: sdk, currency: currency, country: country)
+        _viewModel = StateObject(wrappedValue: vm)
     }
     
     private var isLandscape: Bool {
@@ -108,7 +105,7 @@ struct TV2ProductOverlay: View {
     /// Precio formateado del producto (API > WebSocket fallback)
     private var displayPrice: String {
         if let apiProduct = viewModel.product {
-            return apiProduct.price.display
+            return apiProduct.price.displayAmount
         }
         return productEvent.price
     }
@@ -117,7 +114,7 @@ struct TV2ProductOverlay: View {
     private var displayImageUrl: String {
         if let apiProduct = viewModel.product,
            let firstImage = apiProduct.images.first {
-            return firstImage.src
+            return firstImage.url
         }
         return productEvent.imageUrl
     }
@@ -332,7 +329,7 @@ struct TV2ProductOverlay: View {
 struct TV2TwoProductsOverlay: View {
     let product1: ProductEventData
     let product2: ProductEventData
-    let onAddToCart: (ProductEventData) -> Void
+    let onAddToCart: () -> Void
     let onDismiss: () -> Void
     
     @State private var dragOffset: CGFloat = 0
@@ -494,7 +491,7 @@ struct TV2TwoProductsOverlay: View {
                 
                 // Botón compacto
                 Button(action: {
-                    onAddToCart(product)
+                    onAddToCart()
                     addedProducts.insert(product.id)
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -587,8 +584,8 @@ struct TV2TwoProductsOverlay: View {
                 imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb",
                 campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
-            onAddToCart: { product in
-                print("Agregado: \(product.name)")
+            onAddToCart: {
+                print("Agregado")
             },
             onDismiss: {
                 print("Cerrado")
