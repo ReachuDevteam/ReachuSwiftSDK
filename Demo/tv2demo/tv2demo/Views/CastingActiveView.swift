@@ -1,4 +1,6 @@
 import SwiftUI
+import ReachuUI
+import ReachuCore
 
 /// Vista que se muestra cuando el casting está activo
 /// Permite controlar el video y ver los overlays mientras se castea
