@@ -89,31 +89,37 @@ struct TV2ProductOverlay: View {
     
     private var productCard: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 16) {
+            VStack(spacing: 12) {
                 // Drag indicator
                 Capsule()
                     .fill(Color.white.opacity(0.3))
                     .frame(width: 40, height: 4)
                     .padding(.top, 8)
                 
-                // Sponsor logo arriba a la izquierda
+                // Sponsor badge arriba a la izquierda
                 if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
                     HStack {
-                        AsyncImage(url: URL(string: campaignLogo)) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 80, maxHeight: 30)
-                            case .empty:
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 80, height: 30)
-                            case .failure:
-                                EmptyView()
-                            @unknown default:
-                                EmptyView()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Sponset av")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            AsyncImage(url: URL(string: campaignLogo)) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                case .empty:
+                                    ProgressView()
+                                        .scaleEffect(0.5)
+                                        .frame(width: 80, height: 24)
+                                case .failure:
+                                    EmptyView()
+                                @unknown default:
+                                    EmptyView()
+                                }
                             }
                         }
                         Spacer()
@@ -122,85 +128,101 @@ struct TV2ProductOverlay: View {
                     .padding(.top, 4)
                 }
                 
-                // Imagen del producto
-            AsyncImage(url: URL(string: product.imageUrl)) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                        .frame(height: isLandscape ? 100 : 120)
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: isLandscape ? 100 : 120)
-                        .clipped()
-                        .cornerRadius(12)
-                case .failure:
-                    Color.gray.opacity(0.3)
-                        .frame(height: isLandscape ? 100 : 120)
-                        .cornerRadius(12)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 30))
-                                .foregroundColor(.white.opacity(0.5))
-                        )
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            
-            // Información del producto
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.system(size: isLandscape ? 13 : 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                
-                if !product.description.isEmpty {
-                    Text(product.description)
-                        .font(.system(size: isLandscape ? 10 : 11))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(2)
-                }
-                
-                // Precio
-                Text(product.price)
-                    .font(.system(size: isLandscape ? 14 : 16, weight: .bold))
-                    .foregroundColor(Color(hex: "5B5FCF"))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            
-            // Botón de agregar al carrito
-            Button(action: {
-                onAddToCart()
-                showCheckmark = true
-                
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                    showCheckmark = false
-                }
-            }) {
-                HStack(spacing: 6) {
-                    if showCheckmark {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 14))
-                        Text("Lagt til!")
-                            .font(.system(size: 13, weight: .semibold))
-                    } else {
-                        Image(systemName: "cart.fill")
-                            .font(.system(size: 14))
-                        Text("Legg til")
-                            .font(.system(size: 13, weight: .semibold))
+                // Producto con imagen pequeña a la izquierda
+                HStack(alignment: .top, spacing: 12) {
+                    // Imagen del producto pequeña
+                    ZStack(alignment: .topTrailing) {
+                        AsyncImage(url: URL(string: product.imageUrl)) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 90, height: 90)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 90, height: 90)
+                                    .clipped()
+                                    .cornerRadius(12)
+                            case .failure:
+                                Color.gray.opacity(0.3)
+                                    .frame(width: 90, height: 90)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        Image(systemName: "photo")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(.white.opacity(0.5))
+                                    )
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                        
+                        // Tag de descuento diagonal
+                        Text("30% OFF")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Color(hex: "E93CAC")
+                            )
+                            .rotationEffect(.degrees(-10))
+                            .offset(x: 8, y: -8)
+                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     }
+                    
+                    // Información del producto a la derecha
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(product.name)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(2)
+                        
+                        if !product.description.isEmpty {
+                            Text(product.description)
+                                .font(.system(size: 11))
+                                .foregroundColor(.white.opacity(0.7))
+                                .lineLimit(2)
+                        }
+                        
+                        // Precio
+                        Text(product.price)
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundColor(TV2Theme.Colors.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: 18)
-                        .fill(showCheckmark ? Color.green : Color(hex: "5B5FCF"))
-                )
-            }
-            .disabled(showCheckmark)
+                
+                // Botón de agregar al carrito
+                Button(action: {
+                    onAddToCart()
+                    showCheckmark = true
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        showCheckmark = false
+                    }
+                }) {
+                    HStack(spacing: 6) {
+                        if showCheckmark {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                            Text("Lagt til!")
+                                .font(.system(size: 13, weight: .semibold))
+                        } else {
+                            Text("Legg til")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(showCheckmark ? Color.green : Color(hex: "2C0D65"))
+                    )
+                }
+                .disabled(showCheckmark)
             }
             .padding(14)
             .background(
@@ -212,16 +234,6 @@ struct TV2ProductOverlay: View {
                     )
             )
             .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
-            
-            // Sponsor badge debajo del contenido principal
-            if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
-                HStack {
-                    Spacer()
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                        .padding(.top, 8)
-                        .padding(.trailing, 12)
-                }
-            }
         }
     }
 }
