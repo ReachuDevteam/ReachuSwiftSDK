@@ -1,8 +1,10 @@
 import SwiftUI
+import ReachuUI
 
 struct MatchDetailView: View {
     let match: Match
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var cartManager: CartManager
     @State private var showVideoPlayer = false
     
     var body: some View {
@@ -101,12 +103,6 @@ struct MatchDetailView: View {
                                                 .foregroundColor(.white)
                                         )
                                 }
-                            }
-                            
-                            // Sponsor badge in top left
-                            if let campaignLogo = match.campaignLogo {
-                                TV2SponsorBadge(logoUrl: campaignLogo)
-                                    .padding(.leading, TV2Theme.Spacing.xs)
                             }
                         }
                         .padding(.horizontal, TV2Theme.Spacing.md)
@@ -222,6 +218,12 @@ struct MatchDetailView: View {
                             .background(TV2Theme.Colors.surfaceLight)
                             .padding(.horizontal, TV2Theme.Spacing.md)
                             .padding(.vertical, TV2Theme.Spacing.sm)
+                        
+                        // Products carousel from SDK
+                        RProductSlider(
+                            title: "Produkter",
+                            layout: .cards
+                        )
                         
                         // All football live section
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
