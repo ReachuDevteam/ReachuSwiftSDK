@@ -236,19 +236,15 @@ struct TV2ContestOverlay: View {
                     hasJoined = true
                     onJoin()
                 }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "party.popper.fill")
-                            .font(.system(size: 16))
-                        Text("Bli med!")
-                            .font(.system(size: 15, weight: .bold))
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(hex: "190437"))
-                    )
+                    Text("Bli med!")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(hex: "2C0D65"))
+                        )
                 }
             }
         }
