@@ -37,7 +37,7 @@ struct TV2PollOverlay: View {
                 HStack(spacing: 0) {
                     Spacer()
                     pollCard
-                        .frame(width: 240)
+                        .frame(width: 300)
                         .padding(.trailing, 16)
                         .padding(.bottom, 16)
                         .offset(x: dragOffset)

@@ -83,19 +83,6 @@ struct HomeView: View {
                     // Bottom Tab Bar (part of VStack, not floating)
                     BottomTabBar(selectedTab: $selectedTab)
                 }
-                
-                // MARK: - Floating Cart Indicator
-                // Configuration comes from reachu-config.json (size: small, mode: iconOnly)
-                // Custom padding needed here because of bottom tab bar
-                RFloatingCartIndicator(
-                    customPadding: EdgeInsets(
-                        top: 0,
-                        leading: 0,
-                        bottom: 100, // Above tab bar
-                        trailing: TV2Theme.Spacing.md
-                    )
-                )
-                // Without customPadding, would use smart defaults from the component
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
