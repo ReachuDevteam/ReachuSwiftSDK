@@ -420,13 +420,13 @@ struct TV2ProductOverlay: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: "7B5FFF").opacity(0.15))
+                    .fill(Color.black.opacity(0.4))
                     .background(
                         RoundedRectangle(cornerRadius: 20)
                             .fill(.ultraThinMaterial)
                     )
             )
-            .shadow(color: Color(hex: "7B5FFF").opacity(0.3), radius: 20, x: 0, y: 8)
+            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         }
     }
 }
