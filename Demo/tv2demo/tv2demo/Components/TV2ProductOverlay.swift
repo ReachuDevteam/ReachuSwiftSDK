@@ -1,17 +1,48 @@
 import SwiftUI
+import ReachuCore
 
 /// Componente para mostrar un producto individual
 /// Estilo basado en las cards del SDK de Reachu
+/// Los productos se fetchean desde la API de Reachu usando el ID del WebSocket
 struct TV2ProductOverlay: View {
-    let product: ProductEventData
+    let productEvent: ProductEventData  // Datos del WebSocket (incluye ID y fallback)
     let isChatExpanded: Bool
-    let onAddToCart: () -> Void
+    let sdk: SdkClient
+    let currency: String
+    let country: String
+    let onAddToCart: (Product?) -> Void  // Pasa el producto real de la API si está disponible
     let onDismiss: () -> Void
     
+    @StateObject private var viewModel: ProductFetchViewModel
     @State private var dragOffset: CGFloat = 0
     @State private var showCheckmark = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
+    init(
+        productEvent: ProductEventData,
+        isChatExpanded: Bool,
+        sdk: SdkClient,
+        currency: String,
+        country: String,
+        onAddToCart: @escaping () -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.productEvent = productEvent
+        self.isChatExpanded = isChatExpanded
+        self.sdk = sdk
+        self.currency = currency
+        self.country = country
+        self.onAddToCart = onAddToCart
+        self.onDismiss = onDismiss
+        
+        // Inicializar el ViewModel
+        _viewModel = StateObject(wrappedValue: ProductFetchViewModel(
+            sdk: sdk,
+            currency: currency,
+            country: country
+        ))
+    }
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
@@ -50,6 +81,50 @@ struct TV2ProductOverlay: View {
                     .gesture(dragGesture)
             }
         }
+        .task {
+            // Fetch del producto cuando aparece el componente
+            await viewModel.fetchProduct(id: productEvent.id)
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// Nombre del producto (API > WebSocket fallback)
+    private var displayName: String {
+        if let apiProduct = viewModel.product {
+            return apiProduct.title
+        }
+        return productEvent.name
+    }
+    
+    /// Descripción del producto (API > WebSocket fallback)
+    private var displayDescription: String {
+        if let apiProduct = viewModel.product {
+            return apiProduct.description ?? ""
+        }
+        return productEvent.description
+    }
+    
+    /// Precio formateado del producto (API > WebSocket fallback)
+    private var displayPrice: String {
+        if let apiProduct = viewModel.product {
+            return apiProduct.price.display
+        }
+        return productEvent.price
+    }
+    
+    /// URL de la imagen del producto (API > WebSocket fallback)
+    private var displayImageUrl: String {
+        if let apiProduct = viewModel.product,
+           let firstImage = apiProduct.images.first {
+            return firstImage.src
+        }
+        return productEvent.imageUrl
+    }
+    
+    /// campaignLogo siempre viene del WebSocket
+    private var displayCampaignLogo: String? {
+        return productEvent.campaignLogo
     }
     
     private var dragGesture: some Gesture {
@@ -96,8 +171,21 @@ struct TV2ProductOverlay: View {
                     .frame(width: 40, height: 4)
                     .padding(.top, 8)
                 
+                // Loading indicator sutil mientras se carga
+                if viewModel.isLoading {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                            .tint(.white)
+                        Text("Cargando producto...")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .padding(.vertical, 4)
+                }
+                
                 // Sponsor badge arriba a la izquierda
-                if let campaignLogo = product.campaignLogo, !campaignLogo.isEmpty {
+                if let campaignLogo = displayCampaignLogo, !campaignLogo.isEmpty {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sponset av")
@@ -132,7 +220,7 @@ struct TV2ProductOverlay: View {
                 HStack(alignment: .top, spacing: 12) {
                     // Imagen del producto pequeña
                     ZStack(alignment: .topTrailing) {
-                        AsyncImage(url: URL(string: product.imageUrl)) { phase in
+                        AsyncImage(url: URL(string: displayImageUrl)) { phase in
                             switch phase {
                             case .empty:
                                 ProgressView()
@@ -174,20 +262,20 @@ struct TV2ProductOverlay: View {
                     
                     // Información del producto a la derecha
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(product.name)
+                        Text(displayName)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white)
                             .lineLimit(2)
                         
-                        if !product.description.isEmpty {
-                            Text(product.description)
+                        if !displayDescription.isEmpty {
+                            Text(displayDescription)
                                 .font(.system(size: 11))
                                 .foregroundColor(.white.opacity(0.7))
                                 .lineLimit(2)
                         }
                         
                         // Precio
-                        Text(product.price)
+                        Text(displayPrice)
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(TV2Theme.Colors.primary)
                     }
@@ -196,7 +284,8 @@ struct TV2ProductOverlay: View {
                 
                 // Botón de agregar al carrito
                 Button(action: {
-                    onAddToCart()
+                    // Pasar el producto real de la API al callback
+                    onAddToCart(viewModel.product)
                     showCheckmark = true
                     
                     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
@@ -441,13 +530,16 @@ struct TV2TwoProductsOverlay: View {
 // MARK: - Previews
 
 #Preview("Single Product") {
-    ZStack {
+    let baseURL = URL(string: "https://api.reachu.io/graphql")!
+    let sdk = SdkClient(baseUrl: baseURL, apiKey: "DEMO_KEY")
+    
+    return ZStack {
         Color.black.ignoresSafeArea()
         
         TV2ProductOverlay(
-            product: ProductEventData(
+            productEvent: ProductEventData(
                 id: "prod_123",
-                name: "iPhone 15 Pro Max",
+                name: "iPhone 15 Pro Max (WebSocket Fallback)",
                 description: "El último modelo con titanio y cámara de 48MP",
                 price: "$1,199",
                 currency: "USD",
@@ -455,8 +547,15 @@ struct TV2TwoProductsOverlay: View {
                 campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
             ),
             isChatExpanded: false,
-            onAddToCart: {
-                print("Agregado al carrito")
+            sdk: sdk,
+            currency: "USD",
+            country: "US",
+            onAddToCart: { product in
+                if let p = product {
+                    print("Agregado al carrito (API): \(p.title)")
+                } else {
+                    print("Agregado al carrito (WebSocket fallback)")
+                }
             },
             onDismiss: {
                 print("Cerrado")

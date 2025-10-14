@@ -2,6 +2,8 @@ import SwiftUI
 import AVKit
 import AVFoundation
 import Combine
+import ReachuCore
+import ReachuUI
 
 /// TV2 Video Player with casting support
 /// Simulates a live streaming experience with AirPlay/Chromecast capability
@@ -11,6 +13,7 @@ struct TV2VideoPlayer: View {
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
     @StateObject private var webSocketManager = WebSocketManager()
+    @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -99,13 +102,24 @@ struct TV2VideoPlayer: View {
             }
             
             // Product Overlay (sobre el chat y poll)
-            if let product = webSocketManager.currentProduct, showProduct {
+            if let productEvent = webSocketManager.currentProduct, showProduct {
                 TV2ProductOverlay(
-                    product: product,
+                    productEvent: productEvent,
                     isChatExpanded: isChatExpanded,
-                    onAddToCart: {
-                        print("🛍️ [Product] Agregado al carrito: \(product.name)")
-                        // Aquí se agregará al carrito de Reachu después
+                    sdk: cartManager.sdk,
+                    currency: cartManager.currency,
+                    country: cartManager.country,
+                    onAddToCart: { product in
+                        if let apiProduct = product {
+                            print("🛍️ [Product] Agregando producto de la API al carrito: \(apiProduct.title)")
+                            Task {
+                                await cartManager.addProduct(apiProduct, quantity: 1)
+                                print("✅ [Product] Producto agregado al carrito")
+                            }
+                        } else {
+                            print("⚠️ [Product] Producto de la API aún no disponible, usando fallback: \(productEvent.name)")
+                            // El producto de la API aún no ha cargado, no hacer nada o usar fallback
+                        }
                     },
                     onDismiss: {
                         withAnimation {
