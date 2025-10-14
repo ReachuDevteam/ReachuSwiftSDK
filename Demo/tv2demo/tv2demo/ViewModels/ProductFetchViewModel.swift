@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import ReachuCore
+import ReachuUI
 
 /// ViewModel para fetch de productos individuales desde la API de Reachu
 /// Usado por los overlays de productos del WebSocket
