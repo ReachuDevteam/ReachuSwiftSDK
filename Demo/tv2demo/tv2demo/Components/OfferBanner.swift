@@ -22,11 +22,8 @@ struct OfferBannerView: View {
             // Background layer
             backgroundLayer
             
-            // Discount badge (top-left - rosa)
-            discountBadge
-            
             // Content in two columns
-            HStack(alignment: .center, spacing: 16) {
+            HStack(alignment: .bottom, spacing: 16) {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 4) {
                     // Logo
@@ -54,28 +51,27 @@ struct OfferBannerView: View {
                 Spacer()
                 
                 // Right column: Button (aligned to bottom)
-                VStack {
-                    Spacer()
+                HStack(spacing: 6) {
+                    Text("Se alle tilbud")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white)
                     
-                    HStack(spacing: 6) {
-                        Text("Se alle tilbud")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(TV2Theme.Colors.primary)
-                    )
+                    Image(systemName: "arrow.right")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white)
                 }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(TV2Theme.Colors.primary)
+                )
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
+            
+            // Discount badge (top-right - overlay absoluto)
+            discountBadge
         }
         .frame(height: 160)
         .cornerRadius(TV2Theme.CornerRadius.medium)
@@ -236,11 +232,8 @@ struct OfferBanner: View {
                 // Background layer
                 backgroundLayer
                 
-                // Discount badge (top-left - rosa)
-                discountBadge
-                
                 // Content in two columns
-                HStack(alignment: .center, spacing: 16) {
+                HStack(alignment: .bottom, spacing: 16) {
                     // Left column: Logo, title, subtitle, countdown
                     VStack(alignment: .leading, spacing: 4) {
                         // Logo
@@ -267,31 +260,28 @@ struct OfferBanner: View {
                     
                     Spacer()
                     
-                    // Right column: Button
-                    VStack {
-                        Spacer()
+                    // Right column: Button (aligned to bottom)
+                    HStack(spacing: 6) {
+                        Text("Se alle tilbud")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
                         
-                        HStack(spacing: 6) {
-                            Text("Se alle tilbud")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(TV2Theme.Colors.primary)
-                        )
-                        
-                        Spacer()
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(TV2Theme.Colors.primary)
+                    )
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 10)
+                .padding(.vertical, 12)
+                
+                // Discount badge (top-right - overlay absoluto)
+                discountBadge
             }
             .frame(height: 160)
             .cornerRadius(TV2Theme.CornerRadius.medium)
