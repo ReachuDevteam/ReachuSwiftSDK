@@ -293,7 +293,7 @@ struct TV2VideoPlayer: View {
                 id: $0.id, 
                 name: $0.name, 
                 order: $0.order, 
-                values: $0.values.joined(separator: ",")
+                values: $0.values  // Ya es String, no array
             ) 
         }
         
@@ -304,20 +304,41 @@ struct TV2VideoPlayer: View {
         let shipping = dto.productShipping?.map { s in
             ProductShipping(
                 id: s.id,
-                productId: s.productId,
-                shippingCountryId: s.shippingCountryId,
-                price: Float(s.price),
-                taxAmount: s.taxAmount.map { Float($0) },
-                taxRate: s.taxRate.map { Float($0) }
+                name: s.name,
+                description: s.description,
+                custom_price_enabled: s.customPriceEnabled,
+                default: s.defaultOption,
+                shipping_country: s.shippingCountry?.map { sc in
+                    ShippingCountry(
+                        id: sc.id,
+                        name: sc.country,
+                        price: Float(sc.price.amount),
+                        tax_amount: sc.price.taxAmount.map { Float($0) },
+                        tax_rate: sc.price.taxRate.map { Float($0) },
+                        country: sc.country
+                    )
+                }
             )
         }
         
         let returnInfo = dto.returnInfo.map { r in
             ReturnInfo(
-                id: r.id,
-                productId: r.productId,
-                days: r.days,
-                cost: Float(r.cost)
+                return_right: r.returnRight,
+                return_label: r.returnLabel,
+                return_cost: r.returnCost.map { Float($0) },
+                supplier_policy: r.supplierPolicy,
+                return_address: r.returnAddress.map { ra in
+                    ReturnAddress(
+                        same_as_business: ra.sameAsBusiness,
+                        same_as_warehouse: ra.sameAsWarehouse,
+                        country: ra.country,
+                        timezone: ra.timezone,
+                        return_city: ra.returnCity,
+                        post_code: ra.postCode,
+                        address: ra.address,
+                        address_2: ra.address2
+                    )
+                }
             )
         }
         
