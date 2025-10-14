@@ -86,14 +86,16 @@ struct TV2ProductOverlay: View {
         }
         .sheet(isPresented: $showProductDetail) {
             if let apiProduct = viewModel.product {
-                // Convertir ProductDto a Product para el sheet
-                RProductDetailSheet(
+                // Convertir ProductDto a Product para el overlay
+                RProductDetailOverlay(
                     product: convertDtoToProduct(apiProduct),
-                    isPresented: $showProductDetail,
-                    onAddToCart: { product, quantity in
-                        // Cerrar el overlay principal después de agregar
+                    onDismiss: {
                         showProductDetail = false
+                    },
+                    onAddToCart: { product in
+                        // Agregar al carrito y mostrar feedback
                         onAddToCart(apiProduct)
+                        showProductDetail = false
                         showCheckmark = true
                         
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
