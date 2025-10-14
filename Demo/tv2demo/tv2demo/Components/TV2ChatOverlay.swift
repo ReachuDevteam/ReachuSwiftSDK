@@ -67,7 +67,11 @@ struct TV2ChatOverlay: View {
                 .offset(y: dragOffset)
                 .background(
                     RoundedRectangle(cornerRadius: isExpanded ? 20 : 20)
-                        .fill(Color(hex: "120019"))
+                        .fill(Color.black.opacity(0.4))
+                        .background(
+                            RoundedRectangle(cornerRadius: isExpanded ? 20 : 20)
+                                .fill(.ultraThinMaterial)
+                        )
                         .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: -5)
                 )
             }
@@ -93,26 +97,42 @@ struct TV2ChatOverlay: View {
             
             // Header
             HStack(spacing: 8) {
-                Text("LIVE CHAT")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
+                // Sponsor badge (top left)
+                HStack(spacing: 4) {
+                    Text("Sponset av")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 60, maxHeight: 20)
+                        case .empty:
+                            ProgressView()
+                                .scaleEffect(0.4)
+                                .frame(width: 60, height: 20)
+                        case .failure:
+                            EmptyView()
+                        @unknown default:
+                            EmptyView()
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(0.3))
+                )
                 
                 Spacer()
                 
-                // Viewer count
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(Color.green)
-                        .frame(width: 5, height: 5)
-                    
-                    Text("\(chatManager.viewerCount)")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    Image(systemName: "person.2.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.6))
-                }
+                Text("LIVE CHAT")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
                 
                 // Expand/Collapse indicator
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.up")

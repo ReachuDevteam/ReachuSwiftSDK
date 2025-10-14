@@ -96,24 +96,30 @@ struct TV2PollOverlay: View {
                     .frame(width: 32, height: 4)
                     .padding(.top, 8)
                 
-                // Sponsor logo arriba a la izquierda
+                // Sponsor badge arriba a la izquierda
                 if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
                     HStack {
-                        AsyncImage(url: URL(string: campaignLogo)) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 80, maxHeight: 30)
-                            case .empty:
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 80, height: 30)
-                            case .failure:
-                                EmptyView()
-                            @unknown default:
-                                EmptyView()
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Sponset av")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            AsyncImage(url: URL(string: campaignLogo)) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                case .empty:
+                                    ProgressView()
+                                        .scaleEffect(0.5)
+                                        .frame(width: 80, height: 24)
+                                case .failure:
+                                    EmptyView()
+                                @unknown default:
+                                    EmptyView()
+                                }
                             }
                         }
                         Spacer()
@@ -184,16 +190,6 @@ struct TV2PollOverlay: View {
                 .degrees(showResults ? 180 : 0),
                 axis: (x: 0, y: 1, z: 0)
             )
-            
-            // Sponsor badge debajo del contenido principal
-            if let campaignLogo = poll.campaignLogo, !campaignLogo.isEmpty {
-                HStack {
-                    Spacer()
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                        .padding(.top, 8)
-                        .padding(.trailing, 12)
-                }
-            }
         }
     }
     
