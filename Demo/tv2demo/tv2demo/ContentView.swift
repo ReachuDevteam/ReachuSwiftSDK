@@ -9,10 +9,21 @@ import SwiftUI
 import ReachuUI
 
 struct ContentView: View {
+    @StateObject private var castingManager = CastingManager.shared
+    @State private var showCastingView = false
+    @EnvironmentObject var cartManager: CartManager
+    
     var body: some View {
         ZStack {
             // Main app content
             HomeView()
+            
+            // Mini player de casting (cuando está casteando y minimizado)
+            if castingManager.isCasting && !showCastingView {
+                CastingMiniPlayer(match: Match.barcelonaPSG) {
+                    showCastingView = true
+                }
+            }
             
             // Global floating cart indicator - always on top
             RFloatingCartIndicator(
@@ -23,6 +34,17 @@ struct ContentView: View {
                     trailing: TV2Theme.Spacing.md
                 )
             )
+        }
+        .fullScreenCover(isPresented: $showCastingView) {
+            if castingManager.isCasting {
+                CastingActiveView(match: Match.barcelonaPSG)
+                    .environmentObject(cartManager)
+            }
+        }
+        .onChange(of: castingManager.isCasting) { isCasting in
+            if !isCasting {
+                showCastingView = false
+            }
         }
     }
 }

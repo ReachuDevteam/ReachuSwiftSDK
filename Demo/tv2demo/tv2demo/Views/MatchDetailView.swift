@@ -5,7 +5,10 @@ struct MatchDetailView: View {
     let match: Match
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var cartManager: CartManager
+    @StateObject private var castingManager = CastingManager.shared
     @State private var showVideoPlayer = false
+    @State private var showCastDeviceSelection = false
+    @State private var showCastingView = false
     
     var body: some View {
         ZStack {
@@ -87,10 +90,11 @@ struct MatchDetailView: View {
                                             .frame(width: 44, height: 44)
                                     }
                                     
-                                    Button(action: {}) {
-                                        Image(systemName: "airplayvideo")
+                                    // Cast button - ACTIVADO
+                                    Button(action: { showCastDeviceSelection = true }) {
+                                        Image(systemName: castingManager.isCasting ? "tv.fill" : "airplayvideo")
                                             .font(.system(size: 20, weight: .medium))
-                                            .foregroundColor(.white)
+                                            .foregroundColor(castingManager.isCasting ? TV2Theme.Colors.primary : .white)
                                             .frame(width: 44, height: 44)
                                     }
                                     
@@ -248,6 +252,21 @@ struct MatchDetailView: View {
         .fullScreenCover(isPresented: $showVideoPlayer) {
             TV2VideoPlayer(match: match) {
                 showVideoPlayer = false
+            }
+        }
+        .sheet(isPresented: $showCastDeviceSelection) {
+            CastDeviceSelectionView { device in
+                castingManager.startCasting(to: device)
+                showCastingView = true
+            }
+        }
+        .fullScreenCover(isPresented: $showCastingView) {
+            CastingActiveView(match: match)
+                .environmentObject(cartManager)
+        }
+        .onChange(of: castingManager.isCasting) { isCasting in
+            if !isCasting {
+                showCastingView = false
             }
         }
     }
