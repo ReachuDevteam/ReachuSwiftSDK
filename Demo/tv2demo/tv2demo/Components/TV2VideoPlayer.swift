@@ -311,11 +311,14 @@ struct TV2VideoPlayer: View {
                 shipping_country: s.shippingCountry?.map { sc in
                     ShippingCountry(
                         id: sc.id,
-                        name: sc.country,
-                        price: Float(sc.price.amount),
-                        tax_amount: sc.price.taxAmount.map { Float($0) },
-                        tax_rate: sc.price.taxRate.map { Float($0) },
-                        country: sc.country
+                        country: sc.country,
+                        price: BasePrice(
+                            amount: Float(sc.price.amount),
+                            currency_code: sc.price.currencyCode,
+                            amount_incl_taxes: sc.price.amountInclTaxes.map { Float($0) },
+                            tax_amount: sc.price.taxAmount.map { Float($0) },
+                            tax_rate: sc.price.taxRate.map { Float($0) }
+                        )
                     )
                 }
             )
@@ -333,10 +336,10 @@ struct TV2VideoPlayer: View {
                         same_as_warehouse: ra.sameAsWarehouse,
                         country: ra.country,
                         timezone: ra.timezone,
-                        return_city: ra.returnCity,
-                        post_code: ra.postCode,
                         address: ra.address,
-                        address_2: ra.address2
+                        address_2: ra.address2,
+                        post_code: ra.postCode,
+                        return_city: ra.returnCity
                     )
                 }
             )
