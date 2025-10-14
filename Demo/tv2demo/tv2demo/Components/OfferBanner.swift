@@ -53,7 +53,7 @@ struct OfferBannerView: View {
                 
                 Spacer()
                 
-                // Right column: Button
+                // Right column: Button (aligned to bottom)
                 VStack {
                     Spacer()
                     
@@ -72,8 +72,6 @@ struct OfferBannerView: View {
                         Capsule()
                             .fill(TV2Theme.Colors.primary)
                     )
-                    
-                    Spacer()
                 }
             }
             .padding(.horizontal, 16)
@@ -115,11 +113,13 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge (top-left - rosa claro)
+    // MARK: - Discount Badge (top-right)
     
     private var discountBadge: some View {
         VStack {
             HStack {
+                Spacer()
+                
                 Text("OPPTIL -30%")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
@@ -131,9 +131,7 @@ struct OfferBannerView: View {
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
                     .padding(.top, 12)
-                    .padding(.leading, 12)
-                
-                Spacer()
+                    .padding(.trailing, 12)
             }
             
             Spacer()
@@ -333,11 +331,13 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge (top-left - rosa claro)
+    // MARK: - Discount Badge (top-right)
     
     private var discountBadge: some View {
         VStack {
             HStack {
+                Spacer()
+                
                 Text("OPPTIL -30%")
                     .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
@@ -349,9 +349,7 @@ struct OfferBanner: View {
                     .rotationEffect(.degrees(-10))
                     .shadow(color: .black.opacity(0.4), radius: 6, x: 0, y: 3)
                     .padding(.top, 12)
-                    .padding(.leading, 12)
-                
-                Spacer()
+                    .padding(.trailing, 12)
             }
             
             Spacer()
