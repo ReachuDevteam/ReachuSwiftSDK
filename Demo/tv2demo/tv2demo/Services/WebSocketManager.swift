@@ -119,12 +119,15 @@ class WebSocketManager: NSObject, ObservableObject {
     private func handleContestEvent(_ event: ContestEvent) {
         DispatchQueue.main.async {
             print("🎁 [WebSocket] Concurso recibido: \(event.data.name)")
+            print("🎁 [WebSocket] Contest campaignLogo en evento root: \(event.campaignLogo ?? "nil")")
+            print("🎁 [WebSocket] Contest campaignLogo en data: \(event.data.campaignLogo ?? "nil")")
             var contestData = event.data
             // Copiar campaignLogo del evento al data si existe
             if contestData.campaignLogo == nil && event.campaignLogo != nil {
                 contestData.campaignLogo = event.campaignLogo
+                print("🎁 [WebSocket] ✅ Copiado campaignLogo del root al data")
             }
-            print("🎁 [WebSocket] Contest campaignLogo: \(contestData.campaignLogo ?? "nil")")
+            print("🎁 [WebSocket] Contest campaignLogo final: \(contestData.campaignLogo ?? "nil")")
             self.currentContest = contestData
         }
     }

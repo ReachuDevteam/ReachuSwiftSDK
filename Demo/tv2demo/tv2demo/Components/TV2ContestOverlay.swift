@@ -246,13 +246,9 @@ struct TV2ContestOverlay: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
-                        LinearGradient(
-                            colors: [TV2Theme.Colors.primary, TV2Theme.Colors.secondary],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(hex: "190437"))
                     )
-                    .cornerRadius(12)
                 }
             }
         }
