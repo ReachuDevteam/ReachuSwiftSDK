@@ -9,7 +9,7 @@ public struct LiveStream: Identifiable, Codable, Equatable {
     public let title: String
     public let description: String?
     public let streamer: LiveStreamer
-    public let videoUrl: String // Vimeo URL
+    public let videoUrl: String? // Vimeo URL
     public let thumbnailUrl: String?
     public let viewerCount: Int
     public let isLive: Bool
@@ -23,7 +23,7 @@ public struct LiveStream: Identifiable, Codable, Equatable {
         title: String,
         description: String? = nil,
         streamer: LiveStreamer,
-        videoUrl: String,
+        videoUrl: String? = nil,
         thumbnailUrl: String? = nil,
         viewerCount: Int = 0,
         isLive: Bool = true,

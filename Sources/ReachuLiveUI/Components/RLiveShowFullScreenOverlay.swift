@@ -208,12 +208,25 @@ public struct RLiveShowFullScreenOverlay: View {
     private func videoPlayerSection(stream: LiveStream) -> some View {
         if currentStream != nil {
         // Use optimized video player
-        if let player = player {
-                CustomVideoPlayer(player: player)
+            if let videoUrl = stream.videoUrl, !videoUrl.isEmpty {
+                if videoUrl.contains("player.vimeo.com") {
+                    VimeoWebPlayer(videoUrl: videoUrl)
+                } else if let player = player {
+                    CustomVideoPlayer(player: player)
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
             } else {
-                // Loading placeholder
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
+                // Si no hay videoUrl, muestra "Coming soon"
+                ZStack {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                    Text("Coming soon")
+                        .font(.title)
+                        .foregroundColor(.white)
+                        .bold()
+                }
             }
         } else {
             // Thumbnail placeholder
@@ -529,6 +542,87 @@ public struct RLiveShowFullScreenOverlay: View {
     }
     
     // MARK: - Helper Methods
+
+    private func monitorPlayerStatus(_ item: AVPlayerItem) {
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            print("📊 [LiveShow] Player status: \(item.status.description)")
+            
+            if item.status == .readyToPlay {
+                print("✅ [LiveShow] Player is ready to play")
+                timer.invalidate()
+            } else if item.status == .failed {
+                let errorMsg = item.error?.localizedDescription ?? "Unknown error"
+                print("❌ [LiveShow] Player failed: \(errorMsg)")
+                timer.invalidate()
+                
+                // Detecta error 403 o mensaje de permiso
+                var shouldRefresh = false
+                if let error = item.error as NSError?, error.domain == NSURLErrorDomain {
+                    if let response = error.userInfo["NSErrorFailingURLResponseKey"] as? HTTPURLResponse,
+                    response.statusCode == 403 {
+                        shouldRefresh = true
+                    }
+                }
+                // Fallback: si el mensaje contiene "permission" o "403"
+                if errorMsg.lowercased().contains("permission") || errorMsg.contains("403") {
+                    shouldRefresh = true
+                }
+                
+                if shouldRefresh, let stream = self.currentStream {
+                    print("🔄 [LiveShow] HLS token expired or permission denied, refreshing HLS URL...")
+                    refreshHLSAndRetry(streamId: stream.id)
+                    return
+                }
+                
+                // Try fallback
+                DispatchQueue.main.async {
+                    self.setupPlayerWithFallback()
+                }
+            }
+        }
+    }
+
+    /// Llama al endpoint de refresh y reintenta la reproducción
+    private func refreshHLSAndRetry(streamId: String) {
+        isLoading = true
+        let urlString = "https://stg-dev-microservices.tipioapp.com/api/stg/livestreams/refresh-hls/sdk/\(streamId)" // Cambia TU_BACKEND por tu dominio real
+        guard let url = URL(string: urlString) else {
+            print("❌ [LiveShow] Invalid refresh HLS URL")
+            isLoading = false
+            return
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        // Si necesitas headers, agrégalos aquí
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("❌ [LiveShow] Failed to refresh HLS: \(error.localizedDescription)")
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            guard let data = data else {
+                print("❌ [LiveShow] No data from refresh HLS")
+                DispatchQueue.main.async { self.isLoading = false }
+                return
+            }
+            do {
+                // Decodifica el objeto stream actualizado
+                let decoder = JSONDecoder()
+                let refreshedTipioStream = try decoder.decode(TipioLiveStream.self, from: data)
+                let refreshedStream = refreshedTipioStream.toLiveStream()
+                DispatchQueue.main.async {
+                    // Actualiza el stream y reintenta setupPlayer
+                    self.liveShowManager.updateCurrentStream(refreshedStream)
+                    self.setupPlayer()
+                }
+            } catch {
+                print("❌ [LiveShow] Failed to decode refreshed stream: \(error.localizedDescription)")
+                DispatchQueue.main.async { self.isLoading = false }
+            }
+        }.resume()
+    }
     
     private func setupPlayer() {
         guard let stream = currentStream else { 
@@ -541,16 +635,14 @@ public struct RLiveShowFullScreenOverlay: View {
         
         // Use demo video for better performance (no WebView)
         print("🎬 [LiveShow] Using demo video for optimal performance")
-        let demoVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-        
-        // For HLS and direct video URLs, use AVPlayer
-        print("🎬 [LiveShow] Using AVPlayer for direct video URL")
-        
-        // Always use demo video for performance
-        let videoUrl = demoVideoUrl
-        
+        guard let videoUrl = stream.videoUrl else {
+            print("❌ [LiveShow] Stream has no video URL")
+            isLoading = false
+            return
+        }
+
         print("🔗 [LiveShow] Final video URL: \(videoUrl)")
-        
+
         guard let url = URL(string: videoUrl) else {
             print("❌ [LiveShow] Failed to create URL from: \(videoUrl)")
             isLoading = false
@@ -634,25 +726,25 @@ public struct RLiveShowFullScreenOverlay: View {
         print("✅ [LiveShow] Fallback player setup complete with: \(fallbackUrl)")
     }
     
-    private func monitorPlayerStatus(_ item: AVPlayerItem) {
-        // Check status periodically instead of using KVO
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-            print("📊 [LiveShow] Player status: \(item.status.description)")
+    // private func monitorPlayerStatus(_ item: AVPlayerItem) {
+    //     // Check status periodically instead of using KVO
+    //     Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+    //         print("📊 [LiveShow] Player status: \(item.status.description)")
             
-            if item.status == .readyToPlay {
-                print("✅ [LiveShow] Player is ready to play")
-                timer.invalidate()
-            } else if item.status == .failed {
-                print("❌ [LiveShow] Player failed: \(item.error?.localizedDescription ?? "Unknown error")")
-                timer.invalidate()
+    //         if item.status == .readyToPlay {
+    //             print("✅ [LiveShow] Player is ready to play")
+    //             timer.invalidate()
+    //         } else if item.status == .failed {
+    //             print("❌ [LiveShow] Player failed: \(item.error?.localizedDescription ?? "Unknown error")")
+    //             timer.invalidate()
                 
-                // Try fallback
-                DispatchQueue.main.async {
-                    self.setupPlayerWithFallback()
-                }
-            }
-        }
-    }
+    //             // Try fallback
+    //             DispatchQueue.main.async {
+    //                 self.setupPlayerWithFallback()
+    //             }
+    //         }
+    //     }
+    // }
     
     private func configurePlayer(with stream: LiveStream) {
         // Configure player for live streaming
