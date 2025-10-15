@@ -25,7 +25,7 @@ struct TV2ContestOverlay: View {
     // Ajustar bottom padding basado en si el chat está expandido
     private var bottomPadding: CGFloat {
         if isLandscape {
-            return 16
+            return isChatExpanded ? 250 : 60 // En landscape, más espacio cuando chat está expandido
         } else {
             return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
         }

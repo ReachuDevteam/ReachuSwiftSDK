@@ -8,142 +8,242 @@ struct TV2ChatOverlay: View {
     @StateObject private var chatManager = ChatManager()
     @State private var isExpanded = false
     @State private var dragOffset: CGFloat = 0
+    @State private var messageText = ""
+    @State private var floatingLikes: [FloatingLike] = []
+    @FocusState private var isTextFieldFocused: Bool
+    @State private var keyboardHeight: CGFloat = 0
+    @Environment(\.horizontalSizeClass) var horizontalSizeClass
+    @Environment(\.verticalSizeClass) var verticalSizeClass
     
     // Binding para comunicarse con el padre
     var onExpandedChange: ((Bool) -> Void)?
     
     private let expandedHeight: CGFloat = 0.4 // 40% de la pantalla
     private let collapsedHeight: CGFloat = 60
+    private let collapsedHeightLandscape: CGFloat = 44 // Más pequeño en horizontal
+    private let compactHeight: CGFloat = 0.25 // 25% cuando está escribiendo
+    
+    // Modelo para likes flotantes
+    struct FloatingLike: Identifiable {
+        let id = UUID()
+        let xOffset: CGFloat
+    }
+    
+    // Helper para detectar landscape
+    private var isLandscape: Bool {
+        verticalSizeClass == .compact
+    }
     
     var body: some View {
         GeometryReader { geometry in
-            VStack(spacing: 0) {
-                Spacer()
-                
-                // Chat Panel
+            ZStack {
                 VStack(spacing: 0) {
-                    // Drag Handle
-                    dragHandle
-                        .gesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    let translation = value.translation.height
-                                    if isExpanded {
-                                        // Swiping down when expanded
-                                        dragOffset = max(0, translation)
-                                    } else {
-                                        // Swiping up when collapsed
-                                        dragOffset = min(0, translation)
-                                    }
-                                }
-                                .onEnded { value in
-                                    let threshold: CGFloat = 50
-                                    let velocity = value.predictedEndTranslation.height
-                                    
-                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                        if isExpanded {
-                                            if dragOffset > threshold || velocity > 500 {
-                                                isExpanded = false
-                                                onExpandedChange?(false)
-                                            }
-                                        } else {
-                                            if dragOffset < -threshold || velocity < -500 {
-                                                isExpanded = true
-                                                onExpandedChange?(true)
-                                            }
-                                        }
-                                        dragOffset = 0
-                                    }
-                                }
-                        )
+                    Spacer()
                     
-                    // Chat Content
-                    if isExpanded {
-                        chatContent
-                            .frame(height: geometry.size.height * expandedHeight - collapsedHeight)
+                    // Chat Panel
+                    VStack(spacing: 0) {
+                        // Drag Handle
+                        dragHandle
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        let translation = value.translation.height
+                                        if isExpanded {
+                                            // Swiping down when expanded
+                                            dragOffset = max(0, translation)
+                                        } else {
+                                            // Swiping up when collapsed
+                                            dragOffset = min(0, translation)
+                                        }
+                                    }
+                                    .onEnded { value in
+                                        let threshold: CGFloat = 50
+                                        let velocity = value.predictedEndTranslation.height
+                                        
+                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                            if isExpanded {
+                                                if dragOffset > threshold || velocity > 500 {
+                                                    isExpanded = false
+                                                    onExpandedChange?(false)
+                                                }
+                                            } else {
+                                                if dragOffset < -threshold || velocity < -500 {
+                                                    isExpanded = true
+                                                    onExpandedChange?(true)
+                                                }
+                                            }
+                                            dragOffset = 0
+                                        }
+                                    }
+                            )
+                        
+                        // Chat Content
+                        if isExpanded {
+                            chatContent
+                                .frame(height: chatContentHeight(geometry: geometry))
+                        }
                     }
+                    .frame(height: chatPanelHeight(geometry: geometry))
+                    .offset(y: dragOffset - keyboardHeight)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.black.opacity(0.4))
+                            .background(
+                                RoundedRectangle(cornerRadius: 20)
+                                    .fill(.ultraThinMaterial)
+                            )
+                            .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
+                    )
                 }
-                .frame(height: isExpanded ? geometry.size.height * expandedHeight : collapsedHeight)
-                .offset(y: dragOffset)
-                .background(
-                    RoundedRectangle(cornerRadius: isExpanded ? 20 : 20)
-                        .fill(Color.black.opacity(0.4))
-                        .background(
-                            RoundedRectangle(cornerRadius: isExpanded ? 20 : 20)
-                                .fill(.ultraThinMaterial)
-                        )
-                        .shadow(color: Color.black.opacity(0.5), radius: 20, x: 0, y: -5)
-                )
+                .padding(.bottom, isTextFieldFocused ? 0 : 0)
+                .ignoresSafeArea(edges: .bottom)
+                
+                // Floating likes overlay
+                ForEach(floatingLikes) { like in
+                    FloatingLikeView()
+                        .offset(x: like.xOffset, y: geometry.size.height)
+                        .animation(.easeOut(duration: 2.5), value: floatingLikes.count)
+                        .onAppear {
+                            // Remove after animation
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                floatingLikes.removeAll { $0.id == like.id }
+                            }
+                        }
+                }
             }
-            .ignoresSafeArea(edges: .bottom)
         }
         .onAppear {
             chatManager.startSimulation()
+            setupKeyboardObservers()
         }
         .onDisappear {
             chatManager.stopSimulation()
+            removeKeyboardObservers()
         }
+    }
+    
+    // MARK: - Helpers
+    
+    private func chatPanelHeight(geometry: GeometryProxy) -> CGFloat {
+        if !isExpanded {
+            return isLandscape ? collapsedHeightLandscape : collapsedHeight
+        }
+        
+        if isTextFieldFocused {
+            return geometry.size.height * compactHeight
+        }
+        
+        return geometry.size.height * expandedHeight
+    }
+    
+    private func chatContentHeight(geometry: GeometryProxy) -> CGFloat {
+        let baseHeight = isLandscape ? collapsedHeightLandscape : collapsedHeight
+        
+        if isTextFieldFocused {
+            return geometry.size.height * compactHeight - baseHeight
+        }
+        return geometry.size.height * expandedHeight - baseHeight
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            withAnimation(.easeOut(duration: 0.3)) {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            withAnimation(.easeOut(duration: 0.3)) {
+                keyboardHeight = 0
+            }
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     // MARK: - Drag Handle
     
     private var dragHandle: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: isLandscape && !isExpanded ? 2 : 4) {
             // Drag indicator
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
-                .padding(.top, 6)
+                .padding(.top, isLandscape && !isExpanded ? 4 : 6)
             
-            // Header
-            HStack(spacing: 8) {
-                // Sponsor badge (top left)
-                HStack(spacing: 4) {
-                    Text("Sponset av")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 60, maxHeight: 20)
-                        case .empty:
-                            ProgressView()
-                                .scaleEffect(0.4)
-                                .frame(width: 60, height: 20)
-                        case .failure:
-                            EmptyView()
-                        @unknown default:
-                            EmptyView()
+            // Header - ocultar cuando está cerrado en landscape
+            if isExpanded || !isLandscape {
+                HStack(spacing: 8) {
+                    // Sponsor badge (top left)
+                    HStack(spacing: 4) {
+                        Text("Sponset av")
+                            .font(.system(size: 10, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 70, maxHeight: 24)
+                            case .empty:
+                                ProgressView()
+                                    .scaleEffect(0.5)
+                                    .frame(width: 70, height: 24)
+                            case .failure:
+                                EmptyView()
+                            @unknown default:
+                                EmptyView()
+                            }
                         }
                     }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.black.opacity(0.3))
+                    )
+                    
+                    Spacer()
+                    
+                    Text("LIVE CHAT")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    // Expand/Collapse indicator
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.leading, 2)
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 14)
+                .padding(.bottom, 8)
+            } else {
+                // En landscape cerrado, solo mostrar texto pequeño
+                HStack {
+                    Spacer()
+                    Text("CHAT")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white.opacity(0.8))
+                    Spacer()
+                }
                 .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.black.opacity(0.3))
-                )
-                
-                Spacer()
-                
-                Text("LIVE CHAT")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
-                
-                // Expand/Collapse indicator
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.leading, 2)
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 6)
         }
-        .frame(height: collapsedHeight)
+        .frame(height: isLandscape && !isExpanded ? collapsedHeightLandscape : collapsedHeight)
         .contentShape(Rectangle())
     }
     
@@ -154,13 +254,13 @@ struct TV2ChatOverlay: View {
             // Messages
             ScrollViewReader { proxy in
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 4) {
+                    LazyVStack(alignment: .leading, spacing: 8) {
                         ForEach(chatManager.messages) { message in
                             ChatMessageRow(message: message)
                                 .id(message.id)
                         }
                     }
-                    .padding(8)
+                    .padding(12)
                 }
                 .background(Color(hex: "120019"))
                 .onChange(of: chatManager.messages.count) { _ in
@@ -180,7 +280,7 @@ struct TV2ChatOverlay: View {
     // MARK: - Chat Input Bar
     
     private var chatInputBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             // Avatar placeholder
             Circle()
                 .fill(
@@ -190,35 +290,93 @@ struct TV2ChatOverlay: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 24, height: 24)
+                .frame(width: 28, height: 28)
                 .overlay(
                     Text("A")
-                        .font(.system(size: 11, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white)
                 )
             
             // Input field
-            Text("Send a message...")
-                .font(.system(size: 11))
-                .foregroundColor(.white.opacity(0.4))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 10)
+            TextField("Send a message...", text: $messageText)
+                .font(.system(size: 13))
+                .foregroundColor(.white)
+                .accentColor(TV2Theme.Colors.primary)
+                .focused($isTextFieldFocused)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
                 .background(
-                    RoundedRectangle(cornerRadius: 16)
+                    RoundedRectangle(cornerRadius: 18)
                         .fill(Color.white.opacity(0.1))
                 )
+                .onSubmit {
+                    sendMessage()
+                }
+            
+            // Like button
+            Button(action: {
+                sendFloatingLike()
+            }) {
+                Image(systemName: "hand.thumbsup.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(TV2Theme.Colors.primary)
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(TV2Theme.Colors.primary.opacity(0.2))
+                    )
+            }
             
             // Send button
-            Button(action: {}) {
+            Button(action: {
+                sendMessage()
+            }) {
                 Image(systemName: "paperplane.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(TV2Theme.Colors.primary)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(messageText.isEmpty ? .white.opacity(0.3) : TV2Theme.Colors.primary)
+                    .padding(10)
+                    .background(
+                        Circle()
+                            .fill(messageText.isEmpty ? Color.white.opacity(0.1) : TV2Theme.Colors.primary.opacity(0.2))
+                    )
             }
+            .disabled(messageText.isEmpty)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .padding(.bottom, 8)
         .background(Color(hex: "120019"))
+    }
+    
+    // MARK: - Actions
+    
+    private func sendMessage() {
+        guard !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        let message = ChatMessage(
+            username: "Angelo",
+            text: messageText,
+            usernameColor: TV2Theme.Colors.secondary,
+            likes: 0,
+            timestamp: Date()
+        )
+        
+        chatManager.addMessage(message)
+        messageText = ""
+        
+        // Close keyboard after sending
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            isTextFieldFocused = false
+        }
+    }
+    
+    private func sendFloatingLike() {
+        let randomOffset = CGFloat.random(in: -80...80)
+        let like = FloatingLike(xOffset: randomOffset)
+        
+        withAnimation {
+            floatingLikes.append(like)
+        }
     }
 }
 
@@ -228,50 +386,39 @@ struct ChatMessageRow: View {
     let message: ChatMessage
     
     var body: some View {
-        HStack(alignment: .top, spacing: 6) {
+        HStack(alignment: .top, spacing: 8) {
             // Avatar
             Circle()
                 .fill(message.usernameColor.opacity(0.3))
-                .frame(width: 22, height: 22)
+                .frame(width: 28, height: 28)
                 .overlay(
                     Text(String(message.username.prefix(1)))
-                        .font(.system(size: 10, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(message.usernameColor)
                 )
             
-            VStack(alignment: .leading, spacing: 1) {
-                // Username and badges
-                HStack(spacing: 3) {
-                    if message.isModerator {
-                        Image(systemName: "shield.fill")
-                            .font(.system(size: 8))
-                            .foregroundColor(Color.green)
-                    }
-                    
-                    if message.isSubscriber {
-                        Image(systemName: "star.fill")
-                            .font(.system(size: 8))
-                            .foregroundColor(TV2Theme.Colors.secondary)
-                    }
-                    
+            VStack(alignment: .leading, spacing: 2) {
+                // Username and time
+                HStack(spacing: 4) {
                     Text(message.username)
-                        .font(.system(size: 10, weight: .bold))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundColor(message.usernameColor)
                     
                     Text(timeAgo(from: message.timestamp))
-                        .font(.system(size: 8))
+                        .font(.system(size: 10))
                         .foregroundColor(.white.opacity(0.4))
                 }
                 
                 // Message
                 Text(message.text)
-                    .font(.system(size: 11))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.95))
                     .fixedSize(horizontal: false, vertical: true)
             }
             
             Spacer(minLength: 0)
         }
+        .padding(.vertical, 4)
     }
     
     private func timeAgo(from date: Date) -> String {
@@ -291,8 +438,7 @@ struct ChatMessage: Identifiable {
     let username: String
     let text: String
     let usernameColor: Color
-    let isModerator: Bool
-    let isSubscriber: Bool
+    let likes: Int
     let timestamp: Date
 }
 
@@ -308,22 +454,22 @@ class ChatManager: ObservableObject {
     private let maxMessages = 100
     
     // Simulated users with colors
-    private let simulatedUsers: [(String, Color, Bool, Bool)] = [
-        ("SportsFan23", .cyan, false, false),
-        ("GoalKeeper", .green, false, true),
-        ("MatchMaster", .orange, false, true),
-        ("TeamCaptain", .red, true, true),
-        ("ElClásico", .purple, false, false),
-        ("FutbolLoco", .yellow, false, true),
-        ("DefenderPro", .blue, false, false),
-        ("StrikerKing", .pink, false, true),
-        ("MidFielder", .mint, false, false),
-        ("CoachView", .indigo, true, false),
-        ("TacticsGuru", .teal, false, true),
-        ("FanZone", .orange, false, false),
-        ("LiveScore", .green, false, false),
-        ("TeamSpirit", .purple, false, true),
-        ("UltrasGroup", .red, false, true),
+    private let simulatedUsers: [(String, Color)] = [
+        ("SportsFan23", .cyan),
+        ("GoalKeeper", .green),
+        ("MatchMaster", .orange),
+        ("TeamCaptain", .red),
+        ("ElClásico", .purple),
+        ("FutbolLoco", .yellow),
+        ("DefenderPro", .blue),
+        ("StrikerKing", .pink),
+        ("MidFielder", .mint),
+        ("CoachView", .indigo),
+        ("TacticsGuru", .teal),
+        ("FanZone", .orange),
+        ("LiveScore", .green),
+        ("TeamSpirit", .purple),
+        ("UltrasGroup", .red),
     ]
     
     // Mensajes simulados (temática de fútbol, noruego)
@@ -387,6 +533,15 @@ class ChatManager: ObservableObject {
         viewerTimer = nil
     }
     
+    func addMessage(_ message: ChatMessage) {
+        messages.append(message)
+        
+        // Keep only last N messages
+        if messages.count > maxMessages {
+            messages.removeFirst()
+        }
+    }
+    
     private func scheduleNextMessage() {
         let interval = Double.random(in: 1.5...4.0)
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
@@ -403,8 +558,7 @@ class ChatManager: ObservableObject {
             username: user.0,
             text: messageText,
             usernameColor: user.1,
-            isModerator: user.2,
-            isSubscriber: user.3,
+            likes: Int.random(in: 0...12), // Random initial likes
             timestamp: Date()
         )
         
@@ -414,6 +568,35 @@ class ChatManager: ObservableObject {
         if messages.count > maxMessages {
             messages.removeFirst()
         }
+    }
+}
+
+// MARK: - Floating Like View
+
+struct FloatingLikeView: View {
+    @State private var yOffset: CGFloat = 0
+    @State private var opacity: Double = 1.0
+    @State private var scale: CGFloat = 1.0
+    @State private var rotation: Double = 0
+    
+    var body: some View {
+        Image(systemName: "hand.thumbsup.fill")
+            .font(.system(size: 32, weight: .bold))
+            .foregroundColor(TV2Theme.Colors.primary)
+            .shadow(color: TV2Theme.Colors.primary.opacity(0.5), radius: 8, x: 0, y: 0)
+            .scaleEffect(scale)
+            .rotationEffect(.degrees(rotation))
+            .opacity(opacity)
+            .offset(y: yOffset)
+            .onAppear {
+                // Animate floating up
+                withAnimation(.easeOut(duration: 2.5)) {
+                    yOffset = -UIScreen.main.bounds.height
+                    opacity = 0
+                    scale = 1.5
+                    rotation = Double.random(in: -30...30)
+                }
+            }
     }
 }
 
