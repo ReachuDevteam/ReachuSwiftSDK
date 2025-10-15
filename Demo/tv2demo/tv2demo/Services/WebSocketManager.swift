@@ -195,6 +195,30 @@ struct PollOption: Codable, Identifiable, Equatable {
     enum CodingKeys: String, CodingKey {
         case text
         case avatarUrl
+        case imageUrl
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        text = try container.decode(String.self, forKey: .text)
+        // Try to decode both avatarUrl and imageUrl
+        if let url = try container.decodeIfPresent(String.self, forKey: .avatarUrl) {
+            avatarUrl = url
+        } else {
+            avatarUrl = try container.decodeIfPresent(String.self, forKey: .imageUrl)
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(text, forKey: .text)
+        try container.encodeIfPresent(avatarUrl, forKey: .avatarUrl)
+    }
+    
+    // Init for manual creation (preview, tests)
+    init(text: String, avatarUrl: String?) {
+        self.text = text
+        self.avatarUrl = avatarUrl
     }
 }
 
