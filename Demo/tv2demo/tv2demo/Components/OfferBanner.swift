@@ -1,18 +1,5 @@
 import SwiftUI
 
-/// Triangle Shape para el badge de descuento
-struct TriangleShape: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        // Triángulo en esquina superior derecha
-        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
-        path.closeSubpath()
-        return path
-    }
-}
-
 /// Offer Banner View (for NavigationLink)
 /// Version without internal button for use with NavigationLink
 struct OfferBannerView: View {
@@ -36,7 +23,7 @@ struct OfferBannerView: View {
             backgroundLayer
             
             // Content in two columns
-            HStack(alignment: .bottom, spacing: 16) {
+            HStack(alignment: .center, spacing: 16) {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 4) {
                     // Logo
@@ -63,28 +50,39 @@ struct OfferBannerView: View {
                 
                 Spacer()
                 
-                // Right column: Button (aligned to bottom)
-                HStack(spacing: 6) {
-                    Text("Se alle tilbud")
-                        .font(.system(size: 12, weight: .semibold))
+                // Right column: Discount badge + Button (centered vertically)
+                VStack(spacing: 8) {
+                    // Discount badge
+                    Text("Opp til 30%")
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(TV2Theme.Colors.background)
+                        )
                     
-                    Image(systemName: "arrow.right")
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
+                    // Button
+                    HStack(spacing: 6) {
+                        Text("Se alle tilbud")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        Image(systemName: "arrow.right")
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        Capsule()
+                            .fill(TV2Theme.Colors.primary)
+                    )
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(TV2Theme.Colors.primary)
-                )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            
-            // Discount badge (top-right - overlay absoluto)
-            discountBadge
         }
         .frame(height: 160)
         .cornerRadius(TV2Theme.CornerRadius.medium)
@@ -122,32 +120,6 @@ struct OfferBannerView: View {
         }
     }
     
-    // MARK: - Discount Badge (top-right)
-    
-    private var discountBadge: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Spacer()
-                
-                ZStack(alignment: .center) {
-                    // Triángulo grande en la esquina (color TV2 violeta)
-                    TriangleShape()
-                        .fill(Color(hex: "7B5FFF")) // TV2 primary color
-                        .frame(width: 150, height: 150)
-                    
-                    // Texto del descuento (inclinado en la banda)
-                    Text("Opp til 30%")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white)
-                        .rotationEffect(.degrees(-45))
-                        .offset(x: 30, y: 5)
-                }
-            }
-            
-            Spacer()
-        }
-        .allowsHitTesting(false)
-    }
     
     // MARK: - Analog Countdown
     
@@ -248,7 +220,7 @@ struct OfferBanner: View {
                 backgroundLayer
                 
                 // Content in two columns
-                HStack(alignment: .bottom, spacing: 16) {
+                HStack(alignment: .center, spacing: 16) {
                     // Left column: Logo, title, subtitle, countdown
                     VStack(alignment: .leading, spacing: 4) {
                         // Logo
@@ -275,28 +247,39 @@ struct OfferBanner: View {
                     
                     Spacer()
                     
-                    // Right column: Button (aligned to bottom)
-                    HStack(spacing: 6) {
-                        Text("Se alle tilbud")
-                            .font(.system(size: 12, weight: .semibold))
+                    // Right column: Discount badge + Button (centered vertically)
+                    VStack(spacing: 8) {
+                        // Discount badge
+                        Text("Opp til 30%")
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(TV2Theme.Colors.background)
+                            )
                         
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white)
+                        // Button
+                        HStack(spacing: 6) {
+                            Text("Se alle tilbud")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(TV2Theme.Colors.primary)
+                        )
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        Capsule()
-                            .fill(TV2Theme.Colors.primary)
-                    )
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                
-                // Discount badge (top-right - overlay absoluto)
-                discountBadge
             }
             .frame(height: 160)
             .cornerRadius(TV2Theme.CornerRadius.medium)
@@ -336,32 +319,6 @@ struct OfferBanner: View {
         }
     }
     
-    // MARK: - Discount Badge (top-right)
-    
-    private var discountBadge: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                Spacer()
-                
-                ZStack(alignment: .center) {
-                    // Triángulo grande en la esquina (color TV2 violeta)
-                    TriangleShape()
-                        .fill(Color(hex: "7B5FFF")) // TV2 primary color
-                        .frame(width: 150, height: 150)
-                    
-                    // Texto del descuento (inclinado en la banda)
-                    Text("Opp til 30%")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white)
-                        .rotationEffect(.degrees(-45))
-                        .offset(x: 30, y: 5)
-                }
-            }
-            
-            Spacer()
-        }
-        .allowsHitTesting(false)
-    }
     
     // MARK: - Analog Countdown
     

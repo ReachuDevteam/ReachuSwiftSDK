@@ -6,7 +6,7 @@ struct TV2Theme {
     // MARK: - Colors
     struct Colors {
         // Dark theme colors matching TV2
-        static let background = Color(hex: "#1A1625")
+        static let background = Color(hex: "#16001A")
         static let surface = Color(hex: "#2B2438")
         static let surfaceLight = Color(hex: "#3D3450")
         

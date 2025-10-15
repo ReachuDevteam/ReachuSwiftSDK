@@ -17,6 +17,11 @@ struct ContentItem: Identifiable {
     let isLive: Bool
     let duration: String?
     let date: String?
+    // Match-specific properties
+    let homeTeamLogo: String?
+    let awayTeamLogo: String?
+    let matchTime: String?
+    let matchday: String?
     
     init(
         title: String,
@@ -25,7 +30,11 @@ struct ContentItem: Identifiable {
         category: String,
         isLive: Bool = false,
         duration: String? = nil,
-        date: String? = nil
+        date: String? = nil,
+        homeTeamLogo: String? = nil,
+        awayTeamLogo: String? = nil,
+        matchTime: String? = nil,
+        matchday: String? = nil
     ) {
         self.title = title
         self.subtitle = subtitle
@@ -34,6 +43,10 @@ struct ContentItem: Identifiable {
         self.isLive = isLive
         self.duration = duration
         self.date = date
+        self.homeTeamLogo = homeTeamLogo
+        self.awayTeamLogo = awayTeamLogo
+        self.matchTime = matchTime
+        self.matchday = matchday
     }
 }
 
@@ -41,9 +54,21 @@ struct ContentItem: Identifiable {
 extension ContentItem {
     static let mockItems: [ContentItem] = [
         ContentItem(
+            title: "Barcelona - PSG",
+            subtitle: "Fotball • Menn • UEFA Champions League",
+            imageURL: "barcelona_psg_bg",
+            category: "Fotball",
+            isLive: true,
+            date: "Tir. 18:40",
+            homeTeamLogo: "barcelona_logo",
+            awayTeamLogo: "psg_logo",
+            matchTime: "18:40",
+            matchday: "M"
+        ),
+        ContentItem(
             title: "FOTBALLKVELD",
             subtitle: "Alt fra CL-runden",
-            imageURL: "fotball_1",
+            imageURL: "bg-card-1",
             category: "Fotball",
             isLive: false,
             date: "I dag 17:40"
@@ -51,7 +76,7 @@ extension ContentItem {
         ContentItem(
             title: "CHAMPIONS LEAGUE",
             subtitle: "Kremmerne",
-            imageURL: "fotball_2",
+            imageURL: "bg-card-3",
             category: "Fotball",
             isLive: false,
             date: "I dag 19:00"
@@ -59,7 +84,7 @@ extension ContentItem {
         ContentItem(
             title: "Rolex Shanghai Masters",
             subtitle: "Dag 2",
-            imageURL: "tennis_1",
+            imageURL: "bg-card-2",
             category: "Tennis",
             isLive: true,
             duration: "DIREKTE"
@@ -67,7 +92,7 @@ extension ContentItem {
         ContentItem(
             title: "Rosenborg vs Brann",
             subtitle: "Fotball kveld",
-            imageURL: "fotball_3",
+            imageURL: "bg-card-1",
             category: "Fotball",
             isLive: false,
             date: "I dag 17:40"
@@ -75,7 +100,7 @@ extension ContentItem {
         ContentItem(
             title: "Håndball Highlights",
             subtitle: "Best of Champions League",
-            imageURL: "handball_1",
+            imageURL: "bg-card-2",
             category: "Håndball",
             isLive: false,
             date: "I går 20:00"
@@ -83,7 +108,7 @@ extension ContentItem {
         ContentItem(
             title: "Sykkel VM",
             subtitle: "Herrenes fellesstart",
-            imageURL: "cycling_1",
+            imageURL: "bg-card-3",
             category: "Sykkel",
             isLive: false,
             date: "27 sep"
