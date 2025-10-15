@@ -9,6 +9,7 @@ struct MatchDetailView: View {
     @State private var showVideoPlayer = false
     @State private var showCastDeviceSelection = false
     @State private var showCastingView = false
+    @State private var selectedTab: TabItem = .home
     
     var body: some View {
         ZStack {
@@ -16,6 +17,7 @@ struct MatchDetailView: View {
             TV2Theme.Colors.background
                 .ignoresSafeArea()
             
+            VStack(spacing: 0) {
             ScrollView {
                 VStack(spacing: 0) {
                     // Hero Image with gradient overlay
@@ -24,7 +26,7 @@ struct MatchDetailView: View {
                         Image(match.backgroundImage)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(width: UIScreen.main.bounds.width, height: 400)
+                            .frame(width: UIScreen.main.bounds.width, height: 320)
                             .clipped()
                             .blur(radius: 0.5) // Slight blur for better text readability
                         
@@ -66,16 +68,16 @@ struct MatchDetailView: View {
                                 .frame(width: 60)
                             }
                         }
-                        .frame(height: 400)
+                        .frame(height: 320)
                         
                         // Top bar buttons
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.sm) {
                             HStack {
                                 Button(action: { dismiss() }) {
                                     Image(systemName: "chevron.left")
-                                        .font(.system(size: 20, weight: .semibold))
+                                        .font(.system(size: 16, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .frame(width: 44, height: 44)
+                                        .frame(width: 36, height: 36)
                                         .background(Color.black.opacity(0.3))
                                         .clipShape(Circle())
                                 }
@@ -85,25 +87,25 @@ struct MatchDetailView: View {
                                 HStack(spacing: TV2Theme.Spacing.md) {
                                     Button(action: {}) {
                                         Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 16, weight: .medium))
                                             .foregroundColor(.white)
-                                            .frame(width: 44, height: 44)
+                                            .frame(width: 36, height: 36)
                                     }
                                     
                                     // Cast button - ACTIVADO
                                     Button(action: { showCastDeviceSelection = true }) {
                                         Image(systemName: castingManager.isCasting ? "tv.fill" : "airplayvideo")
-                                            .font(.system(size: 20, weight: .medium))
+                                            .font(.system(size: 16, weight: .medium))
                                             .foregroundColor(castingManager.isCasting ? TV2Theme.Colors.primary : .white)
-                                            .frame(width: 44, height: 44)
+                                            .frame(width: 36, height: 36)
                                     }
                                     
                                     Circle()
                                         .fill(TV2Theme.Colors.secondary)
-                                        .frame(width: 40, height: 40)
+                                        .frame(width: 32, height: 32)
                                         .overlay(
                                             Text("A")
-                                                .font(.system(size: 16, weight: .semibold))
+                                                .font(.system(size: 14, weight: .semibold))
                                                 .foregroundColor(.white)
                                         )
                                 }
@@ -114,19 +116,19 @@ struct MatchDetailView: View {
                     }
                     
                     // Content section
-                    VStack(alignment: .leading, spacing: TV2Theme.Spacing.lg) {
+                    VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
                         // Title
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.xs) {
                             Text(match.title)
-                                .font(.system(size: 32, weight: .bold))
+                                .font(.system(size: 26, weight: .bold))
                                 .foregroundColor(TV2Theme.Colors.textPrimary)
                             
                             Text(match.subtitle)
-                                .font(TV2Theme.Typography.body)
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(TV2Theme.Colors.textSecondary)
                         }
                         .padding(.horizontal, TV2Theme.Spacing.md)
-                        .padding(.top, TV2Theme.Spacing.lg)
+                        .padding(.top, TV2Theme.Spacing.md)
                         
                         // Action Buttons
                         HStack(spacing: TV2Theme.Spacing.md) {
@@ -134,13 +136,13 @@ struct MatchDetailView: View {
                             Button(action: { showVideoPlayer = true }) {
                                 HStack(spacing: TV2Theme.Spacing.sm) {
                                     Image(systemName: "play.fill")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                     Text("Spill av")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                 }
                                 .foregroundColor(.black)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, TV2Theme.Spacing.md)
+                                .padding(.vertical, TV2Theme.Spacing.sm)
                                 .background(
                                     Capsule()
                                         .fill(Color(hex: "#A891FF"))
@@ -151,13 +153,13 @@ struct MatchDetailView: View {
                             Button(action: {}) {
                                 HStack(spacing: TV2Theme.Spacing.sm) {
                                     Image(systemName: "play.fill")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                     Text("Sammendrag")
-                                        .font(.system(size: 18, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                 }
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, TV2Theme.Spacing.md)
+                                .padding(.vertical, TV2Theme.Spacing.sm)
                                 .background(
                                     Capsule()
                                         .strokeBorder(.white, lineWidth: 2)
@@ -168,13 +170,13 @@ struct MatchDetailView: View {
                         
                         // Description
                         Text("Fra \(match.venue), Dortmund og kampen mellom \(match.homeTeam.name) og \(match.awayTeam.name) i \(match.competition).")
-                            .font(TV2Theme.Typography.body)
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundColor(TV2Theme.Colors.textPrimary)
                             .padding(.horizontal, TV2Theme.Spacing.md)
                         
                         if let commentator = match.commentator {
                             Text("Kommentator: \(commentator).")
-                                .font(TV2Theme.Typography.body)
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(TV2Theme.Colors.textPrimary)
                                 .padding(.horizontal, TV2Theme.Spacing.md)
                         }
@@ -187,11 +189,11 @@ struct MatchDetailView: View {
                         // Availability section
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.xs) {
                             Text(match.availability.title)
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(TV2Theme.Colors.textPrimary)
                             
                             Text(match.availability.description)
-                                .font(TV2Theme.Typography.body)
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(TV2Theme.Colors.textSecondary)
                         }
                         .padding(.horizontal, TV2Theme.Spacing.md)
@@ -204,7 +206,7 @@ struct MatchDetailView: View {
                         // Related teams section
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
                             Text("Følg lagene")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(TV2Theme.Colors.textPrimary)
                                 .padding(.horizontal, TV2Theme.Spacing.md)
                             
@@ -232,13 +234,13 @@ struct MatchDetailView: View {
                         // All football live section
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
                             Text("All fotball direkte")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(TV2Theme.Colors.textPrimary)
                                 .padding(.horizontal, TV2Theme.Spacing.md)
                             
                             // More content cards would go here
                             Text("Mer innhold kommer her...")
-                                .font(TV2Theme.Typography.body)
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(TV2Theme.Colors.textSecondary)
                                 .padding(.horizontal, TV2Theme.Spacing.md)
                                 .padding(.bottom, 100)
@@ -247,6 +249,10 @@ struct MatchDetailView: View {
                 }
             }
             .ignoresSafeArea(edges: .top)
+            
+            // Bottom Tab Bar
+            BottomTabBar(selectedTab: $selectedTab)
+            }
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showVideoPlayer) {
@@ -277,19 +283,19 @@ struct TeamCard: View {
     let team: Team
     
     var body: some View {
-        VStack(spacing: TV2Theme.Spacing.md) {
+        VStack(spacing: TV2Theme.Spacing.sm) {
             // Team logo
             Circle()
                 .fill(Color.white)
-                .frame(width: 120, height: 120)
+                .frame(width: 96, height: 96)
                 .overlay(
                     Image(team.logo)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 80, height: 80)
+                        .frame(width: 64, height: 64)
                 )
         }
-        .frame(width: 160, height: 160)
+        .frame(width: 128, height: 128)
         .background(TV2Theme.Colors.surface)
         .cornerRadius(TV2Theme.CornerRadius.medium)
     }

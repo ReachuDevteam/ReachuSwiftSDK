@@ -42,16 +42,6 @@ struct HomeView: View {
                                 .padding(.vertical, TV2Theme.Spacing.sm)
                             }
                             
-                            // Products Section - Automatically loads from API
-                            RProductSlider(
-                                title: "🛍️ Products",
-                                layout: .cards,
-                                maxItems: 6,
-                                currency: cartManager.currency,
-                                country: cartManager.country
-                            )
-                            .environmentObject(cartManager)
-                            
                             // Featured Content Section
                             contentSection(
                                 title: "Direkte",
@@ -75,6 +65,35 @@ struct HomeView: View {
                                 .buttonStyle(PlainButtonStyle())
                             }
                             .padding(.horizontal, TV2Theme.Spacing.md)
+                            .padding(.top, TV2Theme.Spacing.lg)
+                            
+                            // Products Section - Ukens tilbud
+                            VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
+                                // Custom header with logo
+                                HStack {
+                                    Text("Ukens tilbud")
+                                        .font(TV2Theme.Typography.title)
+                                        .foregroundColor(TV2Theme.Colors.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Image("logo")
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(height: 20)
+                                }
+                                .padding(.horizontal, TV2Theme.Spacing.md)
+                                
+                                // Products carousel
+                                RProductSlider(
+                                    title: "",
+                                    layout: .cards,
+                                    maxItems: 6,
+                                    currency: cartManager.currency,
+                                    country: cartManager.country
+                                )
+                                .environmentObject(cartManager)
+                            }
                             .padding(.top, TV2Theme.Spacing.lg)
                             .padding(.bottom, TV2Theme.Spacing.xl)
                         }
