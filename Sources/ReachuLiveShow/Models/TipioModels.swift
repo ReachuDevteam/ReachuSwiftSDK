@@ -16,9 +16,10 @@ public struct TipioLiveStream: Identifiable, Codable {
     public let endDate: Date        // End date
     public let streamDone: Bool?    // Stream completion status (null at beginning)
     public let videoId: String?     // Final video ID (written at end)
+    public let videoUrl: String?     
     
     enum CodingKeys: String, CodingKey {
-        case id, title, liveStreamId, hls, player, thumbnail, broadcasting, date, streamDone, videoId
+        case id, title, liveStreamId, hls, player, thumbnail, broadcasting, date, streamDone, videoId, videoUrl
         case endDate = "end_date"
     }
     
@@ -33,7 +34,8 @@ public struct TipioLiveStream: Identifiable, Codable {
         date: Date,
         endDate: Date,
         streamDone: Bool?,
-        videoId: String?
+        videoId: String?,
+        videoUrl: String?
     ) {
         self.id = id
         self.title = title
@@ -46,6 +48,7 @@ public struct TipioLiveStream: Identifiable, Codable {
         self.endDate = endDate
         self.streamDone = streamDone
         self.videoId = videoId
+        self.videoUrl = videoUrl
     }
     
     public init(from decoder: Decoder) throws {
@@ -60,7 +63,7 @@ public struct TipioLiveStream: Identifiable, Codable {
         broadcasting = try container.decode(Bool.self, forKey: .broadcasting)
         streamDone = try container.decodeIfPresent(Bool.self, forKey: .streamDone)
         videoId = try container.decodeIfPresent(String.self, forKey: .videoId)
-        
+        videoUrl = try container.decodeIfPresent(String.self, forKey: .videoUrl)
         // Parse dates
         let dateFormatter = ISO8601DateFormatter()
         dateFormatter.formatOptions = [
@@ -91,6 +94,7 @@ public struct TipioLiveStream: Identifiable, Codable {
         try container.encode(broadcasting, forKey: .broadcasting)
         try container.encodeIfPresent(streamDone, forKey: .streamDone)
         try container.encodeIfPresent(videoId, forKey: .videoId)
+        try container.encodeIfPresent(videoUrl, forKey: .videoUrl)
         
         // Encode dates
         let dateFormatter = ISO8601DateFormatter()
@@ -183,12 +187,15 @@ public struct TipioStreamStatusData: Codable {
     public let hlsUrl: String?
     public let playerUrl: String?
     public let videoId: String?
+    public let videoUrl: String?
+    
     
     enum CodingKeys: String, CodingKey {
         case broadcasting
         case hlsUrl = "hls"
         case playerUrl = "player"
         case videoId
+        case videoUrl
     }
 }
 
@@ -269,15 +276,15 @@ extension TipioLiveStream {
         )
         
         // Use HLS URL if available, otherwise player URL, otherwise construct Vimeo embed
-        let videoUrl: String
-        if let hls = hls, !hls.isEmpty {
-            videoUrl = hls
-        } else if let player = player, !player.isEmpty {
-            videoUrl = player
-        } else {
-            // Construct Vimeo embed URL from liveStreamId
-            videoUrl = "https://player.vimeo.com/video/\(liveStreamId)"
-        }
+        //let videoUrl: String
+        //if let hls = hls, !hls.isEmpty {
+            //videoUrl = hls
+        //} else if let player = player, !player.isEmpty {
+            //videoUrl = player
+        //} else {
+            //// Construct Vimeo embed URL from liveStreamId
+            //videoUrl = "https://player.vimeo.com/video/\(liveStreamId)"
+        //}
         
         return LiveStream(
             id: String(id),

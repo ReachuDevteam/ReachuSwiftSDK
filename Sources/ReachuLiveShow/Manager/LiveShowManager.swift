@@ -49,6 +49,10 @@ public class LiveShowManager: ObservableObject {
     }
     
     // MARK: - Public Methods
+
+    public func updateCurrentStream(_ stream: LiveStream) {
+        self.currentStream = stream
+    }
     
     /// Show live stream with specified layout
     public func showLiveStream(_ stream: LiveStream, layout: LiveStreamLayout = .fullScreenOverlay) {
@@ -172,7 +176,7 @@ public class LiveShowManager: ObservableObject {
             print("❌ [LiveShow] Failed to fetch Tipio livestream: \(error)")
         }
     }
-    
+
     /// Fetch all active livestreams from Tipio
     public func fetchActiveTipioStreams() async {
         do {
@@ -411,7 +415,8 @@ public class LiveShowManager: ObservableObject {
             date: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
             endDate: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
             streamDone: nil,
-            videoId: "1029631656" // Use the working video ID
+            videoId: "1029631656", // Use the working video ID
+            videoUrl: nil
         )
         
         // Create demo streamers
