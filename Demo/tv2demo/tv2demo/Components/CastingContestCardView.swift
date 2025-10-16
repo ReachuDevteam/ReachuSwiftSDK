@@ -13,6 +13,7 @@ struct CastingContestCardView: View {
     @State private var finalPrize: String = ""
     @State private var isSpinning = false
     @State private var countdown: Int = 10
+    @State private var dragOffset: CGFloat = 0
     
     private let prizes = [
         "🎁 Premio Principal",
@@ -42,6 +43,24 @@ struct CastingContestCardView: View {
         )
         .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         .frame(width: 320)
+        .offset(y: dragOffset)
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    if value.translation.height > 0 {
+                        dragOffset = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height > 100 {
+                        onDismiss()
+                    } else {
+                        withAnimation(.spring()) {
+                            dragOffset = 0
+                        }
+                    }
+                }
+        )
         .onAppear {
             startCountdown()
         }

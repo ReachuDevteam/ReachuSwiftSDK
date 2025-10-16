@@ -10,6 +10,7 @@ struct CastingPollCardView: View {
     @State private var selectedOption: String?
     @State private var hasVoted = false
     @State private var showResults = false
+    @State private var dragOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
@@ -37,6 +38,24 @@ struct CastingPollCardView: View {
             perspective: 0.5
         )
         .frame(width: 300)
+        .offset(y: dragOffset)
+        .gesture(
+            DragGesture()
+                .onChanged { value in
+                    if value.translation.height > 0 {
+                        dragOffset = value.translation.height
+                    }
+                }
+                .onEnded { value in
+                    if value.translation.height > 100 {
+                        onDismiss()
+                    } else {
+                        withAnimation(.spring()) {
+                            dragOffset = 0
+                        }
+                    }
+                }
+        )
     }
     
     // MARK: - Front View
