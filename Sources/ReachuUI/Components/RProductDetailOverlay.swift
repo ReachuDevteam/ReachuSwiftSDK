@@ -105,8 +105,14 @@ public struct RProductDetailOverlay: View {
                         productInfoSection
                         variantSelectionSection
                         quantitySelectionSection
-                        descriptionSection
-                        specificationsSection
+                        
+                        if productDetailConfig.showDescription {
+                            descriptionSection
+                        }
+                        
+                        if productDetailConfig.showSpecifications {
+                            specificationsSection
+                        }
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.top, ReachuSpacing.lg)
@@ -200,7 +206,7 @@ public struct RProductDetailOverlay: View {
                         EmptyView()
                     }
                 }
-                .frame(height: 240)
+                .frame(height: productDetailConfig.imageHeight ?? 240)
             } else {
                 // Multiple images with gallery
                 VStack(spacing: ReachuSpacing.md) {
@@ -234,57 +240,59 @@ public struct RProductDetailOverlay: View {
                             .tag(index)
                         }
                     }
-                    .frame(height: 300)
+                    .frame(height: productDetailConfig.imageHeight ?? 300)
                     #if os(iOS) || os(tvOS) || os(watchOS)
-                    .tabViewStyle(.page(indexDisplayMode: .always))
+                    .tabViewStyle(.page(indexDisplayMode: productDetailConfig.showImageGallery ? .always : .never))
                     #endif
                     
-                    // Thumbnail gallery
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: ReachuSpacing.sm) {
-                            ForEach(Array(displayImages.enumerated()), id: \.element.id) { index, image in
-                                AsyncImage(url: URL(string: image.url)) { phase in
-                                    switch phase {
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                    case .failure(_):
-                                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                            .fill(ReachuColors.background)
-                                            .overlay {
-                                                Image(systemName: "exclamationmark.triangle")
-                                                    .font(.caption)
-                                                    .foregroundColor(ReachuColors.error)
-                                            }
-                                    case .empty:
-                                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                            .fill(ReachuColors.background)
-                                            .overlay {
-                                                ProgressView()
-                                                    .scaleEffect(0.5)
-                                            }
-                                    @unknown default:
-                                        EmptyView()
+                    // Thumbnail gallery (conditionally shown)
+                    if productDetailConfig.showImageGallery {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: ReachuSpacing.sm) {
+                                ForEach(Array(displayImages.enumerated()), id: \.element.id) { index, image in
+                                    AsyncImage(url: URL(string: image.url)) { phase in
+                                        switch phase {
+                                        case .success(let image):
+                                            image
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                        case .failure(_):
+                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                                .fill(ReachuColors.background)
+                                                .overlay {
+                                                    Image(systemName: "exclamationmark.triangle")
+                                                        .font(.caption)
+                                                        .foregroundColor(ReachuColors.error)
+                                                }
+                                        case .empty:
+                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                                .fill(ReachuColors.background)
+                                                .overlay {
+                                                    ProgressView()
+                                                        .scaleEffect(0.5)
+                                                }
+                                        @unknown default:
+                                            EmptyView()
+                                        }
                                     }
-                                }
-                                .frame(width: 60, height: 60)
-                                .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.small))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                        .stroke(
-                                            selectedImageIndex == index ? ReachuColors.primary : ReachuColors.border,
-                                            lineWidth: selectedImageIndex == index ? 2 : 1
-                                        )
-                                }
-                                .onTapGesture {
-                                    withAnimation(.easeInOut(duration: 0.3)) {
-                                        selectedImageIndex = index
+                                    .frame(width: 60, height: 60)
+                                    .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.small))
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                            .stroke(
+                                                selectedImageIndex == index ? ReachuColors.primary : ReachuColors.border,
+                                                lineWidth: selectedImageIndex == index ? 2 : 1
+                                            )
+                                    }
+                                    .onTapGesture {
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            selectedImageIndex = index
+                                        }
                                     }
                                 }
                             }
+                            .padding(.horizontal, ReachuSpacing.lg)
                         }
-                        .padding(.horizontal, ReachuSpacing.lg)
                     }
                 }
             }

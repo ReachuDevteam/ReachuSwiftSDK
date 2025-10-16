@@ -92,8 +92,12 @@
     "modalHeight": "half",
     "imageFullWidth": true,
     "imageCornerRadius": 0,
+    "imageHeight": 380,
+    "showImageGallery": false,
     "headerStyle": "compact",
-    "enableImageZoom": false
+    "enableImageZoom": false,
+    "showDescription": false,
+    "showSpecifications": false
   },
   "marketFallback": {
     "countryCode": "NO",
@@ -130,12 +134,16 @@
     },
     "imageFullWidth": "Boolean - true: image extends to edges without padding, false: image has standard padding",
     "imageCornerRadius": "Number - Corner radius for product images (0 for square edges)",
+    "imageHeight": "Number (optional) - Fixed height for product images in pixels (e.g., 380). If not set, uses default heights (240 for single image, 300 for gallery)",
+    "showImageGallery": "Boolean - true: show thumbnail gallery for multiple images, false: hide gallery thumbnails and page indicators",
     "headerStyle": ["standard", "compact"],
     "headerStyleDescription": {
       "standard": "Normal header with standard spacing",
       "compact": "Reduced header height for more content space"
     },
-    "enableImageZoom": "Boolean - true: allow pinch-to-zoom on product images, false: disable zoom"
+    "enableImageZoom": "Boolean - true: allow pinch-to-zoom on product images, false: disable zoom",
+    "showDescription": "Boolean - true: show product description section, false: hide description",
+    "showSpecifications": "Boolean - true: show product specifications section, false: hide specifications"
   }
 }
 

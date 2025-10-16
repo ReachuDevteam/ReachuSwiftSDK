@@ -296,8 +296,14 @@ public struct ProductDetailConfiguration {
     public let modalHeight: ProductDetailModalHeight
     public let imageFullWidth: Bool
     public let imageCornerRadius: CGFloat
+    public let imageHeight: CGFloat?
+    public let showImageGallery: Bool
     public let headerStyle: ProductDetailHeaderStyle
     public let enableImageZoom: Bool
+    
+    // Content Sections
+    public let showDescription: Bool
+    public let showSpecifications: Bool
     
     // Additional Options
     public let showCloseButton: Bool
@@ -308,8 +314,12 @@ public struct ProductDetailConfiguration {
         modalHeight: ProductDetailModalHeight = .full,
         imageFullWidth: Bool = false,
         imageCornerRadius: CGFloat = 12,
+        imageHeight: CGFloat? = nil,
+        showImageGallery: Bool = true,
         headerStyle: ProductDetailHeaderStyle = .standard,
         enableImageZoom: Bool = true,
+        showDescription: Bool = true,
+        showSpecifications: Bool = true,
         showCloseButton: Bool = true,
         dismissOnTapOutside: Bool = true,
         enableShareButton: Bool = false
@@ -317,8 +327,12 @@ public struct ProductDetailConfiguration {
         self.modalHeight = modalHeight
         self.imageFullWidth = imageFullWidth
         self.imageCornerRadius = imageCornerRadius
+        self.imageHeight = imageHeight
+        self.showImageGallery = showImageGallery
         self.headerStyle = headerStyle
         self.enableImageZoom = enableImageZoom
+        self.showDescription = showDescription
+        self.showSpecifications = showSpecifications
         self.showCloseButton = showCloseButton
         self.dismissOnTapOutside = dismissOnTapOutside
         self.enableShareButton = enableShareButton
