@@ -27,47 +27,54 @@ struct CastingActiveView: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
             
-            // Contenedor centrado con ancho máximo
-            HStack {
+            // Contenido principal (sin límite de ancho)
+            VStack(spacing: 0) {
+                // Header
+                castingHeader
+                
                 Spacer()
                 
-                ZStack {
-                    // Contenido principal
-                    VStack(spacing: 16) {
-                        // Header (full width)
-                        castingHeader
-                        
-                        Spacer()
-                        
-                        // Match info (centrado)
-                        matchInfo
-                        
-                        Spacer()
-                        
-                        // Eventos interactivos (compactos, centrados)
-                        interactiveContentSection
-                        
-                        Spacer()
-                        
-                        // Controles (centrados)
-                        playbackControls
-                            .padding(.bottom, isChatExpanded ? 280 : 80)
-                    }
-                    
-                    // Chat overlay (igual que en TV2VideoPlayer)
-                    TV2ChatOverlay(
-                        showControls: $showControls,
-                        onExpandedChange: { expanded in
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                isChatExpanded = expanded
-                            }
-                        }
-                    )
+                // Match info (centrado con límite)
+                HStack {
+                    Spacer()
+                    matchInfo
+                        .frame(maxWidth: 500)
+                    Spacer()
                 }
-                .frame(maxWidth: 500)
                 
                 Spacer()
+                
+                // Eventos interactivos (compactos, centrados con límite)
+                HStack {
+                    Spacer()
+                    interactiveContentSection
+                        .frame(maxWidth: 500)
+                    Spacer()
+                }
+                
+                Spacer()
+                
+                // Controles (centrados con límite)
+                HStack {
+                    Spacer()
+                    playbackControls
+                        .frame(maxWidth: 500)
+                    Spacer()
+                }
+                .padding(.bottom, 20)
+                .offset(y: isChatExpanded ? -220 : 0) // Mover hacia arriba cuando chat se abre
+                .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isChatExpanded)
             }
+            
+            // Chat overlay (sin límite para que se vea completo)
+            TV2ChatOverlay(
+                showControls: $showControls,
+                onExpandedChange: { expanded in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isChatExpanded = expanded
+                    }
+                }
+            )
         }
         .navigationBarHidden(true)
         .onAppear {
