@@ -348,6 +348,7 @@ public class ConfigurationLoader {
         
         let modalHeight = ProductDetailModalHeight(rawValue: config.modalHeight ?? "full") ?? .full
         let headerStyle = ProductDetailHeaderStyle(rawValue: config.headerStyle ?? "standard") ?? .standard
+        let closeButtonStyle = CloseButtonStyle(rawValue: config.closeButtonStyle ?? "navigationBar") ?? .navigationBar
         
         return ProductDetailConfiguration(
             modalHeight: modalHeight,
@@ -357,6 +358,8 @@ public class ConfigurationLoader {
             showImageGallery: config.showImageGallery ?? true,
             headerStyle: headerStyle,
             enableImageZoom: config.enableImageZoom ?? true,
+            showNavigationTitle: config.showNavigationTitle ?? true,
+            closeButtonStyle: closeButtonStyle,
             showDescription: config.showDescription ?? true,
             showSpecifications: config.showSpecifications ?? true
         )
@@ -461,6 +464,8 @@ private struct JSONProductDetailConfiguration: Codable {
     let showImageGallery: Bool?
     let headerStyle: String?
     let enableImageZoom: Bool?
+    let showNavigationTitle: Bool?
+    let closeButtonStyle: String?
     let showDescription: Bool?
     let showSpecifications: Bool?
 }

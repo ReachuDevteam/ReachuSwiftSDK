@@ -301,6 +301,10 @@ public struct ProductDetailConfiguration {
     public let headerStyle: ProductDetailHeaderStyle
     public let enableImageZoom: Bool
     
+    // Header Options
+    public let showNavigationTitle: Bool
+    public let closeButtonStyle: CloseButtonStyle
+    
     // Content Sections
     public let showDescription: Bool
     public let showSpecifications: Bool
@@ -318,6 +322,8 @@ public struct ProductDetailConfiguration {
         showImageGallery: Bool = true,
         headerStyle: ProductDetailHeaderStyle = .standard,
         enableImageZoom: Bool = true,
+        showNavigationTitle: Bool = true,
+        closeButtonStyle: CloseButtonStyle = .navigationBar,
         showDescription: Bool = true,
         showSpecifications: Bool = true,
         showCloseButton: Bool = true,
@@ -331,6 +337,8 @@ public struct ProductDetailConfiguration {
         self.showImageGallery = showImageGallery
         self.headerStyle = headerStyle
         self.enableImageZoom = enableImageZoom
+        self.showNavigationTitle = showNavigationTitle
+        self.closeButtonStyle = closeButtonStyle
         self.showDescription = showDescription
         self.showSpecifications = showSpecifications
         self.showCloseButton = showCloseButton
@@ -358,6 +366,12 @@ public enum ProductDetailModalHeight: String, CaseIterable {
 public enum ProductDetailHeaderStyle: String, CaseIterable {
     case standard = "standard"
     case compact = "compact"
+}
+
+public enum CloseButtonStyle: String, CaseIterable {
+    case navigationBar = "navigationBar"
+    case overlayTopLeft = "overlayTopLeft"
+    case overlayTopRight = "overlayTopRight"
 }
 
 // MARK: - UI Enums

@@ -50,6 +50,7 @@ public struct RProductDetailOverlay: View {
     @State private var quantity = 1
     @State private var showSuccessAnimation = false
     @State private var showToastOverModal = false
+    @State private var imageLoaded = false
     
     // MARK: - Computed Properties
     private var displayImages: [ProductImage] {
@@ -95,47 +96,62 @@ public struct RProductDetailOverlay: View {
     // MARK: - Body
     public var body: some View {
         NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                ScrollView {
+                    VStack(spacing: 0) {
                     // Image Gallery
                     imageGallerySection
                     
-                    // Product Information
-                    VStack(spacing: ReachuSpacing.md) {
-                        productInfoSection
-                        variantSelectionSection
-                        quantitySelectionSection
-                        
-                        if productDetailConfig.showDescription {
-                            descriptionSection
+                    // Product Information (only show after image loads)
+                    if imageLoaded || displayImages.isEmpty {
+                        VStack(spacing: ReachuSpacing.md) {
+                            productInfoSection
+                            variantSelectionSection
+                            quantitySelectionSection
+                            
+                            if productDetailConfig.showDescription {
+                                descriptionSection
+                            }
+                            
+                            if productDetailConfig.showSpecifications {
+                                specificationsSection
+                            }
                         }
-                        
-                        if productDetailConfig.showSpecifications {
-                            specificationsSection
-                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.top, ReachuSpacing.lg)
+                        .padding(.bottom, ReachuSpacing.lg)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
-                    .padding(.horizontal, ReachuSpacing.lg)
-                    .padding(.top, ReachuSpacing.lg)
-                    .padding(.bottom, ReachuSpacing.lg)
-                }
-            }
-            .navigationTitle("Product Details")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(productDetailConfig.headerStyle == .compact ? .inline : .large)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    if productDetailConfig.showCloseButton {
-                        Button("Close") {
-                            onDismiss?()
-                            dismiss()
-                        }
                     }
                 }
-            }
-            .safeAreaInset(edge: .bottom) {
-                // Bottom Action Bar
-                bottomActionBar
+                .if(productDetailConfig.showNavigationTitle) { view in
+                    view.navigationTitle("Product Details")
+                }
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(productDetailConfig.headerStyle == .compact ? .inline : .large)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        if productDetailConfig.showCloseButton && productDetailConfig.closeButtonStyle == .navigationBar {
+                            Button("Close") {
+                                onDismiss?()
+                                dismiss()
+                            }
+                        }
+                    }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    // Bottom Action Bar (only show after image loads)
+                    if imageLoaded || displayImages.isEmpty {
+                        bottomActionBar
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
+                
+                // Overlay Close Button
+                if productDetailConfig.showCloseButton && productDetailConfig.closeButtonStyle != .navigationBar {
+                    overlayCloseButton
+                }
             }
         }
         .modifier(ProductDetailPresentationModifier(config: productDetailConfig))
@@ -187,8 +203,13 @@ public struct RProductDetailOverlay: View {
                     case .success(let image):
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fit)
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
                             .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
+                            .onAppear {
+                                imageLoaded = true
+                            }
                     case .failure(_):
                         RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                             .fill(ReachuColors.background)
@@ -207,6 +228,7 @@ public struct RProductDetailOverlay: View {
                     }
                 }
                 .frame(height: productDetailConfig.imageHeight ?? 240)
+                .background(Color.clear)
             } else {
                 // Multiple images with gallery
                 VStack(spacing: ReachuSpacing.md) {
@@ -218,8 +240,15 @@ public struct RProductDetailOverlay: View {
                                 case .success(let image):
                                     image
                                         .resizable()
-                                        .aspectRatio(contentMode: .fit)
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(maxWidth: .infinity)
+                                        .clipped()
                                         .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
+                                        .onAppear {
+                                            if index == 0 {
+                                                imageLoaded = true
+                                            }
+                                        }
                                 case .failure(_):
                                     RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                         .fill(ReachuColors.background)
@@ -297,7 +326,7 @@ public struct RProductDetailOverlay: View {
                 }
             }
         }
-        .padding(.top, ReachuSpacing.md)
+        .padding(.top, productDetailConfig.imageFullWidth ? 0 : ReachuSpacing.md)
         .padding(.horizontal, productDetailConfig.imageFullWidth ? 0 : ReachuSpacing.lg)
     }
     
@@ -458,19 +487,6 @@ public struct RProductDetailOverlay: View {
                         }
                 }
                 .disabled(quantity >= (selectedVariant?.quantity ?? product.quantity ?? 0))
-                
-                Spacer()
-                
-                // Total price (aligned to right)
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Total")
-                        .font(ReachuTypography.caption1)
-                        .foregroundColor(ReachuColors.textSecondary)
-                    Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
-                        .font(ReachuTypography.title3)
-                        .foregroundColor(ReachuColors.textPrimary)
-                        .fontWeight(.semibold)
-                }
             }
         }
     }
@@ -856,6 +872,28 @@ public struct RProductDetailOverlay: View {
             Spacer()
         }
         .transition(.move(edge: .top).combined(with: .opacity))
+    }
+    
+    // MARK: - Overlay Close Button
+    private var overlayCloseButton: some View {
+        Button(action: {
+            onDismiss?()
+            dismiss()
+        }) {
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.6))
+                    .frame(width: 36, height: 36)
+                
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+        }
+        .padding(.top, 16)
+        .padding(.leading, productDetailConfig.closeButtonStyle == .overlayTopLeft ? 16 : 0)
+        .padding(.trailing, productDetailConfig.closeButtonStyle == .overlayTopRight ? 16 : 0)
+        .frame(maxWidth: .infinity, alignment: productDetailConfig.closeButtonStyle == .overlayTopLeft ? .leading : .trailing)
     }
 }
 
