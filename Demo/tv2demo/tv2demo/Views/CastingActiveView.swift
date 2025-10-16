@@ -26,102 +26,113 @@ struct CastingActiveView: View {
     }
     
     var body: some View {
-        ZStack {
-            // Background
-            Image("football_field_bg")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .ignoresSafeArea()
-                .blur(radius: 20)
-            
-            Color.black.opacity(0.5)
-                .ignoresSafeArea()
-            
-            // Contenido principal
-            VStack(spacing: 0) {
-                // Header
-                castingHeader
+        GeometryReader { geometry in
+            ZStack {
+                // Background
+                Image("football_field_bg")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .ignoresSafeArea()
+                    .blur(radius: 20)
                 
-                Spacer()
+                Color.black.opacity(0.5)
+                    .ignoresSafeArea()
                 
-                // Match info
-                matchInfo
-                
-                Spacer()
-                
-                // Controles
-                playbackControls
-            }
-            
-            // Contest Overlay (máxima prioridad) - IGUAL QUE TV2VideoPlayer
-            if let contest = webSocketManager.currentContest, showContest {
-                TV2ContestOverlay(
-                    contest: contest,
-                    isChatExpanded: isChatExpanded,
-                    onJoin: {
-                        print("🎁 [Contest] Usuario se unió: \(contest.name)")
-                    },
-                    onDismiss: {
-                        withAnimation {
-                            showContest = false
-                        }
-                    }
-                )
-            }
-            
-            // Product Overlay - IGUAL QUE TV2VideoPlayer
-            if let productEvent = webSocketManager.currentProduct, showProduct {
-                TV2ProductOverlay(
-                    productEvent: productEvent,
-                    isChatExpanded: isChatExpanded,
-                    sdk: sdkClient,
-                    currency: cartManager.currency,
-                    country: cartManager.country,
-                    onAddToCart: { productDto in
-                        if let apiProduct = productDto {
-                            print("🛍️ [Product] Agregando producto al carrito: \(apiProduct.title)")
-                            let product = convertDtoToProduct(apiProduct)
-                            Task {
-                                await cartManager.addProduct(product, quantity: 1)
-                                print("✅ [Product] Producto agregado al carrito")
-                            }
-                        } else {
-                            print("⚠️ [Product] Producto aún no disponible: \(productEvent.name)")
-                        }
-                    },
-                    onDismiss: {
-                        withAnimation {
-                            showProduct = false
-                        }
-                    }
-                )
-            }
-            
-            // Poll Overlay - IGUAL QUE TV2VideoPlayer
-            if let poll = webSocketManager.currentPoll, showPoll {
-                TV2PollOverlay(
-                    poll: poll,
-                    isChatExpanded: isChatExpanded,
-                    onVote: { option in
-                        print("📊 [Poll] Votado: \(option)")
-                    },
-                    onDismiss: {
-                        withAnimation {
-                            showPoll = false
-                        }
-                    }
-                )
-            }
-            
-            // Chat Overlay - IGUAL QUE TV2VideoPlayer
-            TV2ChatOverlay(
-                showControls: $showControls,
-                onExpandedChange: { expanded in
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        isChatExpanded = expanded
-                    }
+                // Contenido principal
+                VStack(spacing: 0) {
+                    // Header
+                    castingHeader
+                    
+                    Spacer()
+                    
+                    // Match info
+                    matchInfo
+                    
+                    Spacer()
+                    
+                    // Controles
+                    playbackControls
+                        .padding(.bottom, 20)
                 }
-            )
+                
+                // Área de overlays (limitada a 70% de la altura)
+                VStack {
+                    Spacer()
+                    
+                    ZStack {
+                        // Contest Overlay
+                        if let contest = webSocketManager.currentContest, showContest {
+                            TV2ContestOverlay(
+                                contest: contest,
+                                isChatExpanded: isChatExpanded,
+                                onJoin: {
+                                    print("🎁 [Contest] Usuario se unió: \(contest.name)")
+                                },
+                                onDismiss: {
+                                    withAnimation {
+                                        showContest = false
+                                    }
+                                }
+                            )
+                        }
+                        
+                        // Product Overlay
+                        if let productEvent = webSocketManager.currentProduct, showProduct {
+                            TV2ProductOverlay(
+                                productEvent: productEvent,
+                                isChatExpanded: isChatExpanded,
+                                sdk: sdkClient,
+                                currency: cartManager.currency,
+                                country: cartManager.country,
+                                onAddToCart: { productDto in
+                                    if let apiProduct = productDto {
+                                        print("🛍️ [Product] Agregando producto al carrito: \(apiProduct.title)")
+                                        let product = convertDtoToProduct(apiProduct)
+                                        Task {
+                                            await cartManager.addProduct(product, quantity: 1)
+                                            print("✅ [Product] Producto agregado al carrito")
+                                        }
+                                    } else {
+                                        print("⚠️ [Product] Producto aún no disponible: \(productEvent.name)")
+                                    }
+                                },
+                                onDismiss: {
+                                    withAnimation {
+                                        showProduct = false
+                                    }
+                                }
+                            )
+                        }
+                        
+                        // Poll Overlay
+                        if let poll = webSocketManager.currentPoll, showPoll {
+                            TV2PollOverlay(
+                                poll: poll,
+                                isChatExpanded: isChatExpanded,
+                                onVote: { option in
+                                    print("📊 [Poll] Votado: \(option)")
+                                },
+                                onDismiss: {
+                                    withAnimation {
+                                        showPoll = false
+                                    }
+                                }
+                            )
+                        }
+                        
+                        // Chat Overlay
+                        TV2ChatOverlay(
+                            showControls: $showControls,
+                            onExpandedChange: { expanded in
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                    isChatExpanded = expanded
+                                }
+                            }
+                        )
+                    }
+                    .frame(height: geometry.size.height * 0.7) // Limitar a 70% de altura
+                }
+            }
         }
         .navigationBarHidden(true)
         .onAppear {
