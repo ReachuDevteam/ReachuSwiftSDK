@@ -417,8 +417,8 @@ struct CastingActiveView: View {
                 .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
         )
         .task {
-            // Fetch del producto usando el ID del evento (el WebSocket envía el productId en el campo 'id')
-            await productViewModel.fetchProduct(productId: productEvent.id)
+            // Fetch del producto usando productId (campo correcto del WebSocket: "productId":"408841")
+            await productViewModel.fetchProduct(productId: productEvent.productId)
         }
     }
     
