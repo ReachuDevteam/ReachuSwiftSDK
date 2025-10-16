@@ -8,6 +8,7 @@ struct CastingActiveView: View {
     let match: Match
     @StateObject private var castingManager = CastingManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
+    @StateObject private var chatManager = ChatManager()
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     
@@ -26,33 +27,37 @@ struct CastingActiveView: View {
                 .ignoresSafeArea()
             
             // Contenido principal
-            VStack(spacing: 0) {
-                // Header
+            VStack(spacing: 16) {
+                // Header (full width)
                 castingHeader
                 
                 Spacer()
                 
-                // Match info
+                // Match info (centrado)
                 matchInfo
+                    .frame(maxWidth: 500)
                 
                 Spacer()
                 
-                // Overlays interactivos (si hay)
-                if webSocketManager.currentPoll != nil || 
-                   webSocketManager.currentProduct != nil || 
-                   webSocketManager.currentContest != nil {
-                    interactiveContentSection
-                }
+                // Eventos interactivos (compactos, centrados)
+                interactiveContentSection
+                    .frame(maxWidth: 500)
                 
                 Spacer()
                 
-                // Controles
+                // Controles (centrados)
                 playbackControls
+                    .frame(maxWidth: 500)
+                    .padding(.bottom, 8)
                 
-                // Chat
-                TV2ChatOverlay(showControls: .constant(true))
-                    .frame(height: 150)
+                // Chat compacto (centrado)
+                CastingChatPanel(chatManager: chatManager)
+                    .frame(maxWidth: 500)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
             }
+            .frame(maxWidth: .infinity) // El VStack toma todo el ancho
+            .ignoresSafeArea(.keyboard) // Ignora el teclado
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -190,25 +195,20 @@ struct CastingActiveView: View {
     @ViewBuilder
     private var interactiveContentSection: some View {
         // Muestra automáticamente el contenido que llegue por WebSocket
-        // Prioridad: Polls > Products > Contests
-        // Versión compacta para la vista de casting
+        // Usa componentes compactos diseñados para casting
         if let poll = webSocketManager.currentPoll {
-            TV2PollOverlay(
+            CastingPollCard(
                 poll: poll,
-                isChatExpanded: false,
                 onVote: { option in
-                    print("Voted: \(option)")
+                    print("✅ Voted: \(option)")
                 },
                 onDismiss: {
                     webSocketManager.currentPoll = nil
                 }
             )
-            .frame(height: 250)
-            .frame(maxWidth: 400)
         } else if let product = webSocketManager.currentProduct {
-            TV2ProductOverlay(
+            CastingProductCard(
                 productEvent: product,
-                isChatExpanded: false,
                 sdk: SdkClient(
                     baseUrl: URL(string: "https://api.reachu.io/graphql")!,
                     apiKey: ReachuConfiguration.shared.apiKey
@@ -216,27 +216,22 @@ struct CastingActiveView: View {
                 currency: cartManager.currency,
                 country: cartManager.country,
                 onAddToCart: { productDto in
-                    print("Added to cart from casting view")
+                    print("✅ Product added to cart from casting")
                 },
                 onDismiss: {
                     webSocketManager.currentProduct = nil
                 }
             )
-            .frame(height: 250)
-            .frame(maxWidth: 400)
         } else if let contest = webSocketManager.currentContest {
-            TV2ContestOverlay(
+            CastingContestCard(
                 contest: contest,
-                isChatExpanded: false,
                 onJoin: {
-                    print("Joined contest from casting view")
+                    print("✅ Joined contest from casting")
                 },
                 onDismiss: {
                     webSocketManager.currentContest = nil
                 }
             )
-            .frame(height: 250)
-            .frame(maxWidth: 400)
         }
     }
 }
