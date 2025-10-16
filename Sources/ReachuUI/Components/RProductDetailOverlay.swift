@@ -453,14 +453,15 @@ public struct RProductDetailOverlay: View {
                 
                 Spacer()
                 
-                // Total price for quantity
-                VStack(alignment: .trailing) {
+                // Total price (aligned to right)
+                VStack(alignment: .trailing, spacing: 2) {
                     Text("Total")
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
                         .font(ReachuTypography.title3)
                         .foregroundColor(ReachuColors.textPrimary)
+                        .fontWeight(.semibold)
                 }
             }
         }
