@@ -15,54 +15,44 @@ struct CastingActiveView: View {
     
     var body: some View {
         ZStack {
-            // Background - imagen del campo de fútbol (como en TV2)
+            // Background
             Image("football_field_bg")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
                 .ignoresSafeArea()
-                .blur(radius: 20) // Blur para que no distraiga del contenido
+                .blur(radius: 20)
             
-            // Overlay oscuro para mejor contraste
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
             
+            // Contenido principal
             VStack(spacing: 0) {
-                // Header con info de casting
+                // Header
                 castingHeader
                 
                 Spacer()
                 
-                // Info del partido en el centro
+                // Match info
                 matchInfo
                 
                 Spacer()
                 
-                // Espacio para overlays si hay contenido
+                // Overlays interactivos (si hay)
                 if webSocketManager.currentPoll != nil || 
                    webSocketManager.currentProduct != nil || 
                    webSocketManager.currentContest != nil {
                     interactiveContentSection
-                        .padding(.bottom, 20)
                 }
                 
                 Spacer()
-                    .frame(height: 20)
                 
-                // Controles de reproducción
+                // Controles
                 playbackControls
-                    .padding(.bottom, 20)
                 
-                // Espacio reservado para el chat
-                Color.clear
-                    .frame(height: 180)
-            }
-            
-            // Chat anclado al fondo - visible y con espacio
-            VStack {
-                Spacer()
+                // Chat
                 TV2ChatOverlay(showControls: .constant(true))
+                    .frame(height: 150)
             }
-            .frame(height: 180)
         }
         .navigationBarHidden(true)
         .onAppear {
