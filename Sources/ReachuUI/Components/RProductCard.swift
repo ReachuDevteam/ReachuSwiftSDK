@@ -110,7 +110,15 @@ public struct RProductCard: View {
     private var gridLayout: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             // Product Images with pagination
-            productImagesView(height: 160, showPagination: sortedImages.count > 1)
+            ZStack(alignment: .topTrailing) {
+                productImagesView(height: 160, showPagination: sortedImages.count > 1)
+                
+                // Discount badge (if enabled in config)
+                if ReachuConfiguration.shared.uiConfiguration.showDiscountBadge,
+                   let badgeText = ReachuConfiguration.shared.uiConfiguration.discountBadgeText {
+                    discountBadge(text: badgeText)
+                }
+            }
             
             // Product Info
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -133,12 +141,8 @@ public struct RProductCard: View {
                         .lineLimit(2)
                 }
                 
-                // Price and Action
-                HStack {
-                    priceView
-                    Spacer()
-                    addToCartButton
-                }
+                // Price only (quick add removed - products have variations)
+                priceView
             }
             .padding(ReachuSpacing.md)
         }
@@ -176,11 +180,8 @@ public struct RProductCard: View {
                 
                 Spacer()
                 
-                HStack {
-                    priceView
-                    Spacer()
-                    addToCartButton
-                }
+                // Price only (quick add removed - products have variations)
+                priceView
             }
             
             Spacer()
@@ -336,6 +337,20 @@ public struct RProductCard: View {
                     }
                 }
             )
+    }
+    
+    /// Discount badge for product cards
+    private func discountBadge(text: String) -> some View {
+        Text(text)
+            .font(.system(size: 11, weight: .bold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(adaptiveColors.primary)
+            )
+            .padding(8)
     }
     
     // MARK: - Reusable Components

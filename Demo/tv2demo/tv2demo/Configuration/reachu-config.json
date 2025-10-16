@@ -78,6 +78,8 @@
     "enableAnimations": true,
     "showProductBrands": true,
     "showProductDescriptions": false,
+    "showDiscountBadge": true,
+    "discountBadgeText": "Opp til 30%",
     "enableHapticFeedback": true
   },
   "cart": {
