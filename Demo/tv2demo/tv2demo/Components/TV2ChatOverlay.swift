@@ -67,8 +67,8 @@ struct TV2ChatOverlay: View {
                         VStack(spacing: 0) {
                             // Drag Handle
                             dragHandle
-                                .gesture(
-                                    DragGesture()
+                                .highPriorityGesture(
+                                    DragGesture(minimumDistance: 10)
                                         .onChanged { value in
                                             let translation = value.translation.height
                                             if isExpanded {
@@ -151,7 +151,8 @@ struct TV2ChatOverlay: View {
     
     private func chatPanelHeight(geometry: GeometryProxy) -> CGFloat {
         if !isExpanded {
-            return collapsedHeight
+            // En vertical más alto (60px), en horizontal más pequeño (40px)
+            return isLandscape ? collapsedHeight : 60
         }
         
         if isTextFieldFocused {
@@ -162,10 +163,11 @@ struct TV2ChatOverlay: View {
     }
     
     private func chatContentHeight(geometry: GeometryProxy) -> CGFloat {
+        let handleHeight = isLandscape ? collapsedHeight : 60
         if isTextFieldFocused {
-            return geometry.size.height * compactHeight - collapsedHeight
+            return geometry.size.height * compactHeight - handleHeight
         }
-        return geometry.size.height * expandedHeight - collapsedHeight
+        return geometry.size.height * expandedHeight - handleHeight
     }
     
     private func setupKeyboardObservers() {
@@ -199,19 +201,19 @@ struct TV2ChatOverlay: View {
     // MARK: - Drag Handle
     
     private var dragHandle: some View {
-        VStack(spacing: 2) {
+        VStack(spacing: isLandscape ? 2 : 4) {
             // Drag indicator
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 28, height: 3)
-                .padding(.top, 4)
+                .frame(width: isLandscape ? 28 : 32, height: isLandscape ? 3 : 4)
+                .padding(.top, isLandscape ? 4 : 6)
             
             // Header
-            HStack(spacing: 6) {
+            HStack(spacing: isLandscape ? 6 : 8) {
                 // Sponsor badge (top left)
-                HStack(spacing: 3) {
+                HStack(spacing: isLandscape ? 3 : 4) {
                     Text("Sponset av")
-                        .font(.system(size: 8, weight: .medium))
+                        .font(.system(size: isLandscape ? 8 : 10, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
                     AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
@@ -220,11 +222,11 @@ struct TV2ChatOverlay: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 50, maxHeight: 16)
+                                .frame(maxWidth: isLandscape ? 50 : 70, maxHeight: isLandscape ? 16 : 24)
                         case .empty:
                             ProgressView()
-                                .scaleEffect(0.4)
-                                .frame(width: 50, height: 16)
+                                .scaleEffect(isLandscape ? 0.4 : 0.5)
+                                .frame(width: isLandscape ? 50 : 70, height: isLandscape ? 16 : 24)
                         case .failure:
                             EmptyView()
                         @unknown default:
@@ -232,29 +234,41 @@ struct TV2ChatOverlay: View {
                         }
                     }
                 }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .padding(.horizontal, isLandscape ? 6 : 10)
+                .padding(.vertical, isLandscape ? 3 : 5)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: isLandscape ? 4 : 6)
                         .fill(Color.black.opacity(0.3))
                 )
                 
                 Spacer()
                 
-                Text("LIVE CHAT")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-                
-                // Expand/Collapse indicator
-                Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.leading, 1)
+                // Área clickeable para expandir/colapsar
+                Button(action: {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isExpanded.toggle()
+                        onExpandedChange?(isExpanded)
+                    }
+                }) {
+                    HStack(spacing: 4) {
+                        Text("LIVE CHAT")
+                            .font(.system(size: isLandscape ? 10 : 13, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        // Expand/Collapse indicator
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
+                            .font(.system(size: isLandscape ? 10 : 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .contentShape(Rectangle())
+                }
             }
-            .padding(.horizontal, 12)
-            .padding(.bottom, 4)
+            .padding(.horizontal, isLandscape ? 12 : 14)
+            .padding(.bottom, isLandscape ? 4 : 8)
         }
-        .frame(height: collapsedHeight)
+        .frame(height: isLandscape ? collapsedHeight : 60)
         .contentShape(Rectangle())
     }
     

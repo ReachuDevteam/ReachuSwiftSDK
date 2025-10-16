@@ -113,11 +113,11 @@ struct CastingActiveView: View {
             
             // Casting info centrada
             VStack(spacing: 4) {
-                Text(castingManager.selectedDevice?.name ?? "Living TV")
+                Text(match.title)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white)
                 
-                Text("4. divisjon, menn Fotball")
+                Text(match.subtitle)
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.7))
             }
