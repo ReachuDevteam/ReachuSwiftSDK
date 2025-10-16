@@ -18,15 +18,22 @@ class WebSocketManager: NSObject, ObservableObject {
     }
     
     func connect() {
+        guard !isConnected else {
+            print("🔌 [WebSocket] Ya está conectado, ignorando nueva conexión")
+            return
+        }
+        
         let url = URL(string: "wss://event-streamer-angelo100.replit.app/ws/3")!
         webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
+        isConnected = true
         
         print("🔌 [WebSocket] Conectando a: \(url.absoluteString)")
         receiveMessage()
     }
     
     func disconnect() {
+        guard isConnected else { return }
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
         isConnected = false
