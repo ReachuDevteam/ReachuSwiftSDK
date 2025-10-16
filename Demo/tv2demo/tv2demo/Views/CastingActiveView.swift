@@ -97,10 +97,11 @@ struct CastingActiveView: View {
                 playbackControls
                 
                 Spacer()
+                
+                // Chat
+                simpleChatPanel
+                    .padding(.bottom, 20)
             }
-            
-            // Chat - posicionado independientemente
-            simpleChatPanel
             
             // Floating likes overlay
             ForEach(floatingLikes) { like in
@@ -130,15 +131,13 @@ struct CastingActiveView: View {
     
     private var simpleChatPanel: some View {
         VStack(spacing: 0) {
-            // Drag indicator + Header (estilo EXACTO de TV2ChatOverlay)
-            VStack(spacing: isChatExpanded ? 4 : 0) {
-                // Drag indicator (solo cuando está abierto)
-                if isChatExpanded {
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.white.opacity(0.3))
-                        .frame(width: 32, height: 4)
-                        .padding(.top, 6)
-                }
+            // Drag indicator + Header
+            VStack(spacing: 4) {
+                // Drag indicator
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 32, height: 4)
+                    .padding(.top, 6)
                 
                 // Header
                 Button {
@@ -146,76 +145,59 @@ struct CastingActiveView: View {
                         isChatExpanded.toggle()
                     }
                 } label: {
-                    if isChatExpanded {
-                        // Header completo cuando está abierto
-                        HStack(spacing: 8) {
-                            // Sponsor badge (top left)
-                            HStack(spacing: 4) {
-                                Text("Sponset av")
-                                    .font(.system(size: 10, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.8))
-                                
-                                AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
-                                    switch phase {
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(maxWidth: 70, maxHeight: 24)
-                                    case .empty:
-                                        ProgressView()
-                                            .scaleEffect(0.5)
-                                            .frame(width: 70, height: 24)
-                                    case .failure:
-                                        EmptyView()
-                                    @unknown default:
-                                        EmptyView()
-                                    }
+                    HStack(spacing: 8) {
+                        // Sponsor badge (top left)
+                        HStack(spacing: 4) {
+                            Text("Sponset av")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 70, maxHeight: 24)
+                                case .empty:
+                                    ProgressView()
+                                        .scaleEffect(0.5)
+                                        .frame(width: 70, height: 24)
+                                case .failure:
+                                    EmptyView()
+                                @unknown default:
+                                    EmptyView()
                                 }
                             }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(
-                                RoundedRectangle(cornerRadius: 6)
-                                    .fill(Color.black.opacity(0.3))
-                            )
-                            
-                            Spacer(minLength: 0)
-                            
-                            // Live Chat indicator
-                            HStack(spacing: 4) {
-                                Text("LIVE CHAT")
-                                    .font(.system(size: 13, weight: .bold))
-                                    .foregroundColor(.white)
-                                
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.6))
-                            }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 6)
                         }
-                        .padding(.horizontal, 14)
-                        .contentShape(Rectangle())
-                    } else {
-                        // Compacto cuando está cerrado
-                        HStack(spacing: 6) {
-                            Image(systemName: "message.fill")
-                                .font(.system(size: 12))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.3))
+                        )
+                        
+                        Spacer(minLength: 0)
+                        
+                        // Live Chat indicator
+                        HStack(spacing: 4) {
                             Text("LIVE CHAT")
-                                .font(.system(size: 11, weight: .bold))
-                            Image(systemName: "chevron.up")
-                                .font(.system(size: 10, weight: .semibold))
-                                .opacity(0.6)
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: isChatExpanded ? "chevron.down" : "chevron.up")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.6))
                         }
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .contentShape(Rectangle())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
                     }
+                    .frame(width: 360)
+                    .padding(.horizontal, 14)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(PlainButtonStyle())
-                .padding(.bottom, isChatExpanded ? 8 : 0)
+                .padding(.bottom, 8)
             }
             
             // Mensajes (cuando está expandido)
@@ -266,7 +248,7 @@ struct CastingActiveView: View {
                         }
                         .padding(14)
                     }
-                    .frame(width: 380, height: 130) // Más pequeño para que el input sea visible
+                    .frame(width: 380, height: 150)
                     .onChange(of: chatManager.messages.count) { _ in
                         if let last = chatManager.messages.last {
                             withAnimation {
@@ -327,10 +309,7 @@ struct CastingActiveView: View {
                 .background(Color(hex: "120019"))
             }
         }
-        .frame(width: isChatExpanded ? UIScreen.main.bounds.width : 250, height: isChatExpanded ? 400 : 50) // Cerrado: 250x50, Abierto: full width x 400
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: isChatExpanded ? .bottom : .bottomTrailing) // Abierto: bottom center, Cerrado: bottom right corner
-        .padding(.trailing, isChatExpanded ? 0 : 10) // Padding cuando está cerrado
-        .padding(.bottom, isChatExpanded ? 0 : 10) // Padding cuando está cerrado
+        .frame(width: 400, height: isChatExpanded ? 320 : 70) // Abierto: 320px para que se vea todo, Cerrado: 70px
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.black.opacity(0.4))
