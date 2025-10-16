@@ -212,6 +212,8 @@ public struct UIConfiguration {
     public let enableProductCardAnimations: Bool
     public let showProductBrands: Bool
     public let showProductDescriptions: Bool
+    public let showDiscountBadge: Bool
+    public let discountBadgeText: String?
     
     // Product Sliders
     public let defaultSliderLayout: ProductSliderLayout
@@ -248,6 +250,8 @@ public struct UIConfiguration {
         enableProductCardAnimations: Bool = true,
         showProductBrands: Bool = true,
         showProductDescriptions: Bool = false,
+        showDiscountBadge: Bool = false,
+        discountBadgeText: String? = nil,
         defaultSliderLayout: ProductSliderLayout = .cards,
         enableSliderPagination: Bool = true,
         maxSliderItems: Int = 20,
@@ -268,6 +272,8 @@ public struct UIConfiguration {
         self.enableProductCardAnimations = enableProductCardAnimations
         self.showProductBrands = showProductBrands
         self.showProductDescriptions = showProductDescriptions
+        self.showDiscountBadge = showDiscountBadge
+        self.discountBadgeText = discountBadgeText
         self.defaultSliderLayout = defaultSliderLayout
         self.enableSliderPagination = enableSliderPagination
         self.maxSliderItems = maxSliderItems

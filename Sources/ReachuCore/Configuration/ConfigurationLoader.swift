@@ -307,6 +307,8 @@ public class ConfigurationLoader {
         return UIConfiguration(
             enableProductCardAnimations: config.enableAnimations,
             showProductBrands: config.showProductBrands,
+            showDiscountBadge: config.showDiscountBadge ?? false,
+            discountBadgeText: config.discountBadgeText,
             enableHapticFeedback: config.enableHapticFeedback
         )
     }
@@ -427,6 +429,8 @@ private struct JSONNetworkConfiguration: Codable {
 private struct JSONUIConfiguration: Codable {
     let enableAnimations: Bool
     let showProductBrands: Bool
+    let showDiscountBadge: Bool?
+    let discountBadgeText: String?
     let enableHapticFeedback: Bool
 }
 

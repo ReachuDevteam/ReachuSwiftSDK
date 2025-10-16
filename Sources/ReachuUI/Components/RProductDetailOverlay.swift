@@ -104,7 +104,7 @@ public struct RProductDetailOverlay: View {
                     
                     // Product Information (only show after image loads)
                     if imageLoaded || displayImages.isEmpty {
-                        VStack(spacing: ReachuSpacing.md) {
+                        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                             productInfoSection
                             variantSelectionSection
                             quantitySelectionSection
