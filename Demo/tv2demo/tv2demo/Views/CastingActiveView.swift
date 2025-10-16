@@ -15,30 +15,11 @@ struct CastingActiveView: View {
     @State private var isPlaying = true
     @State private var isChatExpanded = false
     @State private var chatMessage = ""
-    @State private var hasVotedInPoll = false
-    @State private var selectedPollOption: String?
-    @State private var showProductDetail = false
-    @State private var selectedProduct: Product?
-    @StateObject private var productViewModel: ProductFetchViewModel
     
     private var sdkClient: SdkClient {
-        SdkClient(
-            baseUrl: URL(string: "https://api.reachu.io/graphql")!,
-            apiKey: ReachuConfiguration.shared.apiKey
-        )
-    }
-    
-    init(match: Match) {
-        self.match = match
-        let sdk = SdkClient(
-            baseUrl: URL(string: "https://api.reachu.io/graphql")!,
-            apiKey: ReachuConfiguration.shared.apiKey
-        )
-        _productViewModel = StateObject(wrappedValue: ProductFetchViewModel(
-            sdk: sdk,
-            currency: "NOK",
-            country: "NO"
-        ))
+        let config = ReachuConfiguration.shared
+        let baseURL = URL(string: config.environment.graphQLURL)!
+        return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
     }
     
     var body: some View {
@@ -65,13 +46,43 @@ struct CastingActiveView: View {
                 
                 Spacer()
                 
-                // Eventos interactivos (cards INLINE con tamaños FIJOS)
+                // Eventos interactivos
                 if let poll = webSocketManager.currentPoll {
-                    simplePollCard(poll)
+                    CastingPollCardView(
+                        poll: poll,
+                        onVote: { option in
+                            print("📊 [Poll] Votado: \(option)")
+                        },
+                        onDismiss: {
+                            webSocketManager.currentPoll = nil
+                        }
+                    )
                 } else if let productEvent = webSocketManager.currentProduct {
-                    simpleProductCard(productEvent)
+                    // Componente que carga datos desde Reachu API
+                    CastingProductCardView(
+                        productEvent: productEvent,
+                        sdk: sdkClient,
+                        currency: cartManager.currency,
+                        country: cartManager.country,
+                        onAddToCart: { productDto in
+                            if let apiProduct = productDto {
+                                print("🛍️ Producto de API: \(apiProduct.title)")
+                            }
+                        },
+                        onDismiss: {
+                            webSocketManager.currentProduct = nil
+                        }
+                    )
                 } else if let contest = webSocketManager.currentContest {
-                    simpleContestCard(contest)
+                    CastingContestCardView(
+                        contest: contest,
+                        onJoin: {
+                            print("🎁 [Contest] Usuario se unió")
+                        },
+                        onDismiss: {
+                            webSocketManager.currentContest = nil
+                        }
+                    )
                 }
                 
                 Spacer()
@@ -99,367 +110,9 @@ struct CastingActiveView: View {
             webSocketManager.disconnect()
             chatManager.stopSimulation()
         }
-        .onChange(of: webSocketManager.currentPoll) { _ in
-            hasVotedInPoll = false
-            selectedPollOption = nil
-        }
-        .sheet(isPresented: $showProductDetail) {
-            if let product = selectedProduct {
-                RProductDetailOverlay(
-                    product: product,
-                    onDismiss: {
-                        showProductDetail = false
-                    },
-                    onAddToCart: { product in
-                        Task {
-                            await cartManager.addProduct(product, quantity: 1)
-                            print("✅ Producto agregado al carrito desde casting view")
-                        }
-                        showProductDetail = false
-                    }
-                )
-                .environmentObject(cartManager)
-            }
-        }
     }
     
-    // MARK: - Simple Inline Cards (tamaños fijos, sin GeometryReader)
-    
-    private func simplePollCard(_ poll: PollEventData) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(poll.question)
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
-                    Text("\(poll.duration)s")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-                Spacer(minLength: 0)
-                Button("✕") {
-                    webSocketManager.currentPoll = nil
-                    hasVotedInPoll = false
-                    selectedPollOption = nil
-                }
-                .font(.system(size: 16))
-                .foregroundColor(.white.opacity(0.6))
-            }
-            
-            if hasVotedInPoll {
-                // Resultados
-                ForEach(poll.options, id: \.text) { option in
-                    HStack(spacing: 10) {
-                        if let avatarUrl = option.avatarUrl, !avatarUrl.isEmpty {
-                            AsyncImage(url: URL(string: avatarUrl)) { image in
-                                image.resizable().aspectRatio(contentMode: .fit)
-                            } placeholder: {
-                                Circle().fill(Color.white)
-                            }
-                            .frame(width: 28, height: 28)
-                            .background(Color.white)
-                            .clipShape(Circle())
-                        } else {
-                            Circle()
-                                .fill(Color.white)
-                                .frame(width: 28, height: 28)
-                                .overlay(
-                                    Text(option.text.prefix(1))
-                                        .font(.system(size: 12, weight: .bold))
-                                        .foregroundColor(TV2Theme.Colors.primary)
-                                )
-                        }
-                        
-                        Text(option.text)
-                            .font(.system(size: 13, weight: option.text == selectedPollOption ? .bold : .medium))
-                            .foregroundColor(.white)
-                            .frame(width: 70, alignment: .leading)
-                        
-                        // Barra de progreso
-                        let percentage: CGFloat = option.text == selectedPollOption ? 75 : 12.5
-                        ZStack(alignment: .leading) {
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(Color.white.opacity(0.15))
-                                .frame(width: 180, height: 26)
-                            
-                            RoundedRectangle(cornerRadius: 5)
-                                .fill(option.text == selectedPollOption ? TV2Theme.Colors.primary : Color.white.opacity(0.3))
-                                .frame(width: 180 * (percentage / 100), height: 26)
-                        }
-                        
-                        Text("\(Int(percentage))%")
-                            .font(.system(size: 13, weight: .bold))
-                            .foregroundColor(.white)
-                            .frame(width: 35, alignment: .trailing)
-                    }
-                }
-            } else {
-                // Opciones para votar
-                ForEach(poll.options, id: \.text) { option in
-                    Button {
-                        selectedPollOption = option.text
-                        hasVotedInPoll = true
-                        print("📊 Voted: \(option.text)")
-                    } label: {
-                        HStack(spacing: 10) {
-                            if let avatarUrl = option.avatarUrl, !avatarUrl.isEmpty {
-                                AsyncImage(url: URL(string: avatarUrl)) { image in
-                                    image.resizable().aspectRatio(contentMode: .fit)
-                                } placeholder: {
-                                    Circle().fill(Color.white)
-                                }
-                                .frame(width: 32, height: 32)
-                                .background(Color.white)
-                                .clipShape(Circle())
-                            } else {
-                                Circle()
-                                    .fill(Color.white)
-                                    .frame(width: 32, height: 32)
-                                    .overlay(
-                                        Text(option.text.prefix(1))
-                                            .font(.system(size: 14, weight: .bold))
-                                            .foregroundColor(TV2Theme.Colors.primary)
-                                    )
-                            }
-                            
-                            Text(option.text)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            Spacer(minLength: 0)
-                        }
-                        .frame(width: 360)
-                        .padding(12)
-                        .background(Color.white.opacity(0.15))
-                        .cornerRadius(10)
-                    }
-                }
-            }
-        }
-        .frame(width: 400)
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.4))
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(.ultraThinMaterial)
-                )
-                .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
-        )
-    }
-    
-    private func simpleProductCard(_ productEvent: ProductEventData) -> some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 12) {
-                // Drag indicator
-                Capsule()
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: 40, height: 4)
-                    .padding(.top, 4)
-                
-                // Loading indicator sutil mientras se carga
-                if productViewModel.isLoading {
-                    HStack {
-                        ProgressView()
-                            .scaleEffect(0.7)
-                            .tint(.white)
-                        Text("Cargando producto...")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
-                    .padding(.vertical, 4)
-                }
-                
-                // Sponsor badge (si existe)
-                if let campaignLogo = productEvent.campaignLogo, !campaignLogo.isEmpty {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Sponset av")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                            
-                            AsyncImage(url: URL(string: campaignLogo)) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image.resizable().aspectRatio(contentMode: .fit).frame(maxWidth: 80, maxHeight: 24)
-                                case .empty:
-                                    ProgressView().scaleEffect(0.5).frame(width: 80, height: 24)
-                                case .failure:
-                                    EmptyView()
-                                @unknown default:
-                                    EmptyView()
-                                }
-                            }
-                        }
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 2)
-                }
-                
-                // Producto con imagen pequeña a la izquierda
-                HStack(alignment: .top, spacing: 12) {
-                    // Imagen del producto - API > WebSocket fallback (IGUAL que TV2ProductOverlay)
-                    ZStack(alignment: .topTrailing) {
-                        let displayImageUrl: String = {
-                            if let apiProduct = productViewModel.product,
-                               let firstImage = apiProduct.images.first {
-                                return firstImage.url
-                            }
-                            return productEvent.imageUrl
-                        }()
-                        
-                        AsyncImage(url: URL(string: displayImageUrl)) { phase in
-                            switch phase {
-                            case .empty:
-                                ProgressView().frame(width: 90, height: 90)
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 90, height: 90)
-                                    .clipped()
-                                    .cornerRadius(12)
-                            case .failure:
-                                Color.gray.opacity(0.3)
-                                    .frame(width: 90, height: 90)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(.white.opacity(0.5))
-                                    )
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        
-                        // Tag de descuento diagonal (si está configurado)
-                        if ReachuConfiguration.shared.uiConfiguration.showDiscountBadge,
-                           let badgeText = ReachuConfiguration.shared.uiConfiguration.discountBadgeText {
-                            Text(badgeText)
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color(hex: "E93CAC"))
-                                .rotationEffect(.degrees(-10))
-                                .offset(x: 8, y: -8)
-                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        }
-                    }
-                    
-                    // Información del producto (API > WebSocket fallback)
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(productViewModel.product?.title ?? productEvent.name)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
-                        
-                        let description = productViewModel.product?.description ?? productEvent.description
-                        if !description.isEmpty {
-                            Text(description)
-                                .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.7))
-                                .lineLimit(2)
-                        }
-                        
-                        // Precio (API > WebSocket fallback)
-                        if let apiProduct = productViewModel.product {
-                            Text("\(apiProduct.price.currencyCode) \(String(format: "%.2f", apiProduct.price.amount))")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(TV2Theme.Colors.primary)
-                        } else {
-                            Text("\(productEvent.currency) \(productEvent.price)")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(TV2Theme.Colors.primary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .padding(.horizontal, 12)
-                
-                // Botón para ver detalles
-                Button {
-                    if let apiProduct = productViewModel.product {
-                        // Convertir ProductDto a Product y mostrar detail
-                        selectedProduct = convertDtoToProduct(apiProduct)
-                        showProductDetail = true
-                    } else {
-                        print("⚠️ Producto aún no disponible desde API")
-                    }
-                } label: {
-                    Text("Legg til")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(productViewModel.product != nil ? TV2Theme.Colors.primary : Color.gray)
-                        )
-                }
-                .disabled(productViewModel.product == nil)
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
-            }
-            .padding(.vertical, 8)
-        }
-        .frame(width: 280)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.black.opacity(0.4))
-                .background(
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
-                )
-                .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
-        )
-        .task {
-            // Fetch del producto usando productId (campo correcto del WebSocket: "productId":"408841")
-            await productViewModel.fetchProduct(productId: productEvent.productId)
-        }
-    }
-    
-    private func simpleContestCard(_ contest: ContestEventData) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "trophy.fill")
-                .font(.system(size: 28))
-                .foregroundColor(TV2Theme.Colors.primary)
-                .frame(width: 50, height: 50)
-                .background(Circle().fill(TV2Theme.Colors.primary.opacity(0.2)))
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(contest.name)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                
-                Text("Premio: \(contest.prize)")
-                    .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
-            }
-            
-            Spacer(minLength: 0)
-            
-            Button("✕") {
-                webSocketManager.currentContest = nil
-            }
-            .foregroundColor(.white.opacity(0.6))
-        }
-        .frame(width: 380)
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color.black.opacity(0.4))
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(.ultraThinMaterial)
-                )
-                .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
-        )
-    }
+    // MARK: - Chat Panel
     
     private var simpleChatPanel: some View {
         VStack(spacing: 0) {
