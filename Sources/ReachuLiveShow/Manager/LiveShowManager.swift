@@ -34,8 +34,7 @@ public class LiveShowManager: ObservableObject {
     // Tipio clients
     private lazy var tipioApiClient = TipioApiClient()
     private lazy var tipioWebSocketClient = TipioWebSocketClient(
-        baseUrl: "wss://ws.tipio.no", // TODO: Get from configuration
-        apiKey: "your-tipio-api-key" // TODO: Get from configuration
+        baseUrl: "https://stg-dev-microservices.tipioapp.com/stg-stream"
     )
     
     // MARK: - Initialization
@@ -252,6 +251,37 @@ public class LiveShowManager: ObservableObject {
                 self?.handleTipioEvent(event)
             }
             .store(in: &cancellables)
+
+        // Handle lifecycle live events carrying full updated stream
+        tipioWebSocketClient.liveEventPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] liveEvent in
+                guard let self = self else { return }
+                switch liveEvent {
+                case .started(let stream):
+                    // Update or insert stream and mark as live/current if matching
+                    if let index = self.activeStreams.firstIndex(where: { $0.id == stream.id }) {
+                        self.activeStreams[index] = stream
+                    } else {
+                        self.activeStreams.append(stream)
+                    }
+                    if self.currentStream?.id == stream.id {
+                        self.currentStream = stream
+                    }
+                case .ended(let stream):
+                    // Update stream state to not live; update current if matching
+                    if let index = self.activeStreams.firstIndex(where: { $0.id == stream.id }) {
+                        self.activeStreams[index] = stream
+                    }
+                    if self.currentStream?.id == stream.id {
+                        self.currentStream = stream
+                    }
+                }
+            }
+            .store(in: &cancellables)
+
+        // Ensure socket connection starts
+        tipioWebSocketClient.connect()
         
         print("🔧 [LiveShow] Tipio integration setup completed")
     }

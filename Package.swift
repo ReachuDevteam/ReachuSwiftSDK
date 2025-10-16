@@ -77,6 +77,9 @@ let package = Package(
             url: "https://github.com/klarna/klarna-mobile-sdk-spm.git",
             .upToNextMajor(from: "2.2.0")),
 
+        // Socket.IO client for Tipio realtime backend
+        .package(url: "https://github.com/socketio/socket.io-client-swift", from: "16.0.0"),
+
     ],
     targets: [
         // MARK: - INTERNAL: Network Target (Shared)
@@ -133,6 +136,7 @@ let package = Package(
                 "ReachuCore",
                 "ReachuNetwork",
                 .product(name: "Starscream", package: "Starscream"),
+                .product(name: "SocketIO", package: "socket.io-client-swift"),
             ],
             path: "Sources/ReachuLiveShow"
         ),

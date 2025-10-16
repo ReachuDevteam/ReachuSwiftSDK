@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import SocketIO
 
 /// WebSocket client for real-time Tipio events
 @MainActor
@@ -12,7 +13,10 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     private var webSocketTask: URLSessionWebSocketTask?
     private var session: URLSession
     private let baseUrl: String
-    private let apiKey: String
+    
+    // Socket.IO
+    private var socketManager: SocketManager?
+    private var socket: SocketIOClient?
     private var reconnectTimer: Timer?
     private var heartbeatTimer: Timer?
     private var reconnectAttempts = 0
@@ -22,6 +26,7 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     // Event publishers
     private let eventSubject = PassthroughSubject<TipioEvent, Never>()
     private let connectionSubject = PassthroughSubject<ConnectionStatus, Never>()
+    private let liveEventSubject = PassthroughSubject<LiveStreamSocketEvent, Never>()
     
     public var eventPublisher: AnyPublisher<TipioEvent, Never> {
         eventSubject.eraseToAnyPublisher()
@@ -29,6 +34,10 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     
     public var connectionPublisher: AnyPublisher<ConnectionStatus, Never> {
         connectionSubject.eraseToAnyPublisher()
+    }
+
+    public var liveEventPublisher: AnyPublisher<LiveStreamSocketEvent, Never> {
+        liveEventSubject.eraseToAnyPublisher()
     }
     
     // MARK: - Connection Status
@@ -64,12 +73,10 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     // MARK: - Initialization
     public init(
         baseUrl: String,
-        apiKey: String,
         maxReconnectAttempts: Int = 5,
         heartbeatInterval: TimeInterval = 30
     ) {
         self.baseUrl = baseUrl
-        self.apiKey = apiKey
         self.maxReconnectAttempts = maxReconnectAttempts
         self.heartbeatInterval = heartbeatInterval
         
@@ -85,7 +92,7 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     
     // MARK: - Connection Management
     
-    /// Connect to Tipio WebSocket
+    /// Connect to Tipio Socket.IO backend
     public func connect() {
         guard connectionStatus != .connecting && connectionStatus != .connected else {
             print("🔌 [TipioWS] Already connecting or connected")
@@ -94,29 +101,58 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
         
         updateConnectionStatus(.connecting)
         
-        // Build WebSocket URL
-        guard let url = buildWebSocketURL() else {
-            updateConnectionStatus(.error("Invalid WebSocket URL"))
+        // Prepare Socket.IO manager and client
+        guard let (originURL, socketPath, namespace) = buildSocketIOConfig(from: baseUrl) else {
+            updateConnectionStatus(.error("Invalid Socket.IO URL"))
             return
         }
         
-        print("🔌 [TipioWS] Connecting to: \(url.absoluteString)")
+        print("🔌 [TipioWS] Connecting (Socket.IO) to: \(originURL.absoluteString), path: \(socketPath), ns: \(namespace ?? "/")")
         
-        // Create WebSocket task
-        var request = URLRequest(url: url)
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("ReachuSDK/1.0", forHTTPHeaderField: "User-Agent")
+        let manager = SocketManager(
+            socketURL: originURL,
+            config: [
+                .log(false),
+                .compress,
+                .path(socketPath)
+            ]
+        )
+        self.socketManager = manager
+        let client = (namespace != nil) ? manager.socket(forNamespace: namespace!) : manager.defaultSocket
+        self.socket = client
         
-        webSocketTask = session.webSocketTask(with: request)
-        webSocketTask?.resume()
-        
-        // Start listening for messages
-        receiveMessage()
-        
-        // Start heartbeat after connection
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            self.startHeartbeat()
+        // Lifecycle events
+        client.on(clientEvent: .connect) { [weak self] _, _ in
+            print("✅ [TipioWS] Socket.IO connected")
+            self?.updateConnectionStatus(.connected)
+            self?.resetReconnectAttempts()
         }
+        client.on(clientEvent: .error) { [weak self] data, _ in
+            print("❌ [TipioWS] Socket.IO error: \(data)")
+            self?.updateConnectionStatus(.error("Socket.IO error"))
+        }
+        client.on(clientEvent: .disconnect) { [weak self] _, _ in
+            print("🔌 [TipioWS] Socket.IO disconnected")
+            self?.updateConnectionStatus(.disconnected)
+        }
+        client.on(clientEvent: .reconnect) { [weak self] data, _ in
+            print("🔄 [TipioWS] Socket.IO reconnect: \(data)")
+            self?.updateConnectionStatus(.reconnecting)
+        }
+        client.on(clientEvent: .reconnectAttempt) { [weak self] data, _ in
+            print("🔄 [TipioWS] Socket.IO reconnect attempt: \(data)")
+            self?.updateConnectionStatus(.reconnecting)
+        }
+        
+        // Known domain events
+        self.registerDomainEventHandlers(on: client)
+        
+        // Catch-all (filtrado para evitar spam de logs)
+        client.onAny { [weak self] event in
+            self?.handleAnySocketEvent(event)
+        }
+        
+        client.connect()
     }
     
     /// Disconnect from WebSocket
@@ -125,6 +161,10 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
         
         stopHeartbeat()
         stopReconnectTimer()
+        
+        socket?.disconnect()
+        socket = nil
+        socketManager = nil
         
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
@@ -139,13 +179,11 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
             return
         }
         
-        let subscribeMessage: [String: Any] = [
-            "action": "subscribe",
+        let payload: [String: Any] = [
             "stream_id": streamId,
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
-        
-        sendMessage(subscribeMessage)
+        socket?.emit("subscribe", payload)
         print("📺 [TipioWS] Subscribed to stream: \(streamId)")
     }
     
@@ -156,80 +194,40 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
             return
         }
         
-        let unsubscribeMessage: [String: Any] = [
-            "action": "unsubscribe",
+        let payload: [String: Any] = [
             "stream_id": streamId,
             "timestamp": ISO8601DateFormatter().string(from: Date())
         ]
-        
-        sendMessage(unsubscribeMessage)
+        socket?.emit("unsubscribe", payload)
         print("📺 [TipioWS] Unsubscribed from stream: \(streamId)")
     }
     
     // MARK: - Private Methods
     
-    private func buildWebSocketURL() -> URL? {
-        // Convert HTTP(S) URL to WebSocket URL
-        let wsUrl = baseUrl
-            .replacingOccurrences(of: "https://", with: "wss://")
-            .replacingOccurrences(of: "http://", with: "ws://")
+    // Build Socket.IO config: origin URL, path (ending in /socket.io), and optional namespace
+    private func buildSocketIOConfig(from base: String) -> (URL, String, String?)? {
+        var baseString = base
+        baseString = baseString.replacingOccurrences(of: "wss://", with: "https://")
+        baseString = baseString.replacingOccurrences(of: "ws://", with: "http://")
+        guard var components = URLComponents(string: baseString) else { return nil }
         
-        guard var components = URLComponents(string: wsUrl + "/ws") else {
-            return nil
-        }
+        let path = components.path.isEmpty ? "/socket.io" : components.path + "/socket.io"
+        components.path = ""
+        guard let originURL = components.url else { return nil }
         
-        // Add API key as query parameter
-        components.queryItems = [
-            URLQueryItem(name: "api_key", value: apiKey)
-        ]
-        
-        return components.url
+        // No usar namespace por defecto; backends suelen usar el default "/"
+        let namespace: String? = nil
+        return (originURL, path, namespace)
     }
     
-    private func receiveMessage() {
-        webSocketTask?.receive { [weak self] result in
-            DispatchQueue.main.async {
-                self?.handleReceivedMessage(result)
-            }
-        }
-    }
+    private func receiveMessage() { /* handled by Socket.IO listeners */ }
     
-    private func handleReceivedMessage(_ result: Result<URLSessionWebSocketTask.Message, Error>) {
-        switch result {
-        case .success(let message):
-            switch message {
-            case .string(let text):
-                handleTextMessage(text)
-            case .data(let data):
-                handleDataMessage(data)
-            @unknown default:
-                print("❌ [TipioWS] Unknown message type")
-            }
-            
-            // Continue listening
-            receiveMessage()
-            
-        case .failure(let error):
-            print("❌ [TipioWS] Receive error: \(error)")
-            handleConnectionError(error)
-        }
-    }
+    private func handleReceivedMessage(_ result: Result<URLSessionWebSocketTask.Message, Error>) { /* unused in Socket.IO */ }
     
     private func handleTextMessage(_ text: String) {
         print("📨 [TipioWS] Received text: \(text)")
         
-        // Handle connection confirmation
-        if text.contains("connected") || text.contains("welcome") {
-            updateConnectionStatus(.connected)
-            resetReconnectAttempts()
-            return
-        }
-        
-        // Handle ping/pong
-        if text == "ping" {
-            sendPong()
-            return
-        }
+        // For Socket.IO, textual messages are uncommon here; leave best-effort decoding
         
         // Try to decode as TipioEvent
         guard let data = text.data(using: .utf8) else {
@@ -246,56 +244,41 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
             print("📡 [TipioWS] Received event: \(event.type.rawValue) for stream \(event.streamId)")
             eventSubject.send(event)
         } catch {
-            print("❌ [TipioWS] Failed to decode event: \(error)")
-        }
-    }
-    
-    private func sendMessage(_ message: [String: Any]) {
-        guard let data = try? JSONSerialization.data(withJSONObject: message) else {
-            print("❌ [TipioWS] Failed to serialize message")
-            return
-        }
-        
-        let wsMessage = URLSessionWebSocketTask.Message.data(data)
-        webSocketTask?.send(wsMessage) { error in
-            if let error = error {
-                print("❌ [TipioWS] Send error: \(error)")
+            // Try alternate schema for live stream lifecycle events
+            do {
+                struct RawLiveEvent: Codable {
+                    let event: String
+                    let stream: LiveStream
+                }
+                let raw = try JSONDecoder().decode(RawLiveEvent.self, from: data)
+                switch raw.event {
+                case "live-event-started":
+                    liveEventSubject.send(.started(raw.stream))
+                    print("📺 [TipioWS] Live event started: \(raw.stream.id)")
+                case "live-event-ended":
+                    liveEventSubject.send(.ended(raw.stream))
+                    print("⏹️ [TipioWS] Live event ended: \(raw.stream.id)")
+                default:
+                    print("⚠️ [TipioWS] Unknown live event: \(raw.event)")
+                }
+            } catch {
+                print("❌ [TipioWS] Failed to decode message: \(error)")
             }
         }
     }
     
-    private func sendPong() {
-        webSocketTask?.send(.string("pong")) { error in
-            if let error = error {
-                print("❌ [TipioWS] Pong error: \(error)")
-            }
-        }
-    }
+    private func sendMessage(_ message: [String: Any]) { /* replaced by socket.emit */ }
     
-    private func startHeartbeat() {
-        stopHeartbeat()
-        
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: heartbeatInterval, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.sendHeartbeat()
-            }
-        }
-        
-        print("💓 [TipioWS] Heartbeat started (interval: \(heartbeatInterval)s)")
-    }
+    private func sendPong() { /* managed by Socket.IO internals */ }
+    
+    private func startHeartbeat() { /* unnecessary for Socket.IO */ }
     
     private func stopHeartbeat() {
         heartbeatTimer?.invalidate()
         heartbeatTimer = nil
     }
     
-    private func sendHeartbeat() {
-        let heartbeat = [
-            "action": "heartbeat",
-            "timestamp": ISO8601DateFormatter().string(from: Date())
-        ]
-        sendMessage(heartbeat)
-    }
+    private func sendHeartbeat() { /* unnecessary for Socket.IO */ }
     
     private func handleConnectionError(_ error: Error) {
         print("❌ [TipioWS] Connection error: \(error)")
@@ -324,7 +307,10 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
         
         reconnectTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
             Task { @MainActor in
-                self?.connect()
+                // Socket.IO manager auto-reconnects; ensure connect() is called if not connected
+                if self?.connectionStatus != .connected {
+                    self?.connect()
+                }
             }
         }
     }
@@ -374,5 +360,108 @@ public enum TipioWebSocketError: LocalizedError {
         case .messageDecodingFailed:
             return "Failed to decode WebSocket message"
         }
+    }
+}
+
+// MARK: - Socket.IO Event Handling
+
+extension TipioWebSocketClient {
+    fileprivate func registerDomainEventHandlers(on client: SocketIOClient) {
+        client.on("live-event-started") { [weak self] data, _ in
+            print("🟢 [TipioWS] Evento recibido: live-event-started, payload: \(data)")
+            guard let self = self, let first = data.first else {
+                print("⚠️ [TipioWS] No se recibió payload en live-event-started")
+                return
+            }
+            // Si el payload viene envuelto en un diccionario con clave "payload"
+            if let dict = first as? [String: Any], let payload = dict["payload"] {
+                if let tipio = self.decode(TipioLiveStream.self, from: payload) {
+                    let stream = tipio.toLiveStream()
+                    self.liveEventSubject.send(.started(stream))
+                    print("📺 [TipioWS] Live event started: \(stream.id)")
+                } else {
+                    print("❌ [TipioWS] No se pudo decodificar TipioLiveStream en live-event-started. Payload: \(payload)")
+                }
+            } else if let tipio = self.decode(TipioLiveStream.self, from: first) {
+                let stream = tipio.toLiveStream()
+                self.liveEventSubject.send(.started(stream))
+                print("📺 [TipioWS] Live event started: \(stream.id)")
+            } else {
+                print("❌ [TipioWS] No se pudo decodificar TipioLiveStream en live-event-started. Payload: \(first)")
+            }
+        }      
+        client.on("live-event-ended") { [weak self] data, _ in
+            print("🟢 [TipioWS] Evento recibido: live-event-ended, payload: \(data)")
+            guard let self = self, let first = data.first else {
+                print("⚠️ [TipioWS] No se recibió payload en live-event-ended")
+                return
+            }
+            // Si el payload viene envuelto en un diccionario con clave "payload"
+            if let dict = first as? [String: Any], let payload = dict["payload"] {
+                if let tipio = self.decode(TipioLiveStream.self, from: payload) {
+                    let stream = tipio.toLiveStream()
+                    self.liveEventSubject.send(.ended(stream))
+                    print("⏹️ [TipioWS] Live event ended: \(stream.id)")
+                } else {
+                    print("❌ [TipioWS] No se pudo decodificar TipioLiveStream en live-event-ended. Payload: \(payload)")
+                }
+            } else if let tipio = self.decode(TipioLiveStream.self, from: first) {
+                let stream = tipio.toLiveStream()
+                self.liveEventSubject.send(.ended(stream))
+                print("⏹️ [TipioWS] Live event ended: \(stream.id)")
+            } else {
+                print("❌ [TipioWS] No se pudo decodificar TipioLiveStream en live-event-ended. Payload: \(first)")
+            }
+        }
+        client.on("tipio-event") { [weak self] data, _ in
+            guard let self = self, let first = data.first else { return }
+            if let event = self.decode(TipioEvent.self, from: first) {
+                self.eventSubject.send(event)
+                print("📡 [TipioWS] Received event: \(event.type.rawValue) for stream \(event.streamId)")
+            }
+        }
+        ["stream-status", "chat-message", "viewer-count", "product-highlight", "component"].forEach { name in
+            client.on(name) { [weak self] data, _ in
+                guard let self = self, let first = data.first else { return }
+                if let event = self.decode(TipioEvent.self, from: first) {
+                    self.eventSubject.send(event)
+                }
+            }
+        }
+    }
+        
+    fileprivate func handleAnySocketEvent(_ event: SocketAnyEvent) {
+        guard let items = event.items, !items.isEmpty, let payload = items.first else { return }
+        // Intentar decodificar solo si parece contener claves relevantes
+        if let dict = payload as? [String: Any] {
+            let hasEventKey = dict["event"] != nil || dict["type"] != nil
+            let hasDataKey = dict["data"] != nil || dict["stream"] != nil
+            if hasEventKey || hasDataKey {
+                if let data = try? JSONSerialization.data(withJSONObject: dict, options: []) {
+                    handleDataMessage(data)
+                }
+            }
+        } else if let str = payload as? String {
+            let trimmed = str.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix("{") || trimmed.hasPrefix("[") {
+                if let data = str.data(using: .utf8) {
+                    handleDataMessage(data)
+                }
+            }
+        }
+        // Si no es relevante, ignoramos el evento
+    }
+    
+    fileprivate func decode<T: Decodable>(_ type: T.Type, from any: Any) -> T? {
+        if let dict = any as? [String: Any], let data = try? JSONSerialization.data(withJSONObject: dict) {
+            return try? JSONDecoder().decode(T.self, from: data)
+        }
+        if let str = any as? String, let data = str.data(using: .utf8) {
+            return try? JSONDecoder().decode(T.self, from: data)
+        }
+        if let data = any as? Data {
+            return try? JSONDecoder().decode(T.self, from: data)
+        }
+        return nil
     }
 }

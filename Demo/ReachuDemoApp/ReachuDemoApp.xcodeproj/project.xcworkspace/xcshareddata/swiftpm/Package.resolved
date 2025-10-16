@@ -1,5 +1,5 @@
 {
-  "originHash" : "c059e517836323ce3edf59554cb1cf504904b73eeb28bb325fe88c1ba6266cb5",
+  "originHash" : "0fc3d1ef84338ffcc932a366fac3860899ec1dbf5fa01bbfe538a3a52ba1ee75",
   "pins" : [
     {
       "identity" : "apollo-ios",
@@ -26,6 +26,15 @@
       "state" : {
         "revision" : "0ead44350d2737db384908569c012fe67c421e4d",
         "version" : "12.8.0"
+      }
+    },
+    {
+      "identity" : "socket.io-client-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/socketio/socket.io-client-swift",
+      "state" : {
+        "revision" : "42da871d9369f290d6ec4930636c40672143905b",
+        "version" : "16.1.1"
       }
     },
     {

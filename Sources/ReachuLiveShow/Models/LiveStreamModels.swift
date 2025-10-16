@@ -247,3 +247,10 @@ extension Price {
         return formatter.string(from: NSNumber(value: amount)) ?? "\(currency_code) \(amount)"
     }
 }
+
+// MARK: - Socket Event Types
+
+public enum LiveStreamSocketEvent: Equatable {
+    case started(LiveStream)
+    case ended(LiveStream)
+}
