@@ -82,9 +82,8 @@ struct CastingContestCard: View {
                     .cornerRadius(14)
             }
         }
-        .frame(maxWidth: 450)
         .padding(16)
-        .frame(maxWidth: 500)
+        .frame(width: 420) // ANCHO FIJO
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.6))

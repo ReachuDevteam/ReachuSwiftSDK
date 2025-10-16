@@ -37,7 +37,6 @@ struct CastingPollCard: View {
                         .cornerRadius(14)
                 }
             }
-            .frame(maxWidth: 450)
             
             // Options
             if showResults {
@@ -57,7 +56,7 @@ struct CastingPollCard: View {
             }
         }
         .padding(16)
-        .frame(maxWidth: 500)
+        .frame(width: 420) // ANCHO FIJO
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.6))
@@ -113,7 +112,6 @@ struct CastingPollCard: View {
                 
                 Spacer()
             }
-            .frame(maxWidth: 450)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
@@ -196,7 +194,6 @@ struct CastingPollCard: View {
                 .foregroundColor(.white)
                 .frame(width: 40, alignment: .trailing)
         }
-        .frame(maxWidth: 450)
     }
     
     private func defaultAvatarSmall(for option: PollOption) -> some View {

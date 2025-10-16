@@ -23,7 +23,7 @@ struct CastingProductCard: View {
             }
         }
         .padding(16)
-        .frame(maxWidth: 500)
+        .frame(width: 420) // ANCHO FIJO
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.black.opacity(0.6))
@@ -103,7 +103,7 @@ struct CastingProductCard: View {
                     .cornerRadius(14)
             }
         }
-        .frame(maxWidth: 450, maxHeight: 80)
+        .frame(height: 80)
     }
     
     private var placeholderImage: some View {
@@ -128,6 +128,7 @@ struct CastingProductCard: View {
                     }
                     return
                 }
+                
                 
                 let products = try await sdk.product.getByIds(
                     productIds: [productIdInt],
