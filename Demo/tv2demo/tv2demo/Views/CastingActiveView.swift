@@ -35,29 +35,22 @@ struct CastingActiveView: View {
                 
                 // Match info (centrado)
                 matchInfo
-                    .frame(maxWidth: 500)
                 
                 Spacer()
                 
                 // Eventos interactivos (compactos, centrados)
                 interactiveContentSection
-                    .frame(maxWidth: 500)
                 
                 Spacer()
                 
                 // Controles (centrados)
                 playbackControls
-                    .frame(maxWidth: 500)
                     .padding(.bottom, 8)
                 
                 // Chat compacto (centrado)
                 CastingChatPanel(chatManager: chatManager)
-                    .frame(maxWidth: 500)
-                    .padding(.horizontal, 20)
                     .padding(.bottom, 20)
             }
-            .frame(maxWidth: .infinity) // El VStack toma todo el ancho
-            .ignoresSafeArea(.keyboard) // Ignora el teclado
         }
         .navigationBarHidden(true)
         .onAppear {

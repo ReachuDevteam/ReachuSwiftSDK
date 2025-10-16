@@ -177,12 +177,15 @@ struct CastingPollCard: View {
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.white.opacity(0.15))
-                    .frame(height: 32)
+                    .frame(maxWidth: 200, maxHeight: 32)
                 
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? TV2Theme.Colors.primary : Color.white.opacity(0.3))
-                    .frame(width: max(40, percentage * 2.5), height: 32)
+                GeometryReader { geometry in
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isSelected ? TV2Theme.Colors.primary : Color.white.opacity(0.3))
+                        .frame(width: max(40, geometry.size.width * (percentage / 100)), height: 32)
+                }
             }
+            .frame(maxWidth: 200, maxHeight: 32)
             
             // Percentage
             Text("\(Int(percentage))%")
