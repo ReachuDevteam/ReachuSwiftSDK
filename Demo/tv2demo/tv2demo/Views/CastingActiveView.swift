@@ -32,30 +32,34 @@ struct CastingActiveView: View {
                 
                 Spacer()
                 
-                // Info del partido
+                // Info del partido en el centro
                 matchInfo
+                
+                Spacer()
+                
+                // Espacio para overlays si hay contenido
+                if webSocketManager.currentPoll != nil || 
+                   webSocketManager.currentProduct != nil || 
+                   webSocketManager.currentContest != nil {
+                    interactiveContentSection
+                        .padding(.bottom, 20)
+                }
                 
                 Spacer()
                 
                 // Controles de reproducción
                 playbackControls
-                    .padding(.bottom, 60)
+                    .padding(.bottom, 120)
             }
             
-            // Sección interactiva - posicionada encima de los controles
-            VStack {
-                Spacer()
-                
-                if webSocketManager.currentPoll != nil || 
-                   webSocketManager.currentProduct != nil || 
-                   webSocketManager.currentContest != nil {
-                    interactiveContentSection
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 200)
+            // Chat anclado al fondo con ZStack para que esté siempre visible
+            GeometryReader { geometry in
+                VStack {
+                    Spacer()
+                    TV2ChatOverlay(showControls: .constant(true))
+                        .frame(height: 100)
                 }
-                
-                // Chat en la parte inferior
-                TV2ChatOverlay(showControls: .constant(true))
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
             .ignoresSafeArea(edges: .bottom)
         }
@@ -197,55 +201,52 @@ struct CastingActiveView: View {
         // Muestra automáticamente el contenido que llegue por WebSocket
         // Prioridad: Polls > Products > Contests
         // Versión compacta para la vista de casting
-        GeometryReader { geometry in
-            if let poll = webSocketManager.currentPoll {
-                TV2PollOverlay(
-                    poll: poll,
-                    isChatExpanded: false,
-                    onVote: { option in
-                        print("Voted: \(option)")
-                    },
-                    onDismiss: {
-                        webSocketManager.currentPoll = nil
-                    }
-                )
-                .frame(width: geometry.size.width, height: 280)
-                .clipped()
-            } else if let product = webSocketManager.currentProduct {
-                TV2ProductOverlay(
-                    productEvent: product,
-                    isChatExpanded: false,
-                    sdk: SdkClient(
-                        baseUrl: URL(string: "https://api.reachu.io/graphql")!,
-                        apiKey: ReachuConfiguration.shared.apiKey
-                    ),
-                    currency: cartManager.currency,
-                    country: cartManager.country,
-                    onAddToCart: { productDto in
-                        print("Added to cart from casting view")
-                    },
-                    onDismiss: {
-                        webSocketManager.currentProduct = nil
-                    }
-                )
-                .frame(width: geometry.size.width, height: 280)
-                .clipped()
-            } else if let contest = webSocketManager.currentContest {
-                TV2ContestOverlay(
-                    contest: contest,
-                    isChatExpanded: false,
-                    onJoin: {
-                        print("Joined contest from casting view")
-                    },
-                    onDismiss: {
-                        webSocketManager.currentContest = nil
-                    }
-                )
-                .frame(width: geometry.size.width, height: 280)
-                .clipped()
-            }
+        if let poll = webSocketManager.currentPoll {
+            TV2PollOverlay(
+                poll: poll,
+                isChatExpanded: false,
+                onVote: { option in
+                    print("Voted: \(option)")
+                },
+                onDismiss: {
+                    webSocketManager.currentPoll = nil
+                }
+            )
+            .frame(height: 250)
+            .frame(maxWidth: 400)
+        } else if let product = webSocketManager.currentProduct {
+            TV2ProductOverlay(
+                productEvent: product,
+                isChatExpanded: false,
+                sdk: SdkClient(
+                    baseUrl: URL(string: "https://api.reachu.io/graphql")!,
+                    apiKey: ReachuConfiguration.shared.apiKey
+                ),
+                currency: cartManager.currency,
+                country: cartManager.country,
+                onAddToCart: { productDto in
+                    print("Added to cart from casting view")
+                },
+                onDismiss: {
+                    webSocketManager.currentProduct = nil
+                }
+            )
+            .frame(height: 250)
+            .frame(maxWidth: 400)
+        } else if let contest = webSocketManager.currentContest {
+            TV2ContestOverlay(
+                contest: contest,
+                isChatExpanded: false,
+                onJoin: {
+                    print("Joined contest from casting view")
+                },
+                onDismiss: {
+                    webSocketManager.currentContest = nil
+                }
+            )
+            .frame(height: 250)
+            .frame(maxWidth: 400)
         }
-        .frame(height: 280)
     }
 }
 
