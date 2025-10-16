@@ -33,6 +33,7 @@ public class ReachuConfiguration: ObservableObject {
     @Published public private(set) var uiConfiguration: UIConfiguration = .default
     @Published public private(set) var liveShowConfiguration: LiveShowConfiguration = .default
     @Published public private(set) var marketConfiguration: MarketConfiguration = .default
+    @Published public private(set) var productDetailConfiguration: ProductDetailConfiguration = .default
     
     @Published public private(set) var isConfigured: Bool = false
     
@@ -49,7 +50,8 @@ public class ReachuConfiguration: ObservableObject {
         networkConfig: NetworkConfiguration? = nil,
         uiConfig: UIConfiguration? = nil,
         liveShowConfig: LiveShowConfiguration? = nil,
-        marketConfig: MarketConfiguration? = nil
+        marketConfig: MarketConfiguration? = nil,
+        productDetailConfig: ProductDetailConfiguration? = nil
     ) {
         let instance = ReachuConfiguration.shared
         
@@ -61,6 +63,7 @@ public class ReachuConfiguration: ObservableObject {
         instance.uiConfiguration = uiConfig ?? .default
         instance.liveShowConfiguration = liveShowConfig ?? .default
         instance.marketConfiguration = marketConfig ?? .default
+        instance.productDetailConfiguration = productDetailConfig ?? .default
         instance.isConfigured = true
         
         print("🔧 Reachu SDK configured successfully")

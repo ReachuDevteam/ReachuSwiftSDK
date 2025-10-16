@@ -88,6 +88,13 @@
     "showCartNotifications": true,
     "enableGuestCheckout": true
   },
+  "productDetail": {
+    "modalHeight": "half",
+    "imageFullWidth": true,
+    "imageCornerRadius": 0,
+    "headerStyle": "compact",
+    "enableImageZoom": false
+  },
   "marketFallback": {
     "countryCode": "NO",
     "countryName": "Norway",
@@ -112,6 +119,23 @@
       "medium": "Standard size with title2 icon",
       "large": "Large size with title icon"
     }
+  },
+  "_productDetailOptions": {
+    "_comment": "Available options for product detail modal configuration",
+    "modalHeight": ["full", "half", "threeQuarters"],
+    "modalHeightDescription": {
+      "full": "Modal takes full screen height",
+      "half": "Modal takes half screen height (50%)",
+      "threeQuarters": "Modal takes 75% of screen height"
+    },
+    "imageFullWidth": "Boolean - true: image extends to edges without padding, false: image has standard padding",
+    "imageCornerRadius": "Number - Corner radius for product images (0 for square edges)",
+    "headerStyle": ["standard", "compact"],
+    "headerStyleDescription": {
+      "standard": "Normal header with standard spacing",
+      "compact": "Reduced header height for more content space"
+    },
+    "enableImageZoom": "Boolean - true: allow pinch-to-zoom on product images, false: disable zoom"
   }
 }
 
