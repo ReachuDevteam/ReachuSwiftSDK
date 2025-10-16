@@ -353,8 +353,12 @@ public class ConfigurationLoader {
             modalHeight: modalHeight,
             imageFullWidth: config.imageFullWidth ?? false,
             imageCornerRadius: config.imageCornerRadius ?? 12,
+            imageHeight: config.imageHeight,
+            showImageGallery: config.showImageGallery ?? true,
             headerStyle: headerStyle,
-            enableImageZoom: config.enableImageZoom ?? true
+            enableImageZoom: config.enableImageZoom ?? true,
+            showDescription: config.showDescription ?? true,
+            showSpecifications: config.showSpecifications ?? true
         )
     }
 }
@@ -453,8 +457,12 @@ private struct JSONProductDetailConfiguration: Codable {
     let modalHeight: String?
     let imageFullWidth: Bool?
     let imageCornerRadius: CGFloat?
+    let imageHeight: CGFloat?
+    let showImageGallery: Bool?
     let headerStyle: String?
     let enableImageZoom: Bool?
+    let showDescription: Bool?
+    let showSpecifications: Bool?
 }
 
 private struct JSONTipioConfiguration: Codable {
