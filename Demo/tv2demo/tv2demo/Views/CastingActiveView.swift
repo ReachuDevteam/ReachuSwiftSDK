@@ -123,11 +123,25 @@ struct CastingActiveView: View {
             }
             .padding(.top, 8)
             
-            // Cast icon
-            Image(systemName: "tv.and.hifispeaker.fill")
-                .font(.system(size: 22))
+            // Stop Casting button
+            Button(action: {
+                castingManager.stopCasting()
+                dismiss()
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "tv.slash")
+                        .font(.system(size: 14, weight: .semibold))
+                    Text("Stop")
+                        .font(.system(size: 14, weight: .semibold))
+                }
                 .foregroundColor(.white)
-                .frame(width: 44, height: 44)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule()
+                        .fill(Color.red.opacity(0.8))
+                )
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 50)
