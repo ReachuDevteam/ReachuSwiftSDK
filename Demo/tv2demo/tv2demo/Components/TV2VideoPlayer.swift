@@ -156,11 +156,14 @@ struct TV2VideoPlayer: View {
             }
             
             // Chat Overlay (Twitch/Kick style sliding panel)
-            TV2ChatOverlay(onExpandedChange: { expanded in
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                    isChatExpanded = expanded
+            TV2ChatOverlay(
+                showControls: $playerViewModel.showControls,
+                onExpandedChange: { expanded in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isChatExpanded = expanded
+                    }
                 }
-            })
+            )
             }
         }
         .preferredColorScheme(.dark)
@@ -376,8 +379,6 @@ struct TV2VideoPlayer: View {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
             windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
         }
-        // Force orientation update
-        UIDevice.current.setValue(orientation == .portrait ? UIInterfaceOrientation.portrait.rawValue : UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
         UINavigationController.attemptRotationToDeviceOrientation()
     }
     

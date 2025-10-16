@@ -50,7 +50,7 @@ struct TV2ProductOverlay: View {
     // Ajustar bottom padding basado en si el chat está expandido
     private var bottomPadding: CGFloat {
         if isLandscape {
-            return isChatExpanded ? 250 : 60 // En landscape, más espacio cuando chat está expandido
+            return isChatExpanded ? 250 : 156 // En landscape, espacio para el chat con 2 mensajes (140 + 16)
         } else {
             return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
         }

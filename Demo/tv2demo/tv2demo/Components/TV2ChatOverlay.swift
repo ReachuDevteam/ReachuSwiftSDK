@@ -18,9 +18,16 @@ struct TV2ChatOverlay: View {
     // Binding para comunicarse con el padre
     var onExpandedChange: ((Bool) -> Void)?
     
+    // Binding para controles de video
+    @Binding var showControls: Bool
+    
+    init(showControls: Binding<Bool>, onExpandedChange: ((Bool) -> Void)? = nil) {
+        self._showControls = showControls
+        self.onExpandedChange = onExpandedChange
+    }
+    
     private let expandedHeight: CGFloat = 0.4 // 40% de la pantalla
-    private let collapsedHeight: CGFloat = 60
-    private let collapsedHeightLandscape: CGFloat = 44 // Más pequeño en horizontal
+    private let collapsedHeight: CGFloat = 40 // Más pequeño y discreto
     private let compactHeight: CGFloat = 0.25 // 25% cuando está escribiendo
     
     // Modelo para likes flotantes
@@ -34,69 +41,87 @@ struct TV2ChatOverlay: View {
         verticalSizeClass == .compact
     }
     
+    // Controlar visibilidad del chat
+    private var shouldShowChat: Bool {
+        // Siempre visible si está expandido
+        if isExpanded {
+            return true
+        }
+        // En landscape cerrado, sincronizar con controles de video
+        if isLandscape {
+            return showControls
+        }
+        // En vertical, siempre visible
+        return true
+    }
+    
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                VStack(spacing: 0) {
-                    Spacer()
-                    
-                    // Chat Panel
+                // Solo mostrar el chat si shouldShowChat es true
+                if shouldShowChat {
                     VStack(spacing: 0) {
-                        // Drag Handle
-                        dragHandle
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        let translation = value.translation.height
-                                        if isExpanded {
-                                            // Swiping down when expanded
-                                            dragOffset = max(0, translation)
-                                        } else {
-                                            // Swiping up when collapsed
-                                            dragOffset = min(0, translation)
-                                        }
-                                    }
-                                    .onEnded { value in
-                                        let threshold: CGFloat = 50
-                                        let velocity = value.predictedEndTranslation.height
-                                        
-                                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                                            if isExpanded {
-                                                if dragOffset > threshold || velocity > 500 {
-                                                    isExpanded = false
-                                                    onExpandedChange?(false)
-                                                }
-                                            } else {
-                                                if dragOffset < -threshold || velocity < -500 {
-                                                    isExpanded = true
-                                                    onExpandedChange?(true)
-                                                }
-                                            }
-                                            dragOffset = 0
-                                        }
-                                    }
-                            )
+                        Spacer()
                         
-                        // Chat Content
-                        if isExpanded {
-                            chatContent
-                                .frame(height: chatContentHeight(geometry: geometry))
+                        // Chat Panel
+                        VStack(spacing: 0) {
+                            // Drag Handle
+                            dragHandle
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            let translation = value.translation.height
+                                            if isExpanded {
+                                                // Swiping down when expanded
+                                                dragOffset = max(0, translation)
+                                            } else {
+                                                // Swiping up when collapsed
+                                                dragOffset = min(0, translation)
+                                            }
+                                        }
+                                        .onEnded { value in
+                                            let threshold: CGFloat = 50
+                                            let velocity = value.predictedEndTranslation.height
+                                            
+                                            withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                                                if isExpanded {
+                                                    if dragOffset > threshold || velocity > 500 {
+                                                        isExpanded = false
+                                                        onExpandedChange?(false)
+                                                    }
+                                                } else {
+                                                    if dragOffset < -threshold || velocity < -500 {
+                                                        isExpanded = true
+                                                        onExpandedChange?(true)
+                                                    }
+                                                }
+                                                dragOffset = 0
+                                            }
+                                        }
+                                )
+                            
+                            // Chat Content
+                            if isExpanded {
+                                chatContent
+                                    .frame(height: chatContentHeight(geometry: geometry))
+                            }
                         }
+                        .frame(height: chatPanelHeight(geometry: geometry))
+                        .offset(y: dragOffset - keyboardHeight)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Color.black.opacity(0.4))
+                                .background(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .fill(.ultraThinMaterial)
+                                )
+                                .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
+                        )
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
-                    .frame(height: chatPanelHeight(geometry: geometry))
-                    .offset(y: dragOffset - keyboardHeight)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.black.opacity(0.4))
-                            .background(
-                                RoundedRectangle(cornerRadius: 20)
-                                    .fill(.ultraThinMaterial)
-                            )
-                            .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
-                    )
+                    .padding(.bottom, isTextFieldFocused ? 0 : 0)
+                    .ignoresSafeArea(edges: .bottom)
                 }
-                .padding(.bottom, isTextFieldFocused ? 0 : 0)
-                .ignoresSafeArea(edges: .bottom)
                 
                 // Floating likes overlay
                 ForEach(floatingLikes) { like in
@@ -126,7 +151,7 @@ struct TV2ChatOverlay: View {
     
     private func chatPanelHeight(geometry: GeometryProxy) -> CGFloat {
         if !isExpanded {
-            return isLandscape ? collapsedHeightLandscape : collapsedHeight
+            return collapsedHeight
         }
         
         if isTextFieldFocused {
@@ -137,12 +162,10 @@ struct TV2ChatOverlay: View {
     }
     
     private func chatContentHeight(geometry: GeometryProxy) -> CGFloat {
-        let baseHeight = isLandscape ? collapsedHeightLandscape : collapsedHeight
-        
         if isTextFieldFocused {
-            return geometry.size.height * compactHeight - baseHeight
+            return geometry.size.height * compactHeight - collapsedHeight
         }
-        return geometry.size.height * expandedHeight - baseHeight
+        return geometry.size.height * expandedHeight - collapsedHeight
     }
     
     private func setupKeyboardObservers() {
@@ -176,74 +199,62 @@ struct TV2ChatOverlay: View {
     // MARK: - Drag Handle
     
     private var dragHandle: some View {
-        VStack(spacing: isLandscape && !isExpanded ? 2 : 4) {
+        VStack(spacing: 2) {
             // Drag indicator
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
-                .padding(.top, isLandscape && !isExpanded ? 4 : 6)
+                .frame(width: 28, height: 3)
+                .padding(.top, 4)
             
-            // Header - ocultar cuando está cerrado en landscape
-            if isExpanded || !isLandscape {
-                HStack(spacing: 8) {
-                    // Sponsor badge (top left)
-                    HStack(spacing: 4) {
-                        Text("Sponset av")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 70, maxHeight: 24)
-                            case .empty:
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 70, height: 24)
-                            case .failure:
-                                EmptyView()
-                            @unknown default:
-                                EmptyView()
-                            }
+            // Header
+            HStack(spacing: 6) {
+                // Sponsor badge (top left)
+                HStack(spacing: 3) {
+                    Text("Sponset av")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 50, maxHeight: 16)
+                        case .empty:
+                            ProgressView()
+                                .scaleEffect(0.4)
+                                .frame(width: 50, height: 16)
+                        case .failure:
+                            EmptyView()
+                        @unknown default:
+                            EmptyView()
                         }
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.black.opacity(0.3))
-                    )
-                    
-                    Spacer()
-                    
-                    Text("LIVE CHAT")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    // Expand/Collapse indicator
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.6))
-                        .padding(.leading, 2)
                 }
-                .padding(.horizontal, 14)
-                .padding(.bottom, 8)
-            } else {
-                // En landscape cerrado, solo mostrar texto pequeño
-                HStack {
-                    Spacer()
-                    Text("CHAT")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white.opacity(0.8))
-                    Spacer()
-                }
-                .padding(.vertical, 4)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.black.opacity(0.3))
+                )
+                
+                Spacer()
+                
+                Text("LIVE CHAT")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                
+                // Expand/Collapse indicator
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.6))
+                    .padding(.leading, 1)
             }
+            .padding(.horizontal, 12)
+            .padding(.bottom, 4)
         }
-        .frame(height: isLandscape && !isExpanded ? collapsedHeightLandscape : collapsedHeight)
+        .frame(height: collapsedHeight)
         .contentShape(Rectangle())
     }
     
@@ -603,12 +614,20 @@ struct FloatingLikeView: View {
 // MARK: - Preview
 
 #Preview {
-    ZStack {
-        // Video placeholder
-        Rectangle()
-            .fill(Color.blue)
-            .ignoresSafeArea()
+    struct PreviewWrapper: View {
+        @State private var showControls = true
         
-        TV2ChatOverlay()
+        var body: some View {
+            ZStack {
+                // Video placeholder
+                Rectangle()
+                    .fill(Color.blue)
+                    .ignoresSafeArea()
+                
+                TV2ChatOverlay(showControls: $showControls)
+            }
+        }
     }
+    
+    return PreviewWrapper()
 }

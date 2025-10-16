@@ -33,11 +33,11 @@ struct CastingMiniPlayer: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Kolbotn - Nordstrand 2")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                     
                     Text("4. divisjon, menn Fotball")
                         .font(.system(size: 13))
-                        .foregroundColor(Color(hex: "8E8E93"))
+                        .foregroundColor(Color(hex: "666666"))
                 }
                 
                 Spacer()
@@ -46,12 +46,12 @@ struct CastingMiniPlayer: View {
                 Button(action: { isPlaying.toggle() }) {
                     ZStack {
                         Circle()
-                            .stroke(Color.white, lineWidth: 2)
+                            .stroke(Color.black, lineWidth: 2)
                             .frame(width: 44, height: 44)
                         
                         Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                             .font(.system(size: 16))
-                            .foregroundColor(.white)
+                            .foregroundColor(.black)
                     }
                 }
             }
@@ -59,10 +59,13 @@ struct CastingMiniPlayer: View {
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background(
-                Color(hex: "1C1C1E")
+                Color.white
             )
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: -2)
         }
         .buttonStyle(PlainButtonStyle())
+        .padding(.horizontal, 12)
     }
 }
 
