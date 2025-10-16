@@ -46,22 +46,23 @@ struct CastingActiveView: View {
                 }
                 
                 Spacer()
+                    .frame(height: 20)
                 
                 // Controles de reproducción
                 playbackControls
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 20)
+                
+                // Espacio reservado para el chat
+                Color.clear
+                    .frame(height: 180)
             }
             
-            // Chat anclado al fondo con ZStack para que esté siempre visible
-            GeometryReader { geometry in
-                VStack {
-                    Spacer()
-                    TV2ChatOverlay(showControls: .constant(true))
-                        .frame(height: 100)
-                }
-                .frame(width: geometry.size.width, height: geometry.size.height)
+            // Chat anclado al fondo - visible y con espacio
+            VStack {
+                Spacer()
+                TV2ChatOverlay(showControls: .constant(true))
             }
-            .ignoresSafeArea(edges: .bottom)
+            .frame(height: 180)
         }
         .navigationBarHidden(true)
         .onAppear {
