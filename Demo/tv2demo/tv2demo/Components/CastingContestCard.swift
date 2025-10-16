@@ -82,6 +82,7 @@ struct CastingContestCard: View {
                     .cornerRadius(14)
             }
         }
+        .frame(maxWidth: 450)
         .padding(16)
         .frame(maxWidth: 500)
         .background(

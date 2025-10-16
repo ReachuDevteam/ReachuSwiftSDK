@@ -55,6 +55,7 @@ struct CastingChatPanel: View {
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.white.opacity(0.6))
             }
+            .frame(maxWidth: 450)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
             .frame(height: collapsedHeight)
@@ -152,6 +153,7 @@ struct CastingChatPanel: View {
             }
             .disabled(messageText.isEmpty)
         }
+        .frame(maxWidth: 450)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .frame(height: 50)

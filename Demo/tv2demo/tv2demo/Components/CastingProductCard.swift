@@ -103,7 +103,7 @@ struct CastingProductCard: View {
                     .cornerRadius(14)
             }
         }
-        .frame(height: 80)
+        .frame(maxWidth: 450, maxHeight: 80)
     }
     
     private var placeholderImage: some View {

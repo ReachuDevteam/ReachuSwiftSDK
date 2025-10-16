@@ -18,6 +18,7 @@ struct CastingPollCard: View {
                     Text(poll.question)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
+                        .lineLimit(2)
                     
                     Text("\(poll.duration)s")
                         .font(.system(size: 13))
@@ -36,6 +37,7 @@ struct CastingPollCard: View {
                         .cornerRadius(14)
                 }
             }
+            .frame(maxWidth: 450)
             
             // Options
             if showResults {
@@ -111,6 +113,7 @@ struct CastingPollCard: View {
                 
                 Spacer()
             }
+            .frame(maxWidth: 450)
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
@@ -193,6 +196,7 @@ struct CastingPollCard: View {
                 .foregroundColor(.white)
                 .frame(width: 40, alignment: .trailing)
         }
+        .frame(maxWidth: 450)
     }
     
     private func defaultAvatarSmall(for option: PollOption) -> some View {
