@@ -179,7 +179,7 @@ struct ProductEvent: Codable {
     let timestamp: Int64
 }
 
-struct ProductEventData: Codable {
+struct ProductEventData: Codable, Equatable {
     let id: String
     let productId: String  // El ID numérico real del producto en Reachu
     let name: String
@@ -248,7 +248,7 @@ struct ContestEvent: Codable {
     let timestamp: Int64
 }
 
-struct ContestEventData: Codable {
+struct ContestEventData: Codable, Equatable {
     let id: String
     let name: String
     let prize: String
