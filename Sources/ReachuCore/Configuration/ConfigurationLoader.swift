@@ -171,6 +171,7 @@ public class ConfigurationLoader {
         let uiConfig = createUIConfiguration(from: config.ui)
         let liveShowConfig = createLiveShowConfiguration(from: config.liveShow)
         let marketFallback = createMarketConfiguration(from: config.marketFallback)
+        let productDetailConfig = createProductDetailConfiguration(from: config.productDetail)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -180,7 +181,8 @@ public class ConfigurationLoader {
             networkConfig: networkConfig,
             uiConfig: uiConfig,
             liveShowConfig: liveShowConfig,
-            marketConfig: marketFallback
+            marketConfig: marketFallback,
+            productDetailConfig: productDetailConfig
         )
     }
     
@@ -340,6 +342,21 @@ public class ConfigurationLoader {
             flagURL: config.flag ?? MarketConfiguration.default.flagURL
         )
     }
+    
+    private static func createProductDetailConfiguration(from productDetailConfig: JSONProductDetailConfiguration?) -> ProductDetailConfiguration {
+        guard let config = productDetailConfig else { return .default }
+        
+        let modalHeight = ProductDetailModalHeight(rawValue: config.modalHeight ?? "full") ?? .full
+        let headerStyle = ProductDetailHeaderStyle(rawValue: config.headerStyle ?? "standard") ?? .standard
+        
+        return ProductDetailConfiguration(
+            modalHeight: modalHeight,
+            imageFullWidth: config.imageFullWidth ?? false,
+            imageCornerRadius: config.imageCornerRadius ?? 12,
+            headerStyle: headerStyle,
+            enableImageZoom: config.enableImageZoom ?? true
+        )
+    }
 }
 
 // MARK: - Configuration Errors
@@ -356,6 +373,7 @@ private struct JSONConfiguration: Codable {
     let ui: JSONUIConfiguration?
     let liveShow: JSONLiveShowConfiguration?
     let marketFallback: JSONMarketFallbackConfiguration?
+    let productDetail: JSONProductDetailConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -429,6 +447,14 @@ private struct JSONMarketFallbackConfiguration: Codable {
     let currencySymbol: String?
     let phoneCode: String?
     let flag: String?
+}
+
+private struct JSONProductDetailConfiguration: Codable {
+    let modalHeight: String?
+    let imageFullWidth: Bool?
+    let imageCornerRadius: CGFloat?
+    let headerStyle: String?
+    let enableImageZoom: Bool?
 }
 
 private struct JSONTipioConfiguration: Codable {

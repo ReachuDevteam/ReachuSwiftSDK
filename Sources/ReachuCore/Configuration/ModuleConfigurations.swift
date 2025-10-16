@@ -288,6 +288,64 @@ public struct UIConfiguration {
     public static let `default` = UIConfiguration()
 }
 
+// MARK: - Product Detail Configuration
+
+/// Configuration for product detail modal appearance and behavior
+public struct ProductDetailConfiguration {
+    // Modal Appearance
+    public let modalHeight: ProductDetailModalHeight
+    public let imageFullWidth: Bool
+    public let imageCornerRadius: CGFloat
+    public let headerStyle: ProductDetailHeaderStyle
+    public let enableImageZoom: Bool
+    
+    // Additional Options
+    public let showCloseButton: Bool
+    public let dismissOnTapOutside: Bool
+    public let enableShareButton: Bool
+    
+    public init(
+        modalHeight: ProductDetailModalHeight = .full,
+        imageFullWidth: Bool = false,
+        imageCornerRadius: CGFloat = 12,
+        headerStyle: ProductDetailHeaderStyle = .standard,
+        enableImageZoom: Bool = true,
+        showCloseButton: Bool = true,
+        dismissOnTapOutside: Bool = true,
+        enableShareButton: Bool = false
+    ) {
+        self.modalHeight = modalHeight
+        self.imageFullWidth = imageFullWidth
+        self.imageCornerRadius = imageCornerRadius
+        self.headerStyle = headerStyle
+        self.enableImageZoom = enableImageZoom
+        self.showCloseButton = showCloseButton
+        self.dismissOnTapOutside = dismissOnTapOutside
+        self.enableShareButton = enableShareButton
+    }
+    
+    public static let `default` = ProductDetailConfiguration()
+}
+
+public enum ProductDetailModalHeight: String, CaseIterable {
+    case full = "full"
+    case threeQuarters = "threeQuarters"
+    case half = "half"
+    
+    public var fraction: CGFloat {
+        switch self {
+        case .full: return 1.0
+        case .threeQuarters: return 0.75
+        case .half: return 0.5
+        }
+    }
+}
+
+public enum ProductDetailHeaderStyle: String, CaseIterable {
+    case standard = "standard"
+    case compact = "compact"
+}
+
 // MARK: - UI Enums
 
 public enum ProductCardVariant: String, CaseIterable {
