@@ -49,7 +49,7 @@ struct CastingActiveView: View {
             // Chat siempre visible en la parte inferior
             VStack {
                 Spacer()
-                TV2ChatOverlay()
+                TV2ChatOverlay(showControls: .constant(true))
             }
             .ignoresSafeArea(edges: .bottom)
         }
@@ -193,6 +193,7 @@ struct CastingActiveView: View {
         if let poll = webSocketManager.currentPoll {
             TV2PollOverlay(
                 poll: poll,
+                isChatExpanded: false,
                 onVote: { option in
                     print("Voted: \(option)")
                 },
@@ -205,6 +206,7 @@ struct CastingActiveView: View {
         } else if let product = webSocketManager.currentProduct {
             TV2ProductOverlay(
                 productEvent: product,
+                isChatExpanded: false,
                 sdk: SdkClient(
                     baseUrl: URL(string: "https://api.reachu.io/graphql")!,
                     apiKey: ReachuConfiguration.shared.apiKey
@@ -223,6 +225,7 @@ struct CastingActiveView: View {
         } else if let contest = webSocketManager.currentContest {
             TV2ContestOverlay(
                 contest: contest,
+                isChatExpanded: false,
                 onJoin: {
                     print("Joined contest from casting view")
                 },
