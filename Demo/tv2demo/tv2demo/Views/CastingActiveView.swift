@@ -13,6 +13,7 @@ struct CastingActiveView: View {
     
     @State private var isPlaying = true
     @State private var showControls = true
+    @State private var isChatExpanded = false
     
     var body: some View {
         ZStack {
@@ -57,11 +58,18 @@ struct CastingActiveView: View {
                     playbackControls
                     Spacer()
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, isChatExpanded ? 280 : 80)
             }
             
-            // Chat overlay (igual que en MatchDetailView)
-            TV2ChatOverlay(showControls: $showControls)
+            // Chat overlay (igual que en TV2VideoPlayer)
+            TV2ChatOverlay(
+                showControls: $showControls,
+                onExpandedChange: { expanded in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isChatExpanded = expanded
+                    }
+                }
+            )
         }
         .navigationBarHidden(true)
         .onAppear {
