@@ -20,6 +20,9 @@ struct CastingProductCard: View {
                 loadingView
             } else if let product = product {
                 productContent(product)
+            } else {
+                // Si no hay producto y ya terminó de cargar, no mostrar nada
+                EmptyView()
             }
         }
         .padding(16)
@@ -33,6 +36,7 @@ struct CastingProductCard: View {
         .onAppear {
             fetchProduct()
         }
+        .opacity((isLoading || product != nil) ? 1 : 0) // Ocultar si no hay producto
     }
     
     // MARK: - Loading View
@@ -122,9 +126,13 @@ struct CastingProductCard: View {
         Task {
             do {
                 guard let productIdInt = Int(productEvent.productId) else {
-                    print("❌ [CastingProductCard] Invalid productId: \(productEvent.productId)")
+                    print("⚠️ [CastingProductCard] Invalid productId: \(productEvent.productId)")
                     await MainActor.run {
                         self.isLoading = false
+                        // Auto-dismiss después de un breve delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            self.onDismiss()
+                        }
                     }
                     return
                 }
@@ -143,14 +151,22 @@ struct CastingProductCard: View {
                         self.product = fetchedProduct
                         print("✅ [CastingProductCard] Product fetched: \(fetchedProduct.title)")
                     } else {
-                        print("❌ [CastingProductCard] Product not found: \(productEvent.productId)")
+                        print("⚠️ [CastingProductCard] Product not found in API: \(productEvent.productId)")
+                        // Auto-dismiss después de un breve delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            self.onDismiss()
+                        }
                     }
                     self.isLoading = false
                 }
             } catch {
-                print("❌ [CastingProductCard] Error fetching product: \(error)")
+                print("⚠️ [CastingProductCard] Product not available (404 expected in demo): \(error)")
                 await MainActor.run {
                     self.isLoading = false
+                    // Auto-dismiss después de un breve delay si el producto no existe
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        self.onDismiss()
+                    }
                 }
             }
         }

@@ -8,12 +8,22 @@ struct CastingActiveView: View {
     let match: Match
     @StateObject private var castingManager = CastingManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
-    @StateObject private var chatManager = ChatManager()
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var isPlaying = true
     @State private var isChatExpanded = false
+    @State private var showPoll = false
+    @State private var showProduct = false
+    @State private var showContest = false
+    @State private var showControls = true
+    
+    private var sdkClient: SdkClient {
+        SdkClient(
+            baseUrl: URL(string: "https://api.reachu.io/graphql")!,
+            apiKey: ReachuConfiguration.shared.apiKey
+        )
+    }
     
     var body: some View {
         ZStack {
@@ -27,36 +37,91 @@ struct CastingActiveView: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
             
-            // Contenido principal centrado
+            // Contenido principal
             VStack(spacing: 0) {
                 // Header
                 castingHeader
                 
                 Spacer()
                 
-                // Match info (centrado)
+                // Match info
                 matchInfo
                 
                 Spacer()
                 
-                // Eventos interactivos (compactos, centrados)
-                interactiveContentSection
-                
-                Spacer()
-                
-                // Controles (centrados)
+                // Controles
                 playbackControls
-                    .padding(.bottom, 20)
-                    .offset(y: isChatExpanded ? -180 : 0)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isChatExpanded)
-                
-                Spacer()
-                    .frame(height: isChatExpanded ? 0 : 20)
-                
-                // Chat panel (centrado, ancho fijo)
-                CastingChatPanel(chatManager: chatManager)
-                    .padding(.bottom, 20)
             }
+            
+            // Contest Overlay (máxima prioridad) - IGUAL QUE TV2VideoPlayer
+            if let contest = webSocketManager.currentContest, showContest {
+                TV2ContestOverlay(
+                    contest: contest,
+                    isChatExpanded: isChatExpanded,
+                    onJoin: {
+                        print("🎁 [Contest] Usuario se unió: \(contest.name)")
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showContest = false
+                        }
+                    }
+                )
+            }
+            
+            // Product Overlay - IGUAL QUE TV2VideoPlayer
+            if let productEvent = webSocketManager.currentProduct, showProduct {
+                TV2ProductOverlay(
+                    productEvent: productEvent,
+                    isChatExpanded: isChatExpanded,
+                    sdk: sdkClient,
+                    currency: cartManager.currency,
+                    country: cartManager.country,
+                    onAddToCart: { productDto in
+                        if let apiProduct = productDto {
+                            print("🛍️ [Product] Agregando producto al carrito: \(apiProduct.title)")
+                            let product = convertDtoToProduct(apiProduct)
+                            Task {
+                                await cartManager.addProduct(product, quantity: 1)
+                                print("✅ [Product] Producto agregado al carrito")
+                            }
+                        } else {
+                            print("⚠️ [Product] Producto aún no disponible: \(productEvent.name)")
+                        }
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showProduct = false
+                        }
+                    }
+                )
+            }
+            
+            // Poll Overlay - IGUAL QUE TV2VideoPlayer
+            if let poll = webSocketManager.currentPoll, showPoll {
+                TV2PollOverlay(
+                    poll: poll,
+                    isChatExpanded: isChatExpanded,
+                    onVote: { option in
+                        print("📊 [Poll] Votado: \(option)")
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showPoll = false
+                        }
+                    }
+                )
+            }
+            
+            // Chat Overlay - IGUAL QUE TV2VideoPlayer
+            TV2ChatOverlay(
+                showControls: $showControls,
+                onExpandedChange: { expanded in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                        isChatExpanded = expanded
+                    }
+                }
+            )
         }
         .navigationBarHidden(true)
         .onAppear {
@@ -64,6 +129,21 @@ struct CastingActiveView: View {
         }
         .onDisappear {
             webSocketManager.disconnect()
+        }
+        .onChange(of: webSocketManager.currentPoll) { newPoll in
+            withAnimation {
+                showPoll = newPoll != nil
+            }
+        }
+        .onChange(of: webSocketManager.currentProduct) { newProduct in
+            withAnimation {
+                showProduct = newProduct != nil
+            }
+        }
+        .onChange(of: webSocketManager.currentContest) { newContest in
+            withAnimation {
+                showContest = newContest != nil
+            }
         }
     }
     
@@ -189,49 +269,132 @@ struct CastingActiveView: View {
         }
     }
     
-    // MARK: - Interactive Content Section
+    // MARK: - Conversion Helpers (copiadas de TV2VideoPlayer)
     
-    @ViewBuilder
-    private var interactiveContentSection: some View {
-        // Muestra automáticamente el contenido que llegue por WebSocket
-        // Usa componentes compactos diseñados para casting
-        if let poll = webSocketManager.currentPoll {
-            CastingPollCard(
-                poll: poll,
-                onVote: { option in
-                    print("✅ Voted: \(option)")
-                },
-                onDismiss: {
-                    webSocketManager.currentPoll = nil
-                }
+    private func convertPrice(_ priceDto: PriceDto) -> Price {
+        return Price(
+            amount: Float(priceDto.amount),
+            currency_code: priceDto.currencyCode,
+            amount_incl_taxes: priceDto.amountInclTaxes.map { Float($0) },
+            tax_amount: priceDto.taxAmount.map { Float($0) },
+            tax_rate: priceDto.taxRate.map { Float($0) },
+            compare_at: priceDto.compareAt.map { Float($0) },
+            compare_at_incl_taxes: priceDto.compareAtInclTaxes.map { Float($0) }
+        )
+    }
+    
+    private func convertImages(_ imageDtos: [ProductImageDto]) -> [ProductImage] {
+        return imageDtos.map { 
+            ProductImage(
+                id: $0.id, 
+                url: $0.url, 
+                width: $0.width, 
+                height: $0.height, 
+                order: $0.order ?? 0
+            ) 
+        }
+    }
+    
+    private func convertVariants(_ variantDtos: [VariantDto]) -> [Variant] {
+        return variantDtos.map { variantDto in
+            Variant(
+                id: variantDto.id,
+                barcode: variantDto.barcode,
+                price: convertPrice(variantDto.price),
+                quantity: variantDto.quantity,
+                sku: variantDto.sku,
+                title: variantDto.title,
+                images: convertImages(variantDto.images)
             )
-        } else if let product = webSocketManager.currentProduct {
-            CastingProductCard(
-                productEvent: product,
-                sdk: SdkClient(
-                    baseUrl: URL(string: "https://api.reachu.io/graphql")!,
-                    apiKey: ReachuConfiguration.shared.apiKey
-                ),
-                currency: cartManager.currency,
-                country: cartManager.country,
-                onAddToCart: { productDto in
-                    print("✅ Product added to cart from casting")
-                },
-                onDismiss: {
-                    webSocketManager.currentProduct = nil
-                }
-            )
-        } else if let contest = webSocketManager.currentContest {
-            CastingContestCard(
-                contest: contest,
-                onJoin: {
-                    print("✅ Joined contest from casting")
-                },
-                onDismiss: {
-                    webSocketManager.currentContest = nil
+        }
+    }
+    
+    private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        let price = convertPrice(dto.price)
+        let variants = convertVariants(dto.variants)
+        let images = convertImages(dto.images)
+        
+        let options = dto.options.map { 
+            Option(
+                id: $0.id, 
+                name: $0.name, 
+                order: $0.order, 
+                values: $0.values
+            ) 
+        }
+        
+        let categories = dto.categories?.map { 
+            _Category(id: $0.id, name: $0.name) 
+        }
+        
+        let shipping = dto.productShipping?.map { s in
+            ProductShipping(
+                id: s.id,
+                name: s.name,
+                description: s.description,
+                custom_price_enabled: s.customPriceEnabled,
+                default: s.defaultOption,
+                shipping_country: s.shippingCountry?.map { sc in
+                    ShippingCountry(
+                        id: sc.id,
+                        country: sc.country,
+                        price: BasePrice(
+                            amount: Float(sc.price.amount),
+                            currency_code: sc.price.currencyCode,
+                            amount_incl_taxes: sc.price.amountInclTaxes.map { Float($0) },
+                            tax_amount: sc.price.taxAmount.map { Float($0) },
+                            tax_rate: sc.price.taxRate.map { Float($0) }
+                        )
+                    )
                 }
             )
         }
+        
+        let returnInfo = dto.returnInfo.map { r in
+            ReturnInfo(
+                return_right: r.returnRight,
+                return_label: r.returnLabel,
+                return_cost: r.returnCost.map { Float($0) },
+                supplier_policy: r.supplierPolicy,
+                return_address: r.returnAddress.map { ra in
+                    ReturnAddress(
+                        same_as_business: ra.sameAsBusiness,
+                        same_as_warehouse: ra.sameAsWarehouse,
+                        country: ra.country,
+                        timezone: ra.timezone,
+                        address: ra.address,
+                        address_2: ra.address2,
+                        post_code: ra.postCode,
+                        return_city: ra.returnCity
+                    )
+                }
+            )
+        }
+        
+        return Product(
+            id: dto.id,
+            title: dto.title,
+            brand: dto.brand,
+            description: dto.description,
+            tags: dto.tags,
+            sku: dto.sku,
+            quantity: dto.quantity,
+            price: price,
+            variants: variants,
+            barcode: dto.barcode,
+            options: options,
+            categories: categories,
+            images: images,
+            product_shipping: shipping,
+            supplier: dto.supplier,
+            supplier_id: dto.supplierId,
+            imported_product: dto.importedProduct,
+            referral_fee: dto.referralFee,
+            options_enabled: dto.optionsEnabled,
+            digital: dto.digital,
+            origin: dto.origin,
+            return: returnInfo
+        )
     }
 }
 
