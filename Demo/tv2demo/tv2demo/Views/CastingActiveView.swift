@@ -8,11 +8,11 @@ struct CastingActiveView: View {
     let match: Match
     @StateObject private var castingManager = CastingManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
-    @StateObject private var chatManager = ChatManager()
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var isPlaying = true
+    @State private var showControls = true
     
     var body: some View {
         ZStack {
@@ -34,23 +34,34 @@ struct CastingActiveView: View {
                 Spacer()
                 
                 // Match info (centrado)
-                matchInfo
+                HStack {
+                    Spacer()
+                    matchInfo
+                    Spacer()
+                }
                 
                 Spacer()
                 
                 // Eventos interactivos (compactos, centrados)
-                interactiveContentSection
+                HStack {
+                    Spacer()
+                    interactiveContentSection
+                    Spacer()
+                }
                 
                 Spacer()
                 
                 // Controles (centrados)
-                playbackControls
-                    .padding(.bottom, 8)
-                
-                // Chat compacto (centrado)
-                CastingChatPanel(chatManager: chatManager)
-                    .padding(.bottom, 20)
+                HStack {
+                    Spacer()
+                    playbackControls
+                    Spacer()
+                }
+                .padding(.bottom, 8)
             }
+            
+            // Chat overlay (igual que en MatchDetailView)
+            TV2ChatOverlay(showControls: $showControls)
         }
         .navigationBarHidden(true)
         .onAppear {
