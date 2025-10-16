@@ -13,6 +13,10 @@ struct CastingActiveView: View {
     @Environment(\.dismiss) private var dismiss
     
     @State private var isPlaying = true
+    @State private var isChatExpanded = false
+    @State private var chatMessage = ""
+    @State private var hasVotedInPoll = false
+    @State private var selectedPollOption: String?
     
     private var sdkClient: SdkClient {
         SdkClient(
@@ -56,8 +60,14 @@ struct CastingActiveView: View {
                 
                 Spacer()
                 
-                // Controles
+                // Controles (se mueven hacia arriba cuando chat se expande)
                 playbackControls
+                    .offset(y: isChatExpanded ? -150 : 0)
+                    .animation(.spring(response: 0.3), value: isChatExpanded)
+                
+                // Espacio dinámico
+                Spacer()
+                    .frame(height: isChatExpanded ? 0 : 20)
                 
                 // Chat
                 simpleChatPanel
@@ -67,9 +77,15 @@ struct CastingActiveView: View {
         .navigationBarHidden(true)
         .onAppear {
             webSocketManager.connect()
+            chatManager.startSimulation()
         }
         .onDisappear {
             webSocketManager.disconnect()
+            chatManager.stopSimulation()
+        }
+        .onChange(of: webSocketManager.currentPoll) { _ in
+            hasVotedInPoll = false
+            selectedPollOption = nil
         }
     }
     
@@ -78,20 +94,27 @@ struct CastingActiveView: View {
     private func simplePollCard(_ poll: PollEventData) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text(poll.question)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(poll.question)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white)
+                    Text("\(poll.duration)s")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.7))
+                }
                 Spacer(minLength: 0)
                 Button("✕") {
                     webSocketManager.currentPoll = nil
+                    hasVotedInPoll = false
+                    selectedPollOption = nil
                 }
+                .font(.system(size: 16))
                 .foregroundColor(.white.opacity(0.6))
             }
             
-            ForEach(poll.options, id: \.text) { option in
-                Button {
-                    print("📊 Voted: \(option.text)")
-                } label: {
+            if hasVotedInPoll {
+                // Resultados
+                ForEach(poll.options, id: \.text) { option in
                     HStack(spacing: 10) {
                         if let avatarUrl = option.avatarUrl, !avatarUrl.isEmpty {
                             AsyncImage(url: URL(string: avatarUrl)) { image in
@@ -99,39 +122,96 @@ struct CastingActiveView: View {
                             } placeholder: {
                                 Circle().fill(Color.white)
                             }
-                            .frame(width: 32, height: 32)
+                            .frame(width: 28, height: 28)
                             .background(Color.white)
                             .clipShape(Circle())
                         } else {
                             Circle()
                                 .fill(Color.white)
-                                .frame(width: 32, height: 32)
+                                .frame(width: 28, height: 28)
                                 .overlay(
                                     Text(option.text.prefix(1))
-                                        .font(.system(size: 14, weight: .bold))
+                                        .font(.system(size: 12, weight: .bold))
                                         .foregroundColor(TV2Theme.Colors.primary)
                                 )
                         }
                         
                         Text(option.text)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13, weight: option.text == selectedPollOption ? .bold : .medium))
                             .foregroundColor(.white)
+                            .frame(width: 70, alignment: .leading)
                         
-                        Spacer(minLength: 0)
+                        // Barra de progreso
+                        let percentage: CGFloat = option.text == selectedPollOption ? 75 : 12.5
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(width: 180, height: 26)
+                            
+                            RoundedRectangle(cornerRadius: 5)
+                                .fill(option.text == selectedPollOption ? TV2Theme.Colors.primary : Color.white.opacity(0.3))
+                                .frame(width: 180 * (percentage / 100), height: 26)
+                        }
+                        
+                        Text("\(Int(percentage))%")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(width: 35, alignment: .trailing)
                     }
-                    .frame(width: 360)
-                    .padding(12)
-                    .background(Color.white.opacity(0.15))
-                    .cornerRadius(10)
+                }
+            } else {
+                // Opciones para votar
+                ForEach(poll.options, id: \.text) { option in
+                    Button {
+                        selectedPollOption = option.text
+                        hasVotedInPoll = true
+                        print("📊 Voted: \(option.text)")
+                    } label: {
+                        HStack(spacing: 10) {
+                            if let avatarUrl = option.avatarUrl, !avatarUrl.isEmpty {
+                                AsyncImage(url: URL(string: avatarUrl)) { image in
+                                    image.resizable().aspectRatio(contentMode: .fit)
+                                } placeholder: {
+                                    Circle().fill(Color.white)
+                                }
+                                .frame(width: 32, height: 32)
+                                .background(Color.white)
+                                .clipShape(Circle())
+                            } else {
+                                Circle()
+                                    .fill(Color.white)
+                                    .frame(width: 32, height: 32)
+                                    .overlay(
+                                        Text(option.text.prefix(1))
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundColor(TV2Theme.Colors.primary)
+                                    )
+                            }
+                            
+                            Text(option.text)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Spacer(minLength: 0)
+                        }
+                        .frame(width: 360)
+                        .padding(12)
+                        .background(Color.white.opacity(0.15))
+                        .cornerRadius(10)
+                    }
                 }
             }
         }
         .frame(width: 400)
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.7))
-                .background(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                )
+                .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
         )
     }
     
@@ -166,9 +246,13 @@ struct CastingActiveView: View {
         .frame(width: 380)
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.7))
-                .background(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                )
+                .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
         )
     }
     
@@ -201,35 +285,217 @@ struct CastingActiveView: View {
         .frame(width: 380)
         .padding(14)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.7))
-                .background(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                )
+                .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 4)
         )
     }
     
     private var simpleChatPanel: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Image(systemName: "message.fill")
-                    .font(.system(size: 13))
-                Text("LIVE CHAT")
-                    .font(.system(size: 13, weight: .bold))
-                Text("(\(chatManager.messages.count))")
-                    .font(.system(size: 11))
-                    .opacity(0.7)
-                Spacer(minLength: 0)
+        VStack(spacing: 0) {
+            // Drag indicator + Header (estilo EXACTO de TV2ChatOverlay)
+            VStack(spacing: 4) {
+                // Drag indicator
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color.white.opacity(0.3))
+                    .frame(width: 32, height: 4)
+                    .padding(.top, 6)
+                
+                // Header
+                Button {
+                    withAnimation(.spring(response: 0.3)) {
+                        isChatExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 8) {
+                        // Sponsor badge (top left)
+                        HStack(spacing: 4) {
+                            Text("Sponset av")
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            AsyncImage(url: URL(string: "http://event-streamer-angelo100.replit.app/objects/uploads/16475fd2-da1f-4e9f-8eb4-362067b27858")) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 70, maxHeight: 24)
+                                case .empty:
+                                    ProgressView()
+                                        .scaleEffect(0.5)
+                                        .frame(width: 70, height: 24)
+                                case .failure:
+                                    EmptyView()
+                                @unknown default:
+                                    EmptyView()
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 6)
+                                .fill(Color.black.opacity(0.3))
+                        )
+                        
+                        Spacer(minLength: 0)
+                        
+                        // Live Chat indicator
+                        HStack(spacing: 4) {
+                            Text("LIVE CHAT")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            // Expand/Collapse indicator
+                            Image(systemName: isChatExpanded ? "chevron.down" : "chevron.up")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                    }
+                    .frame(width: 360)
+                    .padding(.horizontal, 14)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(PlainButtonStyle())
+                .padding(.bottom, 8)
             }
-            .foregroundColor(.white)
-            .frame(width: 360)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
+            
+            // Mensajes (cuando está expandido)
+            if isChatExpanded {
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(chatManager.messages.suffix(20)) { message in
+                                HStack(alignment: .top, spacing: 8) {
+                                    // Avatar (estilo EXACTO de TV2ChatOverlay)
+                                    Circle()
+                                        .fill(message.usernameColor.opacity(0.3))
+                                        .frame(width: 28, height: 28)
+                                        .overlay(
+                                            Text(String(message.username.prefix(1)))
+                                                .font(.system(size: 13, weight: .semibold))
+                                                .foregroundColor(message.usernameColor)
+                                        )
+                                    
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        // Username and time
+                                        HStack(spacing: 4) {
+                                            Text(message.username)
+                                                .font(.system(size: 13, weight: .bold))
+                                                .foregroundColor(message.usernameColor)
+                                            
+                                            Text(timeAgo(from: message.timestamp))
+                                                .font(.system(size: 10))
+                                                .foregroundColor(.white.opacity(0.4))
+                                        }
+                                        
+                                        // Message
+                                        Text(message.text)
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.white.opacity(0.95))
+                                            .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    
+                                    Spacer(minLength: 0)
+                                }
+                                .padding(.vertical, 4)
+                                .frame(width: 350)
+                                .id(message.id)
+                            }
+                        }
+                        .padding(14)
+                    }
+                    .frame(width: 380, height: 160)
+                    .onChange(of: chatManager.messages.count) { _ in
+                        if let last = chatManager.messages.last {
+                            withAnimation {
+                                proxy.scrollTo(last.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                }
+                
+                Divider()
+                    .background(Color.white.opacity(0.2))
+                
+                // Input bar (estilo EXACTO de TV2ChatOverlay)
+                HStack(spacing: 12) {
+                    TextField("Send a message...", text: $chatMessage)
+                        .font(.system(size: 15))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 24)
+                                .fill(Color.white.opacity(0.15))
+                        )
+                    
+                    Button {
+                        sendChatMessage()
+                    } label: {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(chatMessage.isEmpty ? .white.opacity(0.3) : TV2Theme.Colors.primary)
+                            .padding(10)
+                            .background(
+                                Circle()
+                                    .fill(chatMessage.isEmpty ? Color.white.opacity(0.1) : TV2Theme.Colors.primary.opacity(0.2))
+                            )
+                    }
+                    .disabled(chatMessage.isEmpty)
+                }
+                .frame(width: 360)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .padding(.bottom, 8)
+                .background(Color(hex: "120019"))
+            }
         }
         .frame(width: 400)
         .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.black.opacity(0.7))
-                .background(.ultraThinMaterial)
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color.black.opacity(0.4))
+                .background(
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
+                )
+                .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
         )
+        .animation(.spring(response: 0.3), value: isChatExpanded)
+    }
+    
+    private func sendChatMessage() {
+        guard !chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        let message = ChatMessage(
+            username: "Angelo",
+            text: chatMessage,
+            usernameColor: TV2Theme.Colors.secondary,
+            likes: 0,
+            timestamp: Date()
+        )
+        
+        chatManager.addMessage(message)
+        chatMessage = ""
+    }
+    
+    private func timeAgo(from date: Date) -> String {
+        let seconds = Int(Date().timeIntervalSince(date))
+        if seconds < 60 { return "\(seconds)s" }
+        let minutes = seconds / 60
+        if minutes < 60 { return "\(minutes)m" }
+        let hours = minutes / 60
+        return "\(hours)h"
     }
     
     // MARK: - Components
