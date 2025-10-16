@@ -50,6 +50,7 @@ public struct RProductDetailOverlay: View {
     @State private var quantity = 1
     @State private var showSuccessAnimation = false
     @State private var showToastOverModal = false
+    @State private var imageLoaded = false
     
     // MARK: - Computed Properties
     private var displayImages: [ProductImage] {
@@ -101,23 +102,26 @@ public struct RProductDetailOverlay: View {
                     // Image Gallery
                     imageGallerySection
                     
-                    // Product Information
-                    VStack(spacing: ReachuSpacing.md) {
-                        productInfoSection
-                        variantSelectionSection
-                        quantitySelectionSection
-                        
-                        if productDetailConfig.showDescription {
-                            descriptionSection
+                    // Product Information (only show after image loads)
+                    if imageLoaded || displayImages.isEmpty {
+                        VStack(spacing: ReachuSpacing.md) {
+                            productInfoSection
+                            variantSelectionSection
+                            quantitySelectionSection
+                            
+                            if productDetailConfig.showDescription {
+                                descriptionSection
+                            }
+                            
+                            if productDetailConfig.showSpecifications {
+                                specificationsSection
+                            }
                         }
-                        
-                        if productDetailConfig.showSpecifications {
-                            specificationsSection
-                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.top, ReachuSpacing.lg)
+                        .padding(.bottom, ReachuSpacing.lg)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                     }
-                    .padding(.horizontal, ReachuSpacing.lg)
-                    .padding(.top, ReachuSpacing.lg)
-                    .padding(.bottom, ReachuSpacing.lg)
                     }
                 }
                 .if(productDetailConfig.showNavigationTitle) { view in
@@ -137,8 +141,11 @@ public struct RProductDetailOverlay: View {
                     }
                 }
                 .safeAreaInset(edge: .bottom) {
-                    // Bottom Action Bar
-                    bottomActionBar
+                    // Bottom Action Bar (only show after image loads)
+                    if imageLoaded || displayImages.isEmpty {
+                        bottomActionBar
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
                 
                 // Overlay Close Button
@@ -200,6 +207,9 @@ public struct RProductDetailOverlay: View {
                             .frame(maxWidth: .infinity)
                             .clipped()
                             .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
+                            .onAppear {
+                                imageLoaded = true
+                            }
                     case .failure(_):
                         RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                             .fill(ReachuColors.background)
@@ -234,6 +244,11 @@ public struct RProductDetailOverlay: View {
                                         .frame(maxWidth: .infinity)
                                         .clipped()
                                         .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
+                                        .onAppear {
+                                            if index == 0 {
+                                                imageLoaded = true
+                                            }
+                                        }
                                 case .failure(_):
                                     RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                         .fill(ReachuColors.background)
