@@ -34,6 +34,11 @@ public struct RProductDetailOverlay: View {
     @SwiftUI.Environment(\.dismiss) private var dismiss: DismissAction
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
+    // MARK: - Configuration
+    private var productDetailConfig: ProductDetailConfiguration {
+        ReachuConfiguration.shared.productDetailConfiguration
+    }
+    
     
     // MARK: - State
     @State private var selectedImageIndex = 0
@@ -110,13 +115,15 @@ public struct RProductDetailOverlay: View {
             }
             .navigationTitle("Product Details")
             #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(productDetailConfig.headerStyle == .compact ? .inline : .large)
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
-                        onDismiss?()
-                        dismiss()
+                    if productDetailConfig.showCloseButton {
+                        Button("Close") {
+                            onDismiss?()
+                            dismiss()
+                        }
                     }
                 }
             }
@@ -125,6 +132,7 @@ public struct RProductDetailOverlay: View {
                 bottomActionBar
             }
         }
+        .modifier(ProductDetailPresentationModifier(config: productDetailConfig))
         
         .onAppear {
             // Initialize default options and variant
@@ -134,12 +142,16 @@ public struct RProductDetailOverlay: View {
             // Success animation overlay
             if showSuccessAnimation {
                 successAnimationOverlay
+            } else {
+                EmptyView()
             }
         }
         .overlay {
             // Toast notification over modal
             if showToastOverModal {
                 toastOverlayView
+            } else {
+                EmptyView()
             }
         }
     }
@@ -149,7 +161,7 @@ public struct RProductDetailOverlay: View {
         VStack(spacing: ReachuSpacing.md) {
             if displayImages.isEmpty {
                 // Placeholder when no images
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                     .fill(ReachuColors.background)
                     .frame(height: 300)
                     .overlay {
@@ -170,15 +182,16 @@ public struct RProductDetailOverlay: View {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
+                            .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
                     case .failure(_):
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                             .fill(ReachuColors.background)
                             .overlay {
                                 Image(systemName: "exclamationmark.triangle")
                                     .foregroundColor(ReachuColors.error)
                             }
                     case .empty:
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                        RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                             .fill(ReachuColors.background)
                             .overlay {
                                 ProgressView()
@@ -188,7 +201,6 @@ public struct RProductDetailOverlay: View {
                     }
                 }
                 .frame(height: 240)
-                .cornerRadius(ReachuBorderRadius.large)
             } else {
                 // Multiple images with gallery
                 VStack(spacing: ReachuSpacing.md) {
@@ -201,15 +213,16 @@ public struct RProductDetailOverlay: View {
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
+                                        .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
                                 case .failure(_):
-                                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                                    RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                         .fill(ReachuColors.background)
                                         .overlay {
                                             Image(systemName: "exclamationmark.triangle")
                                                 .foregroundColor(ReachuColors.error)
                                         }
                                 case .empty:
-                                    RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                                    RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                         .fill(ReachuColors.background)
                                         .overlay {
                                             ProgressView()
@@ -277,6 +290,7 @@ public struct RProductDetailOverlay: View {
             }
         }
         .padding(.top, ReachuSpacing.md)
+        .padding(.horizontal, productDetailConfig.imageFullWidth ? 0 : ReachuSpacing.lg)
     }
     
     // MARK: - Product Info Section
@@ -833,6 +847,66 @@ public struct RProductDetailOverlay: View {
             Spacer()
         }
         .transition(.move(edge: .top).combined(with: .opacity))
+    }
+}
+
+// MARK: - View Modifiers
+
+/// Custom ViewModifier to apply presentation detents based on configuration
+struct ProductDetailPresentationModifier: ViewModifier {
+    let config: ProductDetailConfiguration
+    
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        if #available(iOS 16.0, *) {
+            if config.dismissOnTapOutside {
+                if #available(iOS 16.4, *) {
+                    content
+                        .presentationDetents(presentationDetentsSet)
+                        .presentationBackgroundInteraction(.enabled(upThrough: .large))
+                } else {
+                    content
+                        .presentationDetents(presentationDetentsSet)
+                }
+            } else {
+                content
+                    .presentationDetents(presentationDetentsSet)
+            }
+        } else {
+            content
+        }
+        #else
+        content
+        #endif
+    }
+    
+    @available(iOS 16.0, *)
+    private var presentationDetentsSet: Set<PresentationDetent> {
+        switch config.modalHeight {
+        case .full:
+            return [.large]
+        case .threeQuarters:
+            return [.fraction(0.75), .large]
+        case .half:
+            return [.medium, .large]
+        }
+    }
+}
+
+// MARK: - View Extensions
+extension View {
+    /// Conditionally apply a view modifier
+    @ViewBuilder
+    func `if`<Transform: View>(
+        _ condition: Bool,
+        transform: (Self) -> Transform
+    ) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
 
