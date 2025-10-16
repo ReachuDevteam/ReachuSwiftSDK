@@ -8,11 +8,11 @@ struct CastingActiveView: View {
     let match: Match
     @StateObject private var castingManager = CastingManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
+    @StateObject private var chatManager = ChatManager()
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     
     @State private var isPlaying = true
-    @State private var showControls = true
     @State private var isChatExpanded = false
     
     var body: some View {
@@ -27,54 +27,36 @@ struct CastingActiveView: View {
             Color.black.opacity(0.5)
                 .ignoresSafeArea()
             
-            // Contenido principal (sin límite de ancho)
+            // Contenido principal centrado
             VStack(spacing: 0) {
                 // Header
                 castingHeader
                 
                 Spacer()
                 
-                // Match info (centrado con límite)
-                HStack {
-                    Spacer()
-                    matchInfo
-                        .frame(maxWidth: 500)
-                    Spacer()
-                }
+                // Match info (centrado)
+                matchInfo
                 
                 Spacer()
                 
-                // Eventos interactivos (compactos, centrados con límite)
-                HStack {
-                    Spacer()
-                    interactiveContentSection
-                        .frame(maxWidth: 500)
-                    Spacer()
-                }
+                // Eventos interactivos (compactos, centrados)
+                interactiveContentSection
                 
                 Spacer()
                 
-                // Controles (centrados con límite)
-                HStack {
-                    Spacer()
-                    playbackControls
-                        .frame(maxWidth: 500)
-                    Spacer()
-                }
-                .padding(.bottom, 20)
-                .offset(y: isChatExpanded ? -220 : 0) // Mover hacia arriba cuando chat se abre
-                .animation(.spring(response: 0.4, dampingFraction: 0.75), value: isChatExpanded)
+                // Controles (centrados)
+                playbackControls
+                    .padding(.bottom, 20)
+                    .offset(y: isChatExpanded ? -180 : 0)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isChatExpanded)
+                
+                Spacer()
+                    .frame(height: isChatExpanded ? 0 : 20)
+                
+                // Chat panel (centrado, ancho fijo)
+                CastingChatPanel(chatManager: chatManager)
+                    .padding(.bottom, 20)
             }
-            
-            // Chat overlay (sin límite para que se vea completo)
-            TV2ChatOverlay(
-                showControls: $showControls,
-                onExpandedChange: { expanded in
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
-                        isChatExpanded = expanded
-                    }
-                }
-            )
         }
         .navigationBarHidden(true)
         .onAppear {
