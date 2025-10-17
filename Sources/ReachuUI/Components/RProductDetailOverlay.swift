@@ -500,13 +500,31 @@ public struct RProductDetailOverlay: View {
                     .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
                 
-                Text(description)
+                Text(cleanHTMLString(description))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                     .lineLimit(3)
             }
         }
+    }
+    
+    // MARK: - HTML Cleaning Helper
+    
+    /// Limpia tags HTML de un string
+    private func cleanHTMLString(_ html: String) -> String {
+        // Remover tags HTML
+        var cleaned = html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        // Decodificar entidades HTML comunes
+        cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
+        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
+        cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
+        cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
+        cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
+        cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
+        // Limpiar espacios múltiples y saltos de línea
+        cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     // MARK: - Specifications Section
