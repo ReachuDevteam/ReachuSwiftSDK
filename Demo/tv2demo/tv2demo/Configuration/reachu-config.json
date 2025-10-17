@@ -91,10 +91,10 @@
     "enableGuestCheckout": true
   },
   "productDetail": {
-    "modalHeight": "half",
-    "imageFullWidth": true,
-    "imageCornerRadius": 0,
-    "imageHeight": 380,
+    "modalHeight": "full",
+    "imageFullWidth": false,
+    "imageCornerRadius": 12,
+    "imageHeight": 300,
     "showImageGallery": false,
     "headerStyle": "compact",
     "enableImageZoom": false,
