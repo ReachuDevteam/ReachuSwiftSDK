@@ -79,7 +79,7 @@
     "showProductBrands": true,
     "showProductDescriptions": false,
     "showDiscountBadge": true,
-    "discountBadgeText": "Opp til 30%",
+    "discountBadgeText": "-30%",
     "enableHapticFeedback": true
   },
   "cart": {
