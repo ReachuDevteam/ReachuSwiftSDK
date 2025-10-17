@@ -97,11 +97,8 @@ struct CastingActiveView: View {
                     )
                 }
                 
-                Spacer()
-                
-                // Chat
+                // Chat (sin Spacer arriba para que quede pegado)
                 simpleChatPanel
-                    .padding(.bottom, 20)
             }
             
             // Floating likes overlay
@@ -193,7 +190,7 @@ struct CastingActiveView: View {
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
                     }
-                    .frame(width: 360)
+                    .frame(maxWidth: .infinity) // Full width cuando está cerrado o abierto
                     .padding(.horizontal, 14)
                     .contentShape(Rectangle())
                 }
@@ -262,15 +259,15 @@ struct CastingActiveView: View {
                 Divider()
                     .background(Color.white.opacity(0.2))
                 
-                // Input bar (estilo EXACTO de TV2ChatOverlay)
-                HStack(spacing: 12) {
+                // Input bar
+                HStack(spacing: 10) {
                     TextField("Send a message...", text: $chatMessage)
-                        .font(.system(size: 15))
+                        .font(.system(size: 14))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
                         .background(
-                            RoundedRectangle(cornerRadius: 24)
+                            RoundedRectangle(cornerRadius: 20)
                                 .fill(Color.white.opacity(0.15))
                         )
                     
@@ -279,9 +276,9 @@ struct CastingActiveView: View {
                         sendChatMessage()
                     } label: {
                         Image(systemName: "paperplane.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(chatMessage.isEmpty ? .white.opacity(0.3) : TV2Theme.Colors.primary)
-                            .padding(10)
+                            .padding(8)
                             .background(
                                 Circle()
                                     .fill(chatMessage.isEmpty ? Color.white.opacity(0.1) : TV2Theme.Colors.primary.opacity(0.2))
@@ -294,28 +291,27 @@ struct CastingActiveView: View {
                         sendFloatingLike()
                     }) {
                         Image(systemName: "hand.thumbsup.fill")
-                            .font(.system(size: 18, weight: .semibold))
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(TV2Theme.Colors.primary)
-                            .padding(10)
+                            .padding(8)
                             .background(
                                 Circle()
                                     .fill(TV2Theme.Colors.primary.opacity(0.2))
                             )
                     }
                 }
-                .frame(width: 360)
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity) // Todo el ancho disponible
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
                 .background(Color(hex: "120019"))
             }
         }
-        .frame(width: 400, height: isChatExpanded ? 320 : 70) // Abierto: 320px para que se vea todo, Cerrado: 70px
+        .frame(width: isChatExpanded ? 400 : UIScreen.main.bounds.width, height: isChatExpanded ? 280 : 60) // Cerrado: full width x 60px, Abierto: 400px x 280px
         .background(
-            RoundedRectangle(cornerRadius: 20)
+            RoundedRectangle(cornerRadius: isChatExpanded ? 20 : 0) // Sin bordes redondeados cuando está cerrado (full width)
                 .fill(Color.black.opacity(0.4))
                 .background(
-                    RoundedRectangle(cornerRadius: 20)
+                    RoundedRectangle(cornerRadius: isChatExpanded ? 20 : 0)
                         .fill(.ultraThinMaterial)
                 )
         )
