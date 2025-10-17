@@ -89,6 +89,8 @@
     "autoSaveCart": true,
     "showCartNotifications": true,
     "enableGuestCheckout": true,
+    "requirePhoneNumber": true,
+    "defaultShippingCountry": "NO",
     "supportedPaymentMethods": ["stripe", "klarna", "paypal"]
   },
   "productDetail": {
