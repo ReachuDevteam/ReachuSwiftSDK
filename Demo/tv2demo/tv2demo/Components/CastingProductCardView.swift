@@ -226,13 +226,12 @@ struct CastingProductCardView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
                     )
             )
-            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         }
-        .frame(width: 280)
+        .frame(maxWidth: UIScreen.main.bounds.width - 40) // Margen de 20px a cada lado
         .offset(y: dragOffset)
         .gesture(
             DragGesture()

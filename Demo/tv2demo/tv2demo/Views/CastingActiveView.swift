@@ -52,7 +52,13 @@ struct CastingActiveView: View {
                 
                 Spacer()
                 
-                // Eventos interactivos
+                // Controles (ARRIBA de los eventos)
+                playbackControls
+                
+                Spacer()
+                    .frame(minHeight: 40) // Espacio entre controles y eventos
+                
+                // Eventos interactivos (DEBAJO de los controles)
                 if let poll = webSocketManager.currentPoll {
                     CastingPollCardView(
                         poll: poll,
@@ -90,11 +96,6 @@ struct CastingActiveView: View {
                         }
                     )
                 }
-                
-                Spacer()
-                
-                // Controles
-                playbackControls
                 
                 Spacer()
                 
@@ -317,7 +318,6 @@ struct CastingActiveView: View {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                 )
-                .shadow(color: Color.black.opacity(0.6), radius: 20, x: 0, y: -8)
         )
         .animation(.spring(response: 0.3), value: isChatExpanded)
     }
@@ -536,21 +536,18 @@ struct CastingActiveView: View {
             // Progreso/tiempo
             VStack(spacing: 16) {
                 // Barra de progreso
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        // Background
-                        Capsule()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(height: 4)
-                        
-                        // Progress (simulado al 50%)
-                        Capsule()
-                            .fill(Color.white)
-                            .frame(width: geometry.size.width * 0.5, height: 4)
-                    }
+                ZStack(alignment: .leading) {
+                    // Background
+                    Capsule()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(height: 4)
+                    
+                    // Progress (simulado al 50%)
+                    Capsule()
+                        .fill(Color.white)
+                        .frame(width: (UIScreen.main.bounds.width * 0.6) * 0.5, height: 4) // 60% del ancho de pantalla, 50% de progreso
                 }
-                .frame(height: 4)
-                .padding(.horizontal, 40)
+                .frame(width: UIScreen.main.bounds.width * 0.6, height: 4) // Limitar a 60% del ancho de pantalla
                 
                 // Tiempo
                 HStack {
@@ -564,7 +561,7 @@ struct CastingActiveView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white)
                 }
-                .padding(.horizontal, 40)
+                .frame(width: UIScreen.main.bounds.width * 0.6) // Mismo ancho que la barra
             }
         }
     }

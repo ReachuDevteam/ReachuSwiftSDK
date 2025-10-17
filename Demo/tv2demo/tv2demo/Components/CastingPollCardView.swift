@@ -37,7 +37,7 @@ struct CastingPollCardView: View {
             axis: (x: 0, y: 1, z: 0),
             perspective: 0.5
         )
-        .frame(width: 300)
+        .frame(maxWidth: UIScreen.main.bounds.width - 40) // Margen de 20px a cada lado
         .offset(y: dragOffset)
         .gesture(
             DragGesture()
@@ -134,11 +134,10 @@ struct CastingPollCardView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
                     )
             )
-            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         }
     }
     
@@ -177,11 +176,10 @@ struct CastingPollCardView: View {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.ultraThinMaterial)
                     )
             )
-            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
         }
     }
     
