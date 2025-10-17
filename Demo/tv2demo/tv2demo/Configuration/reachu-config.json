@@ -88,20 +88,11 @@
     "floatingCartSize": "small",
     "autoSaveCart": true,
     "showCartNotifications": true,
-    "enableGuestCheckout": true
+    "enableGuestCheckout": true,
+    "supportedPaymentMethods": ["stripe", "klarna", "paypal"]
   },
   "productDetail": {
-    "modalHeight": "full",
-    "imageFullWidth": false,
-    "imageCornerRadius": 12,
-    "imageHeight": 300,
-    "showImageGallery": false,
-    "headerStyle": "compact",
-    "enableImageZoom": false,
-    "showNavigationTitle": false,
-    "closeButtonStyle": "overlayTopLeft",
-    "showDescription": false,
-    "showSpecifications": false
+    "showNavigationTitle": false
   },
   "marketFallback": {
     "countryCode": "NO",
