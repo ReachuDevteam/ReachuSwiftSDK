@@ -41,27 +41,39 @@ class WebSocketManager: NSObject, ObservableObject {
     }
     
     private func receiveMessage() {
+        guard isConnected, webSocketTask != nil else {
+            print("⚠️ [WebSocket] No se puede recibir mensajes, socket no conectado")
+            return
+        }
+        
         webSocketTask?.receive { [weak self] result in
+            guard let self = self else { return }
+            
             switch result {
             case .success(let message):
                 switch message {
                 case .string(let text):
                     print("📩 [WebSocket] Mensaje recibido: \(text)")
-                    self?.handleMessage(text)
+                    self.handleMessage(text)
                 case .data(let data):
                     if let text = String(data: data, encoding: .utf8) {
                         print("📩 [WebSocket] Mensaje recibido (data): \(text)")
-                        self?.handleMessage(text)
+                        self.handleMessage(text)
                     }
                 @unknown default:
                     break
                 }
-                // Continuar recibiendo mensajes
-                self?.receiveMessage()
+                // Continuar recibiendo mensajes solo si seguimos conectados
+                if self.isConnected {
+                    self.receiveMessage()
+                }
                 
             case .failure(let error):
                 print("❌ [WebSocket] Error: \(error.localizedDescription)")
-                self?.isConnected = false
+                DispatchQueue.main.async {
+                    self.isConnected = false
+                    self.webSocketTask = nil
+                }
             }
         }
     }
@@ -167,7 +179,7 @@ struct ProductEvent: Codable {
     let timestamp: Int64
 }
 
-struct ProductEventData: Codable {
+struct ProductEventData: Codable, Equatable {
     let id: String
     let productId: String  // El ID numérico real del producto en Reachu
     let name: String
@@ -236,7 +248,7 @@ struct ContestEvent: Codable {
     let timestamp: Int64
 }
 
-struct ContestEventData: Codable {
+struct ContestEventData: Codable, Equatable {
     let id: String
     let name: String
     let prize: String
