@@ -30,6 +30,10 @@ public class LiveShowManager: ObservableObject {
     // MARK: - Private Properties
     private var cancellables = Set<AnyCancellable>()
     private let configuration: LiveShowConfiguration
+    private let heartApiBase: String = "https://stg-dev-microservices.tipioapp.com/stg-hearts"
+    private let userDefaults = UserDefaults.standard
+    private let userTrackingKey = "reachu.userTrackingId"
+    private var tipioIdToLiveStreamId: [Int: String] = [:] // maps Tipio id -> Tipio.liveStreamId (Vimeo event)
     
     // Tipio clients
     private lazy var tipioApiClient = TipioApiClient()
@@ -155,6 +159,8 @@ public class LiveShowManager: ObservableObject {
         do {
             print("📡 [LiveShow] Fetching Tipio livestream: \(id)")
             let tipioStream = try await tipioApiClient.getLiveStream(id: id)
+            // Save mapping Tipio.id -> Tipio.liveStreamId
+            tipioIdToLiveStreamId[tipioStream.id] = tipioStream.liveStreamId
             
             // Convert to Reachu LiveStream
             let liveStream = tipioStream.toLiveStream()
@@ -181,6 +187,8 @@ public class LiveShowManager: ObservableObject {
         do {
             print("📡 [LiveShow] Fetching active Tipio livestreams")
             let tipioStreams = try await tipioApiClient.getActiveLiveStreams()
+            // Save mappings for all
+            tipioStreams.forEach { tipioIdToLiveStreamId[$0.id] = $0.liveStreamId }
             
             // Convert all to Reachu LiveStreams
             let liveStreams = tipioStreams.map { $0.toLiveStream() }
@@ -199,6 +207,81 @@ public class LiveShowManager: ObservableObject {
             print("❌ [LiveShow] Failed to fetch active Tipio livestreams: \(error)")
             setupDemoData()
         }
+    }
+
+    // MARK: - Hearts / Likes
+
+    /// Identificador de tracking del usuario. Persistente.
+    public var userTrackingId: String {
+        if let existing = userDefaults.string(forKey: userTrackingKey), !existing.isEmpty {
+            return existing
+        }
+        let generated = "ios-" + UUID().uuidString
+        userDefaults.set(generated, forKey: userTrackingKey)
+        return generated
+    }
+
+    /// Envía un like (HEART) para el stream actual.
+    /// - parameter isVideoLive: si el video está en vivo (controla `after-show`).
+    public func sendHeartForCurrentStream(isVideoLive: Bool) {
+        guard let current = currentStream, let tipioIntId = Int(current.id) else {
+            print("❌ [LiveShow] sendHeart: no current stream or invalid id")
+            return
+        }
+        guard let liveStreamId = tipioIdToLiveStreamId[tipioIntId] else {
+            print("❌ [LiveShow] sendHeart: missing Tipio.liveStreamId mapping for stream id \(tipioIntId)")
+            return
+        }
+
+        let clientId = userTrackingId
+        let emojiChannel = "emojiChannel-\(liveStreamId)"
+        let hasHeartedKey = "reachu.hasHearted.\(liveStreamId)"
+        let hasHeartedBefore = userDefaults.bool(forKey: hasHeartedKey)
+
+        var urlString: String
+
+        if isVideoLive {
+            if hasHeartedBefore {
+                urlString = "\(heartApiBase)/heart/socket-sdk/\(liveStreamId)"
+            } else {
+                urlString = "\(heartApiBase)/heart/livestream/\(liveStreamId)?origin=sdk"
+            }
+        } else {
+            urlString = "\(heartApiBase)/heart/livestream/\(liveStreamId)/after-show?origin=sdk"
+        }
+
+        print("🚀 [LiveShow] Sending HEART to \(urlString)")
+
+        guard let url = URL(string: urlString) else {
+            print("❌ [LiveShow] sendHeart: invalid URL \(urlString)")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let body: [String: Any] = [
+            "channel": emojiChannel,
+            "clientId": clientId
+        ]
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body, options: [])
+
+        let task = URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            if let error = error {
+                print("❌ [LiveShow] HEART request error: \(error.localizedDescription)")
+                return
+            }
+            if let http = response as? HTTPURLResponse {
+                print("❤️ [LiveShow] HEART \(hasHeartedBefore ? "socket-sdk" : "livestream") status=\(http.statusCode)")
+                if http.statusCode >= 200 && http.statusCode < 300 {
+                    // Marcar como ya enviado al menos una vez
+                    if hasHeartedBefore == false {
+                        self?.userDefaults.set(true, forKey: hasHeartedKey)
+                    }
+                }
+            }
+        }
+        task.resume()
     }
     
     /// Start a livestream via Tipio

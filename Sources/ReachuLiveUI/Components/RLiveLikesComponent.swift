@@ -34,12 +34,6 @@ public struct RLiveLikesComponent: View {
                     ))
             }
         }
-        .onAppear {
-            likesManager.startAutoLikes()
-        }
-        .onDisappear {
-            likesManager.stopAutoLikes()
-        }
     }
     
     // MARK: - Create Like
@@ -135,7 +129,27 @@ public class LiveLikesManager: ObservableObject {
     private var autoLikesTimer: Timer?
     
     // MARK: - Initialization
-    private init() {}
+    private init() {
+        // Escuchar HEART del socket para disparar corazones blancos (de otros usuarios)
+        NotificationCenter.default.addObserver(forName: Notification.Name("reachu.heart.received"), object: nil, queue: .main) { [weak self] _ in
+            guard let self = self else { return }
+            // Disparar 1-2 corazones blancos simples al recibir un HEART
+            let count = Int.random(in: 1...2)
+            for i in 0..<count {
+                let heart = FlyingHeartModel(
+                    id: UUID().uuidString,
+                    startPosition: CGPoint(
+                        x: CGFloat.random(in: 100...300),
+                        y: CGFloat.random(in: 400...700)
+                    ),
+                    isUserGenerated: false
+                )
+                DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.15) {
+                    self.addHeart(heart)
+                }
+            }
+        }
+    }
     
     // MARK: - Public Methods
     
@@ -155,40 +169,6 @@ public class LiveLikesManager: ObservableObject {
         flyingHearts.removeAll { $0.id == id }
     }
     
-    /// Start automatic likes simulation
-    public func startAutoLikes() {
-        stopAutoLikes() // Ensure no duplicate timers
-        
-        autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
-            Task { @MainActor in
-                self.simulateAutoLike()
-                
-                // Reschedule with random interval (longer intervals for less load)
-                self.autoLikesTimer?.invalidate()
-                self.autoLikesTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
-                    Task { @MainActor in
-                        self.simulateAutoLike()
-                    }
-                }
-            }
-        }
-        
-        print("❤️ [Likes] Auto likes simulation started")
-    }
-    
-    /// Stop automatic likes simulation
-    public func stopAutoLikes() {
-        autoLikesTimer?.invalidate()
-        autoLikesTimer = nil
-        print("❤️ [Likes] Auto likes simulation stopped")
-    }
-    
-    /// Clear all hearts
-    public func clearHearts() {
-        flyingHearts.removeAll()
-        print("❤️ [Likes] Hearts cleared")
-    }
-    
     /// Create a user-generated like (called from button)
     public func createUserLike(from position: CGPoint = CGPoint(x: 350, y: 450)) {
         let heart = FlyingHeartModel(
@@ -200,38 +180,8 @@ public class LiveLikesManager: ObservableObject {
         addHeart(heart)
         print("❤️ [Likes] User like from button")
     }
-    
-    // MARK: - Private Methods
-    
-    private func simulateAutoLike() {
-        // Generate 2-3 white hearts per auto like (like other users giving multiple likes)
-        let heartCount = Int.random(in: 2...3)
-        
-        for i in 0..<heartCount {
-            let heart = FlyingHeartModel(
-                id: UUID().uuidString,
-                startPosition: CGPoint(
-                    x: CGFloat.random(in: 100...300),
-                    y: CGFloat.random(in: 400...700)
-                ),
-                isUserGenerated: false
-            )
-            
-            // Stagger the hearts slightly
-            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2) {
-                self.addHeart(heart)
-            }
-        }
-        
-        print("❤️ [Likes] Auto-generated \(heartCount) white hearts")
-    }
-    
-    deinit {
-        Task { @MainActor in
-            self.stopAutoLikes()
-        }
-    }
 }
+
 
 // MARK: - Preview
 

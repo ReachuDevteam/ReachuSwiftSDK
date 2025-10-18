@@ -284,7 +284,12 @@ public struct RLiveShowOverlay: View {
                         controlButton(
                             icon: "heart.fill",
                             color: .red,
-                            action: createUserLike
+                            action: {
+                                // Efecto local inmediato
+                                createUserLike()
+                                // Notificar backend HEART
+                                LiveShowManager.shared.sendHeartForCurrentStream(isVideoLive: stream.isLive)
+                            }
                         )
                     }
                 }

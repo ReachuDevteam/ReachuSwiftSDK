@@ -974,8 +974,12 @@ public struct RLiveShowFullScreenOverlay: View {
     }
     
     private func createUserLike() {
-        // Use likes manager to create user like (red heart)
+        // Efecto local inmediato
         LiveLikesManager.shared.createUserLike()
+        // Notificar backend HEART
+        if let stream = liveShowManager.currentStream {
+            LiveShowManager.shared.sendHeartForCurrentStream(isVideoLive: stream.isLive)
+        }
         
         // Haptic feedback
         #if os(iOS)

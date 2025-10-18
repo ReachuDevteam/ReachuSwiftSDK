@@ -428,6 +428,15 @@ extension TipioWebSocketClient {
                 }
             }
         }
+
+        // HEART evento del microservicio de hearts
+        client.on("HEART") { [weak self] data, _ in
+            guard let self = self, let first = data.first else { return }
+            print("🟢 [TipioWS] Evento recibido: HEART")
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("reachu.heart.received"), object: nil)
+            }
+        }
     }
         
     fileprivate func handleAnySocketEvent(_ event: SocketAnyEvent) {
