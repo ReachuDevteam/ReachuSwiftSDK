@@ -2114,9 +2114,9 @@ extension RCheckoutOverlay {
 
                 HStack(spacing: ReachuSpacing.sm) {
                     CountryCodePicker(selectedCode: $phoneCountryCode)
-                        .frame(width: 80)
+                        .frame(width: 100)
 
-                    TextField("(555) 123-4456", text: $phone)
+                    TextField("555 123 4456", text: $phone)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
                             RoundedRectangle(cornerRadius: 6)
@@ -3319,47 +3319,54 @@ struct CountryCodePicker: View {
     @Binding var selectedCode: String
 
     private let countryCodes = [
-        ("+1", "🇺🇸"), ("+44", "🇬🇧"), ("+49", "🇩🇪"), ("+33", "🇫🇷"),
-        ("+39", "🇮🇹"), ("+34", "🇪🇸"), ("+31", "🇳🇱"), ("+46", "🇸🇪"),
-        ("+47", "🇳🇴"), ("+45", "🇩🇰"), ("+41", "🇨🇭"), ("+43", "🇦🇹"),
-        ("+32", "🇧🇪"), ("+351", "🇵🇹"), ("+52", "🇲🇽"), ("+54", "🇦🇷"),
-        ("+55", "🇧🇷"), ("+86", "🇨🇳"), ("+81", "🇯🇵"), ("+82", "🇰🇷"),
-        ("+91", "🇮🇳"), ("+61", "🇦🇺"), ("+64", "🇳🇿"),
+        ("+1", "🇺🇸", "US"), ("+44", "🇬🇧", "UK"), ("+49", "🇩🇪", "DE"), ("+33", "🇫🇷", "FR"),
+        ("+39", "🇮🇹", "IT"), ("+34", "🇪🇸", "ES"), ("+31", "🇳🇱", "NL"), ("+46", "🇸🇪", "SE"),
+        ("+47", "🇳🇴", "NO"), ("+45", "🇩🇰", "DK"), ("+41", "🇨🇭", "CH"), ("+43", "🇦🇹", "AT"),
+        ("+32", "🇧🇪", "BE"), ("+351", "🇵🇹", "PT"), ("+52", "🇲🇽", "MX"), ("+54", "🇦🇷", "AR"),
+        ("+55", "🇧🇷", "BR"), ("+86", "🇨🇳", "CN"), ("+81", "🇯🇵", "JP"), ("+82", "🇰🇷", "KR"),
+        ("+91", "🇮🇳", "IN"), ("+61", "🇦🇺", "AU"), ("+64", "🇳🇿", "NZ"),
     ]
 
     var body: some View {
         Menu {
-            ForEach(countryCodes, id: \.0) { code, flag in
+            ForEach(countryCodes, id: \.0) { code, flag, name in
                 Button(action: { selectedCode = code }) {
                     HStack {
                         Text(flag)
+                            .font(.system(size: 20))
+                        Text(name)
+                            .font(.system(size: 14))
                         Text(code)
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(ReachuColors.textSecondary)
                         Spacer()
                         if selectedCode == code {
-                            Image(systemName: "checkmark")
+                            Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(ReachuColors.primary)
                         }
                     }
                 }
             }
         } label: {
-            HStack(spacing: ReachuSpacing.xs) {
-                Text(
-                    countryCodes.first(where: { $0.0 == selectedCode })?.1
-                        ?? "🇺🇸"
-                )
+            HStack(spacing: 6) {
+                Text(countryCodes.first(where: { $0.0 == selectedCode })?.1 ?? "🇺🇸")
+                    .font(.system(size: 24))
+                
                 Text(selectedCode)
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundColor(ReachuColors.textPrimary)
-                Image(systemName: "chevron.down")
-                    .font(.caption)
+                
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 12))
                     .foregroundColor(ReachuColors.textSecondary)
             }
-            .padding(ReachuSpacing.sm)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(ReachuColors.surfaceSecondary)
-            .cornerRadius(ReachuBorderRadius.medium)
+            .cornerRadius(6)
             .overlay(
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                RoundedRectangle(cornerRadius: 6)
                     .stroke(ReachuColors.border, lineWidth: 1)
             )
         }
