@@ -106,12 +106,17 @@ public struct Price: Codable, Equatable {
 
     /// Formatted display string for the price
     public var displayAmount: String {
-        "\(currency_code) \(String(format: "%.2f", amount))"
+        // Use price with taxes if available (what customer actually pays)
+        let priceToShow = amount_incl_taxes ?? amount
+        return "\(currency_code) \(String(format: "%.2f", priceToShow))"
     }
 
-    /// Formatted display string for compare at price
+    /// Formatted display string for compare at price (original/before discount)
     public var displayCompareAtAmount: String? {
-        if let compareAt = compare_at {
+        // Use compare at price with taxes if available, otherwise base compare at
+        if let compareAtWithTaxes = compare_at_incl_taxes {
+            return "\(currency_code) \(String(format: "%.2f", compareAtWithTaxes))"
+        } else if let compareAt = compare_at {
             return "\(currency_code) \(String(format: "%.2f", compareAt))"
         }
         return nil

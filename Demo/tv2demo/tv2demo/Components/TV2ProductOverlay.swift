@@ -148,7 +148,9 @@ struct TV2ProductOverlay: View {
     /// Precio formateado del producto (API > WebSocket fallback)
     private var displayPrice: String {
         if let apiProduct = viewModel.product {
-            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", apiProduct.price.amount))"
+            // Use price with taxes if available, otherwise use base price
+            let priceToShow = apiProduct.price.amountInclTaxes ?? apiProduct.price.amount
+            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", priceToShow))"
         }
         return productEvent.price
     }

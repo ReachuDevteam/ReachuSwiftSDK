@@ -58,7 +58,9 @@ struct CastingProductCardView: View {
     
     private var displayPrice: String {
         if let apiProduct = viewModel.product {
-            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", apiProduct.price.amount))"
+            // ALWAYS use price with taxes (what customer actually pays)
+            let priceToShow = apiProduct.price.amountInclTaxes ?? apiProduct.price.amount
+            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", priceToShow))"
         }
         return productEvent.price
     }

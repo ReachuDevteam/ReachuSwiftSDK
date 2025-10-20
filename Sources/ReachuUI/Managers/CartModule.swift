@@ -726,6 +726,9 @@ extension CartManager {
         }
         let imageUrl = sortedImages.first?.url
 
+        // Use price with taxes if available, otherwise base price
+        let priceToUse = product.price.amount_incl_taxes ?? product.price.amount
+        
         let cartItem = CartItem(
             id: UUID().uuidString,
             productId: product.id,
@@ -734,7 +737,7 @@ extension CartManager {
             title: product.title,
             brand: product.brand,
             imageUrl: imageUrl,
-            price: Double(product.price.amount),
+            price: Double(priceToUse),
             currency: product.price.currency_code,
             quantity: quantity,
             sku: product.sku,
