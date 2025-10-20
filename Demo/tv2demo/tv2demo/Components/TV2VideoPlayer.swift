@@ -164,6 +164,17 @@ struct TV2VideoPlayer: View {
                     }
                 }
             )
+            
+            // Floating cart indicator - SIEMPRE visible en el video player
+            RFloatingCartIndicator(
+                customPadding: EdgeInsets(
+                    top: 0,
+                    leading: 0,
+                    bottom: 100,
+                    trailing: TV2Theme.Spacing.md
+                )
+            )
+            .zIndex(1000) // Por encima de todo en el video player
             }
         }
         .preferredColorScheme(.dark)
