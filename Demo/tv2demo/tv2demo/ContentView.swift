@@ -23,6 +23,7 @@ struct ContentView: View {
                 CastingMiniPlayer {
                     showCastingView = true
                 }
+                .zIndex(998) // Por debajo del cart (999) pero por encima del resto
             }
             
             // Global floating cart indicator - always on top
@@ -34,6 +35,7 @@ struct ContentView: View {
                     trailing: TV2Theme.Spacing.md
                 )
             )
+            .zIndex(999) // Asegurar que esté por encima de todo (video, overlays, etc.)
         }
         .fullScreenCover(isPresented: $showCastingView) {
             if castingManager.isCasting {
