@@ -668,7 +668,28 @@ public struct RCheckoutOverlay: View {
             }
 
             // Bottom Button - Full Width
-            VStack {
+            VStack(spacing: ReachuSpacing.sm) {
+                // Warning if shipping not selected for all items
+                if checkoutStep == .orderSummary {
+                    let itemsWithoutShipping = cartManager.items.filter { $0.shippingId == nil || $0.shippingId!.isEmpty }
+                    if !itemsWithoutShipping.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(ReachuColors.warning)
+                            Text("Please select shipping method for all items")
+                                .font(ReachuTypography.caption1)
+                                .foregroundColor(ReachuColors.warning)
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(ReachuColors.warning.opacity(0.1))
+                        )
+                        .padding(.horizontal, ReachuSpacing.lg)
+                    }
+                }
+                
                 let _ = print("🔵🔵🔵 [OrderSummary] Renderizando botón 'Initiate Payment' - isDisabled: \(!canProceedToNext)")
                 RButton(
                     title: "Initiate Payment",
