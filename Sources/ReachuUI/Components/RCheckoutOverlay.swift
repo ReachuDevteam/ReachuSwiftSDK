@@ -451,7 +451,7 @@ public struct RCheckoutOverlay: View {
                     // 1. CART SECTION (Products first)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         Text("Cart")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
 
@@ -464,7 +464,7 @@ public struct RCheckoutOverlay: View {
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         HStack {
                             Text("Shipping Address")
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 17, weight: .bold))
                                 .foregroundColor(ReachuColors.textPrimary)
 
                             Spacer()
@@ -517,7 +517,7 @@ public struct RCheckoutOverlay: View {
                     // 3. ORDER SUMMARY SECTION (at bottom)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         Text("Order Summary")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
 
@@ -638,7 +638,7 @@ public struct RCheckoutOverlay: View {
                     // Cart Section (smaller, readonly)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         Text("Cart")
-                            .font(.system(size: 16, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
 
@@ -649,7 +649,7 @@ public struct RCheckoutOverlay: View {
                     // Payment Method Selection
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         Text("Payment Method")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
 
                         VStack(spacing: ReachuSpacing.sm) {
@@ -1833,42 +1833,42 @@ struct PaymentMethodRowCompact: View {
                    let uiImage = UIImage(named: imageName, in: Bundle.module, compatibleWith: nil) {
                     // Logo container with white background
                     ZStack {
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 6)
                             .fill(Color.white)
                         
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .padding(4)
+                            .padding(3)
                     }
-                    .frame(width: 60, height: 36)
+                    .frame(width: 50, height: 30)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: 6)
                             .stroke(ReachuColors.border, lineWidth: 1)
                     )
                 } else {
                     // Fallback to SF Symbol
                     Image(systemName: method.icon)
-                        .font(.title3)
+                        .font(.system(size: 18))
                         .foregroundColor(method.iconColor)
-                        .frame(width: 25)
+                        .frame(width: 50, height: 30)
                 }
 
                 // Payment Method Name
                 Text(method.displayName)
-                    .font(ReachuTypography.body)
+                    .font(.system(size: 15))
                     .foregroundColor(ReachuColors.textPrimary)
 
                 Spacer()
             }
-            .padding(.vertical, ReachuSpacing.md)
-            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 14)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(isSelected ? ReachuColors.primary.opacity(0.1) : ReachuColors.surface)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(isSelected ? ReachuColors.primary.opacity(0.08) : ReachuColors.surface)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 8)
                     .stroke(isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: isSelected ? 2 : 1)
             )
         }
@@ -2794,7 +2794,7 @@ extension RCheckoutOverlay {
             if cartManager.items.contains(where: { !$0.availableShippings.isEmpty }) {
                 HStack(spacing: 8) {
                     Text("Shipping Options")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     if hasItemsWithoutShipping {
