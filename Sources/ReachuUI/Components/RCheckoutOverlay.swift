@@ -2040,7 +2040,7 @@ extension RCheckoutOverlay {
     // Individual products with quantity controls for address step (like the image)
     private var individualProductsWithQuantityView: some View {
         VStack(spacing: ReachuSpacing.xl) {
-            ForEach(Array(cartManager.items.enumerated()), id: \.offset) { index, item in
+            ForEach(cartManager.items) { item in
                 VStack(spacing: ReachuSpacing.md) {
                     // Product header with image and details
                     HStack(spacing: ReachuSpacing.md) {
