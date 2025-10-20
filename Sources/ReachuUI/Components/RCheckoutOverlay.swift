@@ -101,11 +101,13 @@ public struct RCheckoutOverlay: View {
     public enum PaymentMethod: String, CaseIterable {
         case stripe = "stripe"
         case klarna = "klarna"
+        case vipps = "vipps"
 
         var displayName: String {
             switch self {
             case .stripe: return "Credit Card"
             case .klarna: return "Pay with Klarna"
+            case .vipps: return "Vipps"
             }
         }
 
@@ -113,6 +115,15 @@ public struct RCheckoutOverlay: View {
             switch self {
             case .stripe: return "creditcard.fill"
             case .klarna: return "k.square.fill"
+            case .vipps: return "v.square.fill"
+            }
+        }
+        
+        var imageName: String? {
+            switch self {
+            case .stripe: return "stripe"
+            case .klarna: return "klarna"
+            case .vipps: return "vipps"
             }
         }
 
@@ -120,6 +131,7 @@ public struct RCheckoutOverlay: View {
             switch self {
             case .stripe: return .purple
             case .klarna: return Color(hex: "#FFB3C7")
+            case .vipps: return Color(hex: "#FF5B24")
             }
         }
 
@@ -1734,10 +1746,27 @@ struct PaymentMethodRowCompact: View {
                 }
 
                 // Payment Method Icon
-                Image(systemName: method.icon)
-                    .font(.title3)
-                    .foregroundColor(method.iconColor)
-                    .frame(width: 25)
+                if let imageName = method.imageName {
+                    // Try to load payment provider logo from Resources
+                    if let uiImage = UIImage(named: "PaymentIcons/\(imageName)", in: .module, with: nil) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 24)
+                            .frame(width: 50)
+                    } else {
+                        // Fallback to SF Symbol
+                        Image(systemName: method.icon)
+                            .font(.title3)
+                            .foregroundColor(method.iconColor)
+                            .frame(width: 25)
+                    }
+                } else {
+                    Image(systemName: method.icon)
+                        .font(.title3)
+                        .foregroundColor(method.iconColor)
+                        .frame(width: 25)
+                }
 
                 // Payment Method Name
                 Text(method.displayName)

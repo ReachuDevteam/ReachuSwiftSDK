@@ -126,7 +126,10 @@ let package = Package(
                     condition: .when(platforms: [.iOS])),
 
             ],
-            path: "Sources/ReachuUI"
+            path: "Sources/ReachuUI",
+            resources: [
+                .process("Resources")
+            ]
         ),
 
         // MARK: - FASE 3: LiveShow Target (Optional)
