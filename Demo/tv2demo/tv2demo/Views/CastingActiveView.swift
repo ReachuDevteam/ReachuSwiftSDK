@@ -57,44 +57,44 @@ struct CastingActiveView: View {
                 
                 Spacer()
                     .frame(minHeight: 40) // Espacio entre controles y eventos
-                
+            
                 // Eventos interactivos (DEBAJO de los controles)
-                if let poll = webSocketManager.currentPoll {
+            if let poll = webSocketManager.currentPoll {
                     CastingPollCardView(
-                        poll: poll,
-                        onVote: { option in
+                    poll: poll,
+                    onVote: { option in
                             print("📊 [Poll] Votado: \(option)")
-                        },
-                        onDismiss: {
-                            webSocketManager.currentPoll = nil
-                        }
-                    )
+                    },
+                    onDismiss: {
+                        webSocketManager.currentPoll = nil
+                    }
+                )
                 } else if let productEvent = webSocketManager.currentProduct {
                     // Componente que carga datos desde Reachu API
                     CastingProductCardView(
                         productEvent: productEvent,
                         sdk: sdkClient,
-                        currency: cartManager.currency,
-                        country: cartManager.country,
-                        onAddToCart: { productDto in
+                    currency: cartManager.currency,
+                    country: cartManager.country,
+                    onAddToCart: { productDto in
                             if let apiProduct = productDto {
                                 print("🛍️ Producto de API: \(apiProduct.title)")
                             }
-                        },
-                        onDismiss: {
-                            webSocketManager.currentProduct = nil
-                        }
-                    )
+                    },
+                    onDismiss: {
+                        webSocketManager.currentProduct = nil
+                    }
+                )
                 } else if let contest = webSocketManager.currentContest {
                     CastingContestCardView(
-                        contest: contest,
-                        onJoin: {
+                    contest: contest,
+                    onJoin: {
                             print("🎁 [Contest] Usuario se unió")
-                        },
-                        onDismiss: {
-                            webSocketManager.currentContest = nil
-                        }
-                    )
+                    },
+                    onDismiss: {
+                        webSocketManager.currentContest = nil
+                    }
+                )
                 }
                 
                 // Chat (sin Spacer arriba para que quede pegado)
@@ -532,15 +532,15 @@ struct CastingActiveView: View {
             // Progreso/tiempo
             VStack(spacing: 16) {
                 // Barra de progreso
-                ZStack(alignment: .leading) {
-                    // Background
-                    Capsule()
-                        .fill(Color.white.opacity(0.3))
-                        .frame(height: 4)
-                    
-                    // Progress (simulado al 50%)
-                    Capsule()
-                        .fill(Color.white)
+                    ZStack(alignment: .leading) {
+                        // Background
+                        Capsule()
+                            .fill(Color.white.opacity(0.3))
+                            .frame(height: 4)
+                        
+                        // Progress (simulado al 50%)
+                        Capsule()
+                            .fill(Color.white)
                         .frame(width: (UIScreen.main.bounds.width * 0.6) * 0.5, height: 4) // 60% del ancho de pantalla, 50% de progreso
                 }
                 .frame(width: UIScreen.main.bounds.width * 0.6, height: 4) // Limitar a 60% del ancho de pantalla

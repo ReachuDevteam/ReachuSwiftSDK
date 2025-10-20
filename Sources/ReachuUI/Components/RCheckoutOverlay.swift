@@ -2040,7 +2040,7 @@ extension RCheckoutOverlay {
     // Individual products with quantity controls for address step (like the image)
     private var individualProductsWithQuantityView: some View {
         VStack(spacing: ReachuSpacing.xl) {
-            ForEach(cartManager.items) { item in
+            ForEach(cartManager.items, id: \.id) { item in
                 VStack(spacing: ReachuSpacing.md) {
                     // Product header with image and details
                     HStack(spacing: ReachuSpacing.md) {
@@ -2083,7 +2083,7 @@ extension RCheckoutOverlay {
                                             )
                                         } else {
                                             // Remove item when quantity is 1
-                                            await cartManager.removeProduct(item.product)
+                                            await cartManager.removeItem(item)
                                         }
                                     }
                                 }) {
