@@ -7,6 +7,9 @@
 
 import SwiftUI
 import ReachuUI
+import ReachuLiveUI
+import ReachuLiveShow
+import AVFoundation
 
 struct ContentView: View {
     @StateObject private var castingManager = CastingManager.shared
@@ -48,9 +51,32 @@ struct ContentView: View {
                 showCastingView = false
             }
         }
+        .overlay {
+            // Global live stream overlay (Tipio integration)
+            LiveStreamGlobalOverlay()
+                .environmentObject(cartManager)
+        }
+    }
+}
+
+// MARK: - Live Stream Overlay
+
+struct LiveStreamGlobalOverlay: View {
+    @ObservedObject private var liveShowManager = LiveShowManager.shared
+    @EnvironmentObject private var cartManager: CartManager
+    
+    var body: some View {
+        ZStack {
+            // Full screen LiveShow overlay
+            if liveShowManager.isLiveShowVisible {
+                RLiveShowFullScreenOverlay()
+                    .environmentObject(cartManager)
+            }
+        }
     }
 }
 
 #Preview {
     ContentView()
+        .environmentObject(CartManager())
 }
