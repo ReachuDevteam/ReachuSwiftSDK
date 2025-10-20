@@ -84,7 +84,7 @@
   },
   "cart": {
     "floatingCartPosition": "bottomRight",
-    "floatingCartDisplayMode": "minimal",
+    "floatingCartDisplayMode": "iconOnly",
     "floatingCartSize": "small",
     "autoSaveCart": true,
     "showCartNotifications": true,
