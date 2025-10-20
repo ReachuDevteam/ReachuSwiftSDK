@@ -2072,21 +2072,24 @@ extension RCheckoutOverlay {
                             // Quantity controls below title (more compact)
                             HStack(spacing: ReachuSpacing.sm) {
                                 Button(action: {
-                                    if item.quantity > 1 {
-                                        Task {
+                                    Task {
+                                        if item.quantity > 1 {
                                             await cartManager.updateQuantity(
                                                 for: item,
                                                 to: item.quantity - 1
                                             )
+                                        } else {
+                                            // Remove item when quantity is 1
+                                            await cartManager.removeProduct(item.product)
                                         }
                                     }
                                 }) {
-                                    Image(systemName: "minus")
+                                    Image(systemName: item.quantity == 1 ? "trash" : "minus")
                                         .font(
                                             .system(size: 14, weight: .medium)
                                         )
                                         .foregroundColor(
-                                            ReachuColors.textPrimary
+                                            item.quantity == 1 ? ReachuColors.error : ReachuColors.textPrimary
                                         )
                                         .frame(width: 28, height: 28)
                                         .background(
@@ -2094,7 +2097,6 @@ extension RCheckoutOverlay {
                                         )
                                         .cornerRadius(4)
                                 }
-                                .disabled(item.quantity <= 1)
 
                                 Text("\(item.quantity)")
                                     .font(.system(size: 16, weight: .semibold))
