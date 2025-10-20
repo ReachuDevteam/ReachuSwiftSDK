@@ -1,6 +1,10 @@
 import Foundation
 import SwiftUI
 
+#if canImport(StripeCore)
+import StripeCore
+#endif
+
 /// Configuration Loader
 ///
 /// Loads Reachu SDK configuration from various sources:
@@ -184,6 +188,9 @@ public class ConfigurationLoader {
             marketConfig: marketFallback,
             productDetailConfig: productDetailConfig
         )
+        
+        // Initialize Stripe automatically if available
+        initializeStripeIfAvailable()
     }
     
     private static func applyPlistConfiguration(_ config: PlistConfiguration) {
@@ -365,6 +372,59 @@ public class ConfigurationLoader {
             showDescription: config.showDescription ?? true,
             showSpecifications: config.showSpecifications ?? true
         )
+    }
+    
+    // MARK: - Stripe Initialization
+    
+    /// Initialize Stripe automatically by fetching publishable key from Reachu API
+    private static func initializeStripeIfAvailable() {
+        #if canImport(StripeCore) && os(iOS)
+        print("🔧 [Config] Initializing Stripe payment...")
+        
+        let defaultPublishableKey = "pk_test_51MvQONBjfRnXLEB43vxVNP53LmkC13ZruLbNqDYIER8GmRgLX97vWKw9gPuhYLuOSwXaXpDFYAKsZhYtBpcAWvcy00zQ9ZES0L"
+        
+        // Get configuration
+        let config = ReachuConfiguration.shared
+        guard let baseURL = URL(string: config.environment.graphQLURL) else {
+            print("❌ [Config] Invalid GraphQL URL, using default Stripe key")
+            StripeAPI.defaultPublishableKey = defaultPublishableKey
+            return
+        }
+        
+        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
+        let sdkClient = SdkClient(baseUrl: baseURL, apiKey: apiKey)
+        
+        Task {
+            do {
+                // Fetch payment methods from Reachu API
+                let paymentMethods = try await sdkClient.payment.getAvailableMethods()
+                
+                // Find Stripe method and extract publishable key
+                if let stripeMethod = paymentMethods.first(where: { $0.name == "Stripe" }),
+                   let publishableKey = stripeMethod.publishableKey {
+                    await MainActor.run {
+                        StripeAPI.defaultPublishableKey = publishableKey
+                        print("💳 [Config] Stripe configured with API key: \(publishableKey.prefix(20))...")
+                    }
+                } else {
+                    // Stripe method not found in API, use default
+                    await MainActor.run {
+                        StripeAPI.defaultPublishableKey = defaultPublishableKey
+                        print("⚠️ [Config] Stripe method not found in API, using default key")
+                    }
+                }
+            } catch {
+                // API call failed, use default key
+                await MainActor.run {
+                    StripeAPI.defaultPublishableKey = defaultPublishableKey
+                    print("❌ [Config] Failed to fetch payment methods: \(error)")
+                    print("💳 [Config] Using default Stripe key")
+                }
+            }
+        }
+        #else
+        print("ℹ️ [Config] Stripe not available on this platform")
+        #endif
     }
 }
 
