@@ -21,6 +21,7 @@ struct TV2VideoPlayer: View {
     @State private var showPoll = false
     @State private var showProduct = false
     @State private var showContest = false
+    @State private var showCheckout = false
     
     // SDK Client para fetch de productos
     private var sdkClient: SdkClient {
@@ -172,9 +173,26 @@ struct TV2VideoPlayer: View {
                     leading: 0,
                     bottom: 100,
                     trailing: TV2Theme.Spacing.md
-                )
+                ),
+                onTap: {
+                    showCheckout = true
+                }
             )
             .zIndex(1000) // Por encima de todo en el video player
+            
+            // Checkout overlay - se muestra sobre el video sin salir del player
+            if showCheckout {
+                RCheckoutOverlay(
+                    onDismiss: {
+                        showCheckout = false
+                    },
+                    onSuccess: {
+                        showCheckout = false
+                    }
+                )
+                .environmentObject(cartManager)
+                .zIndex(1001) // Por encima del floating cart
+            }
             }
         }
         .preferredColorScheme(.dark)
