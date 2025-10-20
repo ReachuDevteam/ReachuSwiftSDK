@@ -1729,11 +1729,11 @@ struct PaymentMethodRowCompact: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: ReachuSpacing.md) {
+                // Radio button
                 ZStack {
                     Circle()
                         .stroke(
-                            isSelected
-                                ? ReachuColors.primary : ReachuColors.border,
+                            isSelected ? ReachuColors.primary : ReachuColors.border,
                             lineWidth: 2
                         )
                         .frame(width: 20, height: 20)
@@ -1745,23 +1745,26 @@ struct PaymentMethodRowCompact: View {
                     }
                 }
 
-                // Payment Method Icon
-                if let imageName = method.imageName {
-                    // Try to load payment provider logo from Resources
-                    if let uiImage = UIImage(named: "PaymentIcons/\(imageName)", in: .module, with: nil) {
+                // Payment Method Logo Card
+                if let imageName = method.imageName,
+                   let uiImage = UIImage(named: imageName, in: Bundle.module, compatibleWith: nil) {
+                    // Logo container with white background
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white)
+                        
                         Image(uiImage: uiImage)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(height: 24)
-                            .frame(width: 50)
-                    } else {
-                        // Fallback to SF Symbol
-                        Image(systemName: method.icon)
-                            .font(.title3)
-                            .foregroundColor(method.iconColor)
-                            .frame(width: 25)
+                            .padding(4)
                     }
+                    .frame(width: 60, height: 36)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(ReachuColors.border, lineWidth: 1)
+                    )
                 } else {
+                    // Fallback to SF Symbol
                     Image(systemName: method.icon)
                         .font(.title3)
                         .foregroundColor(method.iconColor)
@@ -1775,7 +1778,16 @@ struct PaymentMethodRowCompact: View {
 
                 Spacer()
             }
-            .padding(.vertical, ReachuSpacing.sm)
+            .padding(.vertical, ReachuSpacing.md)
+            .padding(.horizontal, ReachuSpacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(isSelected ? ReachuColors.primary.opacity(0.1) : ReachuColors.surface)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: isSelected ? 2 : 1)
+            )
         }
         .buttonStyle(PlainButtonStyle())
     }
