@@ -2045,14 +2045,19 @@ extension RCheckoutOverlay {
                     // Product header with image and details
                     HStack(spacing: ReachuSpacing.md) {
                         // Product image
-                        AsyncImage(url: URL(string: item.imageUrl ?? "")) {
-                            image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Rectangle()
-                                .fill(Color.yellow)  // Placeholder like in image
+                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            case .empty:
+                                ProgressView()
+                            case .failure:
+                                Rectangle().fill(ReachuColors.surfaceSecondary)
+                            @unknown default:
+                                EmptyView()
+                            }
                         }
                         .frame(width: 60, height: 60)
                         .cornerRadius(8)
