@@ -79,7 +79,7 @@
     "showProductBrands": true,
     "showProductDescriptions": false,
     "showDiscountBadge": true,
-    "discountBadgeText": "Opp til 30%",
+    "discountBadgeText": "-30%",
     "enableHapticFeedback": true
   },
   "cart": {
@@ -88,20 +88,13 @@
     "floatingCartSize": "small",
     "autoSaveCart": true,
     "showCartNotifications": true,
-    "enableGuestCheckout": true
+    "enableGuestCheckout": true,
+    "requirePhoneNumber": true,
+    "defaultShippingCountry": "NO",
+    "supportedPaymentMethods": ["stripe", "klarna", "paypal"]
   },
   "productDetail": {
-    "modalHeight": "half",
-    "imageFullWidth": true,
-    "imageCornerRadius": 0,
-    "imageHeight": 380,
-    "showImageGallery": false,
-    "headerStyle": "compact",
-    "enableImageZoom": false,
-    "showNavigationTitle": false,
-    "closeButtonStyle": "overlayTopLeft",
-    "showDescription": false,
-    "showSpecifications": false
+    "showNavigationTitle": false
   },
   "marketFallback": {
     "countryCode": "NO",

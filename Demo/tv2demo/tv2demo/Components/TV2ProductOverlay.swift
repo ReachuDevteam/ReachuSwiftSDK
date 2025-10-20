@@ -345,8 +345,8 @@ struct TV2ProductOverlay: View {
                             }
                         }
                         
-                        // Tag de descuento diagonal
-                        Text("30% OFF")
+                        // Tag de descuento diagonal (usa configuración o default)
+                        Text(ReachuConfiguration.shared.uiConfiguration.discountBadgeText ?? "-30%")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 8)
