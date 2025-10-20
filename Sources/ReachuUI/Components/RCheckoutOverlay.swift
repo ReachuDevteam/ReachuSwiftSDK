@@ -673,20 +673,37 @@ public struct RCheckoutOverlay: View {
                 if checkoutStep == .orderSummary {
                     let itemsWithoutShipping = cartManager.items.filter { $0.shippingId == nil || $0.shippingId!.isEmpty }
                     if !itemsWithoutShipping.isEmpty {
-                        HStack(spacing: 8) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(ReachuColors.warning)
-                            Text("Please select shipping method for all items")
-                                .font(ReachuTypography.caption1)
-                                .foregroundColor(ReachuColors.warning)
+                        VStack(spacing: ReachuSpacing.sm) {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(.white)
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Shipping Required")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.white)
+                                    
+                                    Text("Select a shipping method for all items to continue")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.9))
+                                }
+                                
+                                Spacer()
+                            }
+                            .padding(16)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color.orange, Color.red.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .cornerRadius(12)
+                            .shadow(color: Color.orange.opacity(0.4), radius: 8, x: 0, y: 4)
                         }
                         .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.vertical, ReachuSpacing.sm)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(ReachuColors.warning.opacity(0.1))
-                        )
-                        .padding(.horizontal, ReachuSpacing.lg)
+                        .transition(.scale.combined(with: .opacity))
                     }
                 }
                 
@@ -2712,22 +2729,52 @@ extension RCheckoutOverlay {
     }
 
     private var shippingOptionsSelectionView: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+        let hasItemsWithoutShipping = cartManager.items.contains { $0.shippingId == nil || $0.shippingId!.isEmpty }
+        
+        return VStack(alignment: .leading, spacing: ReachuSpacing.md) {
             if cartManager.items.contains(where: { !$0.availableShippings.isEmpty }) {
-                Text("Shipping Options")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(ReachuColors.textPrimary)
-                    .padding(.horizontal, ReachuSpacing.lg)
+                HStack(spacing: 8) {
+                    Text("Shipping Options")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    if hasItemsWithoutShipping {
+                        Text("Required")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(
+                                Capsule()
+                                    .fill(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                            )
+                    }
+                }
+                .padding(.horizontal, ReachuSpacing.lg)
 
                 VStack(spacing: ReachuSpacing.md) {
                     ForEach(cartManager.items) { item in
                         if !item.availableShippings.isEmpty {
+                            let itemNeedsShipping = item.shippingId == nil || item.shippingId!.isEmpty
                             ItemShippingOptionsView(
                                 item: item,
                                 onSelect: { option in
                                     cartManager.setShippingOption(for: item.id, optionId: option.id)
                                 }
                             )
+                            .padding(itemNeedsShipping ? 12 : 0)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: itemNeedsShipping ? [Color.orange, Color.red] : [Color.clear],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        ),
+                                        lineWidth: itemNeedsShipping ? 3 : 0
+                                    )
+                            )
+                            .shadow(color: itemNeedsShipping ? Color.orange.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 0)
                         }
                     }
                 }
