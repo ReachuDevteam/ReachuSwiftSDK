@@ -179,21 +179,11 @@ struct TV2VideoPlayer: View {
                 }
             )
             .zIndex(1000) // Por encima de todo en el video player
-            
-            // Checkout overlay - se muestra sobre el video sin salir del player
-            if showCheckout {
-                RCheckoutOverlay(
-                    onDismiss: {
-                        showCheckout = false
-                    },
-                    onSuccess: {
-                        showCheckout = false
-                    }
-                )
+            }
+        }
+        .sheet(isPresented: $showCheckout) {
+            RCheckoutOverlay()
                 .environmentObject(cartManager)
-                .zIndex(1001) // Por encima del floating cart
-            }
-            }
         }
         .preferredColorScheme(.dark)
         .statusBar(hidden: true) // Hide status bar for immersive experience
