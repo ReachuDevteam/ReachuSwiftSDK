@@ -1255,7 +1255,11 @@ public struct RCheckoutOverlay: View {
                 && !phone.isEmpty
                 && !address1.isEmpty && !city.isEmpty && !zip.isEmpty
         case .orderSummary:
-            return true
+            // Validate that all items have shipping method selected
+            let allItemsHaveShipping = cartManager.items.allSatisfy { item in
+                item.shippingId != nil && !item.shippingId!.isEmpty
+            }
+            return allItemsHaveShipping
         case .review:
             return true
         case .success, .error:
