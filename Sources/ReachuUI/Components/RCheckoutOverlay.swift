@@ -533,7 +533,33 @@ public struct RCheckoutOverlay: View {
             }
 
             // Bottom Button - Full Width
-            VStack {
+            VStack(spacing: ReachuSpacing.sm) {
+                // Validation message
+                if !canProceedToNext {
+                    HStack(spacing: 10) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(ReachuColors.primary)
+                        
+                        Text(validationMessage)
+                            .font(.system(size: 13))
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(ReachuColors.primary.opacity(0.1))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(.horizontal, ReachuSpacing.lg)
+                }
+                
                 RButton(
                     title: "Proceed to Checkout",
                     style: .primary,
@@ -669,42 +695,30 @@ public struct RCheckoutOverlay: View {
 
             // Bottom Button - Full Width
             VStack(spacing: ReachuSpacing.sm) {
-                // Warning if shipping not selected for all items
-                if checkoutStep == .orderSummary {
-                    let itemsWithoutShipping = cartManager.items.filter { $0.shippingId == nil || $0.shippingId!.isEmpty }
-                    if !itemsWithoutShipping.isEmpty {
-                        VStack(spacing: ReachuSpacing.sm) {
-                            HStack(spacing: 10) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(.white)
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Shipping Required")
-                                        .font(.system(size: 15, weight: .bold))
-                                        .foregroundColor(.white)
-                                    
-                                    Text("Select a shipping method for all items to continue")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.white.opacity(0.9))
-                                }
-                                
-                                Spacer()
-                            }
-                            .padding(16)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.orange, Color.red.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(12)
-                            .shadow(color: Color.orange.opacity(0.4), radius: 8, x: 0, y: 4)
-                        }
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .transition(.scale.combined(with: .opacity))
+                // Validation messages
+                if !canProceedToNext {
+                    HStack(spacing: 10) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(ReachuColors.primary)
+                        
+                        Text(validationMessage)
+                            .font(.system(size: 13))
+                            .foregroundColor(ReachuColors.textSecondary)
+                        
+                        Spacer()
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(ReachuColors.primary.opacity(0.1))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                    )
+                    .padding(.horizontal, ReachuSpacing.lg)
                 }
                 
                 let _ = print("🔵🔵🔵 [OrderSummary] Renderizando botón 'Initiate Payment' - isDisabled: \(!canProceedToNext)")
@@ -1302,6 +1316,23 @@ public struct RCheckoutOverlay: View {
             return true
         case .success, .error:
             return false
+        }
+    }
+    
+    private var validationMessage: String {
+        switch checkoutStep {
+        case .address:
+            if firstName.isEmpty || lastName.isEmpty { return "Please enter your name" }
+            if email.isEmpty { return "Please enter your email address" }
+            if phone.isEmpty { return "Please enter your phone number" }
+            if address1.isEmpty { return "Please enter your street address" }
+            if city.isEmpty { return "Please enter your city" }
+            if zip.isEmpty { return "Please enter your postal code" }
+            return "Please complete all required fields"
+        case .orderSummary:
+            return "Please select shipping method for all items"
+        default:
+            return ""
         }
     }
 
@@ -2039,6 +2070,10 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("John", text: $firstName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(firstName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        )
                 }
 
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -2047,6 +2082,10 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("Doe", text: $lastName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(lastName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        )
                 }
             }
 
@@ -2057,6 +2096,10 @@ extension RCheckoutOverlay {
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("your@email.com", text: $email)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(email.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                    )
                     #if os(iOS) || os(tvOS) || os(watchOS)
                         .keyboardType(.emailAddress)
                         .autocapitalization(.none)
@@ -2075,6 +2118,10 @@ extension RCheckoutOverlay {
 
                     TextField("(555) 123-4456", text: $phone)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(phone.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        )
                 }
             }
 
@@ -2085,6 +2132,10 @@ extension RCheckoutOverlay {
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("Street address", text: $address1)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 6)
+                            .stroke(address1.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                    )
                 TextField("Apt, suite, etc. (optional)", text: $address2)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
             }
@@ -2097,6 +2148,10 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("City", text: $city)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(city.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        )
                 }
 
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -2113,6 +2168,10 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("ZIP", text: $zip)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 6)
+                                .stroke(zip.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        )
                         #if os(iOS) || os(tvOS) || os(watchOS)
                             .keyboardType(.numberPad)
                         #endif
@@ -2740,13 +2799,13 @@ extension RCheckoutOverlay {
                     
                     if hasItemsWithoutShipping {
                         Text("Required")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundColor(.white)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(ReachuColors.primary)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 Capsule()
-                                    .fill(LinearGradient(colors: [Color.orange, Color.red], startPoint: .leading, endPoint: .trailing))
+                                    .fill(ReachuColors.primary.opacity(0.15))
                             )
                     }
                 }
@@ -2762,19 +2821,15 @@ extension RCheckoutOverlay {
                                     cartManager.setShippingOption(for: item.id, optionId: option.id)
                                 }
                             )
-                            .padding(itemNeedsShipping ? 12 : 0)
+                            .padding(itemNeedsShipping ? 8 : 0)
                             .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        LinearGradient(
-                                            colors: itemNeedsShipping ? [Color.orange, Color.red] : [Color.clear],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        ),
-                                        lineWidth: itemNeedsShipping ? 3 : 0
-                                    )
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(itemNeedsShipping ? ReachuColors.primary.opacity(0.05) : Color.clear)
                             )
-                            .shadow(color: itemNeedsShipping ? Color.orange.opacity(0.3) : Color.clear, radius: 8, x: 0, y: 0)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(ReachuColors.primary.opacity(itemNeedsShipping ? 0.4 : 0), lineWidth: 2)
+                            )
                         }
                     }
                 }
