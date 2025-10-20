@@ -41,6 +41,7 @@ public struct RCheckoutOverlay: View {
 
     // Payment Information
     @State private var selectedPaymentMethod: PaymentMethod = .stripe
+    @State private var availablePaymentMethods: [PaymentMethod] = []
     @State private var acceptsTerms = true
     @State private var acceptsPurchaseConditions = true
 
@@ -203,6 +204,9 @@ public struct RCheckoutOverlay: View {
             .onAppear {
                 print("🟣 [RCheckoutOverlay] onAppear triggered")
                 syncSelectedMarket()
+                Task {
+                    await loadAvailablePaymentMethods()
+                }
             }
             .onChange(of: cartManager.phoneCode) { newValue in
                 syncPhoneCode(newValue)
@@ -623,14 +627,20 @@ public struct RCheckoutOverlay: View {
                             .foregroundColor(ReachuColors.textPrimary)
 
                         VStack(spacing: ReachuSpacing.sm) {
-                            ForEach(PaymentMethod.allCases, id: \.self) {
-                                method in
+                            ForEach(availablePaymentMethods, id: \.self) { method in
                                 PaymentMethodRowCompact(
                                     method: method,
                                     isSelected: selectedPaymentMethod == method
                                 ) {
                                     selectedPaymentMethod = method
                                 }
+                            }
+                            
+                            if availablePaymentMethods.isEmpty {
+                                Text("No payment methods available")
+                                    .font(ReachuTypography.body)
+                                    .foregroundColor(ReachuColors.textSecondary)
+                                    .padding()
                             }
                         }
                     }
@@ -2937,6 +2947,75 @@ extension RCheckoutOverlay {
     private func syncPhoneCode(_ code: String) {
         phoneCountryCode = code
         checkoutDraft.phoneCountryCode = code.replacingOccurrences(of: "+", with: "")
+    }
+    
+    private func loadAvailablePaymentMethods() async {
+        print("💳 [Checkout] Loading available payment methods...")
+        
+        // 1. Get supported methods from config
+        let configMethods = ReachuConfiguration.shared.cartConfiguration.supportedPaymentMethods
+        print("💳 [Checkout] Config supported methods: \(configMethods)")
+        
+        // 2. Create SDK client to fetch available methods from Reachu API
+        let config = ReachuConfiguration.shared
+        guard let baseURL = URL(string: config.environment.graphQLURL) else {
+            print("❌ [Checkout] Invalid GraphQL URL")
+            await setFallbackPaymentMethods(configMethods)
+            return
+        }
+        
+        let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
+        
+        // 3. Fetch available methods from Reachu API
+        do {
+            let apiMethods = try await sdk.payment.getAvailableMethods()
+            print("💳 [Checkout] API returned \(apiMethods.count) payment methods")
+            
+            // 3. Filter: only show methods that are BOTH in config AND enabled in API
+            var available: [PaymentMethod] = []
+            
+            for apiMethod in apiMethods {
+                let methodName = apiMethod.name.lowercased()
+                
+                // Check if method is in supported list
+                if configMethods.contains(where: { $0.lowercased() == methodName }) {
+                    // Map API method name to PaymentMethod enum
+                    if let paymentMethod = PaymentMethod(rawValue: methodName) {
+                        available.append(paymentMethod)
+                        print("✅ [Checkout] Added payment method: \(methodName)")
+                    }
+                }
+            }
+            
+            await MainActor.run {
+                self.availablePaymentMethods = available
+                
+                // Auto-select first available method
+                if let first = available.first {
+                    self.selectedPaymentMethod = first
+                    print("💳 [Checkout] Auto-selected: \(first.rawValue)")
+                }
+                
+                print("💳 [Checkout] Final available methods: \(available.map { $0.rawValue })")
+            }
+            
+        } catch {
+            print("❌ [Checkout] Failed to fetch payment methods: \(error)")
+            await setFallbackPaymentMethods(configMethods)
+        }
+    }
+    
+    private func setFallbackPaymentMethods(_ configMethods: [String]) async {
+        await MainActor.run {
+            let fallbackMethods = configMethods.compactMap { PaymentMethod(rawValue: $0.lowercased()) }
+            self.availablePaymentMethods = fallbackMethods
+            
+            if let first = fallbackMethods.first {
+                self.selectedPaymentMethod = first
+            }
+            
+            print("💳 [Checkout] Using config fallback: \(fallbackMethods.map { $0.rawValue })")
+        }
     }
 
     fileprivate struct ItemShippingOptionsView: View {

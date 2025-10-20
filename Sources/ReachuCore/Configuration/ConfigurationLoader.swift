@@ -293,7 +293,10 @@ public class ConfigurationLoader {
             floatingCartSize: FloatingCartSize(rawValue: config.floatingCartSize) ?? .medium,
             autoSaveCart: config.autoSaveCart,
             showCartNotifications: config.showCartNotifications,
-            enableGuestCheckout: config.enableGuestCheckout
+            enableGuestCheckout: config.enableGuestCheckout,
+            requirePhoneNumber: config.requirePhoneNumber ?? true,
+            defaultShippingCountry: config.defaultShippingCountry ?? "US",
+            supportedPaymentMethods: config.supportedPaymentMethods ?? ["stripe", "klarna", "paypal"]
         )
     }
     
@@ -477,6 +480,9 @@ private struct JSONCartConfiguration: Codable {
     let autoSaveCart: Bool
     let showCartNotifications: Bool
     let enableGuestCheckout: Bool
+    let requirePhoneNumber: Bool?
+    let defaultShippingCountry: String?
+    let supportedPaymentMethods: [String]?
 }
 
 private struct JSONNetworkConfiguration: Codable {
