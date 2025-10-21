@@ -53,7 +53,20 @@ struct CastingProductCardView: View {
         } else {
             rawDescription = productEvent.description
         }
-        return rawDescription
+        // Clean HTML tags
+        return cleanHTMLString(rawDescription)
+    }
+    
+    private func cleanHTMLString(_ html: String) -> String {
+        var cleaned = html.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression)
+        cleaned = cleaned.replacingOccurrences(of: "&nbsp;", with: " ")
+        cleaned = cleaned.replacingOccurrences(of: "&amp;", with: "&")
+        cleaned = cleaned.replacingOccurrences(of: "&lt;", with: "<")
+        cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
+        cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
+        cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
+        cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
+        return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
     private var displayPrice: String {
