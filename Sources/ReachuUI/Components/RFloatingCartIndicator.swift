@@ -268,26 +268,33 @@ public struct RFloatingCartIndicator: View {
     
     // MARK: - Cart Icon with Badge
     private var cartIconWithBadge: some View {
-        ZStack(alignment: .topTrailing) {
+        ZStack {
+            // Cart icon centered
             Image(systemName: "cart.fill")
                 .font(size.iconSize)
                 .foregroundColor(.white)
             
-            // Item count badge - compact design that scales
-            Text("\(cartManager.itemCount)")
-                .font(.system(size: size == .small ? 10 : 11, weight: .bold))
-                .foregroundColor(ReachuColors.primary)
-                .frame(minWidth: size == .small ? 18 : 20)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 2)
-                .background(
-                    Capsule()
-                        .fill(.white)
-                        .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
-                )
-                .offset(x: size == .small ? 8 : 10, y: size == .small ? -8 : -10)
-                .scaleEffect(bounceAnimation ? 1.15 : 1.0)
-                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
+            // Item count badge - top right corner
+            VStack {
+                HStack {
+                    Spacer()
+                    Text("\(cartManager.itemCount)")
+                        .font(.system(size: size == .small ? 10 : 11, weight: .bold))
+                        .foregroundColor(ReachuColors.primary)
+                        .frame(minWidth: size == .small ? 18 : 20)
+                        .padding(.horizontal, 4)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(.white)
+                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                        )
+                        .scaleEffect(bounceAnimation ? 1.15 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
+                }
+                Spacer()
+            }
+            .padding(4)
         }
     }
     
