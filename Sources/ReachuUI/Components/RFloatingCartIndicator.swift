@@ -259,7 +259,13 @@ public struct RFloatingCartIndicator: View {
         .frame(width: size.circleSize, height: size.circleSize)
         .background(
             Circle()
-                .fill(cartBackground)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [ReachuColors.primary, ReachuColors.secondary]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
         )
         .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
