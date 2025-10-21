@@ -256,22 +256,26 @@ public struct RFloatingCartIndicator: View {
     
     // MARK: - Cart Icon with Badge
     private var cartIconWithBadge: some View {
-        ZStack {
+        ZStack(alignment: .topTrailing) {
             Image(systemName: "cart.fill")
                 .font(size.iconSize)
                 .foregroundColor(.white)
+                .padding(4) // Add padding to make room for badge
             
-            // Item count badge
+            // Item count badge - compact design that scales
             Text("\(cartManager.itemCount)")
-                .font(size == .small ? .caption2 : .caption)
-                .fontWeight(.bold)
+                .font(.system(size: size == .small ? 10 : 11, weight: .bold))
                 .foregroundColor(ReachuColors.primary)
-                .padding(.horizontal, size == .small ? 5 : 6)
-                .padding(.vertical, size == .small ? 2 : 3)
-                .background(.white)
-                .clipShape(Capsule())
-                .offset(x: size == .small ? 10 : 12, y: size == .small ? -6 : -8)
-                .scaleEffect(bounceAnimation ? 1.2 : 1.0)
+                .frame(minWidth: size == .small ? 18 : 20)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 2)
+                .background(
+                    Capsule()
+                        .fill(.white)
+                        .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                )
+                .offset(x: 4, y: -4)
+                .scaleEffect(bounceAnimation ? 1.15 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
         }
     }
