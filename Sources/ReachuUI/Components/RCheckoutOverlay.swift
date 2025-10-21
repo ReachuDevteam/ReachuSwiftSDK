@@ -178,8 +178,8 @@ public struct RCheckoutOverlay: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if checkoutStep != .success {
-                        Button("", systemImage: "arrow.left") {
-                            if checkoutStep == .address {
+                        Button("", systemImage: cartManager.items.isEmpty ? "xmark" : "arrow.left") {
+                            if cartManager.items.isEmpty || checkoutStep == .address {
                                 cartManager.hideCheckout()
                             } else {
                                 goToPreviousStep()
@@ -1301,6 +1301,9 @@ public struct RCheckoutOverlay: View {
     // MARK: - Helper Functions
 
     private var canProceedToNext: Bool {
+        // Always check if cart is empty
+        guard !cartManager.items.isEmpty else { return false }
+        
         switch checkoutStep {
         case .address:
             return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty
@@ -1320,6 +1323,11 @@ public struct RCheckoutOverlay: View {
     }
     
     private var validationMessage: String {
+        // Check cart first
+        if cartManager.items.isEmpty {
+            return "Your cart is empty. Add products to continue."
+        }
+        
         switch checkoutStep {
         case .address:
             if firstName.isEmpty || lastName.isEmpty { return "Please enter your name" }
@@ -2192,6 +2200,25 @@ extension RCheckoutOverlay {
     // Individual products with quantity controls for address step (like the image)
     private var individualProductsWithQuantityView: some View {
         VStack(spacing: ReachuSpacing.xl) {
+            if cartManager.items.isEmpty {
+                VStack(spacing: ReachuSpacing.md) {
+                    Image(systemName: "cart")
+                        .font(.system(size: 48))
+                        .foregroundColor(ReachuColors.textSecondary.opacity(0.5))
+                    
+                    Text("Your cart is empty")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                    
+                    Text("Add products to continue with checkout")
+                        .font(.system(size: 14))
+                        .foregroundColor(ReachuColors.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 40)
+            }
+            
             ForEach(cartManager.items, id: \.id) { item in
                 VStack(spacing: ReachuSpacing.md) {
                     // Product header with image and details
@@ -2900,6 +2927,20 @@ extension RCheckoutOverlay {
     // Compact readonly cart for order summary step
     private var compactReadonlyCartView: some View {
         VStack(spacing: ReachuSpacing.md) {
+            if cartManager.items.isEmpty {
+                VStack(spacing: ReachuSpacing.md) {
+                    Image(systemName: "cart")
+                        .font(.system(size: 40))
+                        .foregroundColor(ReachuColors.textSecondary.opacity(0.5))
+                    
+                    Text("Your cart is empty")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(ReachuColors.textPrimary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 30)
+            }
+            
             ForEach(cartManager.items) { item in
                 HStack(spacing: ReachuSpacing.sm) {
                     // Small product image
