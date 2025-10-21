@@ -114,8 +114,8 @@ struct CastingProductCardView: View {
                     .padding(.vertical, 4)
                 }
                 
-                // Sponsor badge
-                if let campaignLogo = displayCampaignLogo, !campaignLogo.isEmpty {
+                // Sponsor badge (from WebSocket if available)
+                if let campaignLogo = productEvent.campaignLogo, !campaignLogo.isEmpty {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Sponset av")
@@ -145,28 +145,42 @@ struct CastingProductCardView: View {
                 HStack(alignment: .top, spacing: 12) {
                     // Imagen
                     ZStack(alignment: .topTrailing) {
-                        AsyncImage(url: URL(string: displayImageUrl)) { phase in
-                            switch phase {
-                            case .empty:
-                                ProgressView().frame(width: 90, height: 90)
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                                    .frame(width: 90, height: 90)
-                                    .clipped()
-                                    .cornerRadius(12)
-                            case .failure:
-                                Color.gray.opacity(0.3)
-                                    .frame(width: 90, height: 90)
-                                    .cornerRadius(12)
-                                    .overlay(
-                                        Image(systemName: "photo")
-                                            .font(.system(size: 24))
-                                            .foregroundColor(.white.opacity(0.5))
-                                    )
-                            @unknown default:
-                                EmptyView()
+                        if viewModel.isLoading {
+                            // Skeleton for image
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.white.opacity(0.15))
+                                .frame(width: 90, height: 90)
+                                .overlay(
+                                    ProgressView()
+                                        .tint(.white)
+                                )
+                        } else {
+                            AsyncImage(url: URL(string: displayImageUrl)) { phase in
+                                switch phase {
+                                case .empty:
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.white.opacity(0.15))
+                                        .frame(width: 90, height: 90)
+                                        .overlay(ProgressView().tint(.white))
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 90, height: 90)
+                                        .clipped()
+                                        .cornerRadius(12)
+                                case .failure:
+                                    Color.gray.opacity(0.3)
+                                        .frame(width: 90, height: 90)
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            Image(systemName: "photo")
+                                                .font(.system(size: 24))
+                                                .foregroundColor(.white.opacity(0.5))
+                                        )
+                                @unknown default:
+                                    EmptyView()
+                                }
                             }
                         }
                         
@@ -184,21 +198,42 @@ struct CastingProductCardView: View {
                     
                     // Info
                     VStack(alignment: .leading, spacing: 6) {
-                        Text(displayName)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .lineLimit(2)
-                        
-                        if !displayDescription.isEmpty {
-                            Text(displayDescription)
-                                .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.7))
+                        if viewModel.isLoading {
+                            // Skeleton loading
+                            VStack(alignment: .leading, spacing: 6) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white.opacity(0.2))
+                                    .frame(height: 14)
+                                    .frame(maxWidth: .infinity)
+                                
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.white.opacity(0.2))
+                                    .frame(height: 11)
+                                    .frame(width: 100)
+                                
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(TV2Theme.Colors.primary.opacity(0.3))
+                                    .frame(height: 16)
+                                    .frame(width: 80)
+                            }
+                        } else {
+                            // Actual data
+                            Text(displayName)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
                                 .lineLimit(2)
+                            
+                            if !displayDescription.isEmpty {
+                                Text(displayDescription)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.white.opacity(0.7))
+                                    .lineLimit(2)
+                            }
+                            
+                            Text(displayPrice)
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(TV2Theme.Colors.primary)
                         }
-                        
-                        Text(displayPrice)
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(TV2Theme.Colors.primary)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
