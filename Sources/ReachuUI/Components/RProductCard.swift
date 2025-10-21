@@ -113,10 +113,10 @@ public struct RProductCard: View {
             ZStack(alignment: .topTrailing) {
                 productImagesView(height: 160, showPagination: sortedImages.count > 1)
                 
-                // Discount badge (if enabled in config)
+                // Discount badge (calculated dynamically if product has compareAt price)
                 if ReachuConfiguration.shared.uiConfiguration.showDiscountBadge,
-                   let badgeText = ReachuConfiguration.shared.uiConfiguration.discountBadgeText {
-                    discountBadge(text: badgeText)
+                   let discount = calculateDiscountPercentage() {
+                    discountBadge(text: "-\(discount)%")
                 }
             }
             
@@ -337,6 +337,20 @@ public struct RProductCard: View {
                     }
                 }
             )
+    }
+    
+    /// Calculate discount percentage from compareAt price
+    private func calculateDiscountPercentage() -> Int? {
+        // Use prices with taxes for discount calculation
+        let currentPrice = product.price.amount_incl_taxes ?? product.price.amount
+        let originalPrice = product.price.compare_at_incl_taxes ?? product.price.compare_at
+        
+        guard let compareAt = originalPrice, compareAt > currentPrice else {
+            return nil
+        }
+        
+        let discount = ((compareAt - currentPrice) / compareAt) * 100
+        return Int(discount.rounded())
     }
     
     /// Discount badge for product cards

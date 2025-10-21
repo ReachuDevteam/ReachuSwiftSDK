@@ -90,6 +90,28 @@ struct CastingProductCardView: View {
         return productEvent.campaignLogo
     }
     
+    private var discountPercentage: Int? {
+        guard let apiProduct = viewModel.product else { return nil }
+        
+        // Use prices with taxes for discount calculation
+        let currentPrice = apiProduct.price.amountInclTaxes ?? apiProduct.price.amount
+        let originalPrice = apiProduct.price.compareAtInclTaxes ?? apiProduct.price.compareAt
+        
+        guard let compareAt = originalPrice, compareAt > currentPrice else {
+            return nil
+        }
+        
+        let discount = ((compareAt - currentPrice) / compareAt) * 100
+        return Int(discount.rounded())
+    }
+    
+    private var shouldShowDiscountBadge: Bool {
+        guard ReachuConfiguration.shared.uiConfiguration.showDiscountBadge else {
+            return false
+        }
+        return discountPercentage != nil && (discountPercentage ?? 0) > 0
+    }
+    
     // MARK: - Body
     
     var body: some View {
@@ -190,16 +212,18 @@ struct CastingProductCardView: View {
                             }
                         }
                         
-                        // Tag descuento (usa configuración o default)
-                        Text(ReachuConfiguration.shared.uiConfiguration.discountBadgeText ?? "-30%")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color(hex: "E93CAC"))
-                            .rotationEffect(.degrees(-10))
-                            .offset(x: 8, y: -8)
-                            .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        // Tag descuento (calculado dinámicamente)
+                        if shouldShowDiscountBadge, let discount = discountPercentage {
+                            Text("-\(discount)%")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color(hex: "E93CAC"))
+                                .rotationEffect(.degrees(-10))
+                                .offset(x: 8, y: -8)
+                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
                     }
                     
                     // Info
