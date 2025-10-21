@@ -114,25 +114,26 @@ struct CastingProductCardView: View {
                     .padding(.vertical, 4)
                 }
                 
-                // Sponsor badge (from WebSocket if available)
-                if let campaignLogo = productEvent.campaignLogo, !campaignLogo.isEmpty {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Sponset av")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                            
-                            AsyncImage(url: URL(string: campaignLogo)) { phase in
+                // Sponsor badge (from WebSocket)
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sponset av")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        if let logoUrl = productEvent.campaignLogo, !logoUrl.isEmpty {
+                            AsyncImage(url: URL(string: logoUrl)) { phase in
                                 switch phase {
                                 case .success(let image):
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: 80, maxHeight: 24)
+                                        .frame(maxWidth: 60, maxHeight: 18)
                                 case .empty:
                                     ProgressView()
-                                        .scaleEffect(0.5)
-                                        .frame(width: 80, height: 24)
+                                        .scaleEffect(0.4)
+                                        .tint(.white)
+                                        .frame(width: 60, height: 18)
                                 case .failure:
                                     EmptyView()
                                 @unknown default:
@@ -140,11 +141,11 @@ struct CastingProductCardView: View {
                                 }
                             }
                         }
-                        Spacer()
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 2)
+                    Spacer()
                 }
+                .padding(.horizontal, 12)
+                .padding(.top, 2)
                 
                 // Producto
                 HStack(alignment: .top, spacing: 12) {

@@ -95,7 +95,7 @@ struct CastingActiveView: View {
                         webSocketManager.currentContest = nil
                     }
                 )
-                }
+            }
                 
                 // Chat (sin Spacer arriba para que quede pegado)
                 simpleChatPanel
