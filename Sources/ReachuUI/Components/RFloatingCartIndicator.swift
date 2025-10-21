@@ -254,13 +254,14 @@ public struct RFloatingCartIndicator: View {
     
     private var iconOnlyContent: some View {
         ZStack {
-            Circle()
-                .fill(cartBackground)
-                .frame(width: size.circleSize, height: size.circleSize)
-                .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
-            
             cartIconWithBadge
         }
+        .frame(width: size.circleSize, height: size.circleSize)
+        .background(
+            Circle()
+                .fill(cartBackground)
+        )
+        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
