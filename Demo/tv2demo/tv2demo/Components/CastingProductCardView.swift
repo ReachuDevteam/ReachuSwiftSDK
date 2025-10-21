@@ -115,13 +115,14 @@ struct CastingProductCardView: View {
                 }
                 
                 // Sponsor badge (from WebSocket if available)
-                if let campaignLogo = productEvent.campaignLogo, !campaignLogo.isEmpty {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Sponset av")
-                                .font(.system(size: 9, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                            
+                // DEBUG: Always show to test
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Sponset av")
+                            .font(.system(size: 9, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                        
+                        if let campaignLogo = productEvent.campaignLogo, !campaignLogo.isEmpty {
                             AsyncImage(url: URL(string: campaignLogo)) { phase in
                                 switch phase {
                                 case .success(let image):
@@ -129,17 +130,24 @@ struct CastingProductCardView: View {
                                 case .empty:
                                     ProgressView().scaleEffect(0.5).frame(width: 80, height: 24)
                                 case .failure:
-                                    EmptyView()
+                                    Text("Failed: \(campaignLogo.prefix(20))...")
+                                        .font(.system(size: 8))
+                                        .foregroundColor(.red)
                                 @unknown default:
                                     EmptyView()
                                 }
                             }
+                        } else {
+                            Text("No logo - campaignLogo is: \(productEvent.campaignLogo ?? "nil")")
+                                .font(.system(size: 8))
+                                .foregroundColor(.yellow)
                         }
-                        Spacer()
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 2)
+                    Spacer()
                 }
+                .padding(.horizontal, 12)
+                .padding(.top, 2)
+                .background(Color.red.opacity(0.3)) // DEBUG: Red background to see if section renders
                 
                 // Producto
                 HStack(alignment: .top, spacing: 12) {
