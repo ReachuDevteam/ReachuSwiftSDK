@@ -91,7 +91,7 @@
     "enableGuestCheckout": true,
     "requirePhoneNumber": true,
     "defaultShippingCountry": "NO",
-    "supportedPaymentMethods": ["stripe", "klarna", "paypal"]
+    "supportedPaymentMethods": ["stripe", "klarna", "vipps", "paypal"]
   },
   "productDetail": {
     "showNavigationTitle": false

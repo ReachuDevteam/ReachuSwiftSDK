@@ -3093,24 +3093,24 @@ extension RCheckoutOverlay {
         
         let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
         
-        // 3. Fetch available methods from Reachu API
+        // 3. Fetch available methods from Reachu API (API is the source of truth)
         do {
             let apiMethods = try await sdk.payment.getAvailableMethods()
             print("💳 [Checkout] API returned \(apiMethods.count) payment methods")
             
-            // 3. Filter: only show methods that are BOTH in config AND enabled in API
+            // Use whatever the API returns (API is the authority)
             var available: [PaymentMethod] = []
             
             for apiMethod in apiMethods {
                 let methodName = apiMethod.name.lowercased()
+                print("🔍 [Checkout] API method: \(apiMethod.name) (normalized: \(methodName))")
                 
-                // Check if method is in supported list
-                if configMethods.contains(where: { $0.lowercased() == methodName }) {
-                    // Map API method name to PaymentMethod enum
-                    if let paymentMethod = PaymentMethod(rawValue: methodName) {
-                        available.append(paymentMethod)
-                        print("✅ [Checkout] Added payment method: \(methodName)")
-                    }
+                // Try to map API method to PaymentMethod enum
+                if let paymentMethod = PaymentMethod(rawValue: methodName) {
+                    available.append(paymentMethod)
+                    print("   ✅ Added: \(methodName)")
+                } else {
+                    print("   ⚠️ Unknown payment method (no enum case): \(methodName)")
                 }
             }
             

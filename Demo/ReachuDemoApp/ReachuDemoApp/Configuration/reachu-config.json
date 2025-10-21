@@ -38,7 +38,7 @@
     "enableGuestCheckout": true,
     "requirePhoneNumber": true,
     "defaultShippingCountry": "US",
-    "supportedPaymentMethods": ["stripe", "klarna", "paypal"]
+    "supportedPaymentMethods": ["stripe", "klarna", "vipps", "paypal"]
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",
