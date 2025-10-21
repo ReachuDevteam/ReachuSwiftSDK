@@ -407,20 +407,13 @@ struct TV2ProductOverlay: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 
-                // Botón para ver detalles y agregar al carrito
+                // Botón para ver detalles (NO agrega directamente)
                 Button(action: {
+                    // Siempre abrir el product detail modal
                     if viewModel.product != nil {
-                        // Si el producto de la API está listo, mostrar el sheet de detalles
                         showProductDetail = true
-                    } else {
-                        // Si aún no está listo, usar el producto del WebSocket
-                        onAddToCart(nil)
-                        showCheckmark = true
-                        
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            showCheckmark = false
-                        }
                     }
+                    // Si el producto aún no ha cargado, no hace nada (espera a que cargue)
                 }) {
                     HStack(spacing: 6) {
                         if showCheckmark {
@@ -438,10 +431,10 @@ struct TV2ProductOverlay: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(showCheckmark ? Color.green : Color(hex: "2C0D65"))
+                            .fill(showCheckmark ? Color.green : (viewModel.product != nil ? Color(hex: "2C0D65") : Color.gray))
                     )
                 }
-                .disabled(showCheckmark)
+                .disabled(showCheckmark || viewModel.product == nil)
             }
             .padding(14)
             .background(
