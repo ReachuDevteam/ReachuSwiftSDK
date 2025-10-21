@@ -67,6 +67,14 @@ public struct RFloatingCartIndicator: View {
             }
         }
         
+        var circleSize: CGFloat {
+            switch self {
+            case .small: return 56
+            case .medium: return 64
+            case .large: return 72
+            }
+        }
+        
         var shadowRadius: CGFloat {
             switch self {
             case .small: return 4
@@ -245,13 +253,16 @@ public struct RFloatingCartIndicator: View {
     }
     
     private var iconOnlyContent: some View {
-        cartIconWithBadge
-            .padding(size.circlePadding)
-            .background(cartBackground)
-            .clipShape(Circle())
-            .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
-            .scaleEffect(isPressed ? 0.95 : 1.0)
-            .animation(.easeInOut(duration: 0.1), value: isPressed)
+        ZStack {
+            Circle()
+                .fill(cartBackground)
+                .frame(width: size.circleSize, height: size.circleSize)
+                .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+            
+            cartIconWithBadge
+        }
+        .scaleEffect(isPressed ? 0.95 : 1.0)
+        .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
     
     // MARK: - Cart Icon with Badge
@@ -260,7 +271,6 @@ public struct RFloatingCartIndicator: View {
             Image(systemName: "cart.fill")
                 .font(size.iconSize)
                 .foregroundColor(.white)
-                .padding(4) // Add padding to make room for badge
             
             // Item count badge - compact design that scales
             Text("\(cartManager.itemCount)")
@@ -274,7 +284,7 @@ public struct RFloatingCartIndicator: View {
                         .fill(.white)
                         .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
                 )
-                .offset(x: 4, y: -4)
+                .offset(x: size == .small ? 8 : 10, y: size == .small ? -8 : -10)
                 .scaleEffect(bounceAnimation ? 1.15 : 1.0)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
         }
