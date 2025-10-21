@@ -93,8 +93,8 @@ struct TV2ProductOverlay: View {
                         showProductDetail = false
                     },
                     onAddToCart: { product in
-                        // Agregar al carrito y mostrar feedback
-                        onAddToCart(apiProduct)
+                        // RProductDetailOverlay ya agrega al cart internamente
+                        // Solo cerramos el modal y mostramos feedback
                         showProductDetail = false
                         showCheckmark = true
                         
@@ -103,6 +103,7 @@ struct TV2ProductOverlay: View {
                         }
                     }
                 )
+                .environmentObject(cartManager)
             }
         }
     }
