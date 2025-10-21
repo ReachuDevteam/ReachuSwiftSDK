@@ -94,7 +94,10 @@
     "supportedPaymentMethods": ["stripe", "klarna", "vipps", "paypal"]
   },
   "productDetail": {
-    "showNavigationTitle": false
+    "showNavigationTitle": false,
+    "imageFullWidth": true,
+    "imageCornerRadius": 0,
+    "imageHeight": 400
   },
   "marketFallback": {
     "countryCode": "NO",

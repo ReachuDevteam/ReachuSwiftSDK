@@ -96,11 +96,35 @@ public struct RProductDetailOverlay: View {
     // MARK: - Body
     public var body: some View {
         NavigationView {
-            ZStack(alignment: .topLeading) {
+            ZStack(alignment: .top) {
                 ScrollView {
                     VStack(spacing: 0) {
-                    // Image Gallery
-                    imageGallerySection
+                    // Image Gallery first (edge to edge)
+                    ZStack(alignment: .top) {
+                        imageGallerySection
+                        
+                        // Drawer handle overlay on image
+                        VStack {
+                            Capsule()
+                                .fill(Color.white.opacity(0.8))
+                                .frame(width: 36, height: 5)
+                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 12)
+                        .padding(.bottom, 8)
+                        .background(Color.black.opacity(0.01)) // Invisible but tappable
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture()
+                                .onEnded { value in
+                                    if value.translation.height > 50 {
+                                        onDismiss?()
+                                        dismiss()
+                                    }
+                                }
+                        )
+                    }
                     
                     // Product Information (only show after image loads)
                     if imageLoaded || displayImages.isEmpty {
@@ -124,21 +148,9 @@ public struct RProductDetailOverlay: View {
                     }
                     }
                 }
-                .if(productDetailConfig.showNavigationTitle) { view in
-                    view.navigationTitle("Product Details")
-                }
-                #if os(iOS)
-                .navigationBarTitleDisplayMode(productDetailConfig.headerStyle == .compact ? .inline : .large)
-                #endif
+                .navigationBarHidden(true)
                 .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        if productDetailConfig.showCloseButton && productDetailConfig.closeButtonStyle == .navigationBar {
-                            Button("Close") {
-                                onDismiss?()
-                                dismiss()
-                            }
-                        }
-                    }
+                    // No close button - use drawer handle instead
                 }
                 .safeAreaInset(edge: .bottom) {
                     // Bottom Action Bar (only show after image loads)
@@ -180,7 +192,7 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Image Gallery Section
     private var imageGallerySection: some View {
-        VStack(spacing: ReachuSpacing.md) {
+        VStack(spacing: 0) {
             if displayImages.isEmpty {
                 // Placeholder when no images
                 RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
@@ -197,7 +209,7 @@ public struct RProductDetailOverlay: View {
                         }
                     }
             } else if displayImages.count == 1 {
-                // Single image
+                // Single image - full width, edge to edge
                 AsyncImage(url: URL(string: displayImages[0].url)) { phase in
                     switch phase {
                     case .success(let image):
@@ -205,8 +217,8 @@ public struct RProductDetailOverlay: View {
                             .resizable()
                             .aspectRatio(contentMode: .fill)
                             .frame(maxWidth: .infinity)
+                            .frame(height: productDetailConfig.imageHeight ?? 400)
                             .clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
                             .onAppear {
                                 imageLoaded = true
                             }
