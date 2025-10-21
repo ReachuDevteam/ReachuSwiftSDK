@@ -115,14 +115,14 @@ struct CastingProductCardView: View {
                 }
                 
                 // Sponsor badge (from WebSocket)
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Sponset av")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        if let logoUrl = productEvent.campaignLogo, !logoUrl.isEmpty {
-                            AsyncImage(url: URL(string: logoUrl)) { phase in
+                if let logoUrl = productEvent.campaignLogo, !logoUrl.isEmpty, let url = URL(string: logoUrl) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Sponset av")
+                                .font(.system(size: 9, weight: .medium))
+                                .foregroundColor(.white.opacity(0.8))
+                            
+                            AsyncImage(url: url) { phase in
                                 switch phase {
                                 case .success(let image):
                                     image
@@ -141,11 +141,11 @@ struct CastingProductCardView: View {
                                 }
                             }
                         }
+                        Spacer()
                     }
-                    Spacer()
+                    .padding(.horizontal, 12)
+                    .padding(.top, 2)
                 }
-                .padding(.horizontal, 12)
-                .padding(.top, 2)
                 
                 // Producto
                 HStack(alignment: .top, spacing: 12) {
