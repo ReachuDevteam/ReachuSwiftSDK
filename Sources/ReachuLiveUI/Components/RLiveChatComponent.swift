@@ -12,14 +12,19 @@ public struct RLiveChatComponent: View {
     
     @State private var messageText = ""
     @State private var showChat = true
+    @State private var userNameInput = ""
+    @State private var showUserNameInput = false
     
     // Colors based on theme
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    public init(chatManager: LiveChatManager? = nil) {
+    public init(channel: String? = nil, role: String = "USER", chatManager: LiveChatManager? = nil) {
         self.chatManager = chatManager ?? LiveChatManager.shared
+        if let channel = channel {
+            self.chatManager.configure(channel: channel, role: role)
+        }
     }
     
     // MARK: - Body
@@ -76,30 +81,58 @@ public struct RLiveChatComponent: View {
                         .clipShape(Circle())
                 }
                 
-                // Message input
-                TextField("Type a message...", text: $messageText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .font(.body)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, ReachuSpacing.md)
-                    .padding(.vertical, ReachuSpacing.sm)
-                    .background(Color.black.opacity(0.6))
-                    .cornerRadius(20)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    )
-                
-                // Send button
-                Button(action: sendMessage) {
-                    Image(systemName: "paperplane.fill")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(messageText.isEmpty ? .gray : .white)
-                        .frame(width: 32, height: 32)
-                        .background(messageText.isEmpty ? Color.gray.opacity(0.3) : adaptiveColors.primary)
-                        .clipShape(Circle())
+                // Conditional input: username first, then message
+                if chatManager.hasUserName {
+                    // Message input
+                    TextField("Type a message...", text: $messageText)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .font(.body)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                    
+                    // Send button
+                    Button(action: sendMessage) {
+                        Image(systemName: "paperplane.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(messageText.isEmpty ? .gray : .white)
+                            .frame(width: 32, height: 32)
+                            .background(messageText.isEmpty ? Color.gray.opacity(0.3) : adaptiveColors.primary)
+                            .clipShape(Circle())
+                    }
+                    .disabled(messageText.isEmpty)
+                } else {
+                    // Username input
+                    TextField("Enter your name or alias", text: $userNameInput)
+                        .textFieldStyle(PlainTextFieldStyle())
+                        .font(.body)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(Color.black.opacity(0.6))
+                        .cornerRadius(20)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                    
+                    Button(action: setUserName) {
+                        Text("Join")
+                            .font(.caption.weight(.semibold))
+                            .foregroundColor(userNameInput.isEmpty ? .gray : .white)
+                            .padding(.horizontal, ReachuSpacing.md)
+                            .padding(.vertical, ReachuSpacing.sm)
+                            .background(userNameInput.isEmpty ? Color.gray.opacity(0.3) : adaptiveColors.primary)
+                            .cornerRadius(20)
+                    }
+                    .disabled(userNameInput.isEmpty)
                 }
-                .disabled(messageText.isEmpty)
             }
             .padding(.horizontal, ReachuSpacing.md)
             .padding(.vertical, ReachuSpacing.sm)
@@ -179,6 +212,12 @@ public struct RLiveChatComponent: View {
         } else {
             return Color.white.opacity(0.9) // Regular users (no verified badge)
         }
+    }
+    
+    private func setUserName() {
+        guard !userNameInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        chatManager.setUserName(userNameInput)
+        userNameInput = ""
     }
     
     private func sendMessage() {

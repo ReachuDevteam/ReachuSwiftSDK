@@ -115,6 +115,8 @@ public enum TipioEventType: String, Codable {
     case productHighlighted = "product_highlighted"
     case componentActivated = "component_activated"
     case componentDeactivated = "component_deactivated"
+    case chat = "CHAT"
+    case deletePinnedMessage = "DELETE-PINNED-MESSAGE"
 }
 
 /// WebSocket event from Tipio
@@ -139,6 +141,8 @@ public enum TipioEventData: Codable {
     case viewerCount(TipioViewerCountData)
     case productHighlight(TipioProductHighlightData)
     case component(TipioComponentData)
+    case chat(TipioChatMessage)
+    case deletePinnedMessage(TipioDeletePinnedMessageData)
     
     enum CodingKeys: String, CodingKey {
         case type
@@ -159,6 +163,10 @@ public enum TipioEventData: Codable {
             self = .productHighlight(try TipioProductHighlightData(from: decoder))
         case "component":
             self = .component(try TipioComponentData(from: decoder))
+        case "CHAT":
+            self = .chat(try TipioChatMessage(from: decoder))
+        case "DELETE-PINNED-MESSAGE":
+            self = .deletePinnedMessage(try TipioDeletePinnedMessageData(from: decoder))
         default:
             throw DecodingError.dataCorruptedError(forKey: .type, in: container, debugDescription: "Unknown event type: \(type)")
         }
@@ -175,6 +183,10 @@ public enum TipioEventData: Codable {
         case .productHighlight(let data):
             try data.encode(to: encoder)
         case .component(let data):
+            try data.encode(to: encoder)
+        case .chat(let data):
+            try data.encode(to: encoder)
+        case .deletePinnedMessage(let data):
             try data.encode(to: encoder)
         }
     }
@@ -200,7 +212,7 @@ public struct TipioStreamStatusData: Codable {
 }
 
 public struct TipioChatMessageData: Codable {
-    public let id: String
+    // public let id: String
     public let userId: String
     public let username: String
     public let message: String
@@ -315,7 +327,7 @@ extension TipioChatMessageData {
         )
         
         return LiveChatMessage(
-            id: id,
+            // id: id,
             user: user,
             message: message,
             timestamp: timestamp,
@@ -351,4 +363,78 @@ public struct TipioStatusResponse: Codable {
     public let streamId: Int
     public let status: String
     public let timestamp: Date
+}
+
+// MARK: - Tipio Chat Message (API Response)
+
+/// Chat message from Tipio API
+public struct TipioChatMessage: Codable {
+    public let user: String
+    public let text: String
+    public let userTime: Date
+    public let role: String
+    public let pinned: Bool
+    public let visible: Bool?
+    public let clientId: String
+    public let messageid: Date
+    public let father: TipioChatMessageFather?
+    public let replies: [TipioChatMessage]
+    
+    enum CodingKeys: String, CodingKey {
+        case user, text, userTime, role, pinned, visible, clientId, messageid, father, replies
+    }
+}
+
+/// Father message for replies
+public struct TipioChatMessageFather: Codable {
+    public let user: String
+    public let text: String
+    public let userTime: Date
+}
+
+/// Delete pinned message data
+public struct TipioDeletePinnedMessageData: Codable {
+    public let message: TipioDeletePinnedMessage
+}
+
+/// Delete pinned message structure
+public struct TipioDeletePinnedMessage: Codable {
+    public let clientId: String
+    public let messageid: Date
+    public let visible: Bool
+}
+
+extension TipioChatMessage {
+    /// Convert Tipio chat message to Reachu LiveChatMessage
+    public func toLiveChatMessage() -> LiveChatMessage {
+        let user = LiveChatUser(
+            id: clientId, // Using clientId as user tracker id
+            username: user,
+            avatarUrl: nil,
+            isVerified: false,
+            isModerator: (role == "admin")
+        )
+        
+        return LiveChatMessage(
+            user: user,
+            message: text,
+            timestamp: userTime,
+            isStreamerMessage: (role == "admin"),
+            isPinned: pinned,
+            reactions: []
+        )
+    }
+    
+    /// Convert TipioChatMessage to TipioChatMessageData for WebSocket events
+    public func toTipioChatMessageData() -> TipioChatMessageData {
+        return TipioChatMessageData(
+            //id: id,
+            userId: clientId,
+            username: user,
+            message: text,
+            timestamp: userTime,
+            isStreamer: (role == "admin"),
+            avatarUrl: nil
+        )
+    }
 }

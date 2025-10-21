@@ -437,6 +437,123 @@ extension TipioWebSocketClient {
                 NotificationCenter.default.post(name: Notification.Name("reachu.heart.received"), object: nil)
             }
         }
+        
+        // CHAT evento para mensajes de chat
+        // client.on("CHAT") { [weak self] data, _ in
+        //     guard let self = self, let first = data.first else { return }
+        //     print("💬 [TipioWS] Evento recibido: CHAT")
+            
+        //     // Extract payload from wrapper, similar to other events
+        //     let decoder = JSONDecoder()
+        //     decoder.dateDecodingStrategy = .iso8601
+
+        //     if let dict = first as? [String: Any], let payload = dict["payload"] {
+        //         if let chatMessage = decoder.decode(TipioChatMessage.self, from: payload) {
+        //             let event = TipioEvent(
+        //                 type: .chat,
+        //                 streamId: 0, // Will be updated based on context
+        //                 timestamp: Date(),
+        //                 data: .chat(chatMessage)
+        //             )
+        //             self.eventSubject.send(event)
+        //             print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
+        //         } else {
+        //             print("❌ [TipioWS] * No se pudo decodificar TipioChatMessage en CHAT. Payload: \(payload)")
+        //         }
+        //     } else if let chatMessage = decoder.decode(TipioChatMessage.self, from: first) {
+        //         let event = TipioEvent(
+        //             type: .chat,
+        //             streamId: 0, // Will be updated based on context
+        //             timestamp: Date(),
+        //             data: .chat(chatMessage)
+        //         )
+        //         self.eventSubject.send(event)
+        //         print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
+        //     } else {
+        //         print("❌ [TipioWS] ** No se pudo decodificar TipioChatMessage en CHAT. Payload: \(first)")
+        //     }
+        // }
+        
+        client.on("CHAT") { [weak self] data, _ in
+            guard let self = self, let first = data.first else { return }
+            print("💬 [TipioWS] Evento recibido: CHAT")
+
+            // Configurar decoder
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+
+            // Helper local para decodificar Any -> Decodable
+            func decode<T: Decodable>(_ type: T.Type, from any: Any) -> T? {
+                guard let dict = any as? [String: Any],
+                    let jsonData = try? JSONSerialization.data(withJSONObject: dict) else {
+                    return nil
+                }
+                return try? decoder.decode(type, from: jsonData)
+            }
+
+            // Caso 1: payload dentro del diccionario
+            if let dict = first as? [String: Any], let payload = dict["payload"] {
+                 if let chatMessage = decode(TipioChatMessage.self, from: payload) {
+                     let event = TipioEvent(
+                         type: .chatMessage,
+                         streamId: 0, // se puede actualizar según el contexto
+                         timestamp: Date(),
+                         data: .chatMessage(chatMessage.toTipioChatMessageData())
+                     )
+                     self.eventSubject.send(event)
+                     print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
+                 } else {
+                     print("❌ [TipioWS] * No se pudo decodificar TipioChatMessage en CHAT. Payload: \(payload)")
+                 }
+ 
+             // Caso 2: el mensaje viene directo sin wrapper
+             } else if let chatMessage = decode(TipioChatMessage.self, from: first) {
+                 let event = TipioEvent(
+                     type: .chatMessage,
+                     streamId: 0,
+                     timestamp: Date(),
+                     data: .chatMessage(chatMessage.toTipioChatMessageData())
+                 )
+                 self.eventSubject.send(event)
+                 print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
+
+            } else {
+                print("❌ [TipioWS] ** No se pudo decodificar TipioChatMessage en CHAT. Payload: \(first)")
+            }
+        }
+   
+        // DELETE-PINNED-MESSAGE evento para eliminar mensajes fijados
+        client.on("DELETE-PINNED-MESSAGE") { [weak self] data, _ in
+            guard let self = self, let first = data.first else { return }
+            print("🗑️ [TipioWS] Evento recibido: DELETE-PINNED-MESSAGE")
+            
+            // Extract payload from wrapper, similar to other events
+            if let dict = first as? [String: Any], let payload = dict["payload"] {
+                if let deleteData = self.decode(TipioDeletePinnedMessageData.self, from: payload) {
+                    let event = TipioEvent(
+                        type: .deletePinnedMessage,
+                        streamId: 0, // Will be updated based on context
+                        timestamp: Date(),
+                        data: .deletePinnedMessage(deleteData)
+                    )
+                    self.eventSubject.send(event)
+                    print("📡 [TipioWS] Delete pinned message received: \(deleteData.message.clientId)")
+                } else {
+                    print("❌ [TipioWS] No se pudo decodificar TipioDeletePinnedMessageData en DELETE-PINNED-MESSAGE. Payload: \(payload)")
+                }
+            } else if let deleteData = self.decode(TipioDeletePinnedMessageData.self, from: first) {
+                let event = TipioEvent(
+                    type: .deletePinnedMessage,
+                    streamId: 0, // Will be updated based on context
+                    timestamp: Date(),
+                    data: .deletePinnedMessage(deleteData)
+                )
+                self.eventSubject.send(event)
+                print("📡 [TipioWS] Delete pinned message received: \(deleteData.message.clientId)")
+            } else {
+                print("❌ [TipioWS] No se pudo decodificar TipioDeletePinnedMessageData en DELETE-PINNED-MESSAGE. Payload: \(first)")
+            }
+        }
     }
         
     fileprivate func handleAnySocketEvent(_ event: SocketAnyEvent) {

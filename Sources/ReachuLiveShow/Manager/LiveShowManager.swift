@@ -55,6 +55,12 @@ public class LiveShowManager: ObservableObject {
 
     public func updateCurrentStream(_ stream: LiveStream) {
         self.currentStream = stream
+        // Configure chat channel using liveStreamId (mapped as stream.id)
+        LiveChatManager.shared.configure(channel: stream.id, role: "USER")
+        // Load chat history; consider migrated when not live
+        Task { @MainActor in
+            await LiveChatManager.shared.loadChatMessages(channel: stream.id, migrated: !stream.isLive)
+        }
     }
     
     /// Show live stream with specified layout
@@ -63,6 +69,11 @@ public class LiveShowManager: ObservableObject {
         self.layout = layout
         self.isLiveShowVisible = true
         self.isMiniPlayerVisible = false
+        // Configure chat channel on show
+        LiveChatManager.shared.configure(channel: stream.id, role: "USER")
+        Task { @MainActor in
+            await LiveChatManager.shared.loadChatMessages(channel: stream.id, migrated: !stream.isLive)
+        }
     }
     
     /// Show live stream by ID
@@ -205,7 +216,7 @@ public class LiveShowManager: ObservableObject {
             
         } catch {
             print("❌ [LiveShow] Failed to fetch active Tipio livestreams: \(error)")
-            setupDemoData()
+            // setupDemoData()
         }
     }
 
@@ -378,7 +389,7 @@ public class LiveShowManager: ObservableObject {
             handleStreamStatusUpdate(streamId: event.streamId, status: statusData)
             
         case .chatMessage(let chatData):
-            handleChatMessage(streamId: event.streamId, chatData: chatData)
+            handleChatMessage(streamId: event.streamId, chatData: chatData)             
             
         case .viewerCount(let viewerData):
             handleViewerCountUpdate(streamId: event.streamId, viewerData: viewerData)
@@ -387,9 +398,13 @@ public class LiveShowManager: ObservableObject {
             handleProductHighlight(streamId: event.streamId, productData: productData)
             
         case .component(let componentData):
-            handleComponentEvent(streamId: event.streamId, componentData: componentData)
+            handleComponentEvent(streamId: event.streamId, componentData: componentData)           
+            
+        @unknown default:
+            print("⚠️ [LiveShow] Unknown TipioEvent data type: \(event.data)")
         }
     }
+
     
     /// Handle stream status updates
     private func handleStreamStatusUpdate(streamId: Int, status: TipioStreamStatusData) {
@@ -430,6 +445,9 @@ public class LiveShowManager: ObservableObject {
     
     /// Handle chat messages
     private func handleChatMessage(streamId: Int, chatData: TipioChatMessageData) {
+        // Process message in LiveChatManager (with duplicate prevention)
+        LiveChatManager.shared.processIncomingMessage(chatData)
+        
         guard let index = activeStreams.firstIndex(where: { $0.id == String(streamId) }) else {
             return
         }
@@ -515,137 +533,138 @@ public class LiveShowManager: ObservableObject {
     }
     
     /// Setup demo data for development
-    private func setupDemoData() {
-        // Use real Tipio demo data with working Vimeo URL
-        let tipioStream = TipioLiveStream(
-            id: 381,
-            title: "test offline-asdasdasdad",
-            liveStreamId: "5404404",
-            hls: nil, // Start as null like in real Tipio
-            player: "https://player.vimeo.com/video/1029631656", // Your working URL
-            thumbnail: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
-            broadcasting: true, // Set to true for demo
-            date: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
-            endDate: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
-            streamDone: nil,
-            videoId: "1029631656", // Use the working video ID
-            videoUrl: nil
-        )
+    // private func setupDemoData() {
+    //     // Use real Tipio demo data with working Vimeo URL
+    //     let tipioStream = TipioLiveStream(
+    //         id: 381,
+    //         title: "test offline-asdasdasdad",
+    //         liveStreamId: "5404404",
+    //         hls: nil, // Start as null like in real Tipio
+    //         player: "https://player.vimeo.com/video/1029631656", // Your working URL
+    //         thumbnail: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
+    //         broadcasting: true, // Set to true for demo
+    //         date: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
+    //         endDate: ISO8601DateFormatter().date(from: "2025-09-03T16:45:00.000Z") ?? Date(),
+    //         streamDone: nil,
+    //         videoId: "1029631656", // Use the working video ID
+    //         videoUrl: nil
+    //     )
         
-        // Create demo streamers
-        let streamer1 = LiveStreamer(
-            id: "tipio-381",
-            name: "Live Host",
-            username: "@livehost",
-            avatarUrl: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
-            isVerified: true,
-            followerCount: 1247
-        )
+    //     // Create demo streamers
+    //     let streamer1 = LiveStreamer(
+    //         id: "tipio-381",
+    //         name: "Live Host",
+    //         username: "@livehost",
+    //         avatarUrl: "https://storage.googleapis.com/tipio-images/1756737999235-012.png",
+    //         isVerified: true,
+    //         followerCount: 1247
+    //     )
         
-        let streamer2 = LiveStreamer(
-            id: "streamer2", 
-            name: "Fashion Central",
-            username: "@fashioncentral",
-            avatarUrl: "https://picsum.photos/100/100?random=2",
-            isVerified: true,
-            followerCount: 85000
-        )
+    //     let streamer2 = LiveStreamer(
+    //         id: "streamer2", 
+    //         name: "Fashion Central",
+    //         username: "@fashioncentral",
+    //         avatarUrl: "https://picsum.photos/100/100?random=2",
+    //         isVerified: true,
+    //         followerCount: 85000
+    //     )
         
-        // Create hardcoded demo products for LiveShow
-        let liveProducts = [
-            LiveProduct(
-                id: "live-101",
-                title: "Reachu Wireless Headphones",
-                price: Price(amount: 199.99, currency_code: "USD"),
-                originalPrice: Price(amount: 249.99, currency_code: "USD"),
-                imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center",
-                isAvailable: true,
-                stockCount: 50,
-                discount: "20% OFF",
-                specialOffer: "Special live price for viewers!",
-                showUntil: Date().addingTimeInterval(600)
-            ),
-            LiveProduct(
-                id: "live-102",
-                title: "Reachu Smart Watch Series 5",
-                price: Price(amount: 349.99, currency_code: "USD"),
-                originalPrice: nil,
-                imageUrl: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=300&fit=crop&crop=center",
-                isAvailable: true,
-                stockCount: 30,
-                specialOffer: "Latest smartwatch technology",
-                showUntil: Date().addingTimeInterval(900)
-            ),
-            LiveProduct(
-                id: "live-103",
-                title: "Reachu Minimalist Backpack",
-                price: Price(amount: 89.99, currency_code: "USD"),
-                originalPrice: Price(amount: 109.99, currency_code: "USD"),
-                imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop&crop=center",
-                isAvailable: true,
-                stockCount: 15,
-                discount: "18% OFF",
-                specialOffer: "Perfect for daily use",
-                showUntil: Date().addingTimeInterval(1200)
-            )
-        ]
+    //     // Create hardcoded demo products for LiveShow
+    //     let liveProducts = [
+    //         LiveProduct(
+    //             id: "live-101",
+    //             title: "Reachu Wireless Headphones",
+    //             price: Price(amount: 199.99, currency_code: "USD"),
+    //             originalPrice: Price(amount: 249.99, currency_code: "USD"),
+    //             imageUrl: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&h=300&fit=crop&crop=center",
+    //             isAvailable: true,
+    //             stockCount: 50,
+    //             discount: "20% OFF",
+    //             specialOffer: "Special live price for viewers!",
+    //             showUntil: Date().addingTimeInterval(600)
+    //         ),
+    //         LiveProduct(
+    //             id: "live-102",
+    //             title: "Reachu Smart Watch Series 5",
+    //             price: Price(amount: 349.99, currency_code: "USD"),
+    //             originalPrice: nil,
+    //             imageUrl: "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=300&fit=crop&crop=center",
+    //             isAvailable: true,
+    //             stockCount: 30,
+    //             specialOffer: "Latest smartwatch technology",
+    //             showUntil: Date().addingTimeInterval(900)
+    //         ),
+    //         LiveProduct(
+    //             id: "live-103",
+    //             title: "Reachu Minimalist Backpack",
+    //             price: Price(amount: 89.99, currency_code: "USD"),
+    //             originalPrice: Price(amount: 109.99, currency_code: "USD"),
+    //             imageUrl: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400&h=300&fit=crop&crop=center",
+    //             isAvailable: true,
+    //             stockCount: 15,
+    //             discount: "18% OFF",
+    //             specialOffer: "Perfect for daily use",
+    //             showUntil: Date().addingTimeInterval(1200)
+    //         )
+    //     ]
         
-        // Create demo chat messages
-        let chatMessages = createDemoChatMessages()
+    //     // Create demo chat messages
+    //     // let chatMessages = createDemoChatMessages()
+    //     let chatMessages = []
         
-        // Create demo streams using Tipio data
-        let stream1 = tipioStream.toLiveStream(
-            streamer: streamer1,
-            featuredProducts: Array(liveProducts), // Use converted mock products
-            chatMessages: chatMessages
-        )
+    //     // Create demo streams using Tipio data
+    //     let stream1 = tipioStream.toLiveStream(
+    //         streamer: streamer1,
+    //         featuredProducts: Array(liveProducts), // Use converted mock products
+    //         chatMessages: chatMessages
+    //     )
         
-        let stream2 = LiveStream(
-            id: "stream-2",
-            title: "Weekend Casual Styling",
-            streamer: streamer2,
-            videoUrl: "https://vimeo.com/1029631656", // Tu video de Vimeo
-            thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
-            viewerCount: 892,
-            isLive: true,
-            featuredProducts: Array(liveProducts.suffix(2)), // Use last 2 products
-            chatMessages: chatMessages.dropFirst(5).map { $0 }
-        )
+    //     let stream2 = LiveStream(
+    //         id: "stream-2",
+    //         title: "Weekend Casual Styling",
+    //         streamer: streamer2,
+    //         videoUrl: "https://vimeo.com/1029631656", // Tu video de Vimeo
+    //         thumbnailUrl: "https://i.vimeocdn.com/video/1029631656.jpg",
+    //         viewerCount: 892,
+    //         isLive: true,
+    //         featuredProducts: Array(liveProducts.suffix(2)), // Use last 2 products
+    //         chatMessages: chatMessages.dropFirst(5).map { $0 }
+    //     )
         
-        self.activeStreams = [stream1, stream2]
-    }
+    //     self.activeStreams = [stream1, stream2]
+    // }
     
     /// Create demo chat messages
-    private func createDemoChatMessages() -> [LiveChatMessage] {
-        let users = [
-            LiveChatUser(id: "user1", username: "fashionlover23", isVerified: true),
-            LiveChatUser(id: "user2", username: "styleinspo"),
-            LiveChatUser(id: "user3", username: "shoppingqueen", isModerator: true),
-            LiveChatUser(id: "user4", username: "trendwatcher"),
-            LiveChatUser(id: "user5", username: "casual_chic"),
-        ]
+    // private func createDemoChatMessages() -> [LiveChatMessage] {
+    //     let users = [
+    //         LiveChatUser(id: "user1", username: "fashionlover23", isVerified: true),
+    //         LiveChatUser(id: "user2", username: "styleinspo"),
+    //         LiveChatUser(id: "user3", username: "shoppingqueen", isModerator: true),
+    //         LiveChatUser(id: "user4", username: "trendwatcher"),
+    //         LiveChatUser(id: "user5", username: "casual_chic"),
+    //     ]
         
-        let messages = [
-            "Love this top! 😍",
-            "Where can I get this?",
-            "Looks amazing on you!",
-            "How much is the shipping?",
-            "Perfect for spring! 🌸",
-            "Can you show it in black?",
-            "Just ordered! Can't wait ❤️",
-            "This would look great with jeans",
-            "So stylish! 💫",
-            "Adding to cart now!"
-        ]
+    //     let messages = [
+    //         "Love this top! 😍",
+    //         "Where can I get this?",
+    //         "Looks amazing on you!",
+    //         "How much is the shipping?",
+    //         "Perfect for spring! 🌸",
+    //         "Can you show it in black?",
+    //         "Just ordered! Can't wait ❤️",
+    //         "This would look great with jeans",
+    //         "So stylish! 💫",
+    //         "Adding to cart now!"
+    //     ]
         
-        return messages.enumerated().map { index, message in
-            LiveChatMessage(
-                user: users[index % users.count],
-                message: message,
-                timestamp: Date().addingTimeInterval(-TimeInterval(index * 30))
-            )
-        }
-    }
+    //     return messages.enumerated().map { index, message in
+    //         LiveChatMessage(
+    //             user: users[index % users.count],
+    //             message: message,
+    //             timestamp: Date().addingTimeInterval(-TimeInterval(index * 30))
+    //         )
+    //     }
+    // }
 }
 
 // MARK: - Mock Data Provider

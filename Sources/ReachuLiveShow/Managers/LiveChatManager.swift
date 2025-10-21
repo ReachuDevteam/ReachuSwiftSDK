@@ -14,6 +14,12 @@ public class LiveChatManager: ObservableObject {
     @Published public private(set) var messages: [LiveChatMessage] = []
     @Published public private(set) var isConnected: Bool = false
     @Published public private(set) var currentUser: LiveChatUser
+    @Published public var userName: String = ""
+    @Published public var hasUserName: Bool = false
+    
+    // Chat context
+    @Published public private(set) var channel: String?
+    @Published public private(set) var role: String = "USER"
     
     // MARK: - Private Properties
     private var messageTimer: Timer?
@@ -30,29 +36,127 @@ public class LiveChatManager: ObservableObject {
             isModerator: false
         )
         
-        setupDemoData()
-        startMessageSimulation()
+        // setupDemoData()
+        // startMessageSimulation()
     }
     
     // MARK: - Public Methods
     
-    /// Send a message to the chat
-    public func sendMessage(_ text: String) {
-        let message = LiveChatMessage(
-            user: currentUser,
-            message: text,
-            timestamp: Date(),
-            isStreamerMessage: false,
-            isPinned: false,
-            reactions: []
+    /// Set user name for chat
+    public func setUserName(_ name: String) {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return }
+        
+        self.userName = trimmedName
+        self.hasUserName = true
+        
+        // Update current user with new name
+        self.currentUser = LiveChatUser(
+            id: currentUser.id,
+            username: trimmedName,
+            avatarUrl: currentUser.avatarUrl,
+            isVerified: currentUser.isVerified,
+            isModerator: currentUser.isModerator
         )
         
-        messages.append(message)
-        print("💬 [Chat] Message sent: \(text)")
+        print("👤 [Chat] User name set: \(trimmedName)")
+    }
+    
+    /// Clear user name
+    public func clearUserName() {
+        self.userName = ""
+        self.hasUserName = false
+        print("👤 [Chat] User name cleared")
+    }
+    
+    /// Configure chat context
+    public func configure(channel: String, role: String = "USER") {
+        self.channel = channel
+        self.role = role
+    }
+    
+    /// Send a message to the chat (Interactions API with pending queue)
+    public func sendMessage(_ text: String, pinned: Bool = false, father: [String: Any]? = nil) {
+        guard hasUserName else {
+            print("❌ [Chat] Cannot send message without user name")
+            return
+        }
+        guard let channel = self.channel else {
+            print("⚠️ [Chat] Channel is not configured. Use configure(channel:) before sending.")
+            let fallback = LiveChatMessage(
+                user: currentUser,
+                message: text,
+                timestamp: Date(),
+                isStreamerMessage: false,
+                isPinned: pinned,
+                reactions: []
+            )
+            messages.append(fallback)
+            return
+        }
         
-        // Simulate typing indicator response after user message
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2...4)) {
-            self.simulateResponseMessage()
+        let now = Date()
+        let clientId = getOrCreateClientId()
+        let connectionId = "chat-\(channel)"
+        let uuid = UUID().uuidString
+        
+        var dataBlock: [String: Any] = [
+            "type": "chatMessage",
+            "text": text,
+            "user": userName,
+            "clientId": clientId,
+            "role": role,
+            "pinned": pinned,
+            "userTime": iso8601(now),
+            "father": father as Any,
+            "replies": []
+        ]
+        if father == nil { dataBlock["father"] = NSNull() }
+        
+        let chatBlock: [String: Any] = [
+            "clientId": clientId,
+            "connectionId": connectionId,
+            "data": dataBlock,
+            "encoding": NSNull(),
+            "messageid": iso8601(now),
+            "name": userName
+        ]
+        
+        let payload: [String: Any] = [
+            "type": "chatMessage",
+            "text": text,
+            "user": userName,
+            "clientId": clientId,
+            "role": role,
+            "pinned": pinned,
+            "userTime": iso8601(now),
+            "father": father as Any,
+            "replies": [],
+            "servicesData": [
+                "liveStreamId": channel,
+                "uuid": uuid,
+                "chat": chatBlock
+            ]
+        ]
+        
+        // Optimistic UI
+        // let optimistic = LiveChatMessage(
+        //     user: currentUser,
+        //     message: text,
+        //     timestamp: now,
+        //     isStreamerMessage: false,
+        //     isPinned: pinned,
+        //     reactions: []
+        // )
+        // messages.append(optimistic)
+        
+        Task {
+            let ok = await postChatMessage(payload: payload)
+            if ok {
+                await self.resendPendingMessagesIfAny()
+            } else {
+                self.addPendingMessage(payload, for: channel)
+            }
         }
     }
     
@@ -76,40 +180,107 @@ public class LiveChatManager: ObservableObject {
         print("🗑️ [Chat] Messages cleared")
     }
     
+    /// Load chat messages from API
+    public func loadChatMessages(channel: String, migrated: Bool = false) async {
+        let baseUrl = "https://stg-dev-microservices.tipioapp.com/stg-interactions";
+        
+        var urlString = "\(baseUrl)/chat/by-channel/chat-\(channel)"
+        if migrated {
+            urlString += "?migratedChats=true"
+        }
+
+        print(migrated ? "🔄 [Chat] Loading migrated messages for channel \(channel)" : "🔄 [Chat] Loading messages for channel \(channel)")
+        print("🔗 [Chat] URL: \(urlString)")
+        guard let url = URL(string: urlString) else {
+            print("❌ [Chat] Invalid URL: \(urlString)")
+            return
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [Chat] Invalid response")
+                return
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                print("❌ [Chat] API error: \(httpResponse.statusCode)")
+                return
+            }
+            
+            let decoder = JSONDecoder()
+            decoder.dateDecodingStrategy = .iso8601
+            // Parse the response data
+            let chatMessages = try decoder.decode([TipioChatMessage].self, from: data)
+            
+            // Convert to LiveChatMessage format
+            let liveChatMessages = chatMessages.map { $0.toLiveChatMessage() }
+            
+            await MainActor.run {
+                self.messages = liveChatMessages.sorted { $0.timestamp < $1.timestamp }
+                print("📥 [Chat] Loaded \(self.messages.count) messages from API")
+            }
+            
+        } catch {
+            print("❌ [Chat] Failed to load messages: \(error)")
+        }
+    }
+    
     /// Add a message programmatically (for testing)
     public func addMessage(_ message: LiveChatMessage) {
         messages.append(message)
     }
     
-    // MARK: - Private Methods
-    
-    private func setupDemoData() {
-        let demoMessages = DemoChatData.initialMessages
-        messages = demoMessages
+    /// Process incoming chat message from WebSocket
+    public func processIncomingMessage(_ tipioMessage: TipioChatMessageData) {
+        // Convert to LiveChatMessage
+        let liveMessage = tipioMessage.toLiveChatMessage()
         
-        print("📝 [Chat] Loaded \(messages.count) demo messages")
-    }
-    
-    private func startMessageSimulation() {
-        guard messageTimer == nil else { return }
-        
-        // Simulate new messages every 8-15 seconds
-        messageTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
-            Task { @MainActor in
-                self.simulateIncomingMessage()
-                
-                // Schedule next message with random interval
-                self.messageTimer?.invalidate()
-                self.messageTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
-                    Task { @MainActor in
-                        self.simulateIncomingMessage()
-                    }
-                }
-            }
+        // Check if message already exists (avoid duplicates)
+        let messageExists = messages.contains { existingMessage in
+            print("🔍 [Chat] Checking existing message from \(existingMessage.timestamp) liveMessage \(liveMessage.id)")
+            return existingMessage.user.id == liveMessage.user.id &&
+                   existingMessage.timestamp == liveMessage.timestamp
         }
         
-        print("🤖 [Chat] Message simulation started")
+        if !messageExists {
+            messages.append(liveMessage)
+            print("💬 [Chat] Added incoming message from \(liveMessage.user.username): \(liveMessage.message)")
+        } else {
+            print("⚠️ [Chat] Duplicate message ignored from \(liveMessage.user.username)")
+        }
     }
+    
+    // MARK: - Private Methods
+    
+    // private func setupDemoData() {
+    //     let demoMessages = DemoChatData.initialMessages
+    //     messages = demoMessages
+        
+    //     print("📝 [Chat] Loaded \(messages.count) demo messages")
+    // }
+    
+    // private func startMessageSimulation() {
+    //     guard messageTimer == nil else { return }
+        
+    //     // Simulate new messages every 8-15 seconds
+    //     messageTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
+    //         Task { @MainActor in
+    //             self.simulateIncomingMessage()
+                
+    //             // Schedule next message with random interval
+    //             self.messageTimer?.invalidate()
+    //             self.messageTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 8...15), repeats: true) { _ in
+    //                 Task { @MainActor in
+    //                     self.simulateIncomingMessage()
+    //                 }
+    //             }
+    //         }
+    //     }
+        
+    //     print("🤖 [Chat] Message simulation started")
+    // }
     
     private func simulateIncomingMessage() {
         let randomMessage = DemoChatData.randomMessages.randomElement()!
@@ -134,23 +305,94 @@ public class LiveChatManager: ObservableObject {
         print("💬 [Chat] Simulated message from \(randomUser.username): \(randomMessage)")
     }
     
-    private func simulateResponseMessage() {
-        let responses = DemoChatData.responseMessages
-        let randomResponse = responses.randomElement()!
-        let responseUser = DemoChatData.demoUsers.randomElement()!
-        
-        let message = LiveChatMessage(
-            user: responseUser,
-            message: randomResponse,
-            timestamp: Date(),
-            isStreamerMessage: responseUser.username == "@livehost",
-            isPinned: false,
-            reactions: []
-        )
-        
-        messages.append(message)
-        print("💬 [Chat] Simulated response: \(randomResponse)")
+    // MARK: - Sending Helpers (ported from ChatInput.js)
+    private func postChatMessage(payload: [String: Any]) async -> Bool {
+        let baseUrl = "https://stg-dev-microservices.tipioapp.com/stg-interactions"
+        guard let url = URL(string: "\(baseUrl)/chat/send") else { return false }
+        do {
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                print("❌ [Chat] POST /chat/send failed")
+                return false
+            }
+            return true
+        } catch {
+            print("❌ [Chat] POST /chat/send error: \(error)")
+            return false
+        }
     }
+    
+    private func getOrCreateClientId() -> String {
+        let key = "pubnub_uuid"
+        if let existing = UserDefaults.standard.string(forKey: key), !existing.isEmpty {
+            return existing
+        }
+        let newId = UUID().uuidString
+        UserDefaults.standard.set(newId, forKey: key)
+        return newId
+    }
+    
+    private func pendingKey(for channel: String) -> String {
+        return "pendingMessages_\(channel)"
+    }
+    
+    private func addPendingMessage(_ message: [String: Any], for channel: String) {
+        let key = pendingKey(for: channel)
+        var arr = UserDefaults.standard.array(forKey: key) as? [[String: Any]] ?? []
+        arr.append(message)
+        UserDefaults.standard.set(arr, forKey: key)
+        print("⏳ [Chat] Stored pending message (count=\(arr.count)) for channel \(channel)")
+    }
+    
+    private func getPendingMessages(for channel: String) -> [[String: Any]] {
+        let key = pendingKey(for: channel)
+        return (UserDefaults.standard.array(forKey: key) as? [[String: Any]]) ?? []
+    }
+    
+    private func setPendingMessages(_ messages: [[String: Any]], for channel: String) {
+        let key = pendingKey(for: channel)
+        UserDefaults.standard.set(messages, forKey: key)
+    }
+    
+    private func resendPendingMessagesIfAny() async {
+        guard let channel = self.channel else { return }
+        let pending = getPendingMessages(for: channel)
+        guard !pending.isEmpty else { return }
+        var remaining: [[String: Any]] = []
+        for msg in pending {
+            let ok = await postChatMessage(payload: msg)
+            if !ok { remaining.append(msg) }
+        }
+        setPendingMessages(remaining, for: channel)
+        print("🔁 [Chat] Resent pending messages. Remaining: \(remaining.count)")
+    }
+    
+    private func iso8601(_ date: Date) -> String {
+        let f = ISO8601DateFormatter()
+        return f.string(from: date)
+    }
+    
+    // private func simulateResponseMessage() {
+    //     let responses = DemoChatData.responseMessages
+    //     let randomResponse = responses.randomElement()!
+    //     let responseUser = DemoChatData.demoUsers.randomElement()!
+        
+    //     let message = LiveChatMessage(
+    //         user: responseUser,
+    //         message: randomResponse,
+    //         timestamp: Date(),
+    //         isStreamerMessage: responseUser.username == "@livehost",
+    //         isPinned: false,
+    //         reactions: []
+    //     )
+        
+    //     messages.append(message)
+    //     print("💬 [Chat] Simulated response: \(randomResponse)")
+    // }
     
     deinit {
         messageTimer?.invalidate()
