@@ -156,9 +156,12 @@ public struct RLiveChatComponent: View {
     @ViewBuilder
     private func chatMessageView(message: LiveChatMessage) -> some View {
         HStack(alignment: .top, spacing: ReachuSpacing.xs) {
-            // User avatar (optional)
-            if let avatarUrl = message.user.avatarUrl, !avatarUrl.isEmpty {
-                AsyncImage(url: URL(string: avatarUrl)) { image in
+
+            // MARK: - Avatar
+            if let avatarUrl = message.user.avatarUrl, !avatarUrl.isEmpty,
+            let url = URL(string: avatarUrl) {
+                // Si existe avatar real
+                AsyncImage(url: url) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -168,16 +171,26 @@ public struct RLiveChatComponent: View {
                 }
                 .frame(width: 16, height: 16)
                 .clipShape(Circle())
+
+            } else {
+                // Si no hay avatar URL → inicial con color basado en el nombre
+                Circle()
+                    .fill(colorForUsername(message.user.username))
+                    .overlay(
+                        Text(String(message.user.username.prefix(1)).uppercased())
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                    )
+                    .frame(width: 16, height: 16)
             }
-            
+
+            // MARK: - Username + Message
             VStack(alignment: .leading, spacing: 2) {
-                // Username with admin badges only
                 HStack(spacing: ReachuSpacing.xs) {
                     Text(message.user.username)
                         .font(.caption.weight(.semibold))
                         .foregroundColor(getUsernameColor(for: message))
-                    
-                    // Only show MOD badge for admins/moderators
+
                     if message.user.isModerator {
                         Text("MOD")
                             .font(.caption2.weight(.bold))
@@ -188,20 +201,26 @@ public struct RLiveChatComponent: View {
                             .cornerRadius(4)
                     }
                 }
-                
-                // Message text
+
                 Text(message.message)
                     .font(.caption)
                     .foregroundColor(.white)
                     .lineLimit(nil)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            
+
             Spacer()
         }
         .padding(.vertical, 2)
     }
-    
+
+    // MARK: - Utilidad para color estable por usuario
+    private func colorForUsername(_ username: String) -> Color {
+        let colors: [Color] = [.blue, .green, .orange, .pink, .purple, .red, .teal, .yellow]
+        let hash = abs(username.hashValue)
+        return colors[hash % colors.count]
+    }
+
     // MARK: - Helper Methods
     
     private func getUsernameColor(for message: LiveChatMessage) -> Color {

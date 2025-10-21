@@ -437,43 +437,7 @@ extension TipioWebSocketClient {
                 NotificationCenter.default.post(name: Notification.Name("reachu.heart.received"), object: nil)
             }
         }
-        
-        // CHAT evento para mensajes de chat
-        // client.on("CHAT") { [weak self] data, _ in
-        //     guard let self = self, let first = data.first else { return }
-        //     print("💬 [TipioWS] Evento recibido: CHAT")
-            
-        //     // Extract payload from wrapper, similar to other events
-        //     let decoder = JSONDecoder()
-        //     decoder.dateDecodingStrategy = .iso8601
 
-        //     if let dict = first as? [String: Any], let payload = dict["payload"] {
-        //         if let chatMessage = decoder.decode(TipioChatMessage.self, from: payload) {
-        //             let event = TipioEvent(
-        //                 type: .chat,
-        //                 streamId: 0, // Will be updated based on context
-        //                 timestamp: Date(),
-        //                 data: .chat(chatMessage)
-        //             )
-        //             self.eventSubject.send(event)
-        //             print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
-        //         } else {
-        //             print("❌ [TipioWS] * No se pudo decodificar TipioChatMessage en CHAT. Payload: \(payload)")
-        //         }
-        //     } else if let chatMessage = decoder.decode(TipioChatMessage.self, from: first) {
-        //         let event = TipioEvent(
-        //             type: .chat,
-        //             streamId: 0, // Will be updated based on context
-        //             timestamp: Date(),
-        //             data: .chat(chatMessage)
-        //         )
-        //         self.eventSubject.send(event)
-        //         print("📡 [TipioWS] Chat message received: \(chatMessage.text)")
-        //     } else {
-        //         print("❌ [TipioWS] ** No se pudo decodificar TipioChatMessage en CHAT. Payload: \(first)")
-        //     }
-        // }
-        
         client.on("CHAT") { [weak self] data, _ in
             guard let self = self, let first = data.first else { return }
             print("💬 [TipioWS] Evento recibido: CHAT")
