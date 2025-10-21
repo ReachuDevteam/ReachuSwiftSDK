@@ -69,9 +69,9 @@ public struct RFloatingCartIndicator: View {
         
         var circleSize: CGFloat {
             switch self {
-            case .small: return 56
-            case .medium: return 64
-            case .large: return 72
+            case .small: return 60
+            case .medium: return 68
+            case .large: return 76
             }
         }
         
@@ -259,15 +259,9 @@ public struct RFloatingCartIndicator: View {
         .frame(width: size.circleSize, height: size.circleSize)
         .background(
             Circle()
-                .fill(
-                    LinearGradient(
-                        gradient: Gradient(colors: [ReachuColors.primary, ReachuColors.secondary]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(ReachuColors.primary)
         )
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.2), radius: size.shadowRadius, x: 0, y: 4)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
