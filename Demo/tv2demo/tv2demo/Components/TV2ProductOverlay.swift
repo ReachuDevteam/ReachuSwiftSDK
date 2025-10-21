@@ -18,6 +18,7 @@ struct TV2ProductOverlay: View {
     @State private var dragOffset: CGFloat = 0
     @State private var showCheckmark = false
     @State private var showProductDetail = false
+    @EnvironmentObject private var cartManager: CartManager
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
     
