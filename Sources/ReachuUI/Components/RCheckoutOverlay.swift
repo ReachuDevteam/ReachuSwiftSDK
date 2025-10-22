@@ -754,6 +754,13 @@ public struct RCheckoutOverlay: View {
                                 await initiateKlarnaDirectFlow()
                                 return
                             }
+                            if selectedPaymentMethod == .vipps {
+                                print("🟢 [Checkout] Botón 'Initiate Payment' presionado con Vipps seleccionado")
+                                print("🟢 [Checkout] Llamando a initiateVippsFlow()...")
+                                // Usar flujo directo de Vipps
+                                await initiateVippsFlow()
+                                return
+                            }
                         #else
                             print("⚠️⚠️⚠️ [Checkout] Platform: NO ES iOS - saltando lógica de pago")
                         #endif
@@ -1629,6 +1636,67 @@ public struct RCheckoutOverlay: View {
             }
         }
     #endif
+
+    private func initiateVippsFlow() async {
+        print("🟠 [Vipps Flow] ========== INICIO ==========")
+        print("🟠 [Vipps Flow] Step 1: Preparando datos del checkout")
+        
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+        }
+
+        print("🟠 [Vipps Flow] Datos preparados:")
+        print("   - Email: \(email)")
+        print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
+        print("   - Success URL: \(checkoutDraft.successUrl)")
+        
+        print("🟠 [Vipps Flow] Step 2: Llamando a backend Reachu (vippsInit)")
+        
+        // Call backend to initialize Vipps payment
+        guard let dto = await cartManager.vippsInit(
+            email: email,
+            returnUrl: checkoutDraft.successUrl
+        ) else {
+            print("🟠 [Vipps Flow] vippsInit returned: NIL")
+            print("❌ [Vipps Flow] ERROR: Backend retornó nil")
+            print("❌ [Vipps Flow] Verificar:")
+            print("   1. CheckoutId existe?")
+            print("   2. Backend de Reachu respondió?")
+            print("   3. Credenciales de Vipps configuradas?")
+            await MainActor.run {
+                print("❌ [Vipps Flow] Setting checkoutStep to .error (vippsInit returned nil)")
+                self.isLoading = false
+                self.errorMessage = "Failed to initialize Vipps payment"
+                self.checkoutStep = .error
+            }
+            return
+        }
+        
+        print("🟠 [Vipps Flow] vippsInit returned: DTO")
+        print("✅ [Vipps Flow] Step 3: Backend respondió correctamente")
+        print("   - Payment URL: \(dto.paymentUrl)")
+        
+        await MainActor.run {
+            self.isLoading = false
+            
+            print("🟠 [Vipps Flow] Step 4: Abriendo Vipps en navegador")
+            // Open Vipps payment URL in browser
+            if let url = URL(string: dto.paymentUrl) {
+                #if os(iOS)
+                UIApplication.shared.open(url)
+                #elseif os(macOS)
+                NSWorkspace.shared.open(url)
+                #endif
+                print("✅ [Vipps Flow] Vipps abierto en navegador")
+                print("🟠 [Vipps Flow] ========== FIN ==========")
+            } else {
+                print("❌ [Vipps Flow] ERROR: URL inválida")
+                self.errorMessage = "Invalid Vipps payment URL"
+                self.checkoutStep = .error
+            }
+        }
+    }
 
     #if os(iOS)
         private func dtoToDict<T: Encodable>(_ dto: T) -> [String: Any]? {

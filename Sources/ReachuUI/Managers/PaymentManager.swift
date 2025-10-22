@@ -307,4 +307,52 @@ extension CartManager {
             return nil
         }
     }
+
+    @discardableResult
+    public func vippsInit(
+        email: String,
+        returnUrl: String
+    ) async -> InitPaymentVippsDto? {
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        let id: String?
+        if let passed = checkoutId, !passed.isEmpty {
+            id = passed
+        } else {
+            id = await createCheckout()
+        }
+
+        guard let checkout = id else {
+            print("ℹ️ [Payment] VippsInit: missing checkoutId")
+            return nil
+        }
+
+        print("💳 [Payment] VippsInit START checkoutId=\(checkout)")
+        do {
+            logRequest(
+                "sdk.payment.vippsInit",
+                payload: [
+                    "checkoutId": checkout,
+                    "email": email,
+                    "returnUrl": returnUrl
+                ]
+            )
+            let dto = try await sdk.payment.vippsInit(
+                checkoutId: checkout,
+                email: email,
+                returnUrl: returnUrl
+            )
+            logResponse("sdk.payment.vippsInit")
+            print("✅ [Payment] VippsInit OK")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            errorMessage = msg
+            logError("sdk.payment.vippsInit", error: error)
+            print("❌ [Payment] VippsInit FAIL \(msg)")
+            return nil
+        }
+    }
 }
