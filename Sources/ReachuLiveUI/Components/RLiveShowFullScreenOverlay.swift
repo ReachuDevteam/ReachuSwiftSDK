@@ -27,7 +27,7 @@ public struct RLiveShowFullScreenOverlay: View {
     // showShopping removed - now handled by RLiveBottomTabs
     @State private var isLoading = true
     @State private var isPlaying = false
-    @State private var isMuted = true
+    @State private var isMuted = false // Start unmuted like Alan's approach
     @State private var showPlayPauseIndicator = false
     @State private var selectedProductForDetail: Product?
     @State private var showProductsGrid = false
@@ -124,17 +124,24 @@ public struct RLiveShowFullScreenOverlay: View {
             VStack {
                 Spacer()
                 
-                // Play/Pause indicator (appears temporarily)
+                // Play/Pause/Mute indicator (appears temporarily)
                 if showPlayPauseIndicator {
-                    Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 64))
-                        .foregroundColor(.white)
-                        .background(
-                            Circle()
-                                .fill(Color.black.opacity(0.6))
-                                .frame(width: 100, height: 100)
-                        )
-                        .transition(.scale.combined(with: .opacity))
+                    VStack(spacing: 8) {
+                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white)
+                        
+                        // Show mute status
+                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.2.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.white)
+                    }
+                    .background(
+                        Circle()
+                            .fill(Color.black.opacity(0.6))
+                            .frame(width: 100, height: 100)
+                    )
+                    .transition(.scale.combined(with: .opacity))
                 }
                 
                 Spacer()
@@ -795,18 +802,48 @@ public struct RLiveShowFullScreenOverlay: View {
         if videoUrl.contains(".m3u8") || videoUrl.contains("hls") {
             print("🎬 [LiveShow] Configuring for HLS stream")
             player.automaticallyWaitsToMinimizeStalling = true // Better for HLS
+            
+            // For live streams, seek to the end (live position)
+            if stream.isLive {
+                print("🔴 [LiveShow] Live stream detected - seeking to live position")
+                seekToLivePosition()
+            }
         } else {
             player.automaticallyWaitsToMinimizeStalling = false // Better for direct videos
         }
         
-        player.isMuted = true // Start muted for better UX
+        player.isMuted = false // Start unmuted for HLS streams (Alan's approach)
         player.allowsExternalPlayback = false // Prevent fullscreen takeover
+        
+        // Configure audio session for live streaming
+        configureAudioSession()
+        
+        // Alternative: Force audio without session configuration
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.forceAudioWithoutSession()
+        }
+        
+        // Check audio status for debugging
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkAudioStatus()
+        }
+        
+        // Simple audio check after delay (Alan's approach)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            self.checkAudioStatus()
+        }
         
         // Additional HLS-specific configuration
         if let currentItem = player.currentItem {
-            // Enable HLS optimizations
-            currentItem.preferredForwardBufferDuration = 5.0 // 5 seconds buffer for HLS
+            // Enable HLS optimizations for live streaming
+            currentItem.preferredForwardBufferDuration = 3.0 // Shorter buffer for live streams
             currentItem.canUseNetworkResourcesForLiveStreamingWhilePaused = true
+            
+            // For live streams, configure to minimize latency
+            if stream.isLive {
+                currentItem.preferredPeakBitRate = 0 // Use highest available bitrate
+                currentItem.preferredMaximumResolution = CGSize(width: 1920, height: 1080) // Max resolution
+            }
         }
         
         // Monitor player status (minimal logging)
@@ -834,6 +871,26 @@ public struct RLiveShowFullScreenOverlay: View {
         isLoading = false
         print("✅ [LiveShow] Player setup complete")
         
+        // For live streams, try to seek to live position after a longer delay
+        if stream.isLive {
+            print("🔴 [LiveShow] Live stream detected - will seek to live position in 5 seconds")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                self.seekToLivePosition()
+            }
+            
+            // Also try after 10 seconds as backup
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) {
+                self.seekToLivePosition()
+            }
+            
+            // For HLS streams, try a different approach after 15 seconds
+            if stream.videoUrl?.contains(".m3u8") == true || stream.videoUrl?.contains("hls") == true {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 15.0) {
+                    self.forceSeekToLiveForHLS()
+                }
+            }
+        }
+        
         // Check status after a delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             if let item = self.player?.currentItem {
@@ -843,11 +900,27 @@ public struct RLiveShowFullScreenOverlay: View {
                 print("   - Error: \(item.error?.localizedDescription ?? "None")")
                 
                 if item.status == .failed {
-                    print("❌ [LiveShow] Player failed, trying fallback URL...")
-                    self.setupPlayerWithFallback()
+                    print("❌ [LiveShow] Player failed")
+                    
+                    // For live streams, don't use fallback - show error instead
+                    if stream.isLive {
+                        print("🔴 [LiveShow] Live stream failed - not using fallback")
+                        // You could show an error message here instead of fallback
+                        self.showStreamError()
+                    } else {
+                        print("🔄 [LiveShow] Non-live stream failed, trying fallback URL...")
+                        self.setupPlayerWithFallback()
+                    }
                 }
             }
         }
+    }
+    
+    private func showStreamError() {
+        print("🔴 [LiveShow] Showing stream error - live stream unavailable")
+        // You could set a state variable here to show an error UI
+        // For now, just log the error
+        isLoading = false
     }
     
     private func setupPlayerWithFallback() {
@@ -929,10 +1002,38 @@ public struct RLiveShowFullScreenOverlay: View {
     }
     
     private func toggleMute() {
-        guard let player = player else { return }
+        guard let player = player else { 
+            print("❌ [LiveShow] No player available for mute toggle")
+            return 
+        }
         
         isMuted.toggle()
         player.isMuted = isMuted
+        
+        print("🔊 [LiveShow] Mute toggled: \(isMuted ? "MUTED" : "UNMUTED")")
+        
+        // Configure audio session when unmuting
+        if !isMuted {
+            configureAudioSession()
+        }
+        
+        // Show temporary mute indicator
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+            showPlayPauseIndicator = true
+        }
+        
+        // Hide indicator after 1 second
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            withAnimation(.easeOut(duration: 0.3)) {
+                showPlayPauseIndicator = false
+            }
+        }
+        
+        // Haptic feedback
+        #if os(iOS)
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        #endif
     }
     
     private func toggleControls() {
@@ -951,6 +1052,280 @@ public struct RLiveShowFullScreenOverlay: View {
                 showControls = false
             }
         }
+    }
+    
+    /// Seek to live position for live streams
+    private func seekToLivePosition() {
+        guard let player = player else { 
+            print("❌ [LiveShow] No player available for live seek")
+            return 
+        }
+        
+        print("🔴 [LiveShow] Attempting to seek to live position...")
+        
+        // For live streams, we want to seek to the end (live position)
+        // This is especially important for HLS streams
+        if let currentItem = player.currentItem {
+            let duration = currentItem.duration
+            
+            // Check if duration is valid and not indefinite
+            if duration.isValid && !duration.isIndefinite {
+                let durationSeconds = CMTimeGetSeconds(duration)
+                print("🔴 [LiveShow] Stream duration: \(durationSeconds)s")
+                
+                // Only seek to live if this is actually a live stream (long duration)
+                // Short durations (< 60s) are likely fallback videos, not live streams
+                if durationSeconds > 60 {
+                    // Try multiple strategies to get to live position
+                    self.tryMultipleSeekStrategies(duration: duration, player: player)
+                } else {
+                    // Short duration - likely fallback video, just play from start
+                    print("⚠️ [LiveShow] Short duration detected (\(durationSeconds)s) - likely fallback video, playing from start")
+                    player.play()
+                }
+            } else {
+                // For indefinite duration (live streams), just start playing
+                print("🔴 [LiveShow] Live stream with indefinite duration - starting playback")
+                player.play()
+            }
+        } else {
+            // Fallback: just start playing
+            print("🔴 [LiveShow] No current item - starting playback")
+            player.play()
+        }
+    }
+    
+    /// Try multiple seek strategies to get to live position
+    private func tryMultipleSeekStrategies(duration: CMTime, player: AVPlayer) {
+        let durationSeconds = CMTimeGetSeconds(duration)
+        
+        // Strategy 1: Seek to 5 seconds before the end
+        let liveTime1 = CMTimeSubtract(duration, CMTime(seconds: 5, preferredTimescale: 1))
+        let liveTime1Seconds = CMTimeGetSeconds(liveTime1)
+        print("🔴 [LiveShow] Strategy 1: Seeking to \(liveTime1Seconds)s (5s before end)")
+        
+        player.seek(to: liveTime1, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
+            if completed {
+                print("✅ [LiveShow] Strategy 1 successful - seeked to live position")
+                player.play()
+            } else {
+                print("⚠️ [LiveShow] Strategy 1 failed, trying strategy 2...")
+                self.tryStrategy2(duration: duration, player: player)
+            }
+        }
+    }
+    
+    /// Strategy 2: Seek to 10 seconds before the end
+    private func tryStrategy2(duration: CMTime, player: AVPlayer) {
+        let liveTime2 = CMTimeSubtract(duration, CMTime(seconds: 10, preferredTimescale: 1))
+        let liveTime2Seconds = CMTimeGetSeconds(liveTime2)
+        print("🔴 [LiveShow] Strategy 2: Seeking to \(liveTime2Seconds)s (10s before end)")
+        
+        player.seek(to: liveTime2, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
+            if completed {
+                print("✅ [LiveShow] Strategy 2 successful - seeked to live position")
+                player.play()
+            } else {
+                print("⚠️ [LiveShow] Strategy 2 failed, trying strategy 3...")
+                self.tryStrategy3(duration: duration, player: player)
+            }
+        }
+    }
+    
+    /// Strategy 3: Seek to 90% of duration
+    private func tryStrategy3(duration: CMTime, player: AVPlayer) {
+        let durationSeconds = CMTimeGetSeconds(duration)
+        let liveTime3 = CMTime(seconds: durationSeconds * 0.9, preferredTimescale: 1)
+        let liveTime3Seconds = CMTimeGetSeconds(liveTime3)
+        print("🔴 [LiveShow] Strategy 3: Seeking to \(liveTime3Seconds)s (90% of duration)")
+        
+        player.seek(to: liveTime3, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
+            if completed {
+                print("✅ [LiveShow] Strategy 3 successful - seeked to live position")
+                player.play()
+            } else {
+                print("❌ [LiveShow] All strategies failed - playing from current position")
+                player.play()
+            }
+        }
+    }
+    
+    /// Force seek to live for HLS streams using a different approach
+    private func forceSeekToLiveForHLS() {
+        guard let player = player else { 
+            print("❌ [LiveShow] No player available for HLS live seek")
+            return 
+        }
+        
+        print("🔴 [LiveShow] Force seeking to live for HLS stream...")
+        
+        // For HLS streams, try to seek to a very large time (beyond the end)
+        // This should automatically snap to the live position
+        let veryLargeTime = CMTime(seconds: 999999, preferredTimescale: 1)
+        
+        player.seek(to: veryLargeTime, toleranceBefore: .zero, toleranceAfter: .zero) { completed in
+            if completed {
+                print("✅ [LiveShow] HLS force seek successful - should be at live position")
+                player.play()
+            } else {
+                print("⚠️ [LiveShow] HLS force seek failed, trying alternative...")
+                // Alternative: seek to current time + 30 seconds
+                let currentTime = player.currentTime()
+                let futureTime = CMTimeAdd(currentTime, CMTime(seconds: 30, preferredTimescale: 1))
+                player.seek(to: futureTime) { completed in
+                    if completed {
+                        print("✅ [LiveShow] Alternative HLS seek successful")
+                        player.play()
+                    } else {
+                        print("❌ [LiveShow] All HLS seek attempts failed")
+                        player.play()
+                    }
+                }
+            }
+        }
+    }
+    
+    /// Configure audio session for live streaming (robust approach)
+    private func configureAudioSession() {
+        #if os(iOS)
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            
+            // First try to deactivate to avoid conflicts
+            try? audioSession.setActive(false)
+            
+            // Wait a moment before reconfiguring
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                do {
+                    // Try basic playback category first
+                    try audioSession.setCategory(.playback)
+                    try audioSession.setActive(true)
+                    print("🔊 [LiveShow] Audio session configured (basic playback)")
+                } catch {
+                    print("❌ [LiveShow] Basic audio session failed: \(error)")
+                    
+                    // Try fallback with different options
+                    do {
+                        try audioSession.setCategory(.playback, mode: .default, options: [])
+                        try audioSession.setActive(true)
+                        print("🔊 [LiveShow] Audio session configured (fallback)")
+                    } catch {
+                        print("❌ [LiveShow] Fallback audio session also failed: \(error)")
+                    }
+                }
+            }
+        } catch {
+            print("❌ [LiveShow] Initial audio session setup failed: \(error)")
+        }
+        #endif
+    }
+    
+    /// Check and log audio status for debugging
+    private func checkAudioStatus() {
+        guard let player = player else { return }
+        
+        print("🔊 [LiveShow] Audio Status Check:")
+        print("   - Player muted: \(player.isMuted)")
+        print("   - Player volume: \(player.volume)")
+        print("   - Player rate: \(player.rate)")
+        
+        #if os(iOS)
+        let audioSession = AVAudioSession.sharedInstance()
+        print("   - Audio session category: \(audioSession.category)")
+        print("   - Audio session mode: \(audioSession.mode)")
+        print("   - Audio session is active: \(audioSession.isOtherAudioPlaying)")
+        #endif
+    }
+    
+    /// Force audio playback by toggling mute state
+    private func forceAudioPlayback() {
+        guard let player = player else { return }
+        
+        print("🔊 [LiveShow] Forcing audio playback...")
+        
+        // Force unmute and reconfigure audio
+        player.isMuted = false
+        isMuted = false
+        
+        // Set volume to maximum
+        player.volume = 1.0
+        
+        // Reconfigure audio session
+        configureAudioSession()
+        
+        // Try to pause and play to reset audio
+        player.pause()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            player.play()
+        }
+        
+        // Check status after forcing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkAudioStatus()
+        }
+        
+        print("🔊 [LiveShow] Audio forced - should be unmuted now")
+    }
+    
+    /// Try alternative audio approach for problematic streams
+    private func tryAlternativeAudioApproach() {
+        guard let player = player else { return }
+        
+        print("🔊 [LiveShow] Trying alternative audio approach...")
+        
+        #if os(iOS)
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            
+            // Try different audio session configuration
+            try audioSession.setActive(false)
+            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP])
+            try audioSession.setActive(true)
+            
+            // Force player settings
+            player.isMuted = false
+            player.volume = 1.0
+            
+            // Try to seek to current position to trigger audio
+            let currentTime = player.currentTime()
+            player.seek(to: currentTime) { completed in
+                if completed {
+                    print("✅ [LiveShow] Alternative audio approach completed")
+                } else {
+                    print("⚠️ [LiveShow] Alternative audio approach failed")
+                }
+            }
+            
+            print("🔊 [LiveShow] Alternative audio session configured")
+        } catch {
+            print("❌ [LiveShow] Alternative audio approach failed: \(error)")
+        }
+        #endif
+    }
+    
+    /// Force audio without relying on audio session configuration
+    private func forceAudioWithoutSession() {
+        guard let player = player else { return }
+        
+        print("🔊 [LiveShow] Forcing audio without session configuration...")
+        
+        // Force player settings
+        player.isMuted = false
+        player.volume = 1.0
+        isMuted = false
+        
+        // Try to pause and play to reset audio
+        player.pause()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            player.play()
+        }
+        
+        // Check if audio is working
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.checkAudioStatus()
+        }
+        
+        print("🔊 [LiveShow] Audio forced without session - should work now")
     }
     
     // handleSwipeGesture removed - now handled inline to reduce gesture conflicts

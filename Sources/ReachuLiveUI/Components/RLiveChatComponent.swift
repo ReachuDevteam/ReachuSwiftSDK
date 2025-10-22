@@ -42,6 +42,11 @@ public struct RLiveChatComponent: View {
                         LazyVStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                             ForEach(chatManager.messages) { message in
                                 chatMessageView(message: message)
+                                    .transition(.asymmetric(
+                                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                                        removal: .move(edge: .leading).combined(with: .opacity)
+                                    ))
+                                    .animation(.easeInOut(duration: 0.3), value: chatManager.messages.count)
                             }
                         }
                         .padding(.horizontal, ReachuSpacing.md)
@@ -163,31 +168,7 @@ public struct RLiveChatComponent: View {
         HStack(alignment: .top, spacing: ReachuSpacing.xs) {
 
             // MARK: - Avatar
-            if let avatarUrl = message.user.avatarUrl, !avatarUrl.isEmpty,
-            let url = URL(string: avatarUrl) {
-                // Si existe avatar real
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 16, height: 16)
-                .clipShape(Circle())
-
-            } else {
-                // Si no hay avatar URL → inicial con color basado en el nombre
-                Circle()
-                    .fill(colorForUsername(message.user.username))
-                    .overlay(
-                        Text(String(message.user.username.prefix(1)).uppercased())
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundColor(.white)
-                    )
-                    .frame(width: 16, height: 16)
-            }
+            avatarView(for: message.user)
 
             // MARK: - Username + Message
             VStack(alignment: .leading, spacing: 2) {
@@ -196,14 +177,9 @@ public struct RLiveChatComponent: View {
                         .font(.caption.weight(.semibold))
                         .foregroundColor(getUsernameColor(for: message))
 
-                    if message.user.isModerator {
-                        Text("MOD")
-                            .font(.caption2.weight(.bold))
-                            .foregroundColor(.yellow)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 1)
-                            .background(Color.yellow.opacity(0.2))
-                            .cornerRadius(4)
+                    // Role badge
+                    if message.user.role != .viewer {
+                        roleBadge(for: message.user.role)
                     }
                 }
 
@@ -219,7 +195,117 @@ public struct RLiveChatComponent: View {
         .padding(.vertical, 2)
     }
 
-    // MARK: - Utilidad para color estable por usuario
+    // MARK: - Avatar View
+    @ViewBuilder
+    private func avatarView(for user: LiveChatUser) -> some View {
+        if let avatarUrl = user.avatarUrl, 
+           !avatarUrl.isEmpty,
+           let url = URL(string: avatarUrl),
+           url.scheme != nil {
+            // Real avatar URL
+            AsyncImage(url: url) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                fallbackAvatar(for: user)
+            }
+            .frame(width: 16, height: 16)
+            .clipShape(Circle())
+        } else {
+            // Fallback avatar
+            fallbackAvatar(for: user)
+        }
+    }
+    
+    @ViewBuilder
+    private func fallbackAvatar(for user: LiveChatUser) -> some View {
+        Circle()
+            .fill(avatarColor(for: user))
+            .overlay(
+                Text(avatarInitial(for: user))
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+            )
+            .frame(width: 16, height: 16)
+    }
+    
+    private func avatarColor(for user: LiveChatUser) -> Color {
+        // Use different colors based on user role
+        switch user.role {
+        case .streamer:
+            return .purple
+        case .admin:
+            return .red
+        case .moderator:
+            return .yellow
+        case .vip:
+            return .orange
+        case .subscriber:
+            return .blue
+        case .viewer:
+            // Generate consistent color based on username
+            let colors: [Color] = [.green, .pink, .teal, .indigo, .mint]
+            let hash = abs(user.username.hashValue)
+            return colors[hash % colors.count]
+        }
+    }
+    
+    @ViewBuilder
+    private func roleBadge(for role: ChatUserRole) -> some View {
+        Text(role.displayName)
+            .font(.caption2.weight(.bold))
+            .foregroundColor(roleTextColor(for: role))
+            .padding(.horizontal, 4)
+            .padding(.vertical, 1)
+            .background(roleBackgroundColor(for: role))
+            .cornerRadius(4)
+    }
+    
+    private func roleTextColor(for role: ChatUserRole) -> Color {
+        switch role {
+        case .streamer, .admin:
+            return .white
+        case .moderator, .vip:
+            return .black
+        case .subscriber:
+            return .white
+        case .viewer:
+            return .white
+        }
+    }
+    
+    private func roleBackgroundColor(for role: ChatUserRole) -> Color {
+        switch role {
+        case .streamer:
+            return .purple
+        case .admin:
+            return .red
+        case .moderator:
+            return .yellow
+        case .vip:
+            return .orange
+        case .subscriber:
+            return .blue
+        case .viewer:
+            return .gray
+        }
+    }
+    
+    private func avatarInitial(for user: LiveChatUser) -> String {
+        // Clean username and get first character
+        let cleanUsername = user.username
+            .replacingOccurrences(of: "@", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if cleanUsername.isEmpty {
+            return "?"
+        }
+        
+        return String(cleanUsername.prefix(1)).uppercased()
+    }
+    
+    // MARK: - Utilidad para color estable por usuario (legacy)
     private func colorForUsername(_ username: String) -> Color {
         let colors: [Color] = [.blue, .green, .orange, .pink, .purple, .red, .teal, .yellow]
         let hash = abs(username.hashValue)
