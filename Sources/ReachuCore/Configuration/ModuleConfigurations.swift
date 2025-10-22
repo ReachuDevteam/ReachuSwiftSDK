@@ -437,6 +437,10 @@ public struct LiveShowConfiguration {
     public let enableAutoplay: Bool
     public let enablePictureInPicture: Bool
     
+    // Tipio Integration
+    public let tipioApiKey: String
+    public let tipioBaseUrl: String
+    
     public init(
         autoJoinChat: Bool = true,
         enableChatModeration: Bool = true,
@@ -450,7 +454,9 @@ public struct LiveShowConfiguration {
         enableChatNotifications: Bool = false,
         videoQuality: VideoQuality = .auto,
         enableAutoplay: Bool = false,
-        enablePictureInPicture: Bool = true
+        enablePictureInPicture: Bool = true,
+        tipioApiKey: String = "",
+        tipioBaseUrl: String = "https://stg-dev-microservices.tipioapp.com"
     ) {
         self.autoJoinChat = autoJoinChat
         self.enableChatModeration = enableChatModeration
@@ -465,6 +471,8 @@ public struct LiveShowConfiguration {
         self.videoQuality = videoQuality
         self.enableAutoplay = enableAutoplay
         self.enablePictureInPicture = enablePictureInPicture
+        self.tipioApiKey = tipioApiKey
+        self.tipioBaseUrl = tipioBaseUrl
     }
     
     public static let `default` = LiveShowConfiguration()

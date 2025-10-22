@@ -279,13 +279,19 @@ extension TipioLiveStream {
         featuredProducts: [LiveProduct] = [],
         chatMessages: [LiveChatMessage] = []
     ) -> LiveStream {
+        // Extract streamer name from title or use a more realistic default
+        let streamerName = extractStreamerName(from: title) ?? "Live Host"
+        let streamerUsername = generateUsername(from: streamerName)
+        
+        print("🔍 [Tipio] Converting stream - Title: '\(title)' -> Streamer: '\(streamerName)' -> Username: '\(streamerUsername)'")
+        
         let defaultStreamer = streamer ?? LiveStreamer(
             id: "tipio-\(id)",
-            name: "Live Host",
-            username: "@livehost",
+            name: streamerName,
+            username: streamerUsername,
             avatarUrl: thumbnail,
             isVerified: true,
-            followerCount: 0
+            followerCount: Int.random(in: 100...5000)
         )
         
         // Use HLS URL if available, otherwise player URL, otherwise construct Vimeo embed
@@ -313,6 +319,70 @@ extension TipioLiveStream {
             featuredProducts: featuredProducts,
             chatMessages: chatMessages
         )
+    }
+    
+    /// Extract streamer name from stream title
+    private func extractStreamerName(from title: String) -> String? {
+        // Common patterns to extract streamer name from title
+        let patterns = [
+            // "Live with [Name]" or "Live: [Name]"
+            "Live with ([A-Za-z\\s]+)",
+            "Live: ([A-Za-z\\s]+)",
+            "Live - ([A-Za-z\\s]+)",
+            "Live \\| ([A-Za-z\\s]+)",
+            // "[Name] Live" or "[Name]'s Live"
+            "([A-Za-z\\s]+) Live",
+            "([A-Za-z\\s]+)'s Live",
+            // "Hosted by [Name]"
+            "Hosted by ([A-Za-z\\s]+)",
+            // "[Name] presents" or "[Name] presents:"
+            "([A-Za-z\\s]+) presents"
+        ]
+        
+        for pattern in patterns {
+            if let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) {
+                let range = NSRange(location: 0, length: title.utf16.count)
+                if let match = regex.firstMatch(in: title, options: [], range: range) {
+                    if let nameRange = Range(match.range(at: 1), in: title) {
+                        let name = String(title[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        if !name.isEmpty && name.count > 2 {
+                            return name
+                        }
+                    }
+                }
+            }
+        }
+        
+        // If no pattern matches, use the title itself as streamer name
+        // but clean it up and make it more personal
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !cleanTitle.isEmpty {
+            // Convert to a more personal name format
+            let words = cleanTitle.components(separatedBy: .whitespaces)
+            if words.count == 1 {
+                // Single word: "swift" -> "Swift Host"
+                let result = "\(words[0].capitalized) Host"
+                print("🔍 [Tipio] Single word pattern - '\(title)' -> '\(result)'")
+                return result
+            } else {
+                // Multiple words: take first word and make it personal
+                let result = "\(words[0].capitalized) Host"
+                print("🔍 [Tipio] Multi-word pattern - '\(title)' -> '\(result)'")
+                return result
+            }
+        }
+        
+        return nil
+    }
+    
+    /// Generate username from streamer name
+    private func generateUsername(from name: String) -> String {
+        let cleanName = name.lowercased()
+            .replacingOccurrences(of: " ", with: "")
+            .replacingOccurrences(of: "[^a-z0-9]", with: "", options: .regularExpression)
+        
+        let randomSuffix = Int.random(in: 10...99)
+        return "@\(cleanName)\(randomSuffix)"
     }
 }
 
