@@ -22,6 +22,7 @@ struct TV2VideoPlayer: View {
     @State private var showProduct = false
     @State private var showContest = false
     @State private var showCheckout = false
+    @State private var isLoadingVideo = true
     
     // SDK Client para fetch de productos
     private var sdkClient: SdkClient {
@@ -47,15 +48,24 @@ struct TV2VideoPlayer: View {
                                 .onTapGesture {
                                     playerViewModel.toggleControlsVisibility()
                                 }
-                        } else {
-                            // Loading state
+                                .onAppear {
+                                    // Hide loader when video appears
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                        isLoadingVideo = false
+                                    }
+                                }
+                        }
+                        
+                        // Loading overlay
+                        if isLoadingVideo {
                             ZStack {
-                                Color.black
+                                Color.black.opacity(0.9)
                                 
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle(tint: TV2Theme.Colors.primary))
                                     .scaleEffect(2.0)
                             }
+                            .transition(.opacity)
                         }
                     }
                     .frame(height: isChatExpanded ? geometry.size.height * 0.6 : geometry.size.height)
