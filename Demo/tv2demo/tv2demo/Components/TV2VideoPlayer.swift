@@ -48,12 +48,20 @@ struct TV2VideoPlayer: View {
                                     playerViewModel.toggleControlsVisibility()
                                 }
                         } else {
-                            // Loading or placeholder
-                            Color.black
-                            
-                            ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                .scaleEffect(1.5)
+                            // Loading state
+                            ZStack {
+                                Color.black
+                                
+                                VStack(spacing: 16) {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: TV2Theme.Colors.primary))
+                                        .scaleEffect(2.0)
+                                    
+                                    Text("Loading match...")
+                                        .font(.system(size: 15))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                            }
                         }
                     }
                     .frame(height: isChatExpanded ? geometry.size.height * 0.6 : geometry.size.height)
