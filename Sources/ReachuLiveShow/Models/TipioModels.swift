@@ -219,6 +219,7 @@ public struct TipioChatMessageData: Codable {
     public let timestamp: Date
     public let isStreamer: Bool
     public let avatarUrl: String?
+    public let isPinned: Bool
 }
 
 public struct TipioViewerCountData: Codable {
@@ -332,7 +333,7 @@ extension TipioChatMessageData {
             message: message,
             timestamp: timestamp,
             isStreamerMessage: isStreamer,
-            isPinned: false,
+            isPinned: isPinned,
             reactions: []
         )
     }
@@ -394,12 +395,15 @@ public struct TipioChatMessageFather: Codable {
 
 /// Delete pinned message data
 public struct TipioDeletePinnedMessageData: Codable {
+    public let channel: String
+    public let liveStreamId: String
     public let message: TipioDeletePinnedMessage
 }
 
 /// Delete pinned message structure
 public struct TipioDeletePinnedMessage: Codable {
     public let clientId: String
+    public let id: String?
     public let messageid: Date
     public let visible: Bool
 }
@@ -434,7 +438,8 @@ extension TipioChatMessage {
             message: text,
             timestamp: userTime,
             isStreamer: (role == "admin"),
-            avatarUrl: nil
+            avatarUrl: nil,
+            isPinned: pinned
         )
     }
 }

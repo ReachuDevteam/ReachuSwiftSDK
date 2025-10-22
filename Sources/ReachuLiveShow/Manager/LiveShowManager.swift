@@ -398,7 +398,10 @@ public class LiveShowManager: ObservableObject {
             handleProductHighlight(streamId: event.streamId, productData: productData)
             
         case .component(let componentData):
-            handleComponentEvent(streamId: event.streamId, componentData: componentData)           
+            handleComponentEvent(streamId: event.streamId, componentData: componentData)
+            
+        case .deletePinnedMessage(let deleteData):
+            handleDeletePinnedMessage(streamId: event.streamId, deleteData: deleteData)
             
         @unknown default:
             print("⚠️ [LiveShow] Unknown TipioEvent data type: \(event.data)")
@@ -484,6 +487,13 @@ public class LiveShowManager: ObservableObject {
         }
         
         print("💬 [LiveShow] New chat message in stream \(streamId): \(chatData.message)")
+    }
+    
+    /// Handle delete pinned message event
+    private func handleDeletePinnedMessage(streamId: Int, deleteData: TipioDeletePinnedMessageData) {
+        // Process delete pinned message in LiveChatManager
+        LiveChatManager.shared.processDeletePinnedMessage(deleteData)
+        print("🗑️ [LiveShow] Delete pinned message event for stream \(streamId)")
     }
     
     /// Handle viewer count updates

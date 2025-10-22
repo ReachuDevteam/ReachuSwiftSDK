@@ -16,6 +16,7 @@ public class LiveChatManager: ObservableObject {
     @Published public private(set) var currentUser: LiveChatUser
     @Published public var userName: String = ""
     @Published public var hasUserName: Bool = false
+    @Published public private(set) var pinnedMessage: LiveChatMessage?
     
     // Chat context
     @Published public private(set) var channel: String?
@@ -216,10 +217,21 @@ public class LiveChatManager: ObservableObject {
             
             // Convert to LiveChatMessage format
             let liveChatMessages = chatMessages.map { $0.toLiveChatMessage() }
+
+            if let lastPinnedMessage = liveChatMessages.last(where: { $0.isPinned }) {
+                // Guardarlo en tu variable de pinnedMessage
+                pinnedMessage = lastPinnedMessage
+                print("📌 [Chat] Pinned message updated: \(lastPinnedMessage.message)")
+            } else {
+                print("📌 [Chat] No pinned messages found")
+            }
             
+            let normalMessages = liveChatMessages.filter { !$0.isPinned }
+
+            // Asignar solo los normales a self.messages
             await MainActor.run {
-                self.messages = liveChatMessages.sorted { $0.timestamp < $1.timestamp }
-                print("📥 [Chat] Loaded \(self.messages.count) messages from API")
+                self.messages = normalMessages.sorted { $0.timestamp < $1.timestamp }
+                print("📥 [Chat] Loaded \(self.messages.count) normal messages from API")
             }
             
         } catch {
@@ -239,16 +251,34 @@ public class LiveChatManager: ObservableObject {
         
         // Check if message already exists (avoid duplicates)
         let messageExists = messages.contains { existingMessage in
-            print("🔍 [Chat] Checking existing message from \(existingMessage.timestamp) liveMessage \(liveMessage.id)")
             return existingMessage.user.id == liveMessage.user.id &&
                    existingMessage.timestamp == liveMessage.timestamp
         }
         
         if !messageExists {
-            messages.append(liveMessage)
-            print("💬 [Chat] Added incoming message from \(liveMessage.user.username): \(liveMessage.message)")
+            print("💬 [Chat] Added incoming message from \(liveMessage.user.username): \(liveMessage.message) \(liveMessage.isPinned)")
+            
+            // Handle pinned messages
+            if liveMessage.isPinned {
+                pinnedMessage = liveMessage
+                print("📌 [Chat] Pinned message updated: \(liveMessage.message)")
+            } else {
+                messages.append(liveMessage)
+            }
         } else {
             print("⚠️ [Chat] Duplicate message ignored from \(liveMessage.user.username)")
+        }
+    }
+    
+    /// Process delete pinned message event
+    public func processDeletePinnedMessage(_ deleteData: TipioDeletePinnedMessageData) {
+        // Check if the deleted message matches our current pinned message
+        if let currentPinned = pinnedMessage,
+           currentPinned.user.id == deleteData.message.clientId &&
+           abs(currentPinned.timestamp.timeIntervalSince(deleteData.message.messageid)) < 1.0 {
+            
+            pinnedMessage = nil
+            print("🗑️ [Chat] Pinned message removed: \(currentPinned.message)")
         }
     }
     

@@ -30,6 +30,11 @@ public struct RLiveChatComponent: View {
     // MARK: - Body
     public var body: some View {
         VStack(spacing: 0) {
+            // Pinned message (shown at top when available)
+            if let pinnedMessage = chatManager.pinnedMessage {
+                pinnedMessageView(pinnedMessage)
+            }
+            
             if showChat {
                 // Chat messages with fading gradient background (no header)
                 ScrollViewReader { proxy in
@@ -244,6 +249,48 @@ public struct RLiveChatComponent: View {
         
         chatManager.sendMessage(messageText)
         messageText = ""
+    }
+    
+    // MARK: - Pinned Message View
+    
+    private func pinnedMessageView(_ message: LiveChatMessage) -> some View {
+        VStack(spacing: ReachuSpacing.xs) {
+            HStack(spacing: ReachuSpacing.sm) {
+                // Pin icon
+                Image(systemName: "pin.fill")
+                    .font(.caption)
+                    .foregroundColor(.yellow)
+                
+                // Username
+                Text(message.user.username)
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.yellow)
+                
+                Spacer()
+            }
+            
+            // Message text
+            HStack {
+                Text(message.message)
+                    .font(.caption)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.md)
+        .padding(.vertical, ReachuSpacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.yellow.opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, ReachuSpacing.md)
+        .padding(.vertical, ReachuSpacing.xs)
     }
 }
 
