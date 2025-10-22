@@ -52,15 +52,9 @@ struct TV2VideoPlayer: View {
                             ZStack {
                                 Color.black
                                 
-                                VStack(spacing: 16) {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: TV2Theme.Colors.primary))
-                                        .scaleEffect(2.0)
-                                    
-                                    Text("Loading match...")
-                                        .font(.system(size: 15))
-                                        .foregroundColor(.white.opacity(0.7))
-                                }
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: TV2Theme.Colors.primary))
+                                    .scaleEffect(2.0)
                             }
                         }
                     }
