@@ -250,7 +250,7 @@ public class ConfigurationLoader {
         }
         
         return ReachuTheme(
-            name: config.name ?? "Custom Theme",
+            name: config.name,
             mode: mode,
             lightColors: lightColors,
             darkColors: darkColors
@@ -335,10 +335,16 @@ public class ConfigurationLoader {
         // Use streaming.enableAutoplay if available, otherwise fallback to legacy enableAutoplay
         let enableAutoplay = config.streaming?.enableAutoplay ?? config.enableAutoplay ?? false
         
+        // Tipio configuration
+        let tipioApiKey = config.tipio?.apiKey ?? ""
+        let tipioBaseUrl = config.tipio?.baseUrl ?? "https://stg-dev-microservices.tipioapp.com"
+        
         return LiveShowConfiguration(
             autoJoinChat: autoJoinChat,
             enableShoppingDuringStream: enableShopping,
-            enableAutoplay: enableAutoplay
+            enableAutoplay: enableAutoplay,
+            tipioApiKey: tipioApiKey,
+            tipioBaseUrl: tipioBaseUrl
         )
     }
 

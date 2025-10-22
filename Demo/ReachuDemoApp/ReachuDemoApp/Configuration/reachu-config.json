@@ -1,5 +1,5 @@
 {
-  "apiKey": "DKCSRFE-1HA439V-GPK24GY-6CT93HB",
+  "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
   "environment": "development",
   "theme": {
     "name": "Reachu Demo Theme",
@@ -147,6 +147,10 @@
     "enableChatNotifications": true,
     "videoQuality": "auto",
     "enableAutoplay": false,
-    "enablePictureInPicture": true
+    "enablePictureInPicture": true,
+    "tipio": {
+      "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
+      "baseUrl": "https://stg-dev-microservices.tipioapp.com"
+    }
   }
 }

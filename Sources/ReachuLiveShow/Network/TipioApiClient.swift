@@ -19,14 +19,13 @@ public class TipioApiClient {
     // MARK: - Convenience Initializer
     /// Initialize with configuration from ReachuConfiguration
     public convenience init() {
-        // TODO: Add tipio configuration to LiveShowConfiguration
-        // For now, use default values
-        self.init(
-            //baseUrl: "https://api.tipio.no",
-            //No acepta localhost, hay que buscar la IP de tu Mac
-            baseUrl: "https://stg-dev-microservices.tipioapp.com",
-            apiKey: "DKCSRFE-1HA439V-GPK24GY-6CT93HB"
-        )
+        let config = ReachuConfiguration.shared.liveShowConfiguration
+        
+        // Use configuration values, fallback to defaults if empty
+        let baseUrl = config.tipioBaseUrl.isEmpty ? "https://stg-dev-microservices.tipioapp.com" : config.tipioBaseUrl
+        let apiKey = config.tipioApiKey.isEmpty ? "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S" : config.tipioApiKey
+        
+        self.init(baseUrl: baseUrl, apiKey: apiKey)
     }
     
     // MARK: - API Methods
@@ -58,10 +57,7 @@ public class TipioApiClient {
     /// Fetch active livestreams
     /// - Returns: Array of active TipioLiveStream objects
     public func getActiveLiveStreams() async throws -> [TipioLiveStream] {
-        // Real url
         let endpoint = "/api/stg/livestreams/active"
-        // To localhost
-        //let endpoint = "/active"
         let url = try buildURL(endpoint: endpoint)
         
         print("🔗 [Tipio] Fetching active livestreams")
@@ -77,9 +73,21 @@ public class TipioApiClient {
             let streams = try JSONDecoder().decode([TipioLiveStream].self, from: data)
             
             print("✅ [Tipio] Successfully fetched \(streams.count) active livestreams")
+            
+            // Debug: Print each stream's details
+            for (index, stream) in streams.enumerated() {
+                print("🔍 [Tipio] Stream \(index + 1):")
+                print("   - ID: \(stream.id)")
+                print("   - Title: '\(stream.title)'")
+                print("   - LiveStreamId: \(stream.liveStreamId)")
+                print("   - Broadcasting: \(stream.broadcasting)")
+                print("   - Thumbnail: \(stream.thumbnail ?? "nil")")
+            }
+            
             return streams            
         } catch {
             print("❌ [Tipio] Failed to decode active livestreams: \(error)")
+            print("❌ [Tipio] Raw response data: \(String(data: data, encoding: .utf8) ?? "Could not decode as string")")
             throw TipioApiError(code: "DECODE_ERROR", message: "Failed to decode active livestreams")
         }
     }
