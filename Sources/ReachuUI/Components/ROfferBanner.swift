@@ -6,6 +6,8 @@ public struct ROfferBanner: View {
     let config: OfferBannerConfig
     @State private var timeRemaining: DateComponents?
     @State private var timer: Timer?
+    @State private var isImageLoaded = false
+    @State private var isLogoLoaded = false
     
     public init(config: OfferBannerConfig) {
         self.config = config
@@ -26,9 +28,13 @@ public struct ROfferBanner: View {
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 16)
+                            .onAppear {
+                                isLogoLoaded = true
+                            }
                     } placeholder: {
+                        // Simple skeleton for logo
                         Rectangle()
-                            .fill(Color.clear)
+                            .fill(Color.gray.opacity(0.3))
                             .frame(height: 16)
                     }
                     .onAppear {
@@ -36,20 +42,52 @@ public struct ROfferBanner: View {
                     }
                     
                     // Title
-                    Text(config.title)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
+                    if isImageLoaded {
+                        Text(config.title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                            .transition(.opacity)
+                    } else {
+                        // Simple skeleton for title
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(height: 24)
+                            .frame(maxWidth: 150)
+                            .cornerRadius(4)
+                    }
                     
                     // Subtitle
                     if let subtitle = config.subtitle {
-                        Text(subtitle)
-                            .font(.system(size: 11, weight: .regular))
-                            .foregroundColor(.white.opacity(0.9))
+                        if isImageLoaded {
+                            Text(subtitle)
+                                .font(.system(size: 11, weight: .regular))
+                                .foregroundColor(.white.opacity(0.9))
+                                .transition(.opacity)
+                        } else {
+                            // Simple skeleton for subtitle
+                            Rectangle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(height: 11)
+                                .frame(maxWidth: 120)
+                                .cornerRadius(2)
+                        }
                     }
                     
                     // Countdown (analog style like hardcoded banner)
-                    if let remaining = timeRemaining {
+                    if let remaining = timeRemaining, isImageLoaded {
                         analogCountdown(timeRemaining: remaining)
+                            .transition(.opacity)
+                    } else if !isImageLoaded {
+                        // Simple skeleton for countdown
+                        HStack(spacing: 4) {
+                            ForEach(0..<4) { _ in
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 30, height: 20)
+                                    .cornerRadius(4)
+                            }
+                        }
+                        .padding(.vertical, 3)
                     }
                 }
                 
@@ -58,39 +96,57 @@ public struct ROfferBanner: View {
                 // Right column: Discount badge + Button (centered vertically)
                 VStack(spacing: 8) {
                     // Discount badge
-                    Text(config.discountBadgeText)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(Color.black.opacity(0.8))
-                        )
+                    if isImageLoaded {
+                        Text(config.discountBadgeText)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(Color.black.opacity(0.8))
+                            )
+                            .transition(.opacity)
+                    } else {
+                        // Simple skeleton for discount badge
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 80, height: 32)
+                            .cornerRadius(16)
+                    }
                     
                     // Button
-                    Button(action: {
-                        if let link = config.ctaLink, let url = URL(string: link) {
-                            #if os(iOS)
-                            UIApplication.shared.open(url)
-                            #endif
+                    if isImageLoaded {
+                        Button(action: {
+                            if let link = config.ctaLink, let url = URL(string: link) {
+                                #if os(iOS)
+                                UIApplication.shared.open(url)
+                                #endif
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                Text(config.ctaText)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.white)
+                                
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundColor(.white)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(buttonColor)
+                            )
                         }
-                    }) {
-                        HStack(spacing: 6) {
-                            Text(config.ctaText)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white)
-                            
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(buttonColor)
-                        )
+                        .transition(.opacity)
+                    } else {
+                        // Simple skeleton for button
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.4))
+                            .frame(width: 100, height: 28)
+                            .cornerRadius(14)
                     }
                 }
             }
@@ -142,9 +198,34 @@ public struct ROfferBanner: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
+                        .onAppear {
+                            isImageLoaded = true
+                        }
                 } placeholder: {
+                    // Simple skeleton for background image
                     Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(Color.gray.opacity(0.2))
+                        .overlay(
+                            // Subtle shimmer effect
+                            Rectangle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            Color.clear,
+                                            Color.white.opacity(0.1),
+                                            Color.clear
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .offset(x: isImageLoaded ? 200 : -200)
+                                .animation(
+                                    .easeInOut(duration: 2.0)
+                                    .repeatForever(autoreverses: false),
+                                    value: isImageLoaded
+                                )
+                        )
                 }
                 .onAppear {
                     print("🖼️ [ROfferBanner] Loading background image: \(buildFullURL(from: config.backgroundImageUrl))")
