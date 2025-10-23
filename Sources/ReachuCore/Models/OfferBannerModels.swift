@@ -60,11 +60,11 @@ public struct ComponentStatusMessage: Codable {
 
 /// Active component from API
 public struct ActiveComponent: Codable, Identifiable {
-    public let id: String
+    public let id: String?
     public let type: String
     public let config: OfferBannerConfig?
     
-    public init(id: String, type: String, config: OfferBannerConfig? = nil) {
+    public init(id: String?, type: String, config: OfferBannerConfig? = nil) {
         self.id = id
         self.type = type
         self.config = config
@@ -129,13 +129,18 @@ public class ComponentManager: ObservableObject {
                 print("📡 [ComponentManager] HTTP Status: \(httpResponse.statusCode)")
             }
             
+            // Log raw response for debugging
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("📄 [ComponentManager] Raw API response: \(jsonString)")
+            }
+            
             let components = try JSONDecoder().decode([ActiveComponent].self, from: data)
             print("📦 [ComponentManager] Found \(components.count) active components")
             
             // Find offer banner component
             if let bannerComponent = components.first(where: { $0.type == "offer_banner" }) {
                 activeBanner = bannerComponent.config
-                print("✅ [ComponentManager] Active banner found: \(bannerComponent.id)")
+                print("✅ [ComponentManager] Active banner found: \(bannerComponent.id ?? "unknown")")
             } else {
                 activeBanner = nil
                 print("ℹ️ [ComponentManager] No active banner found")
