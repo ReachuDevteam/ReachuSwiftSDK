@@ -2,24 +2,24 @@ import Foundation
 
 /// Configuration for Offer Banner component
 public struct OfferBannerConfig: Codable, Equatable {
-    public let logoUrl: String
-    public let title: String
+    public let logoUrl: String?
+    public let title: String?
     public let subtitle: String?
-    public let backgroundImageUrl: String
-    public let countdownEndDate: String // ISO 8601 timestamp
-    public let discountBadgeText: String
-    public let ctaText: String
+    public let backgroundImageUrl: String?
+    public let countdownEndDate: String? // ISO 8601 timestamp
+    public let discountBadgeText: String?
+    public let ctaText: String?
     public let ctaLink: String?
     public let overlayOpacity: Double?
     
     public init(
-        logoUrl: String,
-        title: String,
+        logoUrl: String? = nil,
+        title: String? = nil,
         subtitle: String? = nil,
-        backgroundImageUrl: String,
-        countdownEndDate: String,
-        discountBadgeText: String,
-        ctaText: String,
+        backgroundImageUrl: String? = nil,
+        countdownEndDate: String? = nil,
+        discountBadgeText: String? = nil,
+        ctaText: String? = nil,
         ctaLink: String? = nil,
         overlayOpacity: Double? = nil
     ) {

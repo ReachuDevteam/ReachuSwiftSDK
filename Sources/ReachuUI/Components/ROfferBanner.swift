@@ -14,11 +14,16 @@ public struct ROfferBanner: View {
     public var body: some View {
         ZStack {
             // Background image
-            AsyncImage(url: URL(string: config.backgroundImageUrl)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
+            if let backgroundUrl = config.backgroundImageUrl {
+                AsyncImage(url: URL(string: backgroundUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+            } else {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
             }
@@ -31,21 +36,25 @@ public struct ROfferBanner: View {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 8) {
                     // Logo
-                    AsyncImage(url: URL(string: config.logoUrl)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 30)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(height: 30)
+                    if let logoUrl = config.logoUrl {
+                        AsyncImage(url: URL(string: logoUrl)) { image in
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(height: 30)
+                        } placeholder: {
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(height: 30)
+                        }
                     }
                     
                     // Title
-                    Text(config.title)
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
+                    if let title = config.title {
+                        Text(title)
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundColor(.white)
+                    }
                     
                     // Subtitle
                     if let subtitle = config.subtitle {
@@ -65,29 +74,33 @@ public struct ROfferBanner: View {
                 // Right column: Discount badge and CTA
                 VStack(spacing: 12) {
                     // Discount badge
-                    Text(config.discountBadgeText)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Color.black.opacity(0.6))
-                        .cornerRadius(20)
-                    
-                    // CTA Button
-                    Button(action: {
-                        if let link = config.ctaLink, let url = URL(string: link) {
-                            #if os(iOS)
-                            UIApplication.shared.open(url)
-                            #endif
-                        }
-                    }) {
-                        Text(config.ctaText)
-                            .font(.system(size: 14, weight: .semibold))
+                    if let discountText = config.discountBadgeText {
+                        Text(discountText)
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 10)
-                            .background(Color.purple)
+                            .background(Color.black.opacity(0.6))
                             .cornerRadius(20)
+                    }
+                    
+                    // CTA Button
+                    if let ctaText = config.ctaText {
+                        Button(action: {
+                            if let link = config.ctaLink, let url = URL(string: link) {
+                                #if os(iOS)
+                                UIApplication.shared.open(url)
+                                #endif
+                            }
+                        }) {
+                            Text(ctaText)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 10)
+                                .background(Color.purple)
+                                .cornerRadius(20)
+                        }
                     }
                 }
             }
@@ -105,9 +118,14 @@ public struct ROfferBanner: View {
     }
     
     private func startCountdown() {
+        guard let countdownDate = config.countdownEndDate else {
+            print("ℹ️ [ROfferBanner] No countdown date provided")
+            return
+        }
+        
         let formatter = ISO8601DateFormatter()
-        guard let endDate = formatter.date(from: config.countdownEndDate) else { 
-            print("❌ [ROfferBanner] Invalid countdown date: \(config.countdownEndDate)")
+        guard let endDate = formatter.date(from: countdownDate) else { 
+            print("❌ [ROfferBanner] Invalid countdown date: \(countdownDate)")
             return 
         }
         
