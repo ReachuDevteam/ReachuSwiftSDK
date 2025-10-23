@@ -272,6 +272,9 @@ public class ComponentManager: ObservableObject {
                 if case .offerBanner(let config) = offerBanner.config {
                     self.activeBanner = config
                     print("✅ [ComponentManager] Activated offer banner: \(config.title)")
+                    print("🖼️ [ComponentManager] Background URL: \(config.backgroundImageUrl)")
+                    print("🏷️ [ComponentManager] Logo URL: \(config.logoUrl)")
+                    print("⏰ [ComponentManager] Countdown End: \(config.countdownEndDate)")
                 }
             } else {
                 self.activeBanner = nil
@@ -300,6 +303,9 @@ public class ComponentManager: ObservableObject {
                 if case .offerBanner(let bannerConfig) = component.config {
                     activeBanner = bannerConfig
                     print("✅ [ComponentManager] Banner activated: \(decoded.componentId)")
+                    print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl)")
+                    print("🏷️ [ComponentManager] New Logo URL: \(bannerConfig.logoUrl)")
+                    print("⏰ [ComponentManager] New Countdown End: \(bannerConfig.countdownEndDate)")
                 }
             } else {
                 activeBanner = nil

@@ -21,7 +21,7 @@ public struct ROfferBanner: View {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 4) {
                     // Logo
-                    AsyncImage(url: URL(string: config.logoUrl)) { image in
+                    AsyncImage(url: URL(string: buildFullURL(from: config.logoUrl))) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
@@ -30,6 +30,9 @@ public struct ROfferBanner: View {
                         Rectangle()
                             .fill(Color.clear)
                             .frame(height: 16)
+                    }
+                    .onAppear {
+                        print("🏷️ [ROfferBanner] Loading logo: \(buildFullURL(from: config.logoUrl))")
                     }
                     
                     // Title
@@ -106,6 +109,19 @@ public struct ROfferBanner: View {
         }
     }
     
+    // MARK: - URL Helper
+    
+    private func buildFullURL(from path: String) -> String {
+        // If it's already a full URL, return as is
+        if path.hasPrefix("http://") || path.hasPrefix("https://") {
+            return path
+        }
+        
+        // If it's a relative path, prepend the base URL
+        let baseURL = "https://event-streamer-angelo100.replit.app"
+        return baseURL + path
+    }
+    
     // MARK: - Background Layer (same as hardcoded banner)
     
     private var backgroundLayer: some View {
@@ -113,13 +129,16 @@ public struct ROfferBanner: View {
             // Background with image and overlays
             ZStack {
                 // Background image
-                AsyncImage(url: URL(string: config.backgroundImageUrl)) { image in
+                AsyncImage(url: URL(string: buildFullURL(from: config.backgroundImageUrl))) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
+                }
+                .onAppear {
+                    print("🖼️ [ROfferBanner] Loading background image: \(buildFullURL(from: config.backgroundImageUrl))")
                 }
                 
                 // Dark overlay for readability (same gradient as hardcoded)
