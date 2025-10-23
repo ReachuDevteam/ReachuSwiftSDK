@@ -132,5 +132,27 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
         print("❌ Error message: \(error.localizedDescription)")
         print("❌ Full error: \(error)")
     }
+
+    public func getCheckoutStatus(_ checkoutId: String) async -> Bool {
+        print("Entre a getCheckoutStatus() with checkoutId: \(checkoutId)")
+
+        do {
+            let result: GetCheckoutDto = try await sdk.checkout.getById(checkout_id: checkoutId);
+            print("getCheckoutStatus() result: \(result)")
+
+            // ✅ Aquí validas si Vipps ya pagó
+            if result.status == "SUCCESS" {
+                print("✅ Pago confirmado en backend")
+                return true
+            } else {
+                print("⏳ Aún sin pagar: \(result.status)")
+                return false
+            }
+
+        } catch {
+            logError("getCheckoutStatus", error: error)
+            return false
+        }
+    }
 }
 

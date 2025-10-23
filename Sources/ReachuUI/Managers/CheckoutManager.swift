@@ -100,6 +100,28 @@ extension CartManager {
         }
     }
 
+    @discardableResult
+    public func getCheckoutById(checkoutId: String) async -> GetCheckoutDto? {
+        guard !checkoutId.isEmpty else {
+            print("ℹ️ [Checkout] GetById: empty checkoutId")
+            return nil
+        }
+
+        print("🧾 [Checkout] GetById START checkoutId=\(checkoutId)")
+        do {
+            logRequest("sdk.checkout.getById", payload: ["checkout_id": checkoutId])
+            let dto = try await sdk.checkout.getById(checkout_id: checkoutId)
+            logResponse("sdk.checkout.getById", payload: ["status": dto.status as Any])
+            print("✅ [Checkout] GetById OK status=\(dto.status ?? "unknown")")
+            return dto
+        } catch {
+            let msg = (error as? SdkException)?.description ?? error.localizedDescription
+            logError("sdk.checkout.getById", error: error)
+            print("❌ [Checkout] GetById FAIL \(msg)")
+            return nil
+        }
+    }
+
     internal func extractCheckoutId<T: Encodable>(_ dto: T) -> String? {
         guard
             let data = try? JSONEncoder().encode(dto),

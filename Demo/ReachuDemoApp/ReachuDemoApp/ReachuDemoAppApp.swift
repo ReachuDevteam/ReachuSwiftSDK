@@ -7,6 +7,7 @@
 
 import ReachuCore
 import SwiftUI
+import ReachuUI 
 
 @main
 struct ReachuDemoAppApp: App {
@@ -27,6 +28,14 @@ struct ReachuDemoAppApp: App {
             ContentView()
                 .onAppear {
                     print("✨ [ReachuDemoApp] App ready")
+                }
+                .onOpenURL { url in
+                    print("📡 [Vipps] returned with URL: \(url)")
+                    
+                    NotificationCenter.default.post(
+                        name: .vippsPaymentReturn,
+                        object: url
+                    )
                 }
         }
     }

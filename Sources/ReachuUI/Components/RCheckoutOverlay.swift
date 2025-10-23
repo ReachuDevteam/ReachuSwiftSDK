@@ -19,6 +19,7 @@ public struct RCheckoutOverlay: View {
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft  // ⬅️ Exponemos estado al contexto
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    @StateObject private var vippsHandler = VippsPaymentHandler.shared
 
     // MARK: - State
     @State private var checkoutStep: CheckoutStep = .address
@@ -49,6 +50,13 @@ public struct RCheckoutOverlay: View {
     @State private var discountCode = ""
     @State private var appliedDiscount: Double = 0.0
     @State private var discountMessage = ""
+
+    // Vipps Payment Tracking
+    @State private var vippsPaymentInProgress = false
+    @State private var vippsCheckoutId: String?
+    @State private var vippsRetryCount = 0
+    @State private var vippsMaxRetries = 30 // 5 minutos
+    @State private var vippsRetryTimer: Timer?
 
     #if os(iOS)
         @State private var paymentSheet: PaymentSheet?
@@ -214,9 +222,57 @@ public struct RCheckoutOverlay: View {
             .onChange(of: cartManager.selectedMarket) { _ in
                 syncSelectedMarket()
             }
+            .onChange(of: vippsHandler.paymentStatus) { newStatus in
+                handleVippsPaymentStatusChange(newStatus)
+            }
+            .onDisappear {
+                // Clean up timer when view disappears
+                stopVippsRetryTimer()
+            }
             .overlay {
             if isLoading {
                 loadingOverlay
+            }
+            
+            // Vipps Payment in Progress Overlay
+            if vippsPaymentInProgress {
+                VStack {
+                    Spacer()
+                    HStack(spacing: 12) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.white)
+                        
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Processing Payment")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Text("Please complete your payment in Vipps...")
+                                .font(.system(size: 12))
+                                .foregroundColor(.white.opacity(0.9))
+                                .lineLimit(2)
+                            
+                            if vippsRetryCount > 0 {
+                                Text("Verifying payment... (\(vippsRetryCount)/\(vippsMaxRetries))")
+                                    .font(.system(size: 10))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange)
+                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: vippsPaymentInProgress)
             }
             
             // Toast de error de Klarna
@@ -1649,14 +1705,21 @@ public struct RCheckoutOverlay: View {
         print("🟠 [Vipps Flow] Datos preparados:")
         print("   - Email: \(email)")
         print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
-        print("   - Success URL: \(checkoutDraft.successUrl)")
+        
+        // Create custom return URLs with checkout tracking
+        let checkoutId = cartManager.checkoutId ?? "unknown"
+        let successUrlWithTracking = "\(checkoutDraft.successUrl)?checkout_id=\(checkoutId)&payment_method=vipps&status=success"
+        let cancelUrlWithTracking = "\(checkoutDraft.cancelUrl)?checkout_id=\(checkoutId)&payment_method=vipps&status=cancelled"
+        
+        print("   - Success URL: \(successUrlWithTracking)")
+        print("   - Cancel URL: \(cancelUrlWithTracking)")
         
         print("🟠 [Vipps Flow] Step 2: Llamando a backend Reachu (vippsInit)")
         
         // Call backend to initialize Vipps payment
         guard let dto = await cartManager.vippsInit(
             email: email,
-            returnUrl: checkoutDraft.successUrl
+            returnUrl: successUrlWithTracking
         ) else {
             print("🟠 [Vipps Flow] vippsInit returned: NIL")
             print("❌ [Vipps Flow] ERROR: Backend retornó nil")
@@ -1688,13 +1751,136 @@ public struct RCheckoutOverlay: View {
                 #elseif os(macOS)
                 NSWorkspace.shared.open(url)
                 #endif
+                
+                // Mark Vipps payment as in progress
+                self.vippsPaymentInProgress = true
+                self.vippsCheckoutId = checkoutId
+                self.vippsRetryCount = 0
+                self.vippsHandler.startPaymentTracking(checkoutId: checkoutId)
+                
+                // Start retry timer for webhook delay
+                self.startVippsRetryTimer()
+                
                 print("✅ [Vipps Flow] Vipps abierto en navegador")
+                print("🟠 [Vipps Flow] Payment marked as in progress")
                 print("🟠 [Vipps Flow] ========== FIN ==========")
             } else {
                 print("❌ [Vipps Flow] ERROR: URL inválida")
                 self.errorMessage = "Invalid Vipps payment URL"
                 self.checkoutStep = .error
             }
+        }
+    }
+
+    // MARK: - Vipps Retry System
+    private func startVippsRetryTimer() {
+        print("🔄 [Vipps Retry] Starting retry timer - Max retries: \(vippsMaxRetries)")
+        
+        // Cancel any existing timer
+        vippsRetryTimer?.invalidate()
+        
+        // Start new timer
+        vippsRetryTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { _ in
+            Task {
+                await self.checkVippsPaymentStatusWithRetry()
+            }
+        }
+    }
+    
+    private func stopVippsRetryTimer() {
+        print("🔄 [Vipps Retry] Stopping retry timer")
+        vippsRetryTimer?.invalidate()
+        vippsRetryTimer = nil
+    }
+    
+    private func checkVippsPaymentStatusWithRetry() async {
+        guard vippsPaymentInProgress, let checkoutId = vippsCheckoutId else {
+            stopVippsRetryTimer()
+            return
+        }
+        
+        vippsRetryCount += 1
+        print("🔍 [Vipps Retry] Attempt \(vippsRetryCount)/\(vippsMaxRetries) - Checking status for checkout: \(checkoutId)")
+        
+        // Check checkout status from backend
+        if let checkout = await cartManager.getCheckoutById(checkoutId: checkoutId) {
+            print("🔍 [Vipps Retry] Checkout status: \(checkout.status ?? "unknown")")
+            
+            if checkout.status.uppercased() == "SUCCESS" {
+                print("✅ [Vipps Retry] Payment successful!")
+                await MainActor.run {
+                    self.stopVippsRetryTimer()
+                    self.vippsPaymentInProgress = false
+                    self.vippsCheckoutId = nil
+                    self.vippsRetryCount = 0
+                    self.checkoutStep = .success
+                }
+                return
+            }
+            
+            // If not SUCCESS and we've reached max retries, show error
+            if vippsRetryCount >= vippsMaxRetries {
+                print("❌ [Vipps Retry] Max retries reached. Payment not successful.")
+                await MainActor.run {
+                    self.stopVippsRetryTimer()
+                    self.vippsPaymentInProgress = false
+                    self.vippsCheckoutId = nil
+                    self.vippsRetryCount = 0
+                    self.errorMessage = "Payment verification failed after multiple attempts. Please check your payment status."
+                    self.checkoutStep = .error
+                }
+                return
+            }
+            
+            // If not SUCCESS but still have retries, continue waiting
+            print("⏳ [Vipps Retry] Status not SUCCESS yet. Waiting for webhook... (\(vippsRetryCount)/\(vippsMaxRetries))")
+            
+        } else {
+            print("❌ [Vipps Retry] Could not retrieve checkout status")
+            
+            // If we can't retrieve status and reached max retries, show error
+            if vippsRetryCount >= vippsMaxRetries {
+                await MainActor.run {
+                    self.stopVippsRetryTimer()
+                    self.vippsPaymentInProgress = false
+                    self.vippsCheckoutId = nil
+                    self.vippsRetryCount = 0
+                    self.errorMessage = "Could not verify payment status after multiple attempts."
+                    self.checkoutStep = .error
+                }
+            }
+        }
+    }
+
+    // MARK: - Vipps Payment Status Handler
+    private func handleVippsPaymentStatusChange(_ status: VippsPaymentHandler.PaymentStatus) {
+        print("🟠 [Vipps Status] Status changed to: \(status)")
+        
+        switch status {
+        case .success:
+            print("✅ [Vipps Status] Payment successful!")
+            stopVippsRetryTimer()
+            checkoutStep = .success
+            vippsPaymentInProgress = false
+            vippsCheckoutId = nil
+            vippsRetryCount = 0
+            
+        case .failed, .cancelled:
+            print("❌ [Vipps Status] Payment failed or cancelled")
+            stopVippsRetryTimer()
+            errorMessage = status == .failed ? "Payment failed" : "Payment was cancelled"
+            checkoutStep = .error
+            vippsPaymentInProgress = false
+            vippsCheckoutId = nil
+            vippsRetryCount = 0
+            
+        case .inProgress:
+            print("🟠 [Vipps Status] Payment in progress")
+            // Keep current state and retry timer running
+            
+        case .unknown:
+            print("⚠️ [Vipps Status] Unknown status")
+            // Don't change state, let retry timer continue
         }
     }
 
