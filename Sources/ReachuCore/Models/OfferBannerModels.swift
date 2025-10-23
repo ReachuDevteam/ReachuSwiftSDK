@@ -155,23 +155,31 @@ public struct OfferBadgeConfig: Codable {
 /// WebSocket message for component status changes
 public struct ComponentStatusMessage: Codable {
     public let type: String // "component_status_changed"
-    public let data: ComponentData
+    public let campaignId: Int
+    public let componentId: String
+    public let status: String // "active" or "inactive"
+    public let component: ComponentData?
     
     public struct ComponentData: Codable {
-        public let componentId: String
-        public let status: String // "active" or "inactive"
-        public let config: ComponentConfig?
+        public let id: String
+        public let type: String
+        public let name: String
+        public let config: ComponentConfig
         
-        public init(componentId: String, status: String, config: ComponentConfig? = nil) {
-            self.componentId = componentId
-            self.status = status
+        public init(id: String, type: String, name: String, config: ComponentConfig) {
+            self.id = id
+            self.type = type
+            self.name = name
             self.config = config
         }
     }
     
-    public init(type: String, data: ComponentData) {
+    public init(type: String, campaignId: Int, componentId: String, status: String, component: ComponentData? = nil) {
         self.type = type
-        self.data = data
+        self.campaignId = campaignId
+        self.componentId = componentId
+        self.status = status
+        self.component = component
     }
 }
 
@@ -285,15 +293,17 @@ public class ComponentManager: ObservableObject {
         
         switch decoded.type {
         case "component_status_changed":
-            if decoded.data.status == "active", let config = decoded.data.config {
+            print("📨 [ComponentManager] Component status changed: \(decoded.componentId) -> \(decoded.status)")
+            
+            if decoded.status == "active", let component = decoded.component {
                 // Extract OfferBannerConfig from ComponentConfig enum
-                if case .offerBanner(let bannerConfig) = config {
+                if case .offerBanner(let bannerConfig) = component.config {
                     activeBanner = bannerConfig
-                    print("✅ [ComponentManager] Banner activated: \(decoded.data.componentId)")
+                    print("✅ [ComponentManager] Banner activated: \(decoded.componentId)")
                 }
             } else {
                 activeBanner = nil
-                print("ℹ️ [ComponentManager] Banner deactivated: \(decoded.data.componentId)")
+                print("ℹ️ [ComponentManager] Banner deactivated: \(decoded.componentId)")
             }
             
         case "campaign_ended":
