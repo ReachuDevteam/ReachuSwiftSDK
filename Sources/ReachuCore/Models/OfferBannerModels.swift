@@ -2,24 +2,24 @@ import Foundation
 
 /// Configuration for Offer Banner component
 public struct OfferBannerConfig: Codable, Equatable {
-    public let logoUrl: String?
-    public let title: String?
+    public let logoUrl: String
+    public let title: String
     public let subtitle: String?
-    public let backgroundImageUrl: String?
-    public let countdownEndDate: String? // ISO 8601 timestamp
-    public let discountBadgeText: String?
-    public let ctaText: String?
+    public let backgroundImageUrl: String
+    public let countdownEndDate: String // ISO 8601 timestamp
+    public let discountBadgeText: String
+    public let ctaText: String
     public let ctaLink: String?
     public let overlayOpacity: Double?
     
     public init(
-        logoUrl: String? = nil,
-        title: String? = nil,
+        logoUrl: String,
+        title: String,
         subtitle: String? = nil,
-        backgroundImageUrl: String? = nil,
-        countdownEndDate: String? = nil,
-        discountBadgeText: String? = nil,
-        ctaText: String? = nil,
+        backgroundImageUrl: String,
+        countdownEndDate: String,
+        discountBadgeText: String,
+        ctaText: String,
         ctaLink: String? = nil,
         overlayOpacity: Double? = nil
     ) {
@@ -35,6 +35,123 @@ public struct OfferBannerConfig: Codable, Equatable {
     }
 }
 
+/// Component Response Models
+public struct ActiveComponentResponse: Codable {
+    public let componentId: String
+    public let type: String
+    public let name: String
+    public let config: ComponentConfig
+    public let status: String
+    public let activatedAt: String?
+}
+
+/// Component Config (Dynamic based on type)
+public enum ComponentConfig: Codable {
+    case banner(BannerConfig)
+    case offerBanner(OfferBannerConfig)
+    case productSpotlight(ProductSpotlightConfig)
+    case countdown(CountdownConfig)
+    case carouselAuto(CarouselAutoConfig)
+    case carouselManual(CarouselManualConfig)
+    case offerBadge(OfferBadgeConfig)
+    
+    enum CodingKeys: String, CodingKey {
+        case imageUrl, title, subtitle, ctaText, ctaLink // banner
+        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity // offer_banner
+        case productId, highlightText // product_spotlight
+        case endDate, style // countdown
+        case channelId, displayCount // carousel_auto
+        case productIds // carousel_manual
+        case text, color // offer_badge
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Try to decode as OfferBanner first (has most specific fields)
+        if container.contains(.logoUrl) && container.contains(.backgroundImageUrl) {
+            let config = try OfferBannerConfig(from: decoder)
+            self = .offerBanner(config)
+        }
+        // Then try Banner (has imageUrl but not logoUrl)
+        else if container.contains(.imageUrl) {
+            let config = try BannerConfig(from: decoder)
+            self = .banner(config)
+        }
+        // Then try ProductSpotlight
+        else if container.contains(.productId) {
+            let config = try ProductSpotlightConfig(from: decoder)
+            self = .productSpotlight(config)
+        }
+        // Continue for other types...
+        else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Unknown component config type"
+                )
+            )
+        }
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .offerBanner(let config):
+            try config.encode(to: encoder)
+        case .banner(let config):
+            try config.encode(to: encoder)
+        case .productSpotlight(let config):
+            try config.encode(to: encoder)
+        case .countdown(let config):
+            try config.encode(to: encoder)
+        case .carouselAuto(let config):
+            try config.encode(to: encoder)
+        case .carouselManual(let config):
+            try config.encode(to: encoder)
+        case .offerBadge(let config):
+            try config.encode(to: encoder)
+        }
+    }
+}
+
+/// Banner Config (Simple)
+public struct BannerConfig: Codable {
+    public let imageUrl: String
+    public let title: String
+    public let subtitle: String?
+    public let ctaText: String?
+    public let ctaLink: String?
+}
+
+/// Product Spotlight Config
+public struct ProductSpotlightConfig: Codable {
+    public let productId: String
+    public let highlightText: String?
+}
+
+/// Countdown Config
+public struct CountdownConfig: Codable {
+    public let endDate: String
+    public let style: String?
+}
+
+/// Carousel Auto Config
+public struct CarouselAutoConfig: Codable {
+    public let channelId: String
+    public let displayCount: Int?
+}
+
+/// Carousel Manual Config
+public struct CarouselManualConfig: Codable {
+    public let productIds: [String]
+}
+
+/// Offer Badge Config
+public struct OfferBadgeConfig: Codable {
+    public let text: String
+    public let color: String?
+}
+
 /// WebSocket message for component status changes
 public struct ComponentStatusMessage: Codable {
     public let type: String // "component_status_changed"
@@ -43,9 +160,9 @@ public struct ComponentStatusMessage: Codable {
     public struct ComponentData: Codable {
         public let componentId: String
         public let status: String // "active" or "inactive"
-        public let config: OfferBannerConfig?
+        public let config: ComponentConfig?
         
-        public init(componentId: String, status: String, config: OfferBannerConfig? = nil) {
+        public init(componentId: String, status: String, config: ComponentConfig? = nil) {
             self.componentId = componentId
             self.status = status
             self.config = config
@@ -74,14 +191,17 @@ public struct ActiveComponent: Codable, Identifiable {
 /// Component manager for handling offer banners
 @MainActor
 public class ComponentManager: ObservableObject {
+    @Published public private(set) var activeComponents: [ActiveComponentResponse] = []
     @Published public private(set) var activeBanner: OfferBannerConfig?
     @Published public private(set) var isConnected = false
     
-    private var webSocketManager: WebSocketManager?
     private let campaignId: Int
+    private let baseURL = "https://event-streamer-angelo100.replit.app"
+    private var webSocketManager: WebSocketManager?
     
     public init(campaignId: Int) {
         self.campaignId = campaignId
+        self.webSocketManager = WebSocketManager(campaignId: campaignId)
     }
     
     /// Connect to backend and fetch active components
@@ -114,7 +234,7 @@ public class ComponentManager: ObservableObject {
     
     /// Fetch active components from API
     private func fetchActiveComponents() async {
-        let urlString = "https://event-streamer-angelo100.replit.app/api/campaigns/\(campaignId)/active-components"
+        let urlString = "\(baseURL)/api/campaigns/\(campaignId)/active-components"
         print("🌐 [ComponentManager] Fetching components from: \(urlString)")
         
         guard let url = URL(string: urlString) else {
@@ -134,17 +254,22 @@ public class ComponentManager: ObservableObject {
                 print("📄 [ComponentManager] Raw API response: \(jsonString)")
             }
             
-            let components = try JSONDecoder().decode([ActiveComponent].self, from: data)
-            print("📦 [ComponentManager] Found \(components.count) active components")
+            let components = try JSONDecoder().decode([ActiveComponentResponse].self, from: data)
+            print("✅ [ComponentManager] Loaded \(components.count) active components")
             
-            // Find offer banner component
-            if let bannerComponent = components.first(where: { $0.type == "offer_banner" }) {
-                activeBanner = bannerComponent.config
-                print("✅ [ComponentManager] Active banner found: \(bannerComponent.id ?? "unknown")")
+            self.activeComponents = components
+            
+            // Extract offer_banner if present
+            if let offerBanner = components.first(where: { $0.type == "offer_banner" }) {
+                if case .offerBanner(let config) = offerBanner.config {
+                    self.activeBanner = config
+                    print("✅ [ComponentManager] Activated offer banner: \(config.title)")
+                }
             } else {
-                activeBanner = nil
+                self.activeBanner = nil
                 print("ℹ️ [ComponentManager] No active banner found")
             }
+            
         } catch {
             print("❌ [ComponentManager] Failed to fetch active components: \(error)")
         }
@@ -161,8 +286,11 @@ public class ComponentManager: ObservableObject {
         switch decoded.type {
         case "component_status_changed":
             if decoded.data.status == "active", let config = decoded.data.config {
-                activeBanner = config
-                print("✅ [ComponentManager] Banner activated: \(decoded.data.componentId)")
+                // Extract OfferBannerConfig from ComponentConfig enum
+                if case .offerBanner(let bannerConfig) = config {
+                    activeBanner = bannerConfig
+                    print("✅ [ComponentManager] Banner activated: \(decoded.data.componentId)")
+                }
             } else {
                 activeBanner = nil
                 print("ℹ️ [ComponentManager] Banner deactivated: \(decoded.data.componentId)")
