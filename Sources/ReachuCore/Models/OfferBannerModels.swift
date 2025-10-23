@@ -11,6 +11,7 @@ public struct OfferBannerConfig: Codable, Equatable {
     public let ctaText: String
     public let ctaLink: String?
     public let overlayOpacity: Double?
+    public let buttonColor: String?
     
     public init(
         logoUrl: String,
@@ -21,7 +22,8 @@ public struct OfferBannerConfig: Codable, Equatable {
         discountBadgeText: String,
         ctaText: String,
         ctaLink: String? = nil,
-        overlayOpacity: Double? = nil
+        overlayOpacity: Double? = nil,
+        buttonColor: String? = nil
     ) {
         self.logoUrl = logoUrl
         self.title = title
@@ -32,6 +34,7 @@ public struct OfferBannerConfig: Codable, Equatable {
         self.ctaText = ctaText
         self.ctaLink = ctaLink
         self.overlayOpacity = overlayOpacity
+        self.buttonColor = buttonColor
     }
 }
 
@@ -57,7 +60,7 @@ public enum ComponentConfig: Codable {
     
     enum CodingKeys: String, CodingKey {
         case imageUrl, title, subtitle, ctaText, ctaLink // banner
-        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity // offer_banner
+        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor // offer_banner
         case productId, highlightText // product_spotlight
         case endDate, style // countdown
         case channelId, displayCount // carousel_auto
