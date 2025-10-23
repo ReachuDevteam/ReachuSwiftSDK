@@ -8,6 +8,7 @@ struct HomeView: View {
     @State private var filteredContent: [ContentItem] = ContentItem.mockItems
     @State private var selectedTab: TabItem = .home
     @State private var showMatchDetail = false
+    @StateObject private var componentManager = ComponentManager(campaignId: 3)
     
     // MARK: - Environment Objects
     // These come from the app-level injection in tv2demoApp
@@ -63,6 +64,11 @@ struct HomeView: View {
                                     OfferBannerView()
                                 }
                                 .buttonStyle(PlainButtonStyle())
+                                
+                                // Dynamic Offer Banner (from backend)
+                                if let bannerConfig = componentManager.activeBanner {
+                                    ROfferBanner(config: bannerConfig)
+                                }
                             }
                             .padding(.horizontal, TV2Theme.Spacing.md)
                             .padding(.top, TV2Theme.Spacing.lg)
@@ -129,10 +135,19 @@ struct HomeView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .foregroundColor(.white)
                             )
-                    }
                 }
             }
         }
+        .onAppear {
+            // Connect to component manager for offer banners
+            Task {
+                await componentManager.connect()
+            }
+        }
+        .onDisappear {
+            componentManager.disconnect()
+        }
+    }
         .preferredColorScheme(.dark)
         .onAppear {
             filterContent()

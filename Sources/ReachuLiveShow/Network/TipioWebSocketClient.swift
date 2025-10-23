@@ -335,9 +335,31 @@ public class TipioWebSocketClient: NSObject, ObservableObject {
     
     deinit {
         Task { @MainActor in
-            self.disconnect()
+            self.cleanup()
         }
         print("🔌 [TipioWS] WebSocket client deinitialized")
+    }
+    
+    /// Clean up all resources and timers
+    private func cleanup() {
+        stopHeartbeat()
+        stopReconnectTimer()
+        
+        // Remove all event listeners
+        socket?.removeAllHandlers()
+        socket?.disconnect()
+        socket = nil
+        socketManager = nil
+        
+        // Cancel WebSocket task
+        webSocketTask?.cancel(with: .goingAway, reason: nil)
+        webSocketTask = nil
+        
+        // Reset connection state
+        updateConnectionStatus(.disconnected)
+        reconnectAttempts = 0
+        
+        print("🧹 [TipioWS] Cleanup completed")
     }
 }
 

@@ -249,24 +249,35 @@ public class LiveChatManager: ObservableObject {
         // Convert to LiveChatMessage
         let liveMessage = tipioMessage.toLiveChatMessage()
         
-        // Check if message already exists (avoid duplicates)
-        let messageExists = messages.contains { existingMessage in
-            return existingMessage.user.id == liveMessage.user.id &&
-                   existingMessage.timestamp == liveMessage.timestamp
+        // Enhanced duplicate detection
+        if isDuplicateMessage(liveMessage) {
+            print("⚠️ [Chat] Duplicate message ignored from \(liveMessage.user.username)")
+            return
         }
         
-        if !messageExists {
-            print("💬 [Chat] Added incoming message from \(liveMessage.user.username): \(liveMessage.message) \(liveMessage.isPinned)")
-            
-            // Handle pinned messages
-            if liveMessage.isPinned {
-                pinnedMessage = liveMessage
-                print("📌 [Chat] Pinned message updated: \(liveMessage.message)")
-            } else {
-                messages.append(liveMessage)
-            }
+        print("💬 [Chat] Added incoming message from \(liveMessage.user.username): \(liveMessage.message) \(liveMessage.isPinned)")
+        
+        // Handle pinned messages
+        if liveMessage.isPinned {
+            pinnedMessage = liveMessage
+            print("📌 [Chat] Pinned message updated: \(liveMessage.message)")
         } else {
-            print("⚠️ [Chat] Duplicate message ignored from \(liveMessage.user.username)")
+            messages.append(liveMessage)
+            
+            // Keep only last 100 messages for performance
+            if messages.count > 100 {
+                messages = Array(messages.suffix(100))
+            }
+        }
+    }
+    
+    /// Enhanced duplicate message detection
+    private func isDuplicateMessage(_ message: LiveChatMessage) -> Bool {
+        // Check by user ID, timestamp, and message content for more accurate detection
+        return messages.contains { existingMessage in
+            return existingMessage.user.id == message.user.id &&
+                   abs(existingMessage.timestamp.timeIntervalSince(message.timestamp)) < 1.0 && // Within 1 second
+                   existingMessage.message == message.message
         }
     }
     
@@ -425,7 +436,29 @@ public class LiveChatManager: ObservableObject {
     // }
     
     deinit {
+        // Clean up timers and resources synchronously
         messageTimer?.invalidate()
+        messageTimer = nil
+        
+        // Cancel all pending operations
+        cancellables.removeAll()
+        
+        print("🧹 [Chat] LiveChatManager cleanup completed")
+    }
+    
+    /// Clean up all resources and timers (MainActor context)
+    private func cleanup() {
+        messageTimer?.invalidate()
+        messageTimer = nil
+        
+        // Cancel all pending operations
+        cancellables.removeAll()
+        
+        // Clear messages to free memory
+        messages.removeAll()
+        pinnedMessage = nil
+        
+        print("🧹 [Chat] LiveChatManager cleanup completed")
     }
 }
 

@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuUI
+import ReachuCore
 import ReachuLiveUI
 import ReachuLiveShow
 import AVFoundation

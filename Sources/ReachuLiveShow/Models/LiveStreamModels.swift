@@ -168,6 +168,49 @@ public struct LiveChatMessage: Identifiable, Codable, Equatable {
     }
 }
 
+/// Chat user roles
+public enum ChatUserRole: String, Codable, CaseIterable {
+    case viewer = "viewer"
+    case subscriber = "subscriber"
+    case moderator = "moderator"
+    case admin = "admin"
+    case streamer = "streamer"
+    case vip = "vip"
+    
+    public var displayName: String {
+        switch self {
+        case .viewer: return "Viewer"
+        case .subscriber: return "Subscriber"
+        case .moderator: return "Mod"
+        case .admin: return "Admin"
+        case .streamer: return "Streamer"
+        case .vip: return "VIP"
+        }
+    }
+    
+    public var color: String {
+        switch self {
+        case .viewer: return "gray"
+        case .subscriber: return "blue"
+        case .moderator: return "yellow"
+        case .admin: return "red"
+        case .streamer: return "purple"
+        case .vip: return "gold"
+        }
+    }
+    
+    public var priority: Int {
+        switch self {
+        case .streamer: return 5
+        case .admin: return 4
+        case .moderator: return 3
+        case .vip: return 2
+        case .subscriber: return 1
+        case .viewer: return 0
+        }
+    }
+}
+
 /// Chat user
 public struct LiveChatUser: Identifiable, Codable, Equatable {
     public let id: String
@@ -175,19 +218,45 @@ public struct LiveChatUser: Identifiable, Codable, Equatable {
     public let avatarUrl: String?
     public let isVerified: Bool
     public let isModerator: Bool
+    public let role: ChatUserRole
+    public let joinDate: Date?
+    public let subscriberMonths: Int?
     
     public init(
         id: String,
         username: String,
         avatarUrl: String? = nil,
         isVerified: Bool = false,
-        isModerator: Bool = false
+        isModerator: Bool = false,
+        role: ChatUserRole = .viewer,
+        joinDate: Date? = nil,
+        subscriberMonths: Int? = nil
     ) {
         self.id = id
         self.username = username
         self.avatarUrl = avatarUrl
         self.isVerified = isVerified
         self.isModerator = isModerator
+        self.role = role
+        self.joinDate = joinDate
+        self.subscriberMonths = subscriberMonths
+    }
+    
+    // Computed properties for backward compatibility
+    public var isAdmin: Bool {
+        return role == .admin || role == .streamer
+    }
+    
+    public var isStreamer: Bool {
+        return role == .streamer
+    }
+    
+    public var isVip: Bool {
+        return role == .vip
+    }
+    
+    public var isSubscriber: Bool {
+        return role == .subscriber || subscriberMonths != nil
     }
 }
 
