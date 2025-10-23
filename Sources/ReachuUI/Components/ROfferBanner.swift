@@ -13,33 +13,23 @@ public struct ROfferBanner: View {
     
     public var body: some View {
         ZStack {
-            // Background image
-            AsyncImage(url: URL(string: config.backgroundImageUrl)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-            }
+            // Background layer
+            backgroundLayer
             
-            // Dark overlay
-            Color.black.opacity(config.overlayOpacity ?? 0.4)
-            
-            // Content
+            // Content in two columns (same layout as hardcoded banner)
             HStack(alignment: .center, spacing: 16) {
                 // Left column: Logo, title, subtitle, countdown
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
                     // Logo
                     AsyncImage(url: URL(string: config.logoUrl)) { image in
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .frame(height: 30)
+                            .frame(height: 16)
                     } placeholder: {
                         Rectangle()
                             .fill(Color.clear)
-                            .frame(height: 30)
+                            .frame(height: 16)
                     }
                     
                     // Title
@@ -50,30 +40,32 @@ public struct ROfferBanner: View {
                     // Subtitle
                     if let subtitle = config.subtitle {
                         Text(subtitle)
-                            .font(.system(size: 14, weight: .regular))
+                            .font(.system(size: 11, weight: .regular))
                             .foregroundColor(.white.opacity(0.9))
                     }
                     
-                    // Countdown
+                    // Countdown (analog style like hardcoded banner)
                     if let remaining = timeRemaining {
-                        CountdownView(timeRemaining: remaining)
+                        analogCountdown(timeRemaining: remaining)
                     }
                 }
                 
                 Spacer()
                 
-                // Right column: Discount badge and CTA
-                VStack(spacing: 12) {
+                // Right column: Discount badge + Button (centered vertically)
+                VStack(spacing: 8) {
                     // Discount badge
                     Text(config.discountBadgeText)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 10)
-                        .background(Color.black.opacity(0.6))
-                        .cornerRadius(20)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.black.opacity(0.8))
+                        )
                     
-                    // CTA Button
+                    // Button
                     Button(action: {
                         if let link = config.ctaLink, let url = URL(string: link) {
                             #if os(iOS)
@@ -81,20 +73,30 @@ public struct ROfferBanner: View {
                             #endif
                         }
                     }) {
-                        Text(config.ctaText)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.purple)
-                            .cornerRadius(20)
+                        HStack(spacing: 6) {
+                            Text(config.ctaText)
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white)
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.purple)
+                        )
                     }
                 }
             }
-            .padding(20)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
-        .frame(height: 180)
+        .frame(height: 160)
         .cornerRadius(12)
+        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
         .onAppear {
             startCountdown()
         }
@@ -102,6 +104,64 @@ public struct ROfferBanner: View {
             timer?.invalidate()
             timer = nil
         }
+    }
+    
+    // MARK: - Background Layer (same as hardcoded banner)
+    
+    private var backgroundLayer: some View {
+        ZStack(alignment: .leading) {
+            // Background with image and overlays
+            ZStack {
+                // Background image
+                AsyncImage(url: URL(string: config.backgroundImageUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+                
+                // Dark overlay for readability (same gradient as hardcoded)
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.4),
+                        Color.black.opacity(0.2)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .clipped()
+        }
+    }
+    
+    // MARK: - Analog Countdown (same style as hardcoded banner)
+    
+    private func analogCountdown(timeRemaining: DateComponents) -> some View {
+        let days = timeRemaining.day ?? 0
+        let hours = timeRemaining.hour ?? 0
+        let minutes = timeRemaining.minute ?? 0
+        let seconds = timeRemaining.second ?? 0
+        
+        return HStack(spacing: 4) {
+            // Días
+            if days > 0 {
+                CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
+            }
+            
+            // Horas
+            if days > 0 || hours > 0 {
+                CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
+            }
+            
+            // Minutos
+            CountdownUnit(value: minutes, label: "min")
+            
+            // Segundos
+            CountdownUnit(value: seconds, label: "sek")
+        }
+        .padding(.vertical, 3)
     }
     
     private func startCountdown() {
@@ -184,6 +244,37 @@ public struct ROfferBannerContainer: View {
         }
         .onDisappear {
             componentManager.disconnect()
+        }
+    }
+}
+
+/// Countdown Unit Component (same style as hardcoded banner)
+struct CountdownUnit: View {
+    let value: Int
+    let label: String
+    
+    var body: some View {
+        VStack(spacing: 1) {
+            // Dígitos
+            Text(String(format: "%02d", value))
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white)
+                .frame(minWidth: 24)
+                .padding(.vertical, 2)
+                .padding(.horizontal, 5)
+                .background(
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(Color.white.opacity(0.15))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                        )
+                )
+            
+            // Label
+            Text(label)
+                .font(.system(size: 7, weight: .medium))
+                .foregroundColor(.white.opacity(0.85))
         }
     }
 }
