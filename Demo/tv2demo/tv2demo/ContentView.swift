@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuUI
+import ReachuCore
 import ReachuLiveUI
 import ReachuLiveShow
 import AVFoundation
@@ -15,11 +16,21 @@ struct ContentView: View {
     @StateObject private var castingManager = CastingManager.shared
     @State private var showCastingView = false
     @EnvironmentObject var cartManager: CartManager
+    @StateObject private var componentManager = ComponentManager(campaignId: 3)
     
     var body: some View {
         ZStack {
             // Main app content
-            HomeView()
+            VStack(spacing: 0) {
+                // Dynamic offer banner at the top
+                if let bannerConfig = componentManager.activeBanner {
+                    ROfferBanner(config: bannerConfig)
+                        .padding(.horizontal)
+                        .padding(.top, 10)
+                }
+                
+                HomeView()
+            }
             
             // Mini player de casting - SIEMPRE visible cuando hay casting (persistente)
             if castingManager.isCasting {
@@ -55,6 +66,15 @@ struct ContentView: View {
             // Global live stream overlay (Tipio integration)
             LiveStreamGlobalOverlay()
                 .environmentObject(cartManager)
+        }
+        .onAppear {
+            // Connect to component manager for offer banners
+            Task {
+                await componentManager.connect()
+            }
+        }
+        .onDisappear {
+            componentManager.disconnect()
         }
     }
 }
