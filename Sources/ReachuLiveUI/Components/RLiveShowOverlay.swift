@@ -4,6 +4,7 @@ import ReachuCore
 import ReachuLiveShow
 import ReachuDesignSystem
 import ReachuUI
+import AVFoundation
 
 /// Modular and configurable LiveShow overlay component
 public struct RLiveShowOverlay: View {
@@ -406,18 +407,42 @@ public struct RLiveShowOverlay: View {
     // MARK: - Actions
     
     private func setupPlayer() {
-        let demoVideoUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-        
-        guard let url = URL(string: demoVideoUrl) else {
+        // Usar el video real del stream en lugar de demo hardcodeado
+        guard let videoUrl = stream.videoUrl, !videoUrl.isEmpty else {
+            print("❌ [RLiveShowOverlay] No video URL available in stream")
             isLoading = false
             return
         }
         
+        print("🎬 [RLiveShowOverlay] Setting up player with stream video: \(videoUrl)")
+
+        if videoUrl.contains("player.vimeo.com") {
+            print("🎥 [LiveShow] Vimeo player URL detected. Skipping AVPlayer creation.")
+            player = nil
+            isLoading = false
+            return
+        }
+        
+        guard let url = URL(string: videoUrl) else {
+            print("❌ [RLiveShowOverlay] Invalid video URL: \(videoUrl)")
+            isLoading = false
+            return
+        }
+        
+        
+        // Configurar sesión de audio antes de crear el reproductor
+        AudioSessionManager.shared.configureForContent(isLive: stream.isLive)
+        
         player = AVPlayer(url: url)
         player?.automaticallyWaitsToMinimizeStalling = false
-        player?.isMuted = true
+        player?.isMuted = isMuted // Usar el estado actual en lugar de hardcodear true
         player?.allowsExternalPlayback = false
         player?.play()
+        
+        // Registrar este reproductor como activo
+        if let player = player {
+            AudioSessionManager.shared.registerPlayer(player, isLive: stream.isLive)
+        }
         
         isPlaying = true
         isLoading = false
@@ -435,10 +460,63 @@ public struct RLiveShowOverlay: View {
     }
     
     private func toggleMute() {
-        guard let player = player else { return }
-        
         isMuted.toggle()
-        player.isMuted = isMuted
+        print("🔊 [RLiveShowFullScreenOverlay] Audio \(isMuted ? "silenciado" : "activado")")
+        if let player = player {
+            // ✅ Caso AVPlayer (HLS/MP4)
+            player.isMuted = isMuted
+            print("🎧 [RLiveShowFullScreenOverlay] AVPlayer isMuted: \(player.isMuted)")
+            if !isMuted {
+                // Activar sesión de audio para que se escuche realmente
+                do {
+                    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+                    try AVAudioSession.sharedInstance().setActive(true)
+                    print("✅ AVAudioSession activated for playback")
+                } catch {
+                    print("❌ AVAudioSession error: \(error.localizedDescription)")
+                }
+            }
+        } else {
+            // ✅ Caso Vimeo WebView
+            let targetVolume = isMuted ? 0 : 1;
+            let js = """
+                (function() {
+                    const MAX_ATTEMPTS = 20;
+                    const INTERVAL_MS = 500;
+                    let attempts = 0;
+                    const targetOrigin = 'https://player.vimeo.com';
+                    const volumeValue = \(targetVolume); // Inyecta el volumen deseado
+
+                    const trySetVolume = () => {
+                        attempts++;
+                        const iframe = document.getElementById('vimeo-player');
+
+                        if (iframe && iframe.contentWindow) {
+                            clearInterval(intervalId);
+                            
+                            const command = {
+                                method: 'setVolume',
+                                value: volumeValue
+                            };
+                            const message = JSON.stringify(command);
+                            
+                            iframe.contentWindow.postMessage(message, targetOrigin);
+                            console.log('✅ Vimeo: Volumen establecido en ' + volumeValue + ' después de ' + attempts + ' intentos.');
+                        } else if (attempts >= MAX_ATTEMPTS) {
+                            clearInterval(intervalId);
+                        }
+                    };
+                    const intervalId = setInterval(trySetVolume, INTERVAL_MS);
+                })();
+            """;
+
+            NotificationCenter.default.post(
+                name: .executeVimeoJS,
+                object: js
+            )
+
+            print("🎧 [RLiveShowFullScreenOverlay] Vimeo WebView - toggle via JS")
+        }
     }
     
     private func createUserLike() {
@@ -451,6 +529,9 @@ public struct RLiveShowOverlay: View {
     }
     
     private func cleanup() {
+        if let player = player {
+            AudioSessionManager.shared.unregisterPlayer(player)
+        }
         player?.pause()
         player = nil
     }

@@ -26,8 +26,10 @@ public struct RLiveShowFullScreenOverlay: View {
     @State private var controlsTimer: Timer?
     // showShopping removed - now handled by RLiveBottomTabs
     @State private var isLoading = true
+    @State private var hasError = false
+    @State private var errorMessage = ""
     @State private var isPlaying = false
-    @State private var isMuted = false // Start unmuted like Alan's approach
+    @State private var isMuted = true
     @State private var showPlayPauseIndicator = false
     @State private var selectedProductForDetail: Product?
     @State private var showProductsGrid = false
@@ -670,7 +672,6 @@ public struct RLiveShowFullScreenOverlay: View {
                 // Try fallback for non-HLS errors or if refresh fails
                 DispatchQueue.main.async {
                     print("🔄 [LiveShow] Trying fallback video...")
-                    self.setupPlayerWithFallback()
                 }
             }
         }
@@ -703,15 +704,12 @@ public struct RLiveShowFullScreenOverlay: View {
                 if let error = error {
                     print("❌ [LiveShow] Failed to refresh HLS: \(error.localizedDescription)")
                     self.isLoading = false
-                    // Try fallback after refresh failure
-                    self.setupPlayerWithFallback()
                     return
                 }
                 
                 guard let httpResponse = response as? HTTPURLResponse else {
                     print("❌ [LiveShow] Invalid response type")
                     self.isLoading = false
-                    self.setupPlayerWithFallback()
                     return
                 }
                 
@@ -720,14 +718,12 @@ public struct RLiveShowFullScreenOverlay: View {
                 guard httpResponse.statusCode == 200 else {
                     print("❌ [LiveShow] Refresh failed with status: \(httpResponse.statusCode)")
                     self.isLoading = false
-                    self.setupPlayerWithFallback()
                     return
                 }
                 
                 guard let data = data else {
                     print("❌ [LiveShow] No data from refresh HLS")
                     self.isLoading = false
-                    self.setupPlayerWithFallback()
                     return
                 }
                 
@@ -746,7 +742,6 @@ public struct RLiveShowFullScreenOverlay: View {
                 } catch {
                     print("❌ [LiveShow] Failed to decode refreshed stream: \(error.localizedDescription)")
                     self.isLoading = false
-                    self.setupPlayerWithFallback()
                 }
             }
         }.resume()
@@ -763,6 +758,13 @@ public struct RLiveShowFullScreenOverlay: View {
         
         guard let videoUrl = stream.videoUrl, !videoUrl.isEmpty else {
             print("❌ [LiveShow] Stream has no video URL")
+            isLoading = false
+            return
+        }
+
+        if videoUrl.contains("player.vimeo.com") {
+            print("🎥 [LiveShow] Vimeo player URL detected. Skipping AVPlayer creation.")
+            player = nil
             isLoading = false
             return
         }
@@ -787,6 +789,10 @@ public struct RLiveShowFullScreenOverlay: View {
         }
         
         print("📱 [LiveShow] Creating AVPlayer with URL...")
+        
+        // Configurar sesión de audio antes de crear el reproductor
+        AudioSessionManager.shared.configureForContent(isLive: stream.isLive)
+        
         player = AVPlayer(url: url)
         
         guard let player = player else {
@@ -794,6 +800,9 @@ public struct RLiveShowFullScreenOverlay: View {
             isLoading = false
             return
         }
+        
+        // Registrar este reproductor como activo
+        AudioSessionManager.shared.registerPlayer(player, isLive: stream.isLive)
         
         print("⚙️ [LiveShow] Configuring player settings...")
         
@@ -812,7 +821,7 @@ public struct RLiveShowFullScreenOverlay: View {
             player.automaticallyWaitsToMinimizeStalling = false // Better for direct videos
         }
         
-        player.isMuted = false // Start unmuted for HLS streams (Alan's approach)
+        player.isMuted = isMuted
         player.allowsExternalPlayback = false // Prevent fullscreen takeover
         
         // Configure audio session for live streaming
@@ -899,69 +908,9 @@ public struct RLiveShowFullScreenOverlay: View {
                 print("   - Is playing: \(self.player?.rate != 0)")
                 print("   - Error: \(item.error?.localizedDescription ?? "None")")
                 
-                if item.status == .failed {
-                    print("❌ [LiveShow] Player failed")
-                    
-                    // For live streams, don't use fallback - show error instead
-                    if stream.isLive {
-                        print("🔴 [LiveShow] Live stream failed - not using fallback")
-                        // You could show an error message here instead of fallback
-                        self.showStreamError()
-                    } else {
-                        print("🔄 [LiveShow] Non-live stream failed, trying fallback URL...")
-                        self.setupPlayerWithFallback()
-                    }
-                }
             }
         }
     }
-    
-    private func showStreamError() {
-        print("🔴 [LiveShow] Showing stream error - live stream unavailable")
-        // You could set a state variable here to show an error UI
-        // For now, just log the error
-        isLoading = false
-    }
-    
-    private func setupPlayerWithFallback() {
-        print("🔄 [LiveShow] Setting up player with fallback URL...")
-        
-        let fallbackUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-        
-        guard let url = URL(string: fallbackUrl) else {
-            print("❌ [LiveShow] Failed to create fallback URL")
-            return
-        }
-        
-        player = AVPlayer(url: url)
-        player?.automaticallyWaitsToMinimizeStalling = false
-        player?.isMuted = true
-        player?.allowsExternalPlayback = false
-        player?.play()
-        isPlaying = true
-        
-        print("✅ [LiveShow] Fallback player setup complete with: \(fallbackUrl)")
-    }
-    
-    // private func monitorPlayerStatus(_ item: AVPlayerItem) {
-    //     // Check status periodically instead of using KVO
-    //     Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
-    //         print("📊 [LiveShow] Player status: \(item.status.description)")
-            
-    //         if item.status == .readyToPlay {
-    //             print("✅ [LiveShow] Player is ready to play")
-    //             timer.invalidate()
-    //         } else if item.status == .failed {
-    //             print("❌ [LiveShow] Player failed: \(item.error?.localizedDescription ?? "Unknown error")")
-    //             timer.invalidate()
-                
-    //             // Try fallback
-    //             DispatchQueue.main.async {
-    //                 self.setupPlayerWithFallback()
-    //             }
-    //         }
-    //     }
-    // }
     
     private func configurePlayer(with stream: LiveStream) {
         // Configure player for live streaming
@@ -1000,40 +949,65 @@ public struct RLiveShowFullScreenOverlay: View {
             }
         }
     }
-    
+
     private func toggleMute() {
-        guard let player = player else { 
-            print("❌ [LiveShow] No player available for mute toggle")
-            return 
-        }
-        
         isMuted.toggle()
-        player.isMuted = isMuted
-        
-        print("🔊 [LiveShow] Mute toggled: \(isMuted ? "MUTED" : "UNMUTED")")
-        
-        // Configure audio session when unmuting
-        if !isMuted {
-            configureAudioSession()
-        }
-        
-        // Show temporary mute indicator
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-            showPlayPauseIndicator = true
-        }
-        
-        // Hide indicator after 1 second
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            withAnimation(.easeOut(duration: 0.3)) {
-                showPlayPauseIndicator = false
+        print("🔊 [RLiveShowFullScreenOverlay] Audio \(isMuted ? "silenciado" : "activado")")
+        if let player = player {
+            // ✅ Caso AVPlayer (HLS/MP4)
+            player.isMuted = isMuted
+            print("🎧 [RLiveShowFullScreenOverlay] AVPlayer isMuted: \(player.isMuted)")
+            if !isMuted {
+                // Activar sesión de audio para que se escuche realmente
+                do {
+                    try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
+                    try AVAudioSession.sharedInstance().setActive(true)
+                    print("✅ AVAudioSession activated for playback")
+                } catch {
+                    print("❌ AVAudioSession error: \(error.localizedDescription)")
+                }
             }
+        } else {
+            // ✅ Caso Vimeo WebView
+            let targetVolume = isMuted ? 0 : 1;
+            let js = """
+                (function() {
+                    const MAX_ATTEMPTS = 20;
+                    const INTERVAL_MS = 500;
+                    let attempts = 0;
+                    const targetOrigin = 'https://player.vimeo.com';
+                    const volumeValue = \(targetVolume); // Inyecta el volumen deseado
+
+                    const trySetVolume = () => {
+                        attempts++;
+                        const iframe = document.getElementById('vimeo-player');
+
+                        if (iframe && iframe.contentWindow) {
+                            clearInterval(intervalId);
+                            
+                            const command = {
+                                method: 'setVolume',
+                                value: volumeValue
+                            };
+                            const message = JSON.stringify(command);
+                            
+                            iframe.contentWindow.postMessage(message, targetOrigin);
+                            console.log('✅ Vimeo: Volumen establecido en ' + volumeValue + ' después de ' + attempts + ' intentos.');
+                        } else if (attempts >= MAX_ATTEMPTS) {
+                            clearInterval(intervalId);
+                        }
+                    };
+                    const intervalId = setInterval(trySetVolume, INTERVAL_MS);
+                })();
+            """;
+
+            NotificationCenter.default.post(
+                name: .executeVimeoJS,
+                object: js
+            )
+
+            print("🎧 [RLiveShowFullScreenOverlay] Vimeo WebView - toggle via JS")
         }
-        
-        // Haptic feedback
-        #if os(iOS)
-        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-        impactFeedback.impactOccurred()
-        #endif
     }
     
     private func toggleControls() {
@@ -1235,73 +1209,7 @@ public struct RLiveShowFullScreenOverlay: View {
         print("   - Audio session mode: \(audioSession.mode)")
         print("   - Audio session is active: \(audioSession.isOtherAudioPlaying)")
         #endif
-    }
-    
-    /// Force audio playback by toggling mute state
-    private func forceAudioPlayback() {
-        guard let player = player else { return }
-        
-        print("🔊 [LiveShow] Forcing audio playback...")
-        
-        // Force unmute and reconfigure audio
-        player.isMuted = false
-        isMuted = false
-        
-        // Set volume to maximum
-        player.volume = 1.0
-        
-        // Reconfigure audio session
-        configureAudioSession()
-        
-        // Try to pause and play to reset audio
-        player.pause()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            player.play()
-        }
-        
-        // Check status after forcing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            self.checkAudioStatus()
-        }
-        
-        print("🔊 [LiveShow] Audio forced - should be unmuted now")
-    }
-    
-    /// Try alternative audio approach for problematic streams
-    private func tryAlternativeAudioApproach() {
-        guard let player = player else { return }
-        
-        print("🔊 [LiveShow] Trying alternative audio approach...")
-        
-        #if os(iOS)
-        do {
-            let audioSession = AVAudioSession.sharedInstance()
-            
-            // Try different audio session configuration
-            try audioSession.setActive(false)
-            try audioSession.setCategory(.playback, mode: .default, options: [.allowBluetooth, .allowBluetoothA2DP])
-            try audioSession.setActive(true)
-            
-            // Force player settings
-            player.isMuted = false
-            player.volume = 1.0
-            
-            // Try to seek to current position to trigger audio
-            let currentTime = player.currentTime()
-            player.seek(to: currentTime) { completed in
-                if completed {
-                    print("✅ [LiveShow] Alternative audio approach completed")
-                } else {
-                    print("⚠️ [LiveShow] Alternative audio approach failed")
-                }
-            }
-            
-            print("🔊 [LiveShow] Alternative audio session configured")
-        } catch {
-            print("❌ [LiveShow] Alternative audio approach failed: \(error)")
-        }
-        #endif
-    }
+    } 
     
     /// Force audio without relying on audio session configuration
     private func forceAudioWithoutSession() {
@@ -1364,6 +1272,9 @@ public struct RLiveShowFullScreenOverlay: View {
     }
     
     private func cleanup() {
+        if let player = player {
+            AudioSessionManager.shared.unregisterPlayer(player)
+        }
         player?.pause()
         controlsTimer?.invalidate()
     }
@@ -1502,6 +1413,22 @@ struct VimeoWebPlayer: UIViewRepresentable {
         webView.allowsBackForwardNavigationGestures = false
         
         context.coordinator.webView = webView
+
+        NotificationCenter.default.addObserver(
+            forName: .executeVimeoJS,
+            object: nil,
+            queue: .main
+        ) { notification in
+            if let script = notification.object as? String {
+                context.coordinator.webView?.evaluateJavaScript(script) { _, error in
+                    if let error = error {
+                        print("❌ Vimeo JS failed: \(error.localizedDescription)")
+                    } else {
+                        print("🔊 Vimeo JS success: \(script)")
+                    }
+                }
+            }
+        }
         
         return webView
     }
@@ -1555,6 +1482,7 @@ struct VimeoWebPlayer: UIViewRepresentable {
         <body>
             <div class="video-container">
                 <iframe src="https://player.vimeo.com/video/\(videoId)?badge=0&autopause=0&autoplay=1&muted=1&controls=0&title=0&byline=0&portrait=0&background=1"
+                        id="vimeo-player"
                         frameborder="0"
                         allow="autoplay; fullscreen; picture-in-picture"
                         allowfullscreen>
@@ -1596,6 +1524,11 @@ struct VimeoWebPlayer: UIViewRepresentable {
         }
     }
 }
+
+extension Notification.Name {
+    static let executeVimeoJS = Notification.Name("executeVimeoJS")
+}
+
 
 /// Custom video player for direct video URLs (non-Vimeo)
 struct CustomVideoPlayer: UIViewRepresentable {

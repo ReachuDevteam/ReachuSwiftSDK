@@ -14,3 +14,6 @@ public typealias ReachuNetworkConfiguration = NetworkConfiguration
 public typealias ReachuUIConfiguration = UIConfiguration
 public typealias ReachuLiveShowConfiguration = LiveShowConfiguration
 public typealias ReachuConfigurationLoader = ConfigurationLoader
+
+// Export Audio Session Manager for easy access
+public typealias ReachuAudioSessionManager = AudioSessionManager
