@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		17B2324E2EAF952300EBA3F8 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = 17B2324D2EAF952300EBA3F8 /* ReachuComplete */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		17B22E962EAF801100EBA3F8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				17B2324E2EAF952300EBA3F8 /* ReachuComplete in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +117,7 @@
 			);
 			name = Viaplay;
 			packageProductDependencies = (
+				17B2324D2EAF952300EBA3F8 /* ReachuComplete */,
 			);
 			productName = Viaplay;
 			productReference = 17B22E832EAF800F00EBA3F8 /* Viaplay.app */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = 17B22E7A2EAF800F00EBA3F8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				17B2324C2EAF952300EBA3F8 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 17B22E842EAF800F00EBA3F8 /* Products */;
 			projectDirPath = "";
@@ -578,6 +587,20 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		17B2324C2EAF952300EBA3F8 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../ReachuSwiftSDK;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		17B2324D2EAF952300EBA3F8 /* ReachuComplete */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuComplete;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 17B22E7B2EAF800F00EBA3F8 /* Project object */;
 }

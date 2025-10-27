@@ -26,32 +26,26 @@ struct ContinueWatchingItem: Identifiable {
 // MARK: - Mock Data
 extension HeroContent {
     static let mock: HeroContent = HeroContent(
-        title: "You Can't Run Forever",
-        description: "Omfavn frykten, finn styrke og overlev jakten. Med Oscar-vinner J.K. Simmons.",
+        title: "un Forever",
+        description: "yrke og overlev jakten. Med Oscar-vinner J.K. Simmons.",
         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800",
-        hasCrown: true
+        hasCrown: false
     )
 }
 
 extension ContinueWatchingItem {
     static let mockItems: [ContinueWatchingItem] = [
         ContinueWatchingItem(
-            title: "E.T. the Extra-Terrestrial",
-            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-            rentLabel: "Rent",
-            progress: 0.45
-        ),
-        ContinueWatchingItem(
             title: "Hotell Transylvania: Monsterferie",
             imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-            rentLabel: "Rent",
-            progress: 0.25
+            rentLabel: nil,
+            progress: 0.0
         ),
         ContinueWatchingItem(
             title: "The Boss Baby",
             imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
             rentLabel: nil,
-            progress: 0.65
+            progress: 0.0
         )
     ]
 }
