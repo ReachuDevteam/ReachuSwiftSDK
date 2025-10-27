@@ -10,6 +10,7 @@ import SwiftUI
 struct ViaplayHomeView: View {
     @State private var selectedTab = 0
     @State private var scrollOffset: CGFloat = 0
+    @State private var showSportView = false
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
@@ -263,6 +264,18 @@ struct ViaplayHomeView: View {
                 }
             }
             .frame(width: geometry.size.width)
+            .fullScreenCover(isPresented: $showSportView) {
+                SportView()
+            }
+            .onChange(of: selectedTab) { newValue in
+                if newValue == 1 { // Sport tab
+                    showSportView = true
+                    // Reset tab to 0 after showing sport view
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        selectedTab = 0
+                    }
+                }
+            }
         }
     }
 }
