@@ -4,7 +4,7 @@ import ReachuCore
 
 /// Demo view showing how to use the dynamic Offer Banner
 struct OfferBannerDemo: View {
-    @StateObject private var componentManager = ComponentManager(campaignId: 10)
+    @StateObject private var componentManager = ComponentManager.shared
     @State private var showDemo = false
     
     var body: some View {
@@ -13,13 +13,17 @@ struct OfferBannerDemo: View {
                 .font(.title)
                 .fontWeight(.bold)
             
+            Text("Campaign ID: \(componentManager.campaignId)")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
             // Demo button
             Button("Show Demo Banner") {
                 showDemo.toggle()
             }
             .buttonStyle(.borderedProminent)
             
-            // Dynamic banner container
+            // Dynamic banner container (now uses config automatically)
             if let bannerConfig = componentManager.activeBanner {
                 ROfferBanner(config: bannerConfig)
                     .padding(.horizontal)
@@ -68,12 +72,66 @@ struct OfferBannerContainerDemo: View {
                 .font(.title)
                 .fontWeight(.bold)
             
+            Text("Now uses campaignId from configuration automatically!")
+                .font(.caption)
+                .foregroundColor(.green)
+                .padding(.bottom)
+            
             // This automatically handles connection and lifecycle
-            ROfferBannerContainer(campaignId: 10)
+            // No need to pass campaignId manually anymore
+            ROfferBannerContainer()
                 .padding(.horizontal)
             
             Spacer()
         }
+    }
+}
+
+/// Example showing the difference between manual and automatic configuration
+struct OfferBannerComparisonDemo: View {
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Offer Banner Configuration Comparison")
+                .font(.title)
+                .fontWeight(.bold)
+            
+            VStack(alignment: .leading, spacing: 16) {
+                Text("✅ NEW: Automatic Configuration")
+                    .font(.headline)
+                    .foregroundColor(.green)
+                
+                Text("ROfferBannerContainer()")
+                    .font(.system(.body, design: .monospaced))
+                    .padding()
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(8)
+                
+                Text("• Campaign ID read from reachu-config.json")
+                Text("• No manual parameters needed")
+                Text("• Automatic lifecycle management")
+            }
+            
+            Divider()
+            
+            VStack(alignment: .leading, spacing: 16) {
+                Text("🔧 Manual Configuration (still supported)")
+                    .font(.headline)
+                    .foregroundColor(.orange)
+                
+                Text("ROfferBannerContainer(campaignId: 3)")
+                    .font(.system(.body, design: .monospaced))
+                    .padding()
+                    .background(Color.orange.opacity(0.1))
+                    .cornerRadius(8)
+                
+                Text("• Manual campaign ID parameter")
+                Text("• Explicit configuration")
+                Text("• Useful for testing different campaigns")
+            }
+            
+            Spacer()
+        }
+        .padding()
     }
 }
 

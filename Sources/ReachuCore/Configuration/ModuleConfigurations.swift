@@ -441,6 +441,9 @@ public struct LiveShowConfiguration {
     public let tipioApiKey: String
     public let tipioBaseUrl: String
     
+    // Dynamic Components
+    public let campaignId: Int
+    
     public init(
         autoJoinChat: Bool = true,
         enableChatModeration: Bool = true,
@@ -456,7 +459,8 @@ public struct LiveShowConfiguration {
         enableAutoplay: Bool = false,
         enablePictureInPicture: Bool = true,
         tipioApiKey: String = "",
-        tipioBaseUrl: String = "https://stg-dev-microservices.tipioapp.com"
+        tipioBaseUrl: String = "https://stg-dev-microservices.tipioapp.com",
+        campaignId: Int = 3
     ) {
         self.autoJoinChat = autoJoinChat
         self.enableChatModeration = enableChatModeration
@@ -473,6 +477,7 @@ public struct LiveShowConfiguration {
         self.enablePictureInPicture = enablePictureInPicture
         self.tipioApiKey = tipioApiKey
         self.tipioBaseUrl = tipioBaseUrl
+        self.campaignId = campaignId
     }
     
     public static let `default` = LiveShowConfiguration()

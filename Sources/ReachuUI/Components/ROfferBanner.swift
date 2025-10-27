@@ -118,11 +118,7 @@ public struct ROfferBanner: View {
                     // Button
                     if isImageLoaded {
                         Button(action: {
-                            if let link = config.ctaLink, let url = URL(string: link) {
-                                #if os(iOS)
-                                UIApplication.shared.open(url)
-                                #endif
-                            }
+                            handleCTAAction()
                         }) {
                             HStack(spacing: 6) {
                                 Text(config.ctaText)
@@ -294,6 +290,61 @@ public struct ROfferBanner: View {
             }
         }
     }
+    
+    /// Handle CTA button action with deeplink support
+    private func handleCTAAction() {
+        // Priority: deeplink > ctaLink
+        if let deeplinkUrl = config.deeplinkUrl, !deeplinkUrl.isEmpty {
+            handleDeeplink(url: deeplinkUrl, action: config.deeplinkAction)
+        } else if let ctaLink = config.ctaLink, !ctaLink.isEmpty {
+            handleExternalLink(url: ctaLink)
+        } else {
+            print("⚠️ [ROfferBanner] No CTA link or deeplink configured")
+        }
+    }
+    
+    /// Handle deeplink navigation
+    private func handleDeeplink(url: String, action: String?) {
+        print("🔗 [ROfferBanner] Handling deeplink: \(url)")
+        
+        #if os(iOS)
+        if let deeplinkURL = URL(string: url) {
+            // Check if it's a custom scheme (deeplink)
+            if deeplinkURL.scheme != "http" && deeplinkURL.scheme != "https" {
+                // Custom deeplink - open with app
+                if UIApplication.shared.canOpenURL(deeplinkURL) {
+                    UIApplication.shared.open(deeplinkURL) { success in
+                        if success {
+                            print("✅ [ROfferBanner] Deeplink opened successfully")
+                        } else {
+                            print("❌ [ROfferBanner] Failed to open deeplink")
+                        }
+                    }
+                } else {
+                    print("❌ [ROfferBanner] Cannot handle deeplink: \(url)")
+                    // Fallback to external link if available
+                    if let fallbackLink = config.ctaLink {
+                        handleExternalLink(url: fallbackLink)
+                    }
+                }
+            } else {
+                // HTTP/HTTPS link - open in browser
+                handleExternalLink(url: url)
+            }
+        }
+        #endif
+    }
+    
+    /// Handle external link (HTTP/HTTPS)
+    private func handleExternalLink(url: String) {
+        print("🌐 [ROfferBanner] Opening external link: \(url)")
+        
+        #if os(iOS)
+        if let externalURL = URL(string: url) {
+            UIApplication.shared.open(externalURL)
+        }
+        #endif
+    }
 }
 
 /// Countdown display component
@@ -334,10 +385,10 @@ struct TimeUnit: View {
 
 /// Container view that manages the offer banner lifecycle
 public struct ROfferBannerContainer: View {
-    @StateObject private var componentManager: ComponentManager
+    @StateObject private var componentManager = ComponentManager.shared
     
-    public init(campaignId: Int) {
-        self._componentManager = StateObject(wrappedValue: ComponentManager(campaignId: campaignId))
+    public init() {
+        // Use the global singleton - no need to pass campaignId
     }
     
     public var body: some View {

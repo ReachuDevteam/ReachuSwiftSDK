@@ -135,6 +135,7 @@
     "flag": "https://flagcdn.com/w320/us.png"
   },
   "liveShow": {
+    "campaignId": 3,
     "autoJoinChat": true,
     "enableChatModeration": true,
     "maxChatMessageLength": 200,

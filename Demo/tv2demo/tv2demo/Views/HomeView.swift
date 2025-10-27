@@ -8,7 +8,7 @@ struct HomeView: View {
     @State private var filteredContent: [ContentItem] = ContentItem.mockItems
     @State private var selectedTab: TabItem = .home
     @State private var showMatchDetail = false
-    @StateObject private var componentManager = ComponentManager(campaignId: 3)
+    @StateObject private var componentManager = ComponentManager.shared
     
     // MARK: - Environment Objects
     // These come from the app-level injection in tv2demoApp

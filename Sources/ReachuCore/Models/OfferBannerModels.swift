@@ -12,6 +12,8 @@ public struct OfferBannerConfig: Codable, Equatable {
     public let ctaLink: String?
     public let overlayOpacity: Double?
     public let buttonColor: String?
+    public let deeplinkUrl: String?
+    public let deeplinkAction: String?
     
     public init(
         logoUrl: String,
@@ -23,7 +25,9 @@ public struct OfferBannerConfig: Codable, Equatable {
         ctaText: String,
         ctaLink: String? = nil,
         overlayOpacity: Double? = nil,
-        buttonColor: String? = nil
+        buttonColor: String? = nil,
+        deeplinkUrl: String? = nil,
+        deeplinkAction: String? = nil
     ) {
         self.logoUrl = logoUrl
         self.title = title
@@ -35,6 +39,8 @@ public struct OfferBannerConfig: Codable, Equatable {
         self.ctaLink = ctaLink
         self.overlayOpacity = overlayOpacity
         self.buttonColor = buttonColor
+        self.deeplinkUrl = deeplinkUrl
+        self.deeplinkAction = deeplinkAction
     }
 }
 
@@ -60,7 +66,7 @@ public enum ComponentConfig: Codable {
     
     enum CodingKeys: String, CodingKey {
         case imageUrl, title, subtitle, ctaText, ctaLink // banner
-        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor // offer_banner
+        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor, deeplinkUrl, deeplinkAction // offer_banner
         case productId, highlightText // product_spotlight
         case endDate, style // countdown
         case channelId, displayCount // carousel_auto
@@ -199,21 +205,30 @@ public struct ActiveComponent: Codable, Identifiable {
     }
 }
 
-/// Component manager for handling offer banners
+/// Global component manager for handling dynamic components (singleton)
 @MainActor
 public class ComponentManager: ObservableObject {
     @Published public private(set) var activeComponents: [ActiveComponentResponse] = []
     @Published public private(set) var activeBanner: OfferBannerConfig?
     @Published public private(set) var isConnected = false
     
-    private let campaignId: Int
+    public let campaignId: Int
     private let baseURL = "https://event-streamer-angelo100.replit.app"
     private var webSocketManager: WebSocketManager?
     
-    public init(campaignId: Int) {
-        self.campaignId = campaignId
-        self.webSocketManager = WebSocketManager(campaignId: campaignId)
+    // MARK: - Singleton
+    public static let shared = ComponentManager()
+    
+    private init() {
+        self.campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
+        self.webSocketManager = WebSocketManager(campaignId: self.campaignId)
+        
+        // Auto-connect on initialization
+        Task {
+            await connect()
+        }
     }
+    
     
     /// Connect to backend and fetch active components
     public func connect() async {

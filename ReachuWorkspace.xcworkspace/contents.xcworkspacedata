@@ -11,14 +11,17 @@
          location = "group:README.md">
       </FileRef>
    </Group>
-   <Group
-      location = "container:"
-      name = "Demo Apps">
-      <FileRef
-         location = "group:Demo/tv2demo/tv2demo.xcodeproj">
-      </FileRef>
-      <FileRef
-         location = "group:Demo/ReachuDemoApp/ReachuDemoApp.xcodeproj">
-      </FileRef>
+     <Group
+     location = "container:"
+     name = "Demo Apps">
+     <FileRef
+        location = "container:Demo/tv2demo/tv2demo.xcodeproj">
+     </FileRef>
+     <FileRef
+        location = "container:Demo/ReachuDemoApp/ReachuDemoApp.xcodeproj">
+     </FileRef>
+     <FileRef
+        location = "container:Demo/Viaplay/Viaplay.xcodeproj">
+     </FileRef>
    </Group>
 </Workspace>

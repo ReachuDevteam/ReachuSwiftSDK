@@ -339,12 +339,16 @@ public class ConfigurationLoader {
         let tipioApiKey = config.tipio?.apiKey ?? ""
         let tipioBaseUrl = config.tipio?.baseUrl ?? "https://stg-dev-microservices.tipioapp.com"
         
+        // Dynamic components configuration
+        let campaignId = config.campaignId ?? 3
+        
         return LiveShowConfiguration(
             autoJoinChat: autoJoinChat,
             enableShoppingDuringStream: enableShopping,
             enableAutoplay: enableAutoplay,
             tipioApiKey: tipioApiKey,
-            tipioBaseUrl: tipioBaseUrl
+            tipioBaseUrl: tipioBaseUrl,
+            campaignId: campaignId
         )
     }
 
@@ -516,6 +520,9 @@ private struct JSONLiveShowConfiguration: Codable {
     let shopping: JSONShoppingConfiguration?
     let ui: JSONLiveShowUIConfiguration?
     let notifications: JSONNotificationsConfiguration?
+    
+    // Dynamic components configuration
+    let campaignId: Int?
     
     // Legacy properties for backward compatibility
     let autoJoinChat: Bool?
