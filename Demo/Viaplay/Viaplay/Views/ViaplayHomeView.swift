@@ -27,24 +27,20 @@ struct ViaplayHomeView: View {
                         HeroSection(content: heroContent)
                             .frame(width: geometry.size.width)
                         
-                        // Fortsett å se Section
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Fortsett å se")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.top, 20)
+                        // Pagination dots after hero
+                        HStack(spacing: 7) {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 8, height: 8)
                             
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(continueWatchingItems) { item in
-                                        ContinueWatchingCard(item: item)
-                                    }
-                                }
-                                .padding(.horizontal, 16)
+                            ForEach(0..<5) { _ in
+                                Circle()
+                                    .fill(.white.opacity(0.4))
+                                    .frame(width: 7, height: 7)
                             }
                         }
-                        .frame(width: geometry.size.width)
+                        .padding(.top, 20)
+                        .padding(.bottom, 24)
                         
                         // Category Buttons Grid
                         VStack(spacing: 16) {
@@ -62,11 +58,10 @@ struct ViaplayHomeView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, 32)
                         .frame(width: geometry.size.width)
                         
                         // Akkurat nå ser andre på Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 16) {
                             Text("Akkurat nå ser andre på")
                                 .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
@@ -82,13 +77,46 @@ struct ViaplayHomeView: View {
                                     )
                                     
                                     CategoryCard(
+                                        title: "Kraven The Hunter",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: nil
+                                    )
+                                    
+                                    CategoryCard(
                                         title: "Paradise Hotel",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         seasonEpisode: "S17 | E28"
                                     )
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                        .frame(width: geometry.size.width)
+                        
+                        // Nytt hos oss Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Nytt hos oss")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 32)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    CategoryCard(
+                                        title: "American Gangster",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: nil
+                                    )
                                     
                                     CategoryCard(
-                                        title: "Kraven The Hunter",
+                                        title: "The Equalizer",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: nil
+                                    )
+                                    
+                                    CategoryCard(
+                                        title: "The 924th",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         seasonEpisode: nil
                                     )
@@ -97,7 +125,7 @@ struct ViaplayHomeView: View {
                             }
                         }
                         .frame(width: geometry.size.width)
-                        .padding(.bottom, 100) // Space for bottom nav and crown
+                        .padding(.bottom, 100) // Space for bottom nav
                     }
                 }
                 .ignoresSafeArea(edges: .top) // Allow scroll content to go under status bar
