@@ -42,12 +42,12 @@ struct CategoryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 58)
+                .frame(height: 50)
                 .background(Color(hex: "302F3F"))
-                .cornerRadius(14)
+                .cornerRadius(12)
         }
     }
 }

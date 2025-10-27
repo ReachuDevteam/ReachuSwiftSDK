@@ -43,18 +43,18 @@ struct ViaplayHomeView: View {
                         .padding(.bottom, 24)
                         
                         // Category Buttons Grid (2x2 + Channels on left)
-                        VStack(spacing: 14) {
-                            HStack(spacing: 14) {
+                        VStack(spacing: 12) {
+                            HStack(spacing: 12) {
                                 CategoryButton(title: "Series") {}
                                 CategoryButton(title: "Films") {}
                             }
                             
-                            HStack(spacing: 14) {
+                            HStack(spacing: 12) {
                                 CategoryButton(title: "Sport") {}
                                 CategoryButton(title: "Kids") {}
                             }
                             
-                            HStack(spacing: 14) {
+                            HStack(spacing: 12) {
                                 CategoryButton(title: "Channels") {}
                                     .frame(maxWidth: .infinity)
                                 
