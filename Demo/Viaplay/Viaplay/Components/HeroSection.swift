@@ -16,19 +16,19 @@ struct HeroSection: View {
             Image("bg-main")
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(height: 620)
+                .frame(height: 700)
                 .clipped()
             
             // Dark gradient overlay
             LinearGradient(
-                colors: [Color.black.opacity(0.3), Color.clear, Color.clear, Color.black.opacity(0.85)],
+                colors: [Color.black.opacity(0.4), Color.clear, Color.clear, Color.black.opacity(0.85)],
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .frame(height: 620)
+            .frame(height: 700)
             
             VStack(spacing: 0) {
-                // Header with Logo and Boombox
+                // Header with Logo and Avatar
                 HStack {
                     Spacer()
                     
@@ -40,16 +40,18 @@ struct HeroSection: View {
                     
                     Spacer()
                     
-                    // Boombox icon
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 17))
-                        .foregroundColor(.cyan)
-                        .padding(7)
-                        .background(Color.cyan.opacity(0.2))
-                        .cornerRadius(7)
+                    // Avatar/Profile circle (instead of boombox icon)
+                    Circle()
+                        .fill(Color.cyan.opacity(0.3))
+                        .frame(width: 36, height: 36)
+                        .overlay(
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 16))
+                                .foregroundColor(.cyan)
+                        )
                 }
                 .padding(.horizontal, 16)
-                .padding(.top, 50)
+                .padding(.top, 60)
                 
                 Spacer()
                 
@@ -116,7 +118,7 @@ struct HeroSection: View {
                 .padding(.bottom, 32)
             }
         }
-        .frame(height: 620)
+        .frame(height: 700)
     }
 }
 
