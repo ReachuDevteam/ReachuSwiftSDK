@@ -80,7 +80,7 @@ struct SportView: View {
                         // Vår beste sport Section with Carousel
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Vår beste sport")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 20, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
@@ -92,7 +92,7 @@ struct SportView: View {
                                 }
                             }
                             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                            .frame(height: 280)
+                            .frame(height: 340)
                             
                             // Custom pagination dots
                             HStack(spacing: 6) {
@@ -109,7 +109,7 @@ struct SportView: View {
                         // Live akkurat nå Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Live akkurat nå")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 20, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
@@ -168,7 +168,7 @@ struct SportView: View {
                         // Populær sport Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Populær sport")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 20, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
@@ -228,22 +228,22 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(height: 200)
+                .frame(height: 260)
                 .clipped()
-                .cornerRadius(12)
+                .cornerRadius(16, corners: [.topLeft, .topRight])
                 
                 // Time badge
                 Text(data.time)
                     .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(Color.white)
                     .cornerRadius(6)
                     .padding(12)
             }
             
-            // Bottom info section
+            // Bottom info section with dark background
             HStack(spacing: 12) {
                 // Logo
                 AsyncImage(url: URL(string: data.logo)) { image in
@@ -254,37 +254,64 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                 }
-                .frame(width: 50, height: 50)
+                .frame(width: 56, height: 56)
                 .background(Color.white)
                 .cornerRadius(8)
                 
                 // Text info
                 VStack(alignment: .leading, spacing: 4) {
                     Text(data.title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
+                        .lineLimit(1)
                     
                     Text(data.subtitle)
-                        .font(.system(size: 13, weight: .regular))
+                        .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.white.opacity(0.7))
+                        .lineLimit(1)
                 }
                 
                 Spacer()
                 
-                // Three dots menu
+                // Three dots menu (integrated in card)
                 Button(action: {}) {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                         .rotationEffect(.degrees(90))
+                        .padding(.trailing, 8)
                 }
             }
-            .padding(12)
-            .background(Color(hex: "1F1E26"))
-            .cornerRadius(12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .background(Color(hex: "2C2D36"))
+            .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
         }
-        .padding(.horizontal, 16)
-        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 4)
+        .background(Color(hex: "2C2D36"))
+        .cornerRadius(16)
+        .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
+        .padding(.horizontal, 8)
+    }
+}
+
+// Extension for corner radius on specific corners
+extension View {
+    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
+        clipShape(RoundedCorner(radius: radius, corners: corners))
+    }
+}
+
+struct RoundedCorner: Shape {
+    var radius: CGFloat = .infinity
+    var corners: UIRectCorner = .allCorners
+    
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
     }
 }
 
@@ -295,7 +322,7 @@ struct SportSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(title)
-                .font(.system(size: 17, weight: .semibold))
+                .font(.system(size: 20, weight: .regular))
                 .foregroundColor(.white)
                 .padding(.horizontal, 16)
                 .padding(.top, 32)
