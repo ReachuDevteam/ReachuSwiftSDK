@@ -82,17 +82,18 @@ struct SportView: View {
                             Text("Vår beste sport")
                                 .font(.system(size: 22, weight: .regular))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 24)
                                 .padding(.top, 24)
                             
                             TabView(selection: $currentCarouselIndex) {
                                 ForEach(carouselCards.indices, id: \.self) { index in
                                     CarouselCard(data: carouselCards[index])
+                                        .padding(.horizontal, 24)
                                         .tag(index)
                                 }
                             }
                             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                            .frame(height: 460)
+                            .frame(height: 440)
                         }
                         
                         // Live akkurat nå Section
@@ -100,7 +101,7 @@ struct SportView: View {
                             Text("Live akkurat nå")
                                 .font(.system(size: 22, weight: .regular))
                                 .foregroundColor(.white)
-                                .padding(.horizontal, 20)
+                                .padding(.horizontal, 24)
                                 .padding(.top, 24)
                             
                             LiveSportCard(
@@ -109,7 +110,7 @@ struct SportView: View {
                                 subtitle: "Premier Padel",
                                 time: "12:00"
                             )
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, 24)
                         }
                         
                         // Det beste fra Premier League Section
@@ -217,23 +218,23 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(height: 340)
+                .frame(height: 320)
                 .clipped()
                 .cornerRadius(16, corners: [.topLeft, .topRight])
                 
                 // Time badge
                 Text(data.time)
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 7)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
                     .background(Color.white)
-                    .cornerRadius(8)
-                    .padding(16)
+                    .cornerRadius(6)
+                    .padding(14)
             }
             
             // Bottom info section with dark background
-            HStack(spacing: 14) {
+            HStack(spacing: 12) {
                 // Logo
                 AsyncImage(url: URL(string: data.logo)) { image in
                     image
@@ -243,19 +244,19 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                 }
-                .frame(width: 64, height: 64)
+                .frame(width: 54, height: 54)
                 .background(Color.white)
-                .cornerRadius(10)
+                .cornerRadius(8)
                 
                 // Text info
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(data.title)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(1)
                     
                     Text(data.subtitle)
-                        .font(.system(size: 15, weight: .regular))
+                        .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.white.opacity(0.7))
                         .lineLimit(1)
                 }
@@ -265,21 +266,20 @@ struct CarouselCard: View {
                 // Three dots menu
                 Button(action: {}) {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                         .rotationEffect(.degrees(90))
-                        .padding(.trailing, 4)
+                        .padding(.trailing, 2)
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
             .background(Color(hex: "2C2D36"))
             .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
         }
         .background(Color(hex: "2C2D36"))
         .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.5), radius: 16, x: 0, y: 8)
-        .padding(.horizontal, 20)
+        .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
     }
 }
 
@@ -419,75 +419,75 @@ struct LiveSportCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(height: 240)
+                .frame(height: 220)
                 .clipped()
                 .cornerRadius(16, corners: [.topLeft, .topRight])
                 
                 // LIVE badge
                 Text("LIVE")
-                    .font(.system(size: 12, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.red)
-                    .cornerRadius(6)
-                    .padding(16)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                    .cornerRadius(5)
+                    .padding(14)
                 
                 // Crown icon centered
                 ZStack {
                     Circle()
                         .fill(Color.black.opacity(0.5))
-                        .frame(width: 60, height: 60)
+                        .frame(width: 54, height: 54)
                     
                     Image(systemName: "crown.fill")
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 22, weight: .bold))
                         .foregroundColor(.white)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(height: 240)
+            .frame(height: 220)
             
             // Info section
-            HStack(spacing: 14) {
-                VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 5) {
                     Text(title)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                     
                     Text(subtitle)
-                        .font(.system(size: 15, weight: .regular))
+                        .font(.system(size: 14, weight: .regular))
                         .foregroundColor(.white.opacity(0.7))
                     
                     // Progress bar
                     HStack(spacing: 0) {
                         Rectangle()
                             .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                            .frame(width: 80, height: 3)
+                            .frame(width: 70, height: 3)
                         
                         Rectangle()
                             .fill(Color.white.opacity(0.3))
                             .frame(height: 3)
                     }
                     .frame(height: 3)
-                    .padding(.top, 4)
+                    .padding(.top, 6)
                     
                     Text(time)
                         .font(.system(size: 13, weight: .regular))
                         .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
-                        .padding(.top, 2)
+                        .padding(.top, 4)
                 }
                 
                 Spacer()
                 
                 Button(action: {}) {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 22, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundColor(.white)
                         .rotationEffect(.degrees(90))
                 }
             }
-            .padding(.horizontal, 18)
-            .padding(.vertical, 18)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
             .background(Color(hex: "2C2D36"))
             .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
         }
