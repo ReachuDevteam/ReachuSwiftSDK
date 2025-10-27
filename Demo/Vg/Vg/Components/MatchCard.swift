@@ -23,6 +23,7 @@ struct MatchCard: View {
                         .fill(VGTheme.Colors.mediumGray)
                 }
                 .frame(height: 140)
+                .frame(maxWidth: .infinity)
                 .clipped()
                 
                 // VG+ Sport Badge
@@ -57,6 +58,7 @@ struct MatchCard: View {
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .frame(maxWidth: .infinity)
         .background(VGTheme.Colors.black)
         .cornerRadius(VGTheme.CornerRadius.medium)
     }
