@@ -281,8 +281,9 @@ struct ViaplayHomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            }
+            .navigationViewStyle(StackNavigationViewStyle())
         }
-        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 
