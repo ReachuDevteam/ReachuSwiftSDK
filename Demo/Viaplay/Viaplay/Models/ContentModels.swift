@@ -39,19 +39,19 @@ extension ContinueWatchingItem {
             title: "E.T. the Extra-Terrestrial",
             imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
             rentLabel: "Rent",
-            progress: 0.0
+            progress: 0.25 // 25 min left
         ),
         ContinueWatchingItem(
             title: "Hotell Transylvania: Monsterferie",
             imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
             rentLabel: "Rent",
-            progress: 0.0
+            progress: 0.10 // 10 min left
         ),
         ContinueWatchingItem(
             title: "The Boss Baby",
             imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
             rentLabel: nil,
-            progress: 0.0
+            progress: 0.07 // 7 min left
         )
     ]
 }
