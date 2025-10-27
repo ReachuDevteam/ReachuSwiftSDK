@@ -93,7 +93,7 @@ struct SportView: View {
                                 }
                             }
                             .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-                            .frame(height: 440)
+                            .frame(height: 370)
                         }
                         
                         // Live akkurat nå Section
@@ -218,23 +218,23 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(height: 320)
+                .frame(height: 280)
+                .cornerRadius(12, corners: [.topLeft, .topRight])
                 .clipped()
-                .cornerRadius(16, corners: [.topLeft, .topRight])
                 
                 // Time badge
                 Text(data.time)
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.black)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
                     .background(Color.white)
-                    .cornerRadius(6)
-                    .padding(14)
+                    .cornerRadius(4)
+                    .padding(12)
             }
             
-            // Bottom info section with dark background
-            HStack(spacing: 12) {
+            // Bottom info section
+            HStack(spacing: 10) {
                 // Logo
                 AsyncImage(url: URL(string: data.logo)) { image in
                     image
@@ -244,20 +244,20 @@ struct CarouselCard: View {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                 }
-                .frame(width: 54, height: 54)
+                .frame(width: 48, height: 48)
                 .background(Color.white)
-                .cornerRadius(8)
+                .cornerRadius(6)
                 
                 // Text info
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(data.title)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .lineLimit(1)
                     
                     Text(data.subtitle)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.white.opacity(0.6))
                         .lineLimit(1)
                 }
                 
@@ -266,20 +266,18 @@ struct CarouselCard: View {
                 // Three dots menu
                 Button(action: {}) {
                     Image(systemName: "ellipsis")
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .rotationEffect(.degrees(90))
-                        .padding(.trailing, 2)
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(14)
             .background(Color(hex: "2C2D36"))
-            .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
+            .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
         }
         .background(Color(hex: "2C2D36"))
-        .cornerRadius(16)
-        .shadow(color: Color.black.opacity(0.4), radius: 12, x: 0, y: 6)
+        .cornerRadius(12)
+        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
     }
 }
 
