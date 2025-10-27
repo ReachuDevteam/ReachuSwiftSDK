@@ -15,11 +15,12 @@ struct ViaplayHomeView: View {
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .top) {
-                // Background
-                Color(hex: "1B1B25")
-                    .ignoresSafeArea()
+        NavigationView {
+            GeometryReader { geometry in
+                ZStack(alignment: .top) {
+                    // Background
+                    Color(hex: "1B1B25")
+                        .ignoresSafeArea()
                 
                 // Main Content
                 ScrollView {
@@ -262,21 +263,26 @@ struct ViaplayHomeView: View {
                     ViaplayBottomNav(selectedTab: $selectedTab)
                         .frame(width: geometry.size.width)
                 }
+                
+                // Hidden NavigationLink for Sport
+                NavigationLink(destination: SportView(), isActive: $showSportView) {
+                    EmptyView()
+                }
+                .hidden()
             }
             .frame(width: geometry.size.width)
-            .fullScreenCover(isPresented: $showSportView) {
-                SportView()
-            }
             .onChange(of: selectedTab) { newValue in
                 if newValue == 1 { // Sport tab
                     showSportView = true
-                    // Reset tab to 0 after showing sport view
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    // Reset tab to 0 after navigation
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                         selectedTab = 0
                     }
                 }
             }
+            .navigationBarHidden(true)
         }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 

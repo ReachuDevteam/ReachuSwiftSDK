@@ -9,6 +9,31 @@ import SwiftUI
 
 struct SportView: View {
     @Environment(\.presentationMode) var presentationMode
+    @State private var currentCarouselIndex = 0
+    
+    let carouselCards = [
+        CarouselCardData(
+            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600",
+            time: "THIS EVENING 20:55",
+            logo: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=100",
+            title: "Port Vale - Stockport",
+            subtitle: "League One | 14. runde"
+        ),
+        CarouselCardData(
+            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600",
+            time: "TONIGHT 21:30",
+            logo: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=100",
+            title: "Manchester United - Chelsea",
+            subtitle: "Premier League | 12. runde"
+        ),
+        CarouselCardData(
+            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=600",
+            time: "TOMORROW 19:00",
+            logo: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=100",
+            title: "Liverpool - Arsenal",
+            subtitle: "Premier League | 12. runde"
+        )
+    ]
     
     var body: some View {
         GeometryReader { geometry in
@@ -52,19 +77,34 @@ struct SportView: View {
                         .padding(.horizontal, 16)
                         .padding(.bottom, 24)
                         
-                        // Vår beste sport Section
-                        SportSection(
-                            title: "Vår beste sport",
-                            cards: [
-                                SportCard(
-                                    imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                    time: "THIS EVENING 20:55",
-                                    title: "Port Vale - Stockport",
-                                    subtitle: "League One | 14. runde",
-                                    isLarge: true
-                                )
-                            ]
-                        )
+                        // Vår beste sport Section with Carousel
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Vår beste sport")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 32)
+                            
+                            TabView(selection: $currentCarouselIndex) {
+                                ForEach(carouselCards.indices, id: \.self) { index in
+                                    CarouselCard(data: carouselCards[index])
+                                        .tag(index)
+                                }
+                            }
+                            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
+                            .frame(height: 280)
+                            
+                            // Custom pagination dots
+                            HStack(spacing: 6) {
+                                ForEach(carouselCards.indices, id: \.self) { index in
+                                    Circle()
+                                        .fill(index == currentCarouselIndex ? .white : .white.opacity(0.4))
+                                        .frame(width: index == currentCarouselIndex ? 8 : 6, height: index == currentCarouselIndex ? 8 : 6)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, -20)
+                        }
                         
                         // Live akkurat nå Section
                         VStack(alignment: .leading, spacing: 12) {
@@ -162,6 +202,89 @@ struct SportView: View {
             }
         }
         .navigationBarHidden(true)
+    }
+}
+
+struct CarouselCardData {
+    let imageUrl: String
+    let time: String
+    let logo: String
+    let title: String
+    let subtitle: String
+}
+
+struct CarouselCard: View {
+    let data: CarouselCardData
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ZStack(alignment: .topLeading) {
+                // Background image
+                AsyncImage(url: URL(string: data.imageUrl)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
+                }
+                .frame(height: 200)
+                .clipped()
+                .cornerRadius(12)
+                
+                // Time badge
+                Text(data.time)
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.black)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.white)
+                    .cornerRadius(6)
+                    .padding(12)
+            }
+            
+            // Bottom info section
+            HStack(spacing: 12) {
+                // Logo
+                AsyncImage(url: URL(string: data.logo)) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+                .frame(width: 50, height: 50)
+                .background(Color.white)
+                .cornerRadius(8)
+                
+                // Text info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(data.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    Text(data.subtitle)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                
+                Spacer()
+                
+                // Three dots menu
+                Button(action: {}) {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .rotationEffect(.degrees(90))
+                }
+            }
+            .padding(12)
+            .background(Color(hex: "1F1E26"))
+            .cornerRadius(12)
+        }
+        .padding(.horizontal, 16)
+        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 4)
     }
 }
 
