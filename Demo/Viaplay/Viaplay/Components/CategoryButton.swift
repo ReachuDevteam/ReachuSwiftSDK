@@ -7,6 +7,34 @@
 
 import SwiftUI
 
+// MARK: - Color Extension for Hex Support
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (255, 0, 0, 0)
+        }
+        
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
+}
+
 struct CategoryButton: View {
     let title: String
     let action: () -> Void
@@ -14,12 +42,12 @@ struct CategoryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 18, weight: .semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 56)
-                .background(Color(red: 0.18, green: 0.19, blue: 0.22))
-                .cornerRadius(12)
+                .frame(height: 64)
+                .background(Color(hex: "302F3F"))
+                .cornerRadius(16)
         }
     }
 }
@@ -30,7 +58,7 @@ struct CategoryCard: View {
     let seasonEpisode: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 10) {
             ZStack {
                 // Thumbnail
                 AsyncImage(url: URL(string: imageUrl)) { image in
@@ -41,9 +69,9 @@ struct CategoryCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(width: 150, height: 210)
+                .frame(width: 170, height: 240)
                 .clipped()
-                .cornerRadius(10)
+                .cornerRadius(14)
                 
                 // Crown icon at bottom center
                 VStack {
@@ -55,25 +83,25 @@ struct CategoryCard: View {
                         ZStack {
                             Circle()
                                 .fill(Color(red: 0.35, green: 0.35, blue: 0.38))
-                                .frame(width: 48, height: 48)
+                                .frame(width: 54, height: 54)
                             
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         Spacer()
                     }
-                    .offset(y: 24)
+                    .offset(y: 27)
                 }
             }
-            .frame(width: 150, height: 210)
+            .frame(width: 170, height: 240)
             
             // Season/Episode info
             if let seasonEpisode = seasonEpisode {
                 Text(seasonEpisode)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(.white.opacity(0.8))
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
             }
         }
     }

@@ -53,7 +53,7 @@ struct ViaplayBottomNav: View {
             }
         }
         .padding(.vertical, 8)
-        .background(Color(red: 0.08, green: 0.08, blue: 0.1))
+        .background(Color(hex: "1F1E26"))
     }
 }
 

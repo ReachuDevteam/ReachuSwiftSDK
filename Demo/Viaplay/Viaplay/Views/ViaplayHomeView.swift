@@ -17,7 +17,7 @@ struct ViaplayHomeView: View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 // Background
-                Color.black
+                Color(hex: "1B1B25")
                     .ignoresSafeArea()
                 
                 // Main Content
@@ -69,7 +69,7 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 32)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 16) {
                                     CategoryCard(
                                         title: "Norske Truckers",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -102,7 +102,7 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 32)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 16) {
                                     CategoryCard(
                                         title: "American Gangster",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
