@@ -7,7 +7,8 @@
 
 import SwiftUI
 import CoreData
-import ReachuCore
+// TODO: Add ReachuCore package dependency in Xcode
+// import ReachuCore
 
 @main
 struct VgApp: App {
@@ -15,7 +16,8 @@ struct VgApp: App {
     
     init() {
         // Initialize Reachu SDK
-        ConfigurationLoader.loadConfiguration()
+        // TODO: Uncomment after adding ReachuCore dependency
+        // ConfigurationLoader.loadConfiguration()
     }
 
     var body: some Scene {
