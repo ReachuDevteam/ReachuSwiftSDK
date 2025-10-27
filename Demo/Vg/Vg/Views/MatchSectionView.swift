@@ -40,7 +40,7 @@ struct MatchSectionView: View {
                 HStack(spacing: VGTheme.Spacing.md) {
                     ForEach(section.matches) { match in
                         MatchCard(match: match)
-                            .frame(width: 180)
+                            .frame(width: 160)
                     }
                 }
                 .padding(.horizontal, VGTheme.Spacing.md)

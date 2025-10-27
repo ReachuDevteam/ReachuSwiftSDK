@@ -22,48 +22,43 @@ struct MatchCard: View {
                     Rectangle()
                         .fill(VGTheme.Colors.mediumGray)
                 }
-                .frame(height: 180)
+                .frame(height: 140)
                 .clipped()
                 
                 // VG+ Sport Badge
                 if match.isVGPlus {
                     Text("VG+ Sport")
-                        .font(VGTheme.Typography.caption())
-                        .fontWeight(.medium)
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 3)
                         .background(
                             Capsule()
-                                .fill(Color.black.opacity(0.7))
+                                .fill(Color.black.opacity(0.8))
                         )
-                        .padding(.leading, 8)
-                        .padding(.bottom, 8)
+                        .padding(.leading, 6)
+                        .padding(.bottom, 6)
                 }
             }
             
             // Match Info
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(match.displayDate)
-                    .font(VGTheme.Typography.caption())
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundColor(VGTheme.Colors.textSecondary)
                 
                 Text("\(match.homeTeam) - \(match.awayTeam)")
-                    .font(VGTheme.Typography.body())
-                    .fontWeight(.semibold)
-                    .foregroundColor(VGTheme.Colors.textPrimary)
-                    .lineLimit(1)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(VGTheme.Colors.darkGray)
         }
+        .background(VGTheme.Colors.black)
         .cornerRadius(VGTheme.CornerRadius.medium)
-        .overlay(
-            RoundedRectangle(cornerRadius: VGTheme.CornerRadius.medium)
-                .stroke(VGTheme.Colors.mediumGray, lineWidth: 1)
-        )
     }
 }
 
@@ -76,6 +71,6 @@ struct MatchCard: View {
         imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400",
         isVGPlus: true
     ))
-    .frame(width: 180, height: 260)
+    .frame(width: 160, height: 220)
     .background(VGTheme.Colors.black)
 }
