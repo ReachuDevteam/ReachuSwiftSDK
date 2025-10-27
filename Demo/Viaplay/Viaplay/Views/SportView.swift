@@ -205,79 +205,98 @@ struct CarouselCardData {
 
 struct CarouselCard: View {
     let data: CarouselCardData
+    @State private var navigateToDetail = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                // Background image
-                AsyncImage(url: URL(string: data.imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
-                }
-                .frame(height: 280)
-                .cornerRadius(12, corners: [.topLeft, .topRight])
-                .clipped()
-                
-                // Time badge
-                Text(data.time)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(Color.white)
-                    .cornerRadius(4)
-                    .padding(12)
-            }
-            
-            // Bottom info section
-            HStack(spacing: 10) {
-                // Logo
-                AsyncImage(url: URL(string: data.logo)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(width: 48, height: 48)
-                .background(Color.white)
-                .cornerRadius(6)
-                
-                // Text info
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(data.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
+        Button(action: {
+            navigateToDetail = true
+        }) {
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .topLeading) {
+                    // Background image
+                    AsyncImage(url: URL(string: data.imageUrl)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
+                    }
+                    .frame(height: 280)
+                    .cornerRadius(12, corners: [.topLeft, .topRight])
+                    .clipped()
                     
-                    Text(data.subtitle)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.white.opacity(0.6))
-                        .lineLimit(1)
+                    // Time badge
+                    Text(data.time)
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(Color.white)
+                        .cornerRadius(4)
+                        .padding(12)
                 }
                 
-                Spacer()
-                
-                // Three dots menu
-                Button(action: {}) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .rotationEffect(.degrees(90))
+                // Bottom info section
+                HStack(spacing: 10) {
+                    // Logo
+                    AsyncImage(url: URL(string: data.logo)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                    }
+                    .frame(width: 48, height: 48)
+                    .background(Color.white)
+                    .cornerRadius(6)
+                    
+                    // Text info
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(data.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Text(data.subtitle)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundColor(.white.opacity(0.6))
+                            .lineLimit(1)
+                    }
+                    
+                    Spacer()
+                    
+                    // Three dots menu
+                    Button(action: {}) {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .rotationEffect(.degrees(90))
+                    }
                 }
+                .padding(14)
+                .background(Color(hex: "2C2D36"))
+                .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
             }
-            .padding(14)
             .background(Color(hex: "2C2D36"))
-            .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
+            .cornerRadius(12)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
-        .background(Color(hex: "2C2D36"))
-        .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .buttonStyle(PlainButtonStyle())
+        .background(
+            NavigationLink(
+                destination: SportDetailView(
+                    title: data.title,
+                    subtitle: data.subtitle,
+                    imageUrl: data.imageUrl
+                ),
+                isActive: $navigateToDetail
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
 }
 
@@ -339,63 +358,82 @@ struct SportCard: View {
     let title: String
     let subtitle: String
     let isLarge: Bool
+    @State private var navigateToDetail = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            ZStack(alignment: .topLeading) {
-                // Image
-                AsyncImage(url: URL(string: imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
-                }
-                .frame(width: isLarge ? nil : 240, height: isLarge ? 200 : 135)
-                .clipped()
-                .cornerRadius(12)
-                
-                // Time badge
-                Text(time)
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.black.opacity(0.7))
-                    .cornerRadius(4)
-                    .padding(8)
-                
-                // Crown icon centered
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.5))
-                        .frame(width: 46, height: 46)
+        Button(action: {
+            navigateToDetail = true
+        }) {
+            VStack(alignment: .leading, spacing: 0) {
+                ZStack(alignment: .topLeading) {
+                    // Image
+                    AsyncImage(url: URL(string: imageUrl)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
+                    }
+                    .frame(width: isLarge ? nil : 240, height: isLarge ? 200 : 135)
+                    .clipped()
+                    .cornerRadius(12)
                     
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 18, weight: .bold))
+                    // Time badge
+                    Text(time)
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            
-            // Info section
-            VStack(alignment: .leading, spacing: 4) {
-                if !subtitle.isEmpty {
-                    Text(subtitle)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                        .textCase(.uppercase)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(4)
+                        .padding(8)
+                    
+                    // Crown icon centered
+                    ZStack {
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .frame(width: 46, height: 46)
+                        
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 
-                Text(title)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
+                // Info section
+                VStack(alignment: .leading, spacing: 4) {
+                    if !subtitle.isEmpty {
+                        Text(subtitle)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.6))
+                            .textCase(.uppercase)
+                    }
+                    
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                }
+                .padding(.top, 8)
             }
-            .padding(.top, 8)
+            .frame(width: isLarge ? nil : 240)
         }
-        .frame(width: isLarge ? nil : 240)
+        .buttonStyle(PlainButtonStyle())
+        .background(
+            NavigationLink(
+                destination: SportDetailView(
+                    title: title,
+                    subtitle: subtitle,
+                    imageUrl: imageUrl
+                ),
+                isActive: $navigateToDetail
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
 }
 
@@ -404,93 +442,113 @@ struct LiveSportCard: View {
     let title: String
     let subtitle: String
     let time: String
+    @State private var navigateToDetail = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Image section with LIVE badge and crown
-            ZStack(alignment: .topLeading) {
-                AsyncImage(url: URL(string: imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
+        Button(action: {
+            navigateToDetail = true
+        }) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Image section with LIVE badge and crown
+                ZStack(alignment: .topLeading) {
+                    AsyncImage(url: URL(string: imageUrl)) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } placeholder: {
+                        Rectangle()
+                            .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
+                    }
+                    .frame(height: 220)
+                    .clipped()
+                    .cornerRadius(16, corners: [.topLeft, .topRight])
+                    
+                    // LIVE badge
+                    Text("LIVE")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                        .cornerRadius(5)
+                        .padding(14)
+                    
+                    // Crown icon centered
+                    ZStack {
+                        Circle()
+                            .fill(Color.black.opacity(0.5))
+                            .frame(width: 54, height: 54)
+                        
+                        Image(systemName: "crown.fill")
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 .frame(height: 220)
-                .clipped()
-                .cornerRadius(16, corners: [.topLeft, .topRight])
                 
-                // LIVE badge
-                Text("LIVE")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color(red: 0.96, green: 0.08, blue: 0.42))
-                    .cornerRadius(5)
-                    .padding(14)
-                
-                // Crown icon centered
-                ZStack {
-                    Circle()
-                        .fill(Color.black.opacity(0.5))
-                        .frame(width: 54, height: 54)
-                    
-                    Image(systemName: "crown.fill")
-                        .font(.system(size: 22, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            .frame(height: 220)
-            
-            // Info section
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(title)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Text(subtitle)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
-                    
-                    // Progress bar
-                    HStack(spacing: 0) {
-                        Rectangle()
-                            .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                            .frame(width: 70, height: 3)
+                // Info section
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(title)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
                         
-                        Rectangle()
-                            .fill(Color.white.opacity(0.3))
-                            .frame(height: 3)
+                        Text(subtitle)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white.opacity(0.7))
+                        
+                        // Progress bar
+                        HStack(spacing: 0) {
+                            Rectangle()
+                                .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
+                                .frame(width: 70, height: 3)
+                            
+                            Rectangle()
+                                .fill(Color.white.opacity(0.3))
+                                .frame(height: 3)
+                        }
+                        .frame(height: 3)
+                        .padding(.top, 6)
+                        
+                        Text(time)
+                            .font(.system(size: 13, weight: .regular))
+                            .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+                            .padding(.top, 4)
                     }
-                    .frame(height: 3)
-                    .padding(.top, 6)
                     
-                    Text(time)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
-                        .padding(.top, 4)
+                    Spacer()
+                    
+                    Button(action: {}) {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white)
+                            .rotationEffect(.degrees(90))
+                    }
                 }
-                
-                Spacer()
-                
-                Button(action: {}) {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .rotationEffect(.degrees(90))
-                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
+                .background(Color(hex: "2C2D36"))
+                .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
             .background(Color(hex: "2C2D36"))
-            .cornerRadius(16, corners: [.bottomLeft, .bottomRight])
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
         }
-        .background(Color(hex: "2C2D36"))
-        .cornerRadius(16)
+        .buttonStyle(PlainButtonStyle())
+        .background(
+            NavigationLink(
+                destination: SportDetailView(
+                    title: title,
+                    subtitle: subtitle,
+                    imageUrl: imageUrl
+                ),
+                isActive: $navigateToDetail
+            ) {
+                EmptyView()
+            }
+            .hidden()
+        )
     }
 }
 
