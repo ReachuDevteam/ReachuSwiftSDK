@@ -11,7 +11,7 @@ struct HeroSection: View {
     let content: HeroContent
     
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        ZStack(alignment: .top) {
             // Background Image
             AsyncImage(url: URL(string: content.imageUrl)) { image in
                 image
@@ -19,80 +19,78 @@ struct HeroSection: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(ViaplayTheme.Colors.darkGray)
+                    .fill(Color(red: 0.15, green: 0.1, blue: 0.12))
             }
-            .frame(height: 500)
+            .frame(height: 600)
             .clipped()
             
             // Dark gradient overlay
             LinearGradient(
-                colors: [Color.clear, Color.black.opacity(0.7)],
+                colors: [Color.black.opacity(0.6), Color.clear, Color.black.opacity(0.8)],
                 startPoint: .top,
                 endPoint: .bottom
             )
+            .frame(height: 600)
             
-            // Content
-            VStack(alignment: .leading, spacing: ViaplayTheme.Spacing.md) {
-                // Title
-                Text(content.title)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(.white)
-                
-                // Description
-                Text(content.description)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.9))
-                    .lineLimit(3)
-                
-                // Action Buttons
-                HStack(spacing: 12) {
-                    // Crown Button (Pink)
-                    Button(action: {}) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "crown.fill")
-                                .font(.system(size: 18, weight: .semibold))
-                            // No text, just icon
-                        }
-                        .foregroundColor(.white)
-                        .frame(width: 50, height: 44)
-                        .background(Color(red: 0.91, green: 0.12, blue: 0.39)) // Pink
-                        .cornerRadius(10)
-                    }
-                    
-                    // Les mer Button (Gray)
-                    Button(action: {}) {
-                        Text("Les mer")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 32)
-                            .frame(height: 44)
-                            .background(Color(red: 0.25, green: 0.25, blue: 0.3))
-                            .cornerRadius(10)
-                    }
-                }
-                
-                // Pagination Dots
+            VStack(spacing: 0) {
+                // Viaplay Logo at top
                 HStack(spacing: 6) {
-                    Circle()
-                        .fill(.white)
-                        .frame(width: 8, height: 8)
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [Color(red: 1.0, green: 0.2, blue: 0.6), Color(red: 0.6, green: 0.2, blue: 1.0)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
                     
-                    ForEach(0..<4) { _ in
-                        Circle()
-                            .fill(.white.opacity(0.4))
-                            .frame(width: 6, height: 6)
-                    }
+                    Text("viaplay")
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundColor(.white)
                 }
-                .padding(.top, ViaplayTheme.Spacing.sm)
+                .padding(.top, 60)
+                
+                Spacer()
+                
+                // Content at bottom
+                VStack(alignment: .leading, spacing: 12) {
+                    // Title
+                    Text(content.title)
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(2)
+                    
+                    // Description
+                    Text(content.description)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.white.opacity(0.9))
+                        .lineLimit(2)
+                    
+                    // Pagination Dots
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(.white)
+                            .frame(width: 8, height: 8)
+                        
+                        ForEach(0..<5) { _ in
+                            Circle()
+                                .fill(.white.opacity(0.4))
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+                    .padding(.top, 8)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 32)
             }
-            .padding(.horizontal, ViaplayTheme.Spacing.lg)
-            .padding(.bottom, ViaplayTheme.Spacing.xl)
         }
     }
 }
 
 #Preview {
     HeroSection(content: HeroContent.mock)
-        .frame(height: 500)
-        .background(ViaplayTheme.Colors.black)
+        .frame(height: 600)
+        .background(Color.black)
 }
