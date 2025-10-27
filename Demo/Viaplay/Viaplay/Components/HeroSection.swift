@@ -56,50 +56,50 @@ struct HeroSection: View {
                 Spacer()
                 
                 // Content at bottom
-                VStack(alignment: .leading, spacing: 12) {
-                    // Title
+                VStack(alignment: .center, spacing: 12) {
+                    // Title (centered)
                     Text(content.title)
-                        .font(.system(size: 34, weight: .bold))
+                        .font(.system(size: 32, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                     
-                    // Description
+                    // Description (centered)
                     Text(content.description)
-                        .font(.system(size: 14, weight: .regular))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundColor(.white.opacity(0.95))
                         .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
                     
-                    // Action Buttons
-                    HStack(spacing: 12) {
-                        // Crown Button (Pink)
+                    // Action Buttons (centered)
+                    HStack(spacing: 14) {
+                        // Crown Button (Pink/Magenta)
                         Button(action: {}) {
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 20, weight: .bold))
+                                .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 54, height: 46)
+                                .frame(width: 70, height: 50)
                                 .background(
-                                    LinearGradient(
-                                        colors: [Color(red: 0.91, green: 0.12, blue: 0.39), Color(red: 0.85, green: 0.10, blue: 0.35)],
-                                        startPoint: .top,
-                                        endPoint: .bottom
-                                    )
+                                    Color(red: 0.96, green: 0.08, blue: 0.42) // Magenta/Pink #F51569
                                 )
-                                .cornerRadius(10)
+                                .cornerRadius(8)
                         }
                         
-                        // Les mer Button (Gray)
+                        // Les mer Button (Dark Gray)
                         Button(action: {}) {
                             Text("Les mer")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 150, height: 46)
-                                .background(Color(red: 0.28, green: 0.28, blue: 0.32))
-                                .cornerRadius(10)
+                                .frame(width: 160, height: 50)
+                                .background(Color(red: 0.23, green: 0.24, blue: 0.27))
+                                .cornerRadius(8)
                         }
                     }
-                    .padding(.top, 4)
+                    .padding(.top, 6)
                     
-                    // Pagination Dots
+                    // Pagination Dots (centered)
                     HStack(spacing: 7) {
                         Circle()
                             .fill(.white)
@@ -111,11 +111,11 @@ struct HeroSection: View {
                                 .frame(width: 7, height: 7)
                         }
                     }
-                    .padding(.top, 10)
+                    .padding(.top, 12)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 32)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 36)
             }
         }
         .frame(height: 700)
