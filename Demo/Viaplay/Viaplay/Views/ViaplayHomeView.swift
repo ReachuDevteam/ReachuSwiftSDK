@@ -25,16 +25,16 @@ struct ViaplayHomeView: View {
                     // Hero Section (no header here)
                     HeroSection(content: heroContent)
                     
-                    // Rent Section
+                    // Fortsett å se Section
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("Rent")
+                        Text("Fortsett å se")
                             .font(.system(size: 22, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 16)
-                            .padding(.top, 32)
+                            .padding(.top, 24)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 16) {
                                 ForEach(continueWatchingItems) { item in
                                     ContinueWatchingCard(item: item)
                                 }
@@ -42,7 +42,7 @@ struct ViaplayHomeView: View {
                             .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.bottom, 100) // Space for bottom nav
+                    .padding(.bottom, 120) // Space for bottom nav and crown
                 }
             }
             
@@ -51,35 +51,24 @@ struct ViaplayHomeView: View {
                 HStack {
                     Spacer()
                     
-                    // Viaplay Logo
-                    HStack(spacing: 6) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color(red: 1.0, green: 0.2, blue: 0.6), Color(red: 0.6, green: 0.2, blue: 1.0)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                        
-                        Text("viaplay")
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundColor(.white)
-                    }
+                    // Viaplay Logo from assets
+                    Image("logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 24)
                     
                     Spacer()
                     
                     // Boombox icon
                     Image(systemName: "music.note.list")
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundColor(.cyan)
                         .padding(6)
                         .background(Color.cyan.opacity(0.2))
                         .cornerRadius(6)
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
                 .background(Color.black.opacity(0.95))
                 .transition(.move(edge: .top))
             }
