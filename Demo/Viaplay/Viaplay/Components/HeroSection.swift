@@ -44,15 +44,31 @@ struct HeroSection: View {
                     .foregroundColor(.white.opacity(0.9))
                     .lineLimit(3)
                 
-                // Action Button
-                Button(action: {}) {
-                    Text("Les mer")
-                        .font(.system(size: 16, weight: .semibold))
+                // Action Buttons
+                HStack(spacing: 12) {
+                    // Crown Button (Pink)
+                    Button(action: {}) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "crown.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                            // No text, just icon
+                        }
                         .foregroundColor(.white)
-                        .padding(.horizontal, ViaplayTheme.Spacing.lg)
-                        .padding(.vertical, ViaplayTheme.Spacing.sm)
-                        .background(ViaplayTheme.Colors.mediumGray)
-                        .cornerRadius(ViaplayTheme.CornerRadius.medium)
+                        .frame(width: 50, height: 44)
+                        .background(Color(red: 0.91, green: 0.12, blue: 0.39)) // Pink
+                        .cornerRadius(10)
+                    }
+                    
+                    // Les mer Button (Gray)
+                    Button(action: {}) {
+                        Text("Les mer")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 32)
+                            .frame(height: 44)
+                            .background(Color(red: 0.25, green: 0.25, blue: 0.3))
+                            .cornerRadius(10)
+                    }
                 }
                 
                 // Pagination Dots

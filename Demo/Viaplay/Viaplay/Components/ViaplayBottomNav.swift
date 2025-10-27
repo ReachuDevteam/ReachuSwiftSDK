@@ -13,31 +13,47 @@ struct ViaplayBottomNav: View {
     var body: some View {
         HStack(spacing: 0) {
             TabButton(
-                icon: "sportscourt.fill",
-                label: "Sport",
+                icon: "house.fill",
+                label: "Home",
                 isSelected: selectedTab == 0
             ) {
                 selectedTab = 0
             }
             
             TabButton(
-                icon: "square.grid.2x2",
-                label: "Categories",
+                icon: "sportscourt.fill",
+                label: "Sport",
                 isSelected: selectedTab == 1
             ) {
                 selectedTab = 1
             }
             
             TabButton(
-                icon: "magnifyingglass",
-                label: "Search",
+                icon: "square.grid.2x2",
+                label: "Categories",
                 isSelected: selectedTab == 2
             ) {
                 selectedTab = 2
             }
+            
+            TabButton(
+                icon: "magnifyingglass",
+                label: "Search",
+                isSelected: selectedTab == 3
+            ) {
+                selectedTab = 3
+            }
+            
+            TabButton(
+                icon: "text.justify.leading",
+                label: "My library",
+                isSelected: selectedTab == 4
+            ) {
+                selectedTab = 4
+            }
         }
-        .padding(.vertical, ViaplayTheme.Spacing.sm)
-        .background(ViaplayTheme.Colors.darkGray)
+        .padding(.vertical, 8)
+        .background(Color(red: 0.08, green: 0.08, blue: 0.1))
     }
 }
 

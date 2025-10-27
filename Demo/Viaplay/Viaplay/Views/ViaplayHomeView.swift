@@ -8,134 +8,81 @@
 import SwiftUI
 
 struct ViaplayHomeView: View {
-    @State private var selectedTab = 0 // Sport tab
+    @State private var selectedTab = 0
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
     var body: some View {
         ZStack {
             // Background
-            ViaplayTheme.Colors.black
+            Color.black
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Status Bar
-                HStack {
-                    Text("12:42")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "bell")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                        
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.green)
-                    }
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 4) {
-                        Image(systemName: "wifi")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                        Text("5G")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                        Image(systemName: "battery.100")
-                            .font(.system(size: 16))
-                            .foregroundColor(.white)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 8)
-                .padding(.bottom, 12)
-                
-                // Header with Viaplay Logo
+                // Header with Viaplay Logo and Boombox
                 HStack {
                     Spacer()
                     
                     // Viaplay Logo
-                    HStack(spacing: 8) {
-                        // Gradient chevron
-                        Image(systemName: "chevron.right")
+                    HStack(spacing: 6) {
+                        Image(systemName: "play.fill")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(ViaplayTheme.Colors.brandGradient)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [Color(red: 1.0, green: 0.2, blue: 0.6), Color(red: 0.6, green: 0.2, blue: 1.0)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
                         
                         Text("viaplay")
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: 26, weight: .bold))
                             .foregroundColor(.white)
                     }
                     
                     Spacer()
                     
                     // Boombox icon
-                    Image(systemName: "speaker.wave.2.fill")
+                    Image(systemName: "music.note.list")
                         .font(.system(size: 20))
-                        .foregroundColor(.blue)
-                        .frame(width: 32, height: 32)
-                        .background(Color.blue.opacity(0.2))
+                        .foregroundColor(.cyan)
+                        .padding(8)
+                        .background(Color.cyan.opacity(0.2))
                         .cornerRadius(8)
+                        .padding(.trailing, 16)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
+                .padding(.top, 8)
+                .padding(.bottom, 16)
                 
-                // Content based on selected tab
-                Group {
-                    switch selectedTab {
-                    case 0: // Sport tab
-                        homeContent
-                    case 1: // Categories tab
-                        VStack {
-                            Text("Categories")
+                // Content
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Hero Section
+                        HeroSection(content: heroContent)
+                        
+                        // Fortsett å se Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Fortsett å se")
+                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 24)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(continueWatchingItems) { item in
+                                        ContinueWatchingCard(item: item)
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                            }
                         }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    case 2: // Search tab
-                        VStack {
-                            Text("Search")
-                                .foregroundColor(.white)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    default:
-                        homeContent
+                        .padding(.bottom, 100) // Space for bottom nav
                     }
                 }
                 
                 // Bottom Navigation Bar
                 ViaplayBottomNav(selectedTab: $selectedTab)
-            }
-        }
-    }
-    
-    private var homeContent: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Hero Section
-                HeroSection(content: heroContent)
-                
-                // Rent Section
-                VStack(alignment: .leading, spacing: ViaplayTheme.Spacing.md) {
-                    Text("Rent")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ViaplayTheme.Spacing.lg)
-                        .padding(.top, ViaplayTheme.Spacing.lg)
-                    
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: ViaplayTheme.Spacing.md) {
-                            ForEach(continueWatchingItems) { item in
-                                ContinueWatchingCard(item: item)
-                            }
-                        }
-                        .padding(.horizontal, ViaplayTheme.Spacing.lg)
-                    }
-                }
-                .padding(.bottom, 100) // Space for bottom nav
             }
         }
     }
