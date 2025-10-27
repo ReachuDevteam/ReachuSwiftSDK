@@ -21,20 +21,20 @@ struct ContinueWatchingCard: View {
                 Rectangle()
                     .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
             }
-            .frame(width: 200, height: 280)
+            .frame(width: 150, height: 215)
             .clipped()
-            .cornerRadius(16)
+            .cornerRadius(14)
             
             // Rent Label (top left corner)
             if let rentLabel = item.rentLabel {
                 Text(rentLabel)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.black.opacity(0.75))
-                    .cornerRadius(6)
-                    .padding(10)
+                    .padding(.horizontal, 9)
+                    .padding(.vertical, 4)
+                    .background(Color.black.opacity(0.7))
+                    .cornerRadius(5)
+                    .padding(8)
             }
             
             // Crown icon at bottom center (for items without rent label)
@@ -48,25 +48,25 @@ struct ContinueWatchingCard: View {
                         ZStack {
                             Circle()
                                 .fill(Color(red: 0.35, green: 0.35, blue: 0.38))
-                                .frame(width: 54, height: 54)
+                                .frame(width: 48, height: 48)
                             
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         Spacer()
                     }
-                    .offset(y: 27) // Half outside the card
+                    .offset(y: 24) // Half outside the card
                 }
             }
         }
-        .frame(width: 200, height: 280)
+        .frame(width: 150, height: 215)
     }
 }
 
 #Preview {
-    HStack(spacing: 16) {
+    HStack(spacing: 12) {
         ContinueWatchingCard(item: ContinueWatchingItem.mockItems[0])
         ContinueWatchingCard(item: ContinueWatchingItem.mockItems[1])
         ContinueWatchingCard(item: ContinueWatchingItem.mockItems[2])

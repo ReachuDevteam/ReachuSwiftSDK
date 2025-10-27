@@ -26,15 +26,15 @@ struct ViaplayHomeView: View {
                     HeroSection(content: heroContent)
                     
                     // Fortsett å se Section
-                    VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 12) {
                         Text("Fortsett å se")
-                            .font(.system(size: 22, weight: .semibold))
+                            .font(.system(size: 20, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 16)
-                            .padding(.top, 24)
+                            .padding(.top, 20)
                         
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 16) {
+                            HStack(spacing: 12) {
                                 ForEach(continueWatchingItems) { item in
                                     ContinueWatchingCard(item: item)
                                 }
@@ -42,7 +42,7 @@ struct ViaplayHomeView: View {
                             .padding(.horizontal, 16)
                         }
                     }
-                    .padding(.bottom, 120) // Space for bottom nav and crown
+                    .padding(.bottom, 100) // Space for bottom nav and crown
                 }
             }
             
