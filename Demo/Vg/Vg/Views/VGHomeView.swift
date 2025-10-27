@@ -18,43 +18,16 @@ struct VGHomeView: View {
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
-                // Top status area
-                VStack(spacing: 0) {
-                    // Status Bar
-                    HStack {
-                        Text("12:10")
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        HStack(spacing: 4) {
-                            Image(systemName: "bell.fill")
-                                .foregroundColor(.white)
-                                .font(.system(size: 14))
-                        }
-                    }
-                    .padding(.horizontal, VGTheme.Spacing.md)
-                    .padding(.top, 4)
-                    .padding(.bottom, VGTheme.Spacing.sm)
-                    
-                    // VG SPORT Logo
-                    HStack {
-                        Spacer()
-                        HStack(spacing: 4) {
-                            Text("VG")
-                                .foregroundColor(VGTheme.Colors.red)
-                                .font(VGTheme.Typography.title())
-                                .fontWeight(.bold)
-                            
-                            Text("SPORT")
-                                .foregroundColor(.white)
-                                .font(VGTheme.Typography.title())
-                                .fontWeight(.bold)
-                        }
-                        Spacer()
-                    }
-                    .padding(.bottom, VGTheme.Spacing.md)
+                // VG Logo Header
+                HStack {
+                    Spacer()
+                    Image("logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 32)
+                    Spacer()
                 }
+                .padding(.vertical, VGTheme.Spacing.md)
                 .background(VGTheme.Colors.black)
                 
                 // Main Content

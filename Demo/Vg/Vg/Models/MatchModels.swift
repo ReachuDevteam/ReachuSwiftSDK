@@ -31,63 +31,63 @@ struct MatchSection: Identifiable {
 extension Match {
     static let mockMatches: [MatchSection] = [
         MatchSection(
-            title: "Liga Portugal",
+            title: "Tidligere sendinger",
             matches: [
                 Match(
-                    homeTeam: "Moreirense",
-                    awayTeam: "FC Porto",
-                    date: "I DAG",
-                    time: "21:05",
+                    homeTeam: "New Orleans Saints",
+                    awayTeam: "Tampa Bay",
+                    date: "I GÅR",
+                    time: "20:55",
                     imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400",
                     isVGPlus: true
                 ),
                 Match(
-                    homeTeam: "Sporting CP",
-                    awayTeam: "FC Alv",
-                    date: "FREDAG",
-                    time: "21:05",
+                    homeTeam: "Lazio",
+                    awayTeam: "Juventus",
+                    date: "I GÅR",
+                    time: "20:30",
                     imageUrl: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400",
                     isVGPlus: true
                 )
             ]
         ),
         MatchSection(
-            title: "DFB Pokal",
+            title: "NFL",
             matches: [
                 Match(
-                    homeTeam: "Eintracht Frankfurt",
-                    awayTeam: "Borussia Dortmund",
-                    date: "I MORGEN",
-                    time: "18:20",
+                    homeTeam: "NFL RedZone",
+                    awayTeam: "Week 9",
+                    date: "SØNDAG",
+                    time: "18:50",
                     imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400",
                     isVGPlus: true
                 ),
                 Match(
-                    homeTeam: "Heidenheim",
-                    awayTeam: "Hamb",
-                    date: "I MORGEN",
-                    time: "18:20",
+                    homeTeam: "Detroit Lions",
+                    awayTeam: "Minnesota Vikings",
+                    date: "SØNDAG",
+                    time: "18:50",
                     imageUrl: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400",
                     isVGPlus: true
                 )
             ]
         ),
         MatchSection(
-            title: "Coppa Italia",
+            title: "Women's Super League",
             matches: [
                 Match(
-                    homeTeam: "Juventus",
-                    awayTeam: "AC Milan",
-                    date: "TIRSDAG",
-                    time: "20:45",
+                    homeTeam: "Chelsea",
+                    awayTeam: "Arsenal",
+                    date: "SØNDAG",
+                    time: "15:00",
                     imageUrl: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=400",
                     isVGPlus: true
                 ),
                 Match(
-                    homeTeam: "Inter Milan",
-                    awayTeam: "Lazio",
-                    date: "TIRSDAG",
-                    time: "20:45",
+                    homeTeam: "Manchester City",
+                    awayTeam: "Tottenham",
+                    date: "SØNDAG",
+                    time: "17:30",
                     imageUrl: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=400",
                     isVGPlus: true
                 )
