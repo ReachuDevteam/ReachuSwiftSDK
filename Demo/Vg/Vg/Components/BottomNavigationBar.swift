@@ -45,7 +45,7 @@ struct BottomNavigationBar: View {
             }
             
             TabButton(
-                icon: "gearshape.fill",
+                icon: "gearshape",
                 label: "Innstillinger",
                 isSelected: selectedTab == 4
             ) {
@@ -53,7 +53,7 @@ struct BottomNavigationBar: View {
             }
         }
         .padding(.vertical, VGTheme.Spacing.sm)
-        .background(.ultraThinMaterial)
+        .background(VGTheme.Colors.darkGray)
     }
 }
 
