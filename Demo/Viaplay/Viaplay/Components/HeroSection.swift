@@ -20,9 +20,15 @@ struct HeroSection: View {
                     .frame(width: geometry.size.width, height: 620)
                     .clipped()
                 
-                // Dark gradient overlay
+                // Dark gradient overlay (fade to background color)
                 LinearGradient(
-                    colors: [Color.black.opacity(0.4), Color.clear, Color.clear, Color.black.opacity(0.85)],
+                    colors: [
+                        Color.clear,
+                        Color.clear,
+                        Color(hex: "1B1B25").opacity(0.3),
+                        Color(hex: "1B1B25").opacity(0.7),
+                        Color(hex: "1B1B25")
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
@@ -76,28 +82,28 @@ struct HeroSection: View {
                                 .padding(.horizontal, 24)
                                 .fixedSize(horizontal: false, vertical: true)
                             
-                            // Action Buttons (centered)
+                            // Action Buttons (centered) - Same size for both
                             HStack(spacing: 12) {
-                                // Crown Button (Pink/Magenta)
+                                // Crown Button (Pink/Magenta) - Same size as Les mer
                                 Button(action: {}) {
                                     Image(systemName: "crown.fill")
-                                        .font(.system(size: 22, weight: .bold))
+                                        .font(.system(size: 18, weight: .bold))
                                         .foregroundColor(.white)
-                                        .frame(width: 64, height: 48)
+                                        .frame(width: 160, height: 50)
                                         .background(
                                             Color(red: 0.96, green: 0.08, blue: 0.42) // Magenta/Pink #F51569
                                         )
-                                        .cornerRadius(8)
+                                        .cornerRadius(10)
                                 }
                                 
-                                // Les mer Button (Dark Gray)
+                                // Les mer Button (Dark Gray) - Same size as Crown
                                 Button(action: {}) {
                                     Text("Les mer")
-                                        .font(.system(size: 16, weight: .semibold))
+                                        .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .frame(width: 140, height: 48)
+                                        .frame(width: 160, height: 50)
                                         .background(Color(red: 0.23, green: 0.24, blue: 0.27))
-                                        .cornerRadius(8)
+                                        .cornerRadius(10)
                                 }
                             }
                             .padding(.top, 6)

@@ -42,28 +42,34 @@ struct ViaplayHomeView: View {
                         .padding(.top, 20)
                         .padding(.bottom, 24)
                         
-                        // Category Buttons Grid
-                        VStack(spacing: 16) {
-                            HStack(spacing: 16) {
+                        // Category Buttons Grid (2x2 + Channels on left)
+                        VStack(spacing: 14) {
+                            HStack(spacing: 14) {
                                 CategoryButton(title: "Series") {}
                                 CategoryButton(title: "Films") {}
                             }
                             
-                            HStack(spacing: 16) {
+                            HStack(spacing: 14) {
                                 CategoryButton(title: "Sport") {}
                                 CategoryButton(title: "Kids") {}
                             }
                             
-                            CategoryButton(title: "Channels") {}
-                                .frame(maxWidth: .infinity)
+                            HStack(spacing: 14) {
+                                CategoryButton(title: "Channels") {}
+                                    .frame(maxWidth: .infinity)
+                                
+                                // Empty spacer to keep Channels on the left
+                                Color.clear
+                                    .frame(maxWidth: .infinity)
+                            }
                         }
                         .padding(.horizontal, 16)
                         .frame(width: geometry.size.width)
                         
                         // Akkurat nå ser andre på Section
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Akkurat nå ser andre på")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
@@ -94,9 +100,9 @@ struct ViaplayHomeView: View {
                         .frame(width: geometry.size.width)
                         
                         // Nytt hos oss Section
-                        VStack(alignment: .leading, spacing: 16) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Nytt hos oss")
-                                .font(.system(size: 20, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)

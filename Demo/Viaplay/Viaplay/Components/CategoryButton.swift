@@ -42,12 +42,12 @@ struct CategoryButton: View {
     var body: some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 20, weight: .semibold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .frame(height: 64)
+                .frame(height: 58)
                 .background(Color(hex: "302F3F"))
-                .cornerRadius(16)
+                .cornerRadius(14)
         }
     }
 }
@@ -58,7 +58,7 @@ struct CategoryCard: View {
     let seasonEpisode: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 8) {
             ZStack {
                 // Thumbnail
                 AsyncImage(url: URL(string: imageUrl)) { image in
@@ -69,9 +69,9 @@ struct CategoryCard: View {
                     Rectangle()
                         .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
                 }
-                .frame(width: 170, height: 240)
+                .frame(width: 150, height: 210)
                 .clipped()
-                .cornerRadius(14)
+                .cornerRadius(12)
                 
                 // Crown icon at bottom center
                 VStack {
@@ -83,24 +83,24 @@ struct CategoryCard: View {
                         ZStack {
                             Circle()
                                 .fill(Color(red: 0.35, green: 0.35, blue: 0.38))
-                                .frame(width: 54, height: 54)
+                                .frame(width: 48, height: 48)
                             
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 20, weight: .bold))
                                 .foregroundColor(.white)
                         }
                         
                         Spacer()
                     }
-                    .offset(y: 27)
+                    .offset(y: 24)
                 }
             }
-            .frame(width: 170, height: 240)
+            .frame(width: 150, height: 210)
             
             // Season/Episode info
             if let seasonEpisode = seasonEpisode {
                 Text(seasonEpisode)
-                    .font(.system(size: 15, weight: .regular))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
             }
         }
