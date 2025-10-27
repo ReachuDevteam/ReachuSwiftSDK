@@ -23,5 +23,8 @@
      <FileRef
         location = "container:Demo/Viaplay/Viaplay.xcodeproj">
      </FileRef>
+     <FileRef
+        location = "container:Demo/Vg/Vg.xcodeproj">
+     </FileRef>
    </Group>
 </Workspace>
