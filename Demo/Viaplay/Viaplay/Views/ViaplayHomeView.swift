@@ -75,7 +75,7 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 32)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 16) {
+                                HStack(spacing: 12) {
                                     CategoryCard(
                                         title: "Norske Truckers",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -108,7 +108,7 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 32)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 16) {
+                                HStack(spacing: 12) {
                                     CategoryCard(
                                         title: "American Gangster",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -125,6 +125,49 @@ struct ViaplayHomeView: View {
                                         title: "The 924th",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         seasonEpisode: nil
+                                    )
+                                }
+                                .padding(.horizontal, 16)
+                            }
+                        }
+                        .frame(width: geometry.size.width)
+                        
+                        // Nytt og populært på Lei & kjøp Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Nytt og populært på Lei & kjøp")
+                                    .font(.system(size: 17, weight: .semibold))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                Button(action: {}) {
+                                    Text("See all")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 32)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    RentBuyCard(
+                                        title: "Movie 1",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        badge: "Buy"
+                                    )
+                                    
+                                    RentBuyCard(
+                                        title: "The Conjuring 4",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        badge: "KINOAKTUE"
+                                    )
+                                    
+                                    RentBuyCard(
+                                        title: "Jurassic World",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        badge: "Rent"
                                     )
                                 }
                                 .padding(.horizontal, 16)
