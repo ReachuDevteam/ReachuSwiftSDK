@@ -59,28 +59,28 @@ struct HeroSection: View {
                 VStack(alignment: .center, spacing: 12) {
                     // Title (centered)
                     Text(content.title)
-                        .font(.system(size: 32, weight: .bold))
+                        .font(.system(size: 28, weight: .bold))
                         .foregroundColor(.white)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 24)
                     
                     // Description (centered)
                     Text(content.description)
-                        .font(.system(size: 13, weight: .regular))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundColor(.white.opacity(0.95))
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 24)
                     
                     // Action Buttons (centered)
-                    HStack(spacing: 14) {
+                    HStack(spacing: 12) {
                         // Crown Button (Pink/Magenta)
                         Button(action: {}) {
                             Image(systemName: "crown.fill")
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
-                                .frame(width: 70, height: 50)
+                                .frame(width: 64, height: 48)
                                 .background(
                                     Color(red: 0.96, green: 0.08, blue: 0.42) // Magenta/Pink #F51569
                                 )
@@ -90,9 +90,9 @@ struct HeroSection: View {
                         // Les mer Button (Dark Gray)
                         Button(action: {}) {
                             Text("Les mer")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 160, height: 50)
+                                .frame(width: 140, height: 48)
                                 .background(Color(red: 0.23, green: 0.24, blue: 0.27))
                                 .cornerRadius(8)
                         }
@@ -113,8 +113,7 @@ struct HeroSection: View {
                     }
                     .padding(.top, 12)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 36)
             }
         }
