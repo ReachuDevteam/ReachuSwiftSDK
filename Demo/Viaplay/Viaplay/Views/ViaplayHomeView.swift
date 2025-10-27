@@ -93,6 +93,18 @@ struct ViaplayHomeView: View {
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         seasonEpisode: "S17 | E28"
                                     )
+                                    
+                                    CategoryCard(
+                                        title: "Series 4",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: "S1 | E5"
+                                    )
+                                    
+                                    CategoryCard(
+                                        title: "Series 5",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: "S2 | E12"
+                                    )
                                 }
                                 .padding(.horizontal, 16)
                             }
@@ -123,6 +135,18 @@ struct ViaplayHomeView: View {
                                     
                                     CategoryCard(
                                         title: "The 924th",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: nil
+                                    )
+                                    
+                                    CategoryCard(
+                                        title: "Movie 4",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        seasonEpisode: nil
+                                    )
+                                    
+                                    CategoryCard(
+                                        title: "Movie 5",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         seasonEpisode: nil
                                     )
@@ -166,6 +190,18 @@ struct ViaplayHomeView: View {
                                     
                                     RentBuyCard(
                                         title: "Jurassic World",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        badge: "Rent"
+                                    )
+                                    
+                                    RentBuyCard(
+                                        title: "Movie 4",
+                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
+                                        badge: "Buy"
+                                    )
+                                    
+                                    RentBuyCard(
+                                        title: "Movie 5",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
                                         badge: "Rent"
                                     )

@@ -86,12 +86,19 @@ struct CategoryCard: View {
             }
             .frame(width: 130, height: 185)
             
-            // Season/Episode info
-            if let seasonEpisode = seasonEpisode {
-                Text(seasonEpisode)
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundColor(.white.opacity(0.7))
+            // Season/Episode info - Fixed height to prevent misalignment
+            Group {
+                if let seasonEpisode = seasonEpisode {
+                    Text(seasonEpisode)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                } else {
+                    Text(" ")
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundColor(.clear)
+                }
             }
+            .frame(height: 16) // Fixed height for alignment
         }
     }
 }
