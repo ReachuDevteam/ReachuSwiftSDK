@@ -65,13 +65,28 @@ struct VGHomeView: View {
             
             // Main Content
             ScrollView {
-                VStack(spacing: VGTheme.Spacing.xl) {
-                    ForEach(sections) { section in
-                        MatchSectionView(section: section)
+                VStack(spacing: 0) {
+                    // Featured Match Hero
+                    FeaturedMatchHero(
+                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800",
+                        time: "I dag 18:15",
+                        title: "Lecce - Napoli",
+                        category: "Sport",
+                        description: "Se italiensk Serie A direkte på VG+Sport. Lecce og Napoli møtes i niende serierunde på Stadio Via del Mare i Lecce. Vegard Aulstad står for kommenteringen.",
+                        onPlayTapped: {
+                            print("🎬 [VG] Opening match: Lecce - Napoli")
+                        }
+                    )
+                    
+                    // Match sections
+                    VStack(spacing: VGTheme.Spacing.xl) {
+                        ForEach(sections) { section in
+                            MatchSectionView(section: section)
+                        }
                     }
+                    .padding(.top, VGTheme.Spacing.xl)
+                    .padding(.bottom, 80) // Space for bottom nav
                 }
-                .padding(.top, VGTheme.Spacing.lg)
-                .padding(.bottom, 80) // Space for bottom nav
             }
         }
     }
