@@ -60,15 +60,16 @@ struct FeaturedMatchHero: View {
                             .font(.system(size: 14, weight: .light))
                             .foregroundColor(.white.opacity(0.6))
                             .padding(.top, 2)
+                            .padding(.bottom, 2)
                         
                         Text(description)
-                            .font(.system(size: 15, weight: .regular))
+                            .font(.system(size: 16, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                             .lineLimit(3)
-                            .padding(.top, 2)
+                            .padding(.top, 10)
                         
                         Text("VG+ Sport")
-                            .font(.system(size: 11, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.5))
                             .padding(.top, 4)
                     }

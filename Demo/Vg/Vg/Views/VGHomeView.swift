@@ -77,6 +77,17 @@ struct VGHomeView: View {
                         }
                     )
                     
+                    // Next Live Section
+                    NextLiveSection(
+                        onSeeAllTapped: {
+                            print("📺 [VG] See all next live broadcasts")
+                        },
+                        onCardTapped: { index in
+                            print("📺 [VG] Card \(index) tapped")
+                        }
+                    )
+                    .padding(.top, 24)
+                    
                     // Match sections
                     VStack(spacing: VGTheme.Spacing.xl) {
                         ForEach(sections) { section in
