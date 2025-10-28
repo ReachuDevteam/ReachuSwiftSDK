@@ -17,91 +17,65 @@ struct FeaturedMatchHero: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottomLeading) {
-                // Background image from assets
                 Image("bg-sport")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: geometry.size.width, height: 520)
                     .clipped()
                 
-                // Dark gradient overlay
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0),
-                        Color.black.opacity(0.2),
-                        Color.black.opacity(0.5),
-                        Color.black.opacity(0.8),
-                        Color.black.opacity(0.95)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(width: geometry.size.width, height: 520)
+                LinearGradient(colors: [Color.black.opacity(0), Color.black.opacity(0), Color.black.opacity(0), Color.black.opacity(0.7), Color.black.opacity(0.80)], startPoint: .top, endPoint: .bottom)
+                    .frame(width: geometry.size.width, height: 520)
             
-            // Content at bottom
-            VStack {
-                Spacer()
-                
-                VStack(alignment: .leading, spacing: 12) {
-                    // Time badge (above title, more spacing)
-                    HStack {
-                        Text(time)
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.black)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(Color.white)
-                            .cornerRadius(4)
-                        
-                        Spacer()
-                    }
-                    .padding(.bottom, 8)
+                VStack {
+                    Spacer()
                     
-                    // Title with play button (same row)
-                    HStack(alignment: .center) {
-                        Text(title)
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                        
-                        Spacer()
-                        
-                        // Play button (same height as title, smaller, custom red)
-                        Button(action: onPlayTapped) {
-                            Circle()
-                                .fill(Color(red: 0.85, green: 0, blue: 0))
-                                .frame(width: 48, height: 48)
-                                .overlay(
-                                    Image(systemName: "play.fill")
-                                        .font(.system(size: 18, weight: .bold))
-                                        .foregroundColor(.white)
-                                        .offset(x: 2)
-                                )
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack {
+                            Text(time)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.white)
+                                .cornerRadius(4)
+                            Spacer()
                         }
+                        .padding(.bottom, 2)
+                        
+                        HStack(alignment: .center, spacing: 0) {
+                            Text(title)
+                                .font(.system(size: 26, weight: .bold))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            Spacer()
+                            Button(action: onPlayTapped) {
+                                Circle()
+                                    .fill(Color(red: 0.85, green: 0, blue: 0))
+                                    .frame(width: 48, height: 48)
+                                    .overlay(Image(systemName: "play.fill").font(.system(size: 18, weight: .bold)).foregroundColor(.white).offset(x: 2))
+                            }
+                        }
+                        
+                        Text(category)
+                            .font(.system(size: 14, weight: .light))
+                            .foregroundColor(.white.opacity(0.6))
+                            .padding(.top, 2)
+                        
+                        Text(description)
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(3)
+                            .padding(.top, 2)
+                        
+                        Text("VG+ Sport")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(.white.opacity(0.5))
+                            .padding(.top, 4)
                     }
-                    
-                    // Category
-                    Text(category)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    // Description (full width, below title)
-                    Text(description)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineLimit(3)
-                        .padding(.top, 4)
-                    
-                    // VG+ Sport badge
-                    Text("VG+ Sport")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.5))
-                        .padding(.top, 6)
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 20)
+                    .frame(width: geometry.size.width)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 24)
-                .frame(width: geometry.size.width)
-            }
             }
             .frame(width: geometry.size.width, height: 520)
         }
