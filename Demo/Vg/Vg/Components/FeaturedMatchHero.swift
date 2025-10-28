@@ -38,73 +38,68 @@ struct FeaturedMatchHero: View {
                 )
                 .frame(width: geometry.size.width, height: 520)
             
-            // Time badge (top-left, absolute position)
-            VStack {
-                HStack {
-                    Text(time)
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.black)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color.white)
-                        .cornerRadius(4)
-                    
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                
-                Spacer()
-            }
-            .frame(width: geometry.size.width)
-            .zIndex(10)
-            
             // Content at bottom
             VStack {
                 Spacer()
                 
-                VStack(alignment: .leading, spacing: 6) {
-                    // Title
-                    Text(title)
-                        .font(.system(size: 26, weight: .bold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    
-                    // Category
-                    Text(category)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    // Description with play button
-                    HStack(alignment: .top, spacing: 12) {
-                        Text(description)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundColor(.white.opacity(0.8))
-                            .lineLimit(3)
-                            .padding(.top, 4)
+                VStack(alignment: .leading, spacing: 12) {
+                    // Time badge (above title, more spacing)
+                    HStack {
+                        Text(time)
+                            .font(.system(size: 11, weight: .semibold))
+                            .foregroundColor(.black)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Color.white)
+                            .cornerRadius(4)
                         
-                        // Play button (on right, over description)
+                        Spacer()
+                    }
+                    .padding(.bottom, 8)
+                    
+                    // Title with play button (same row)
+                    HStack(alignment: .center) {
+                        Text(title)
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        
+                        Spacer()
+                        
+                        // Play button (same height as title, smaller, custom red)
                         Button(action: onPlayTapped) {
                             Circle()
-                                .fill(Color.red)
-                                .frame(width: 50, height: 50)
+                                .fill(Color(red: 0.85, green: 0, blue: 0))
+                                .frame(width: 48, height: 48)
                                 .overlay(
                                     Image(systemName: "play.fill")
-                                        .font(.system(size: 20, weight: .bold))
+                                        .font(.system(size: 18, weight: .bold))
                                         .foregroundColor(.white)
                                         .offset(x: 2)
                                 )
                         }
                     }
                     
+                    // Category
+                    Text(category)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    // Description (full width, below title)
+                    Text(description)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.white.opacity(0.8))
+                        .lineLimit(3)
+                        .padding(.top, 4)
+                    
                     // VG+ Sport badge
                     Text("VG+ Sport")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.white.opacity(0.5))
-                        .padding(.top, 4)
+                        .padding(.top, 6)
                 }
                 .padding(.horizontal, 20)
-                .padding(.bottom, 28)
+                .padding(.bottom, 24)
                 .frame(width: geometry.size.width)
             }
             }
