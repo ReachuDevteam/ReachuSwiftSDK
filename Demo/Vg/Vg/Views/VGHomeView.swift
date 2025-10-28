@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct VGHomeView: View {
-    let sections = Match.mockMatches
     @State private var selectedTab = 3 // "Direkte" tab
     
     var body: some View {
@@ -88,14 +87,31 @@ struct VGHomeView: View {
                     )
                     .padding(.top, 24)
                     
-                    // Match sections
-                    VStack(spacing: VGTheme.Spacing.xl) {
-                        ForEach(sections) { section in
-                            MatchSectionView(section: section)
+                    // Serie A Section
+                    SerieASection(
+                        onSeeAllTapped: {
+                            print("⚽ [VG] See all Serie A matches")
+                        },
+                        onCardTapped: { index in
+                            print("⚽ [VG] Serie A card \(index) tapped")
                         }
-                    }
-                    .padding(.top, VGTheme.Spacing.xl)
-                    .padding(.bottom, 80) // Space for bottom nav
+                    )
+                    .padding(.top, 32)
+                    
+                    // Previous Broadcasts Section
+                    PreviousBroadcastsSection(
+                        onSeeAllTapped: {
+                            print("📺 [VG] See all previous broadcasts")
+                        },
+                        onCardTapped: { index in
+                            print("📺 [VG] Previous broadcast card \(index) tapped")
+                        }
+                    )
+                    .padding(.top, 32)
+                    
+                    // Bottom padding for navigation
+                    Spacer()
+                        .frame(height: 80)
                 }
             }
         }
