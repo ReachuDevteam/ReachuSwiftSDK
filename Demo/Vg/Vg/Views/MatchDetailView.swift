@@ -7,8 +7,8 @@ struct MatchDetailView: View {
     let onShareTapped: () -> Void
     
     private let contentItems = [
-        (image: "content1", title: "Tondela - Sporting CP", subtitle: "Sport · 2. oktober", duration: "02:12:09"),
-        (image: "content2", title: "Jose Mourinho Interview", subtitle: "Sport · 1. oktober", duration: "03:01:55")
+        (image: "card2x1", title: "Tondela - Sporting CP", subtitle: "Sport · 2. oktober", duration: "02:12:09"),
+        (image: "card2x2", title: "Jose Mourinho Interview", subtitle: "Sport · 1. oktober", duration: "03:01:55")
     ]
     
     var body: some View {
@@ -37,14 +37,14 @@ struct MatchDetailView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
-                    .padding(.bottom, 20)
+                    .padding(.bottom, 16)
                     
                     // Main content area (placeholder for video)
                     VStack(spacing: 0) {
                         // Video placeholder - will be replaced with actual video player
                         Rectangle()
                             .fill(Color.gray.opacity(0.3))
-                            .frame(height: 200)
+                            .frame(height: 220)
                             .overlay(
                                 VStack {
                                     Image(systemName: "play.circle.fill")
@@ -60,12 +60,12 @@ struct MatchDetailView: View {
                         // Match details
                         VStack(alignment: .leading, spacing: 8) {
                             Text(matchTitle)
-                                .font(.system(size: 24, weight: .bold))
+                                .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
                             
                             HStack {
                                 Text(matchSubtitle)
-                                    .font(.system(size: 16, weight: .regular))
+                                    .font(.system(size: 15, weight: .regular))
                                     .foregroundColor(.white.opacity(0.7))
                                 
                                 Spacer()
@@ -78,21 +78,21 @@ struct MatchDetailView: View {
                             }
                         }
                         .padding(.horizontal, 20)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, 12)
                     }
                     
                     // "Neste" section
                     VStack(alignment: .leading, spacing: 16) {
                         // Section header
                         Text("Neste")
-                            .font(.system(size: 20, weight: .bold))
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 20)
-                            .padding(.top, 24)
+                            .padding(.top, 20)
                         
                         // Content cards
                         ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 12) {
+                            HStack(spacing: 16) {
                                 ForEach(0..<contentItems.count, id: \.self) { index in
                                     ContentCard(
                                         imageName: contentItems[index].image,

@@ -42,7 +42,7 @@ struct VGHomeView: View {
                 BottomNavigationBar(selectedTab: $selectedTab)
             }
         }
-        .sheet(isPresented: $showMatchDetail) {
+        .fullScreenCover(isPresented: $showMatchDetail) {
             MatchDetailView(
                 matchTitle: selectedMatchTitle,
                 matchSubtitle: selectedMatchSubtitle,
