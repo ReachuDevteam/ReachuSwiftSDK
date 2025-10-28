@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct FeaturedMatchHero: View {
-    let imageUrl: String
     let time: String
     let title: String
     let category: String
@@ -16,97 +15,107 @@ struct FeaturedMatchHero: View {
     let onPlayTapped: () -> Void
     
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Background image
-            AsyncImage(url: URL(string: imageUrl)) { image in
-                image
+        GeometryReader { geometry in
+            ZStack(alignment: .bottomLeading) {
+                // Background image from assets
+                Image("bg-sport")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-            } placeholder: {
-                Rectangle()
-                    .fill(Color(red: 0.15, green: 0.15, blue: 0.2))
-            }
-            .frame(height: 420)
-            .clipped()
+                    .frame(width: geometry.size.width, height: 520)
+                    .clipped()
+                
+                // Dark gradient overlay
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0),
+                        Color.black.opacity(0.2),
+                        Color.black.opacity(0.5),
+                        Color.black.opacity(0.8),
+                        Color.black.opacity(0.95)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .frame(width: geometry.size.width, height: 520)
             
-            // Dark gradient overlay
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0),
-                    Color.black.opacity(0.3),
-                    Color.black.opacity(0.7),
-                    Color.black.opacity(0.95)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 420)
-            
-            // Content
-            VStack(alignment: .leading, spacing: 12) {
-                // Time badge
-                Text(time)
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.black)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(Color.white)
-                    .cornerRadius(4)
-                
-                // Title
-                Text(title)
-                    .font(.system(size: 32, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                
-                // Category
-                Text(category)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundColor(.white.opacity(0.7))
-                
-                // Description
-                Text(description)
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.85))
-                    .lineLimit(3)
-                    .padding(.top, 4)
-                
-                // VG+ Sport badge
-                Text("VG+ Sport")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-                    .padding(.top, 2)
-                
-                // Play button
-                Button(action: onPlayTapped) {
-                    HStack(spacing: 0) {
-                        Spacer()
-                        
-                        Circle()
-                            .fill(Color.red)
-                            .frame(width: 64, height: 64)
-                            .overlay(
-                                Image(systemName: "play.fill")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .offset(x: 2) // Slight offset to center visually
-                            )
-                        
-                        Spacer()
-                    }
+            // Time badge (top-left, absolute position)
+            VStack {
+                HStack {
+                    Text(time)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.black)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.white)
+                        .cornerRadius(4)
+                    
+                    Spacer()
                 }
-                .padding(.top, 16)
+                .padding(.horizontal, 20)
+                .padding(.top, 20)
+                
+                Spacer()
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 24)
+            .frame(width: geometry.size.width)
+            .zIndex(10)
+            
+            // Content at bottom
+            VStack {
+                Spacer()
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    // Title
+                    Text(title)
+                        .font(.system(size: 26, weight: .bold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    
+                    // Category
+                    Text(category)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    // Description with play button
+                    HStack(alignment: .top, spacing: 12) {
+                        Text(description)
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(3)
+                            .padding(.top, 4)
+                        
+                        // Play button (on right, over description)
+                        Button(action: onPlayTapped) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 50, height: 50)
+                                .overlay(
+                                    Image(systemName: "play.fill")
+                                        .font(.system(size: 20, weight: .bold))
+                                        .foregroundColor(.white)
+                                        .offset(x: 2)
+                                )
+                        }
+                    }
+                    
+                    // VG+ Sport badge
+                    Text("VG+ Sport")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundColor(.white.opacity(0.5))
+                        .padding(.top, 4)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 28)
+                .frame(width: geometry.size.width)
+            }
+            }
+            .frame(width: geometry.size.width, height: 520)
         }
-        .frame(height: 420)
+        .frame(height: 520)
     }
 }
 
 #Preview {
     FeaturedMatchHero(
-        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=800",
         time: "I dag 18:15",
         title: "Lecce - Napoli",
         category: "Sport",
