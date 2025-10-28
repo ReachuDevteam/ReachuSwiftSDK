@@ -13,7 +13,7 @@ struct SerieASection: View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
             HStack {
-                Text("Serie A")
+                Text("Tidligere sendinger")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 

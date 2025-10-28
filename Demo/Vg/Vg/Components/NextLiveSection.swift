@@ -24,25 +24,6 @@ struct NextLiveSection: View {
             }
             
             // Header (below cards)
-            HStack {
-                Text("Neste direktesendinger")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Button(action: onSeeAllTapped) {
-                    HStack(spacing: 4) {
-                        Text("SE ALLE")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white)
-                    }
-                }
-            }
             .padding(.horizontal, 20)
         }
     }

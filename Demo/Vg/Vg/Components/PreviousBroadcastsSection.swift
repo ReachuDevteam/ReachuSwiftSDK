@@ -15,7 +15,7 @@ struct PreviousBroadcastsSection: View {
         VStack(alignment: .leading, spacing: 16) {
             // Header
             HStack {
-                Text("Tidligere sendinger")
+                Text("Serie A")
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(.white)
                 
