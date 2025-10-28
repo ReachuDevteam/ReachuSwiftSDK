@@ -13,6 +13,7 @@ struct FeaturedMatchHero: View {
     let category: String
     let description: String
     let onPlayTapped: () -> Void
+    let onMatchTapped: () -> Void
     
     var body: some View {
         GeometryReader { geometry in
@@ -43,10 +44,14 @@ struct FeaturedMatchHero: View {
                         .padding(.bottom, 2)
                         
                         HStack(alignment: .center, spacing: 0) {
-                            Text(title)
-                                .font(.system(size: 26, weight: .bold))
-                                .foregroundColor(.white)
-                                .lineLimit(1)
+                            Button(action: onMatchTapped) {
+                                Text(title)
+                                    .font(.system(size: 26, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            
                             Spacer()
                             Button(action: onPlayTapped) {
                                 Circle()
@@ -92,6 +97,9 @@ struct FeaturedMatchHero: View {
         description: "Se italiensk Serie A direkte på VG+Sport. Lecce og Napoli møtes i niende serierunde på Stadio Via del Mare i Lecce. Vegard Aulstad står for kommenteringen.",
         onPlayTapped: {
             print("Play tapped")
+        },
+        onMatchTapped: {
+            print("Match tapped")
         }
     )
 }

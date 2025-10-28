@@ -9,6 +9,9 @@ import SwiftUI
 
 struct VGHomeView: View {
     @State private var selectedTab = 3 // "Direkte" tab
+    @State private var showMatchDetail = false
+    @State private var selectedMatchTitle = ""
+    @State private var selectedMatchSubtitle = ""
     
     var body: some View {
         ZStack {
@@ -38,6 +41,18 @@ struct VGHomeView: View {
                 // Bottom Navigation Bar (always visible)
                 BottomNavigationBar(selectedTab: $selectedTab)
             }
+        }
+        .sheet(isPresented: $showMatchDetail) {
+            MatchDetailView(
+                matchTitle: selectedMatchTitle,
+                matchSubtitle: selectedMatchSubtitle,
+                onBackTapped: {
+                    showMatchDetail = false
+                },
+                onShareTapped: {
+                    print("📤 [VG] Share match: \(selectedMatchTitle)")
+                }
+            )
         }
     }
     
@@ -73,6 +88,11 @@ struct VGHomeView: View {
                         description: "Se italiensk Serie A direkte på VG+Sport. Lecce og Napoli møtes i niende serierunde på Stadio Via del Mare i Lecce. Vegard Aulstad står for kommenteringen.",
                         onPlayTapped: {
                             print("🎬 [VG] Opening match: Lecce - Napoli")
+                        },
+                        onMatchTapped: {
+                            selectedMatchTitle = "Lecce - Napoli"
+                            selectedMatchSubtitle = "Sport · i dag, 18:15... Se mer"
+                            showMatchDetail = true
                         }
                     )
                     
@@ -82,7 +102,12 @@ struct VGHomeView: View {
                             print("📺 [VG] See all next live broadcasts")
                         },
                         onCardTapped: { index in
-                            print("📺 [VG] Card \(index) tapped")
+                            let titles = ["Lecce - Napoli", "Borussia Dortmund - Bayern Munich", "AC Milan - Inter Milan", "RB Leipzig - Bayer Leverkusen"]
+                            let subtitles = ["Sport · i dag, 18:15... Se mer", "Sport · i morgen, 20:30... Se mer", "Sport · i morgen, 18:00... Se mer", "Sport · i overmorgen, 15:30... Se mer"]
+                            
+                            selectedMatchTitle = titles[index]
+                            selectedMatchSubtitle = subtitles[index]
+                            showMatchDetail = true
                         }
                     )
                     .padding(.top, 24)
@@ -93,7 +118,12 @@ struct VGHomeView: View {
                             print("⚽ [VG] See all Serie A matches")
                         },
                         onCardTapped: { index in
-                            print("⚽ [VG] Serie A card \(index) tapped")
+                            let titles = ["Lecce - Napoli", "Atalanta - Milan"]
+                            let subtitles = ["Sport · i dag, 18:15... Se mer", "Sport · i dag, 20:30... Se mer"]
+                            
+                            selectedMatchTitle = titles[index]
+                            selectedMatchSubtitle = subtitles[index]
+                            showMatchDetail = true
                         }
                     )
                     .padding(.top, 32)
@@ -104,7 +134,12 @@ struct VGHomeView: View {
                             print("📺 [VG] See all previous broadcasts")
                         },
                         onCardTapped: { index in
-                            print("📺 [VG] Previous broadcast card \(index) tapped")
+                            let titles = ["Lecce - Napoli", "Atalanta - Milan", "Lazio - Juventus", "Roma - Inter"]
+                            let subtitles = ["Sport · i dag, 18:15... Se mer", "Sport · i dag, 20:30... Se mer", "Sport · i går, 20:30... Se mer", "Sport · i går, 18:00... Se mer"]
+                            
+                            selectedMatchTitle = titles[index]
+                            selectedMatchSubtitle = subtitles[index]
+                            showMatchDetail = true
                         }
                     )
                     .padding(.top, 32)
