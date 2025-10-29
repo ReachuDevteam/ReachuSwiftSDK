@@ -151,7 +151,25 @@ struct ViaplayVideoPlayer: View {
                     .padding(.bottom, 100)
                 }
             }
+            
+            // Floating cart indicator - SIEMPRE visible en el video player
+            RFloatingCartIndicator(
+                customPadding: EdgeInsets(
+                    top: 0,
+                    leading: 0,
+                    bottom: 100,
+                    trailing: 16
+                ),
+                onTap: {
+                    showCheckout = true
+                }
+            )
+            .zIndex(1000) // Por encima de todo en el video player
         }
+        }
+        .sheet(isPresented: $showCheckout) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
         }
         .ignoresSafeArea() // Full screen
         .onAppear {

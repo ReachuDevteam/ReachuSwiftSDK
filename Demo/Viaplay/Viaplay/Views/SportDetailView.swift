@@ -6,17 +6,16 @@
 //
 
 import SwiftUI
-// TODO: Migrar CartManager
-// import ReachuCore
+import ReachuCore
+import ReachuUI
 
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode
+    @EnvironmentObject var cartManager: CartManager
     let title: String
     let subtitle: String
     let imageUrl: String
     @State private var showVideoPlayer = false
-    // TODO: Migrar CartManager
-    // @StateObject private var cartManager = CartManager()
     
     var body: some View {
         GeometryReader { geometry in
@@ -232,8 +231,15 @@ struct SportDetailView: View {
                             .padding(.horizontal, 16)
                         }
                         .padding(.top, 30)
-                        .padding(.bottom, 100)
                         .frame(width: geometry.size.width)
+                        
+                        // Products carousel from SDK
+                        RProductSlider(
+                            title: "Produkter",
+                            layout: .cards
+                        )
+                        .padding(.top, 30)
+                        .padding(.bottom, 100)
                     }
                 }
                 .ignoresSafeArea(edges: .top)
@@ -251,8 +257,7 @@ struct SportDetailView: View {
             ViaplayVideoPlayer(match: Match.barcelonaPSG) {
                 showVideoPlayer = false
             }
-            // TODO: Migrar CartManager
-            // .environmentObject(cartManager)
+            .environmentObject(cartManager)
         }
     }
 }
