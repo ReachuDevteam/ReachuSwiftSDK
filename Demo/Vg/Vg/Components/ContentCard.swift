@@ -15,7 +15,7 @@ struct ContentCard: View {
                     Image(imageName)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 280, height: 160)
+                        .frame(width: 240, height: 140)
                         .clipped()
                         .cornerRadius(8)
                     
@@ -57,7 +57,7 @@ struct ContentCard: View {
                 }
                 .padding(.horizontal, 6)
                 .padding(.vertical, 8)
-                .frame(width: 280, alignment: .leading)
+                .frame(width: 240, alignment: .leading)
             }
         }
         .buttonStyle(PlainButtonStyle())

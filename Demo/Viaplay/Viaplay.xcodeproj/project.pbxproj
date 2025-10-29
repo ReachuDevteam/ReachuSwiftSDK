@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		17B2324E2EAF952300EBA3F8 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = 17B2324D2EAF952300EBA3F8 /* ReachuComplete */; };
+		17B235522EB0FE3900EBA3F8 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = 17B235512EB0FE3900EBA3F8 /* ReachuComplete */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +58,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				17B2324E2EAF952300EBA3F8 /* ReachuComplete in Frameworks */,
+				17B235522EB0FE3900EBA3F8 /* ReachuComplete in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,6 +120,7 @@
 			name = Viaplay;
 			packageProductDependencies = (
 				17B2324D2EAF952300EBA3F8 /* ReachuComplete */,
+				17B235512EB0FE3900EBA3F8 /* ReachuComplete */,
 			);
 			productName = Viaplay;
 			productReference = 17B22E832EAF800F00EBA3F8 /* Viaplay.app */;
@@ -597,6 +600,10 @@
 
 /* Begin XCSwiftPackageProductDependency section */
 		17B2324D2EAF952300EBA3F8 /* ReachuComplete */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuComplete;
+		};
+		17B235512EB0FE3900EBA3F8 /* ReachuComplete */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = ReachuComplete;
 		};

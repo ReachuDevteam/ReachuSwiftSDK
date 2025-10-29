@@ -66,7 +66,7 @@ struct ViaplayHomeView: View {
                             }
                         }
                         .padding(.horizontal, 16)
-                        .frame(width: geometry.size.width)
+                        .frame(maxWidth: geometry.size.width)
                         
                         // Akkurat nå ser andre på Section
                         VStack(alignment: .leading, spacing: 12) {
@@ -75,6 +75,7 @@ struct ViaplayHomeView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
@@ -111,7 +112,7 @@ struct ViaplayHomeView: View {
                                 .padding(.horizontal, 16)
                             }
                         }
-                        .frame(width: geometry.size.width)
+                        .frame(maxWidth: geometry.size.width)
                         
                         // Nytt hos oss Section
                         VStack(alignment: .leading, spacing: 12) {
@@ -120,6 +121,7 @@ struct ViaplayHomeView: View {
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
@@ -156,7 +158,7 @@ struct ViaplayHomeView: View {
                                 .padding(.horizontal, 16)
                             }
                         }
-                        .frame(width: geometry.size.width)
+                        .frame(maxWidth: geometry.size.width)
                         
                         // Nytt og populært på Lei & kjøp Section
                         VStack(alignment: .leading, spacing: 12) {
@@ -175,6 +177,7 @@ struct ViaplayHomeView: View {
                             }
                             .padding(.horizontal, 16)
                             .padding(.top, 32)
+                            .frame(maxWidth: .infinity)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
@@ -211,7 +214,7 @@ struct ViaplayHomeView: View {
                                 .padding(.horizontal, 16)
                             }
                         }
-                        .frame(width: geometry.size.width)
+                        .frame(maxWidth: geometry.size.width)
                         .padding(.bottom, 100) // Space for bottom nav
                     }
                 }

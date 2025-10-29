@@ -62,6 +62,8 @@ struct MatchDetailView: View {
                             Text(matchTitle)
                                 .font(.system(size: 22, weight: .bold))
                                 .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
                             
                             HStack {
                                 Text(matchSubtitle)
@@ -89,6 +91,7 @@ struct MatchDetailView: View {
                             .foregroundColor(.white)
                             .padding(.horizontal, 20)
                             .padding(.top, 20)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         // Content cards
                         ScrollView(.horizontal, showsIndicators: false) {
