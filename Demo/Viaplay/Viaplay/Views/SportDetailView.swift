@@ -12,6 +12,8 @@ struct SportDetailView: View {
     let title: String
     let subtitle: String
     let imageUrl: String
+    @State private var showVideoPlayer = false
+    @StateObject private var cartManager = CartManager()
     
     var body: some View {
         GeometryReader { geometry in
@@ -117,7 +119,7 @@ struct SportDetailView: View {
                         // Action Buttons
                         VStack(spacing: 12) {
                             // Live button
-                            Button(action: {}) {
+                            Button(action: { showVideoPlayer = true }) {
                                 HStack(spacing: 10) {
                                     Image(systemName: "play.fill")
                                         .font(.system(size: 18, weight: .bold))
@@ -242,6 +244,12 @@ struct SportDetailView: View {
             }
         }
         .navigationBarHidden(true)
+        .fullScreenCover(isPresented: $showVideoPlayer) {
+            ViaplayVideoPlayer(match: Match.barcelonaPSG) {
+                showVideoPlayer = false
+            }
+            .environmentObject(cartManager)
+        }
     }
 }
 
