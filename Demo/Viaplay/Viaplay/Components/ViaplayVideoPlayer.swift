@@ -208,7 +208,7 @@ struct ViaplayVideoPlayer: View {
             }
         }
         .onReceive(webSocketManager.$currentContest) { newContest in
-            print("🎁 [VideoPlayer] Concurso recibido: \(newContest?.title ?? "nil")")
+            print("🎁 [VideoPlayer] Concurso recibido: \(newContest?.name ?? "nil")")
             if newContest != nil {
                 print("🎁 [VideoPlayer] Mostrando concurso")
                 withAnimation {
@@ -552,7 +552,7 @@ func setOrientation(_ orientation: UIInterfaceOrientationMask) {
 
 // MARK: - Overlay Views
 struct PollOverlayView: View {
-    let poll: Poll
+    let poll: PollEventData
     let onDismiss: () -> Void
     
     var body: some View {
@@ -572,9 +572,18 @@ struct PollOverlayView: View {
                             
                             Spacer()
                             
-                            Text("\(option.percentage)%")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
+                            if let avatarUrl = option.avatarUrl {
+                                AsyncImage(url: URL(string: avatarUrl)) { image in
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                } placeholder: {
+                                    Circle()
+                                        .fill(Color.gray.opacity(0.3))
+                                }
+                                .frame(width: 24, height: 24)
+                                .clipShape(Circle())
+                            }
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
@@ -601,12 +610,12 @@ struct PollOverlayView: View {
 }
 
 struct ProductOverlayView: View {
-    let product: Product
+    let product: ProductEventData
     let onDismiss: () -> Void
     
     var body: some View {
         HStack(spacing: 16) {
-            AsyncImage(url: URL(string: product.imageURL)) { image in
+            AsyncImage(url: URL(string: product.imageUrl)) { image in
                 image
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -651,34 +660,41 @@ struct ProductOverlayView: View {
 }
 
 struct ContestOverlayView: View {
-    let contest: Contest
+    let contest: ContestEventData
     let onDismiss: () -> Void
     
     var body: some View {
         VStack(spacing: 16) {
-            AsyncImage(url: URL(string: contest.imageURL)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } placeholder: {
+            if let imageUrl = contest.campaignLogo, let url = URL(string: imageUrl) {
+                AsyncImage(url: url) { image in
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                } placeholder: {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                }
+                .frame(height: 120)
+                .cornerRadius(8)
+            } else {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
+                    .frame(height: 120)
+                    .cornerRadius(8)
             }
-            .frame(height: 120)
-            .cornerRadius(8)
             
             VStack(spacing: 8) {
-                Text(contest.title)
+                Text(contest.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                 
-                Text(contest.description)
+                Text("Premie: \(contest.prize)")
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
                 
-                Text("Premie: \(contest.prize)")
+                Text("Frist: \(contest.deadline)")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
             }
