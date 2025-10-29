@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+// TODO: Migrar CartManager
+// import ReachuCore
 
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -13,7 +15,8 @@ struct SportDetailView: View {
     let subtitle: String
     let imageUrl: String
     @State private var showVideoPlayer = false
-    @StateObject private var cartManager = CartManager()
+    // TODO: Migrar CartManager
+    // @StateObject private var cartManager = CartManager()
     
     var body: some View {
         GeometryReader { geometry in
@@ -248,7 +251,8 @@ struct SportDetailView: View {
             ViaplayVideoPlayer(match: Match.barcelonaPSG) {
                 showVideoPlayer = false
             }
-            .environmentObject(cartManager)
+            // TODO: Migrar CartManager
+            // .environmentObject(cartManager)
         }
     }
 }

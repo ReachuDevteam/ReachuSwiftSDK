@@ -116,7 +116,7 @@ struct ViaplayVideoPlayer: View {
                 VStack {
                     Spacer()
                     
-                    PollOverlay(poll: poll) {
+                    PollOverlayView(poll: poll) {
                         showPoll = false
                     }
                     .padding(.horizontal, 16)
@@ -129,7 +129,7 @@ struct ViaplayVideoPlayer: View {
                 VStack {
                     Spacer()
                     
-                    ProductOverlay(product: product) {
+                    ProductOverlayView(product: product) {
                         showProduct = false
                     }
                     .padding(.horizontal, 16)
@@ -142,13 +142,14 @@ struct ViaplayVideoPlayer: View {
                 VStack {
                     Spacer()
                     
-                    ContestOverlay(contest: contest) {
+                    ContestOverlayView(contest: contest) {
                         showContest = false
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 100)
                 }
             }
+        }
         }
         .ignoresSafeArea() // Full screen
         .onAppear {
@@ -274,7 +275,7 @@ struct ViaplayVideoPlayer: View {
                         .foregroundColor(.white)
                 }
                 
-                GeometryReader { geometry in
+                GeometryReader { progressGeometry in
                     ZStack(alignment: .leading) {
                         Rectangle()
                             .fill(Color.white.opacity(0.3))
@@ -282,7 +283,7 @@ struct ViaplayVideoPlayer: View {
                         
                         Rectangle()
                             .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                            .frame(width: geometry.size.width * playerViewModel.progress, height: 4)
+                            .frame(width: progressGeometry.size.width * playerViewModel.progress, height: 4)
                     }
                 }
                 .frame(height: 4)
@@ -541,15 +542,178 @@ class VideoPlayerViewModel: ObservableObject {
 }
 
 // MARK: - Orientation Helper
-private func setOrientation(_ orientation: UIInterfaceOrientationMask) {
+func setOrientation(_ orientation: UIInterfaceOrientationMask) {
     if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
         windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
     }
 }
 
-#Preview {
-    ViaplayVideoPlayer(match: Match.barcelonaPSG) {
-        print("Dismissed")
+// MARK: - Overlay Views
+struct PollOverlayView: View {
+    let poll: Poll
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(poll.question)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white)
+                .multilineTextAlignment(.center)
+            
+            VStack(spacing: 12) {
+                ForEach(poll.options) { option in
+                    Button(action: {}) {
+                        HStack {
+                            Text(option.text)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            Text("\(option.percentage)%")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                    }
+                }
+            }
+            
+            Button(action: onDismiss) {
+                Text("Lukk")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 8)
+                    .background(Color.white.opacity(0.3))
+                    .cornerRadius(16)
+            }
+        }
+        .padding(20)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(16)
     }
-    .environmentObject(CartManager())
+}
+
+struct ProductOverlayView: View {
+    let product: Product
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            AsyncImage(url: URL(string: product.imageURL)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+            }
+            .frame(width: 80, height: 80)
+            .cornerRadius(8)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.name)
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                
+                Text(product.description)
+                    .font(.system(size: 12, weight: .regular))
+                    .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(2)
+                
+                Text(product.price)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+            }
+            
+            Spacer()
+            
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(width: 32, height: 32)
+                    .background(Color.white.opacity(0.2))
+                    .clipShape(Circle())
+            }
+        }
+        .padding(16)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(12)
+    }
+}
+
+struct ContestOverlayView: View {
+    let contest: Contest
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            AsyncImage(url: URL(string: contest.imageURL)) { image in
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } placeholder: {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+            }
+            .frame(height: 120)
+            .cornerRadius(8)
+            
+            VStack(spacing: 8) {
+                Text(contest.title)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                Text(contest.description)
+                    .font(.system(size: 14, weight: .regular))
+                    .foregroundColor(.white.opacity(0.8))
+                    .multilineTextAlignment(.center)
+                
+                Text("Premie: \(contest.prize)")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+            }
+            
+            HStack(spacing: 12) {
+                Button(action: {}) {
+                    Text("Delta")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                        .cornerRadius(8)
+                }
+                
+                Button(action: onDismiss) {
+                    Text("Lukk")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                }
+            }
+        }
+        .padding(20)
+        .background(Color.black.opacity(0.8))
+        .cornerRadius(16)
+    }
+}
+
+struct ViaplayVideoPlayer_Previews: PreviewProvider {
+    static var previews: some View {
+        ViaplayVideoPlayer(match: Match.barcelonaPSG) {
+            print("Dismissed")
+        }
+        .environmentObject(CartManager())
+    }
 }

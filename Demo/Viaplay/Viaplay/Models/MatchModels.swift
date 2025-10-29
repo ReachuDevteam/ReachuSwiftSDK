@@ -115,7 +115,8 @@ extension Match {
             isLive: true,
             backgroundImage: "img1",
             availability: .available,
-            relatedContent: []
+            relatedContent: [],
+            campaignLogo: nil
         )
     ]
 }

@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 // MARK: - WebSocket Manager
 class WebSocketManager: ObservableObject {
