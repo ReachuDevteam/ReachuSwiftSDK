@@ -52,9 +52,6 @@ struct ViaplayVideoPlayer: View {
                         if let player = playerViewModel.player {
                             CustomVideoPlayerView(player: player)
                                 .aspectRatio(16/9, contentMode: .fit)
-                                .onTapGesture {
-                                    playerViewModel.toggleControlsVisibility()
-                                }
                                 .onAppear {
                                     // Hide loader when video appears
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
@@ -82,6 +79,10 @@ struct ViaplayVideoPlayer: View {
                         Spacer()
                     }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    playerViewModel.toggleControlsVisibility()
+                }
                 .ignoresSafeArea()
             
             // Overlay Controls
@@ -96,6 +97,7 @@ struct ViaplayVideoPlayer: View {
                     bottomControls
                 }
                 .transition(.opacity)
+                .allowsHitTesting(true)
             }
             
             // Live Badge
