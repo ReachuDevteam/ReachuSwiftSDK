@@ -254,11 +254,22 @@ struct ViaplayHomeView: View {
                             HStack {
                                 Spacer()
                                 
-                                // Viaplay Logo from assets
-                                Image("logo")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(height: 20)
+                                // Viaplay Icon + Logo from assets
+                                HStack(alignment: .center, spacing: 0) {
+                                    Image("icon ")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 28, height: 28)
+                                    
+                                    Image("logo")
+                                        .renderingMode(.template)
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .foregroundColor(.white)
+                                        .frame(height: 22)
+                                        .offset(x: -30)
+                                }
+                                .offset(x: 15) // Compensar el offset del logo para centrar el conjunto
                                 
                                 Spacer()
                                 

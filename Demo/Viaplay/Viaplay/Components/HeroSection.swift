@@ -39,11 +39,22 @@ struct HeroSection: View {
                         HStack {
                             Spacer()
                             
-                            // Viaplay Logo from assets
-                            Image("logo")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 22)
+                            // Viaplay Icon + Logo from assets
+                            HStack(alignment: .center, spacing: 0) {
+                                Image("icon ")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: 32, height: 32)
+                                
+                                Image("logo")
+                                    .renderingMode(.template)
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .foregroundColor(.white)
+                                    .frame(height: 24)
+                                    .offset(x: -30)
+                            }
+                            .offset(x: 15) // Compensar el offset del logo para centrar el conjunto
                             
                             Spacer()
                             
@@ -84,9 +95,9 @@ struct HeroSection: View {
                             
                             // Action Buttons (centered) - Same size for both
                             HStack(spacing: 10) {
-                                // Crown Button (Pink/Magenta) - Same size as Les mer
+                                // Play Button (Pink/Magenta) - Same size as Les mer
                                 Button(action: {}) {
-                                    Image(systemName: "crown.fill")
+                                    Image(systemName: "play.fill")
                                         .font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
                                         .frame(width: 140, height: 44)
