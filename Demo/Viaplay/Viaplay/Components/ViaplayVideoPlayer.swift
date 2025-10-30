@@ -99,6 +99,10 @@ struct ViaplayVideoPlayer: View {
                 .transition(.opacity)
                 .allowsHitTesting(true)
             }
+
+            ZStack {
+                ViaplayChatOverlay(showControls: .constant(true))
+            }
             
             // Live Badge
             VStack {
