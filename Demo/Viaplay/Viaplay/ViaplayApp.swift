@@ -28,6 +28,14 @@ struct ViaplayApp: App {
         print("✅ [Viaplay] Reachu SDK configured successfully")
         print("🎨 [Viaplay] Theme: \(ReachuConfiguration.shared.theme.name)")
         print("🎨 [Viaplay] Mode: \(ReachuConfiguration.shared.theme.mode)")
+
+        // MARK: - Reachu Diagnostic Logs
+        let cfg = ReachuConfiguration.shared
+        let apiKeyMasked = cfg.apiKey.isEmpty ? "(empty)" : String(repeating: "*", count: max(0, cfg.apiKey.count - 4)) + cfg.apiKey.suffix(4)
+        print("🔧 [Reachu][Config] environment=\(cfg.environment.rawValue)")
+        print("🔧 [Reachu][Config] graphQLURL=\(cfg.environment.graphQLURL)")
+        print("🔧 [Reachu][Config] apiKey=\(apiKeyMasked)")
+        print("🔧 [Reachu][Market] country=\(cfg.marketConfiguration.countryCode) currency=\(cfg.marketConfiguration.currencyCode)")
     }
 
     var body: some Scene {

@@ -90,8 +90,8 @@
     "showCartNotifications": true,
     "enableGuestCheckout": true,
     "requirePhoneNumber": true,
-    "defaultShippingCountry": "SE",
-    "supportedPaymentMethods": ["stripe", "klarna", "vipps", "paypal"]
+    "defaultShippingCountry": "NO",
+    "supportedPaymentMethods": ["stripe", "klarna", "vipps"]
   },
   "productDetail": {
     "showNavigationTitle": false,
@@ -100,12 +100,12 @@
     "imageHeight": 400
   },
   "marketFallback": {
-    "countryCode": "SE",
-    "countryName": "Sweden",
-    "currencyCode": "SEK",
+    "countryCode": "NO",
+    "countryName": "Norway",
+    "currencyCode": "NOK",
     "currencySymbol": "kr",
-    "phoneCode": "+46",
-    "flag": "https://flagcdn.com/w320/se.png"
+    "phoneCode": "+47",
+    "flag": "https://flagcdn.com/w320/no.png"
   },
   "liveShow": {
     "campaignId": 3,

@@ -1,5 +1,5 @@
 {
-  "originHash" : "c059e517836323ce3edf59554cb1cf504904b73eeb28bb325fe88c1ba6266cb5",
+  "originHash" : "0fc3d1ef84338ffcc932a366fac3860899ec1dbf5fa01bbfe538a3a52ba1ee75",
   "pins" : [
     {
       "identity" : "apollo-ios",
@@ -15,8 +15,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/klarna/klarna-mobile-sdk-spm.git",
       "state" : {
-        "revision" : "f4738231a5385fe9a15ab9708d5f7b71870c19f2",
-        "version" : "2.9.0"
+        "revision" : "ab4c6e3602e2338b8c772597f7a7d1b9369b5dbd",
+        "version" : "2.8.0"
       }
     },
     {

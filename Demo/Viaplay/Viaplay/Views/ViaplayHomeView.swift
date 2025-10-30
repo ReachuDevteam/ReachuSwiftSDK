@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuUI
 
 struct ViaplayHomeView: View {
     @State private var selectedTab = 0
@@ -213,6 +214,28 @@ struct ViaplayHomeView: View {
                                 }
                                 .padding(.horizontal, 16)
                             }
+                        }
+                        .frame(maxWidth: geometry.size.width)
+                        
+                        // Reachu Products - Auto-loaded slider (cards layout)
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Shop")
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 32)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // Auto-loads based on ReachuConfiguration (currency/country)
+                            RProductSlider(
+                                title: nil,
+                                products: nil,
+                                categoryId: nil,
+                                layout: .cards,
+                                showSeeAll: false,
+                                maxItems: 12
+                            )
+                            .padding(.bottom, 8)
                         }
                         .frame(maxWidth: geometry.size.width)
                         .padding(.bottom, 100) // Space for bottom nav
