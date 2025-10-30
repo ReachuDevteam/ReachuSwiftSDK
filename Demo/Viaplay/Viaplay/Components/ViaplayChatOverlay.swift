@@ -174,7 +174,26 @@ struct ViaplayChatOverlay: View {
                 .frame(width: isLandscape ? 28 : 32, height: isLandscape ? 3 : 4)
                 .padding(.top, isLandscape ? 4 : 6)
             HStack(spacing: isLandscape ? 6 : 8) {
+                // Sponsor badge (top left)
+                VStack(alignment: .leading, spacing: isLandscape ? 2 : 3) {
+                    Text("Sponset av")
+                        .font(.system(size: isLandscape ? 8 : 10, weight: .medium))
+                        .foregroundColor(.white.opacity(0.8))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: isLandscape ? 40 : 60, maxHeight: isLandscape ? 12 : 18)
+                }
+                .padding(.horizontal, isLandscape ? 6 : 10)
+                .padding(.vertical, isLandscape ? 3 : 5)
+                .background(
+                    RoundedRectangle(cornerRadius: isLandscape ? 4 : 6)
+                        .fill(Color.black.opacity(0.3))
+                )
+                
                 Spacer()
+                
                 Button(action: {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
                         isExpanded.toggle()

@@ -101,7 +101,12 @@ struct ViaplayVideoPlayer: View {
             }
 
             ZStack {
-                ViaplayChatOverlay(showControls: .constant(true))
+                ViaplayChatOverlay(
+                    showControls: $playerViewModel.showControls,
+                    onExpandedChange: { expanded in
+                        isChatExpanded = expanded
+                    }
+                )
             }
             
             // Live Badge
@@ -296,7 +301,7 @@ struct ViaplayVideoPlayer: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 50)
+        .padding(.top, 8)
     }
     
     // MARK: - Bottom Controls
@@ -368,7 +373,7 @@ struct ViaplayVideoPlayer: View {
             }
             .padding(.horizontal, 16)
         }
-        .padding(.bottom, 50)
+        .padding(.bottom, 100)
     }
     
     // MARK: - Live Badge

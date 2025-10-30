@@ -17,6 +17,9 @@ struct SportDetailView: View {
     let subtitle: String
     let imageUrl: String
     @State private var showVideoPlayer = false
+    @StateObject private var castingManager = CastingManager.shared
+    @State private var showCastDeviceSelection = false
+    @State private var showCastingView = false
     
     var body: some View {
         GeometryReader { geometry in
@@ -62,10 +65,10 @@ struct SportDetailView: View {
                                 
                                 Spacer()
                                 
-                                Button(action: {}) {
-                                    Image(systemName: "airplayvideo")
+                                Button(action: { showCastDeviceSelection = true }) {
+                                    Image(systemName: castingManager.isCasting ? "tv.fill" : "airplayvideo")
                                         .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(.white)
+                                        .foregroundColor(castingManager.isCasting ? ViaplayTheme.Colors.pink : .white)
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -285,11 +288,44 @@ struct SportDetailView: View {
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showVideoPlayer) {
-            ViaplayVideoPlayer(match: Match.barcelonaPSG) {
+            ViaplayVideoPlayer(match: createMatchFromDetail()) {
                 showVideoPlayer = false
             }
             .environmentObject(cartManager)
         }
+        .sheet(isPresented: $showCastDeviceSelection) {
+            CastDeviceSelectionView { device in
+                castingManager.startCasting(to: device)
+                showCastingView = true
+            }
+        }
+        .fullScreenCover(isPresented: $showCastingView) {
+            ViaplayCastingActiveView(match: createMatchFromDetail())
+                .environmentObject(cartManager)
+        }
+        .onChange(of: castingManager.isCasting) { isCasting in
+            if !isCasting {
+                showCastingView = false
+            }
+        }
+    }
+    
+    // Helper para crear un Match desde los datos del SportDetailView
+    private func createMatchFromDetail() -> Match {
+        return Match(
+            homeTeam: Team(name: "Team A", shortName: "TA", logo: "img1"),
+            awayTeam: Team(name: "Team B", shortName: "TB", logo: "img1"),
+            title: title,
+            subtitle: subtitle,
+            competition: subtitle,
+            venue: "Venue",
+            commentator: nil,
+            isLive: true,
+            backgroundImage: imageUrl,
+            availability: .available,
+            relatedContent: [],
+            campaignLogo: nil
+        )
     }
 }
 
