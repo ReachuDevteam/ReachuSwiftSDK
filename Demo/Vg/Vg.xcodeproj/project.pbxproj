@@ -6,6 +6,14 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D0A5AD682EB3F99E00A8D4B5 /* ReachuComplete in Frameworks */ = {isa = PBXBuildFile; productRef = D0A5AD672EB3F99E00A8D4B5 /* ReachuComplete */; };
+		D0A5AD6A2EB3F99E00A8D4B5 /* ReachuCore in Frameworks */ = {isa = PBXBuildFile; productRef = D0A5AD692EB3F99E00A8D4B5 /* ReachuCore */; };
+		D0A5AD6C2EB3F99E00A8D4B5 /* ReachuDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = D0A5AD6B2EB3F99E00A8D4B5 /* ReachuDesignSystem */; };
+		D0A5AD6E2EB3F99E00A8D4B5 /* ReachuLiveShow in Frameworks */ = {isa = PBXBuildFile; productRef = D0A5AD6D2EB3F99E00A8D4B5 /* ReachuLiveShow */; };
+		D0A5AD702EB3F99E00A8D4B5 /* ReachuLiveUI in Frameworks */ = {isa = PBXBuildFile; productRef = D0A5AD6F2EB3F99E00A8D4B5 /* ReachuLiveUI */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		17B230D12EAF88A600EBA3F8 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +60,11 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D0A5AD702EB3F99E00A8D4B5 /* ReachuLiveUI in Frameworks */,
+				D0A5AD682EB3F99E00A8D4B5 /* ReachuComplete in Frameworks */,
+				D0A5AD6A2EB3F99E00A8D4B5 /* ReachuCore in Frameworks */,
+				D0A5AD6C2EB3F99E00A8D4B5 /* ReachuDesignSystem in Frameworks */,
+				D0A5AD6E2EB3F99E00A8D4B5 /* ReachuLiveShow in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +125,11 @@
 			);
 			name = Vg;
 			packageProductDependencies = (
+				D0A5AD672EB3F99E00A8D4B5 /* ReachuComplete */,
+				D0A5AD692EB3F99E00A8D4B5 /* ReachuCore */,
+				D0A5AD6B2EB3F99E00A8D4B5 /* ReachuDesignSystem */,
+				D0A5AD6D2EB3F99E00A8D4B5 /* ReachuLiveShow */,
+				D0A5AD6F2EB3F99E00A8D4B5 /* ReachuLiveUI */,
 			);
 			productName = Vg;
 			productReference = 17B230BE2EAF88A400EBA3F8 /* Vg.app */;
@@ -195,6 +213,9 @@
 			);
 			mainGroup = 17B230B52EAF88A400EBA3F8;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D0A5AD662EB3F99E00A8D4B5 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 17B230BF2EAF88A400EBA3F8 /* Products */;
 			projectDirPath = "";
@@ -578,6 +599,36 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		D0A5AD662EB3F99E00A8D4B5 /* XCLocalSwiftPackageReference "../../../ReachuSwiftSDK" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../../ReachuSwiftSDK;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D0A5AD672EB3F99E00A8D4B5 /* ReachuComplete */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuComplete;
+		};
+		D0A5AD692EB3F99E00A8D4B5 /* ReachuCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuCore;
+		};
+		D0A5AD6B2EB3F99E00A8D4B5 /* ReachuDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuDesignSystem;
+		};
+		D0A5AD6D2EB3F99E00A8D4B5 /* ReachuLiveShow */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuLiveShow;
+		};
+		D0A5AD6F2EB3F99E00A8D4B5 /* ReachuLiveUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = ReachuLiveUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 17B230B62EAF88A400EBA3F8 /* Project object */;
 }
