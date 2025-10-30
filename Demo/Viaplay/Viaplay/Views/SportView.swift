@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct SportView: View {
-    @Environment(\.presentationMode) var presentationMode
+    @Binding var selectedTab: Int
+    @Binding var showSportView: Bool
     @State private var currentCarouselIndex = 0
     
     let carouselCards = [
@@ -47,7 +48,8 @@ struct SportView: View {
                         // Header with back button
                         HStack {
                             Button(action: {
-                                presentationMode.wrappedValue.dismiss()
+                                showSportView = false
+                                selectedTab = 0
                             }) {
                                 Image(systemName: "chevron.left")
                                     .font(.system(size: 20, weight: .semibold))
@@ -90,7 +92,7 @@ struct SportView: View {
                             
                             TabView(selection: $currentCarouselIndex) {
                                 ForEach(carouselCards.indices, id: \.self) { index in
-                                    CarouselCard(data: carouselCards[index])
+                                    CarouselCard(data: carouselCards[index], selectedTab: $selectedTab)
                                         .padding(.horizontal, 16)
                                         .tag(index)
                                 }
@@ -110,6 +112,7 @@ struct SportView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             LiveSportCard(
+                                selectedTab: $selectedTab,
                                 imageUrl: "img1",
                                 title: "New Giza P2",
                                 subtitle: "Premier Padel",
@@ -124,6 +127,7 @@ struct SportView: View {
                             title: "De beste klippene akkurat nå",
                             cards: [
                                 SportCard(
+                                    selectedTab: $selectedTab,
                                     imageUrl: "img1",
                                     time: "00:51",
                                     title: "Haaland ofret sitt for å redde City-poeng",
@@ -131,6 +135,7 @@ struct SportView: View {
                                     isLarge: false
                                 ),
                                 SportCard(
+                                    selectedTab: $selectedTab,
                                     imageUrl: "img1",
                                     time: "00:53",
                                     title: "Jørgen Strand Larsen scoring i Premier League",
@@ -146,6 +151,7 @@ struct SportView: View {
                             title: "De beste motorklippene! 🏁",
                             cards: [
                                 SportCard(
+                                    selectedTab: $selectedTab,
                                     imageUrl: "img1",
                                     time: "29:26",
                                     title: "Dette er sikkeleg racing! Se høydepunktene fra Mexico Grand Prix",
@@ -153,6 +159,7 @@ struct SportView: View {
                                     isLarge: false
                                 ),
                                 SportCard(
+                                    selectedTab: $selectedTab,
                                     imageUrl: "img1",
                                     time: "00:51",
                                     title: "Haaland ofret sitt",
@@ -199,9 +206,20 @@ struct SportView: View {
                     }
                 }
                 .ignoresSafeArea(edges: .top)
+                
+                // Bottom Navigation
+                VStack {
+                    Spacer()
+                    ViaplayBottomNav(selectedTab: $selectedTab)
+                        .frame(width: geometry.size.width)
+                }
             }
         }
         .navigationBarHidden(true)
+        .onAppear {
+            // Asegurar que el tab esté en 1 cuando aparezca SportView
+            selectedTab = 1
+        }
     }
 }
 
@@ -215,9 +233,11 @@ struct CarouselCardData {
 
 struct CarouselCard: View {
     let data: CarouselCardData
+    @Binding var selectedTab: Int
     
     var body: some View {
         NavigationLink(destination: SportDetailView(
+            selectedTab: $selectedTab,
             title: data.title,
             subtitle: data.subtitle,
             imageUrl: data.imageUrl
@@ -367,6 +387,7 @@ struct SportSection: View {
 }
 
 struct SportCard: View {
+    @Binding var selectedTab: Int
     let imageUrl: String
     let time: String
     let title: String
@@ -375,6 +396,7 @@ struct SportCard: View {
     
     var body: some View {
         NavigationLink(destination: SportDetailView(
+            selectedTab: $selectedTab,
             title: title,
             subtitle: subtitle,
             imageUrl: imageUrl
@@ -435,6 +457,7 @@ struct SportCard: View {
 }
 
 struct LiveSportCard: View {
+    @Binding var selectedTab: Int
     let imageUrl: String
     let title: String
     let subtitle: String
@@ -442,6 +465,7 @@ struct LiveSportCard: View {
     
     var body: some View {
         NavigationLink(destination: SportDetailView(
+            selectedTab: $selectedTab,
             title: title,
             subtitle: subtitle,
             imageUrl: imageUrl
@@ -557,6 +581,6 @@ struct PopularSportCard: View {
 }
 
 #Preview {
-    SportView()
+    SportView(selectedTab: .constant(0), showSportView: .constant(true))
 }
 

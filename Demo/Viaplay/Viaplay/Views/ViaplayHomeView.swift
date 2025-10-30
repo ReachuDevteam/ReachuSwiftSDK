@@ -9,22 +9,21 @@ import SwiftUI
 import ReachuUI
 
 struct ViaplayHomeView: View {
-    @State private var selectedTab = 0
+    @Binding var selectedTab: Int
+    @Binding var showSportView: Bool
     @State private var scrollOffset: CGFloat = 0
-    @State private var showSportView = false
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
     var body: some View {
-        NavigationView {
-            GeometryReader { geometry in
-                ZStack(alignment: .top) {
-                    // Background
-                    Color(hex: "1B1B25")
-                        .ignoresSafeArea()
-                
-                // Main Content
-                ScrollView {
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                // Background
+                Color(hex: "1B1B25")
+                    .ignoresSafeArea()
+            
+            // Main Content
+            ScrollView {
                     VStack(spacing: 0) {
                         // Hero Section (extends to top)
                         HeroSection(content: heroContent)
@@ -289,30 +288,12 @@ struct ViaplayHomeView: View {
                     ViaplayBottomNav(selectedTab: $selectedTab)
                         .frame(width: geometry.size.width)
                 }
-                
-                // Hidden NavigationLink for Sport
-                NavigationLink(destination: SportView(), isActive: $showSportView) {
-                    EmptyView()
-                }
-                .hidden()
             }
             .frame(width: geometry.size.width)
-            .onChange(of: selectedTab) { newValue in
-                if newValue == 1 { // Sport tab
-                    showSportView = true
-                    // Reset tab to 0 after navigation
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        selectedTab = 0
-                    }
-                }
-            }
-            .navigationBarHidden(true)
-            }
-            .navigationViewStyle(StackNavigationViewStyle())
         }
     }
 }
 
 #Preview {
-    ViaplayHomeView()
+    ViaplayHomeView(selectedTab: .constant(0), showSportView: .constant(false))
 }

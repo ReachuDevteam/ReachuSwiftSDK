@@ -14,38 +14,59 @@ import ReachuLiveShow
 struct ContentView: View {
     @EnvironmentObject var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft
+    @State private var selectedTab = 0
+    @State private var showSportView = false
     
     var body: some View {
-        ZStack {
-            // Main app content
-            ViaplayHomeView()
-            
-            // Global floating cart indicator - always on top
-            RFloatingCartIndicator(
-                customPadding: EdgeInsets(
-                    top: 0,
-                    leading: 0,
-                    bottom: 100,
-                    trailing: 16
+        NavigationView {
+            ZStack {
+                // Main app content based on selected tab
+                Group {
+                    if showSportView {
+                        SportView(selectedTab: $selectedTab, showSportView: $showSportView)
+                    } else {
+                        ViaplayHomeView(selectedTab: $selectedTab, showSportView: $showSportView)
+                    }
+                }
+                .onChange(of: selectedTab) { newValue in
+                    if newValue == 1 { // Sport tab
+                        if !showSportView {
+                            showSportView = true
+                        }
+                    } else if newValue == 0 { // Home tab
+                        showSportView = false
+                    }
+                }
+                
+                // Global floating cart indicator - always on top
+                RFloatingCartIndicator(
+                    customPadding: EdgeInsets(
+                        top: 0,
+                        leading: 0,
+                        bottom: 100,
+                        trailing: 16
+                    )
                 )
-            )
-            .zIndex(999) // Asegurar que esté por encima de todo (video, overlays, etc.)
+                .zIndex(999) // Asegurar que esté por encima de todo (video, overlays, etc.)
+            }
+            .overlay {
+                // Global live stream overlay (Tipio integration)
+                LiveStreamGlobalOverlay()
+                    .environmentObject(cartManager)
+            }
+            // Checkout Overlay
+            .sheet(isPresented: $cartManager.isCheckoutPresented) {
+                RCheckoutOverlay()
+                    .environmentObject(cartManager)
+                    .environmentObject(checkoutDraft)
+            }
+            // MARK: - Reachu Diagnostics (App Start)
+            .task {
+                await debugReachuPing()
+            }
+            .navigationBarHidden(true)
         }
-        .overlay {
-            // Global live stream overlay (Tipio integration)
-            LiveStreamGlobalOverlay()
-                .environmentObject(cartManager)
-        }
-        // Checkout Overlay
-        .sheet(isPresented: $cartManager.isCheckoutPresented) {
-            RCheckoutOverlay()
-                .environmentObject(cartManager)
-                .environmentObject(checkoutDraft)
-        }
-        // MARK: - Reachu Diagnostics (App Start)
-        .task {
-            await debugReachuPing()
-        }
+        .navigationViewStyle(StackNavigationViewStyle())
     }
 }
 

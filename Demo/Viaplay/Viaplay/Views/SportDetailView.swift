@@ -12,6 +12,7 @@ import ReachuUI
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var cartManager: CartManager
+    @Binding var selectedTab: Int
     let title: String
     let subtitle: String
     let imageUrl: String
@@ -244,11 +245,13 @@ struct SportDetailView: View {
                 }
                 .ignoresSafeArea(edges: .top)
                 
-                // Bottom Navigation
-                VStack {
-                    Spacer()
-                    ViaplayBottomNav(selectedTab: .constant(1)) // Sport tab selected
-                        .frame(width: geometry.size.width)
+                // Bottom Navigation - Only show when video player is not showing
+                if !showVideoPlayer {
+                    VStack {
+                        Spacer()
+                        ViaplayBottomNav(selectedTab: $selectedTab)
+                            .frame(width: geometry.size.width)
+                    }
                 }
             }
         }
@@ -282,6 +285,7 @@ struct DetailRow: View {
 
 #Preview {
     SportDetailView(
+        selectedTab: .constant(1),
         title: "Lorient - PSG",
         subtitle: "Ligue 1 | 10. runde",
         imageUrl: "img1"
