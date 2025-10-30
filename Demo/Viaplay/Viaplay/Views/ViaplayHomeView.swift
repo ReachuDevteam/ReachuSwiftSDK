@@ -219,14 +219,31 @@ struct ViaplayHomeView: View {
                         .frame(maxWidth: geometry.size.width)
                         
                         // Reachu Products - Auto-loaded slider (cards layout)
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Shop")
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 16)
-                                .padding(.top, 24)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-
+                      VStack(alignment: .leading, spacing: 10) {
+                                              
+                            // Header with title and sponsor badge
+                            HStack(alignment: .top, spacing: 12) {
+                                // Title
+                                Text("Ukens tilbud")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 20)
+                                Spacer()
+                                
+                                // Sponsor badge
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sponset av")
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.8))
+                                    
+                                    Image("logo1")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                }
+                            }
+                            .padding(.top, 24)
+                            .padding(.horizontal, 16)
                             // Auto-loads based on ReachuConfiguration (currency/country)
                             RProductSlider(
                                 title: nil,
