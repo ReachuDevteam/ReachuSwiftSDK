@@ -44,39 +44,6 @@ struct ViaplayHomeView: View {
                         .padding(.top, 16)
                         .padding(.bottom, 20)
 
-                        //Reachu
-                        VStack(alignment: .leading, spacing: 10) {                                          
-                            HStack(alignment: .top, spacing: 12) {
-                                Text("Ukens tilbud")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.bottom, 20)
-                                Spacer()                            
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Sponset av")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                    
-                                    Image("logo1")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: 80, maxHeight: 24)
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            RProductSlider(
-                                title: nil,
-                                products: nil,
-                                categoryId: nil,
-                                layout: .cards,
-                                showSeeAll: false,
-                                maxItems: 12
-                            )
-                            .padding(.bottom, 8)
-                        }
-                        .frame(maxWidth: geometry.size.width)
-                        .padding(.bottom, 10)
-                         //Reachu
                         // Category Buttons Grid (2x2 + Channels on left)
                         VStack(spacing: 10) {
                             HStack(spacing: 12) {
@@ -112,40 +79,36 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 10) {
-                                    CategoryCard(
-                                        title: "Norske Truckers",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: "S3 | E2"
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Kraven The Hunter",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Paradise Hotel",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: "S17 | E28"
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Series 4",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: "S1 | E5"
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Series 5",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: "S2 | E12"
-                                    )
+                            GeometryReader { scrollGeometry in
+                                let cardWidth = (scrollGeometry.size.width - 32 - 24) / 3 // 32 = padding, 24 = spacing between 3 cards
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        CategoryCard(
+                                            title: "Norske Truckers",
+                                            localImageName: "card1",
+                                            seasonEpisode: "S3 | E2"
+                                        )
+                                        .frame(width: cardWidth)
+                                        
+                                        CategoryCard(
+                                            title: "Kraven The Hunter",
+                                            localImageName: "card2",
+                                            seasonEpisode: nil
+                                        )
+                                        .frame(width: cardWidth)
+                                        
+                                        CategoryCard(
+                                            title: "Paradise Hotel",
+                                            localImageName: "card3",
+                                            seasonEpisode: "S17 | E28"
+                                        )
+                                        .frame(width: cardWidth)
+                                    }
+                                    .padding(.horizontal, 16)
                                 }
-                                .padding(.horizontal, 16)
                             }
+                            .frame(height: 180)
                         }
                         .frame(maxWidth: geometry.size.width)
                         
@@ -158,135 +121,60 @@ struct ViaplayHomeView: View {
                                 .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 10) {
-                                    CategoryCard(
-                                        title: "American Gangster",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "The Equalizer",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "The 924th",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Movie 4",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
-                                    
-                                    CategoryCard(
-                                        title: "Movie 5",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        seasonEpisode: nil
-                                    )
+                            GeometryReader { scrollGeometry in
+                                let cardWidth = (scrollGeometry.size.width - 32 - 24) / 3 // 32 = padding, 24 = spacing between 3 cards
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        CategoryCard(
+                                            title: "American Gangster",
+                                            localImageName: "card1",
+                                            seasonEpisode: nil
+                                        )
+                                        .frame(width: cardWidth)
+                                        
+                                        CategoryCard(
+                                            title: "The Equalizer",
+                                            localImageName: "card2",
+                                            seasonEpisode: nil
+                                        )
+                                        .frame(width: cardWidth)
+                                        
+                                        CategoryCard(
+                                            title: "The Oath",
+                                            localImageName: "card3",
+                                            seasonEpisode: nil
+                                        )
+                                        .frame(width: cardWidth)
+                                    }
+                                    .padding(.horizontal, 16)
                                 }
-                                .padding(.horizontal, 16)
                             }
+                            .frame(height: 180)
                         }
                         .frame(maxWidth: geometry.size.width)
                         
-                        // Nytt og populært på Lei & kjøp Section
+                        // Ukens tilbud Section (at the end)
                         VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text("Nytt og populært på Lei & kjøp")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white)
-                                
-                                Spacer()
-                                
-                                Button(action: {}) {
-                                    Text("See all")
-                                        .font(.system(size: 12, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.7))
-                                }
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.top, 24)
-                            .frame(maxWidth: .infinity)
+                            Text("Ukens tilbud")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 24)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 10) {
-                                    RentBuyCard(
-                                        title: "Movie 1",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        badge: "Buy"
-                                    )
-                                    
-                                    RentBuyCard(
-                                        title: "The Conjuring 4",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        badge: "KINOAKTUE"
-                                    )
-                                    
-                                    RentBuyCard(
-                                        title: "Jurassic World",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        badge: "Rent"
-                                    )
-                                    
-                                    RentBuyCard(
-                                        title: "Movie 4",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        badge: "Buy"
-                                    )
-                                    
-                                    RentBuyCard(
-                                        title: "Movie 5",
-                                        imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-                                        badge: "Rent"
-                                    )
-                                }
+                            GeometryReader { scrollGeometry in
+                                RProductSlider(
+                                    title: nil,
+                                    products: nil,
+                                    categoryId: nil,
+                                    layout: .cards,
+                                    showSeeAll: false,
+                                    maxItems: 12
+                                )
                                 .padding(.horizontal, 16)
                             }
-                        }
-                        .frame(maxWidth: geometry.size.width)
-                        
-                        // Reachu Products - Auto-loaded slider (cards layout)
-                      VStack(alignment: .leading, spacing: 10) {
-                                              
-                            // Header with title and sponsor badge
-                            HStack(alignment: .top, spacing: 12) {
-                                // Title
-                                Text("Ukens tilbud")
-                                    .font(.system(size: 24, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .padding(.bottom, 20)
-                                Spacer()
-                                
-                                // Sponsor badge
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Sponset av")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                    
-                                    Image("logo1")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: 80, maxHeight: 24)
-                                }
-                            }
-                            .padding(.top, 24)
-                            .padding(.horizontal, 16)
-                            // Auto-loads based on ReachuConfiguration (currency/country)
-                            RProductSlider(
-                                title: nil,
-                                products: nil,
-                                categoryId: nil,
-                                layout: .cards,
-                                showSeeAll: false,
-                                maxItems: 12
-                            )
-                            .padding(.bottom, 8)
+                            .frame(height: 180)
                         }
                         .frame(maxWidth: geometry.size.width)
                         .padding(.bottom, 100) // Space for bottom nav

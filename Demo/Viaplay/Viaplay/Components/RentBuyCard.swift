@@ -2,72 +2,93 @@ import SwiftUI
 
 struct RentBuyCard: View {
     let title: String
-    let imageUrl: String
+    let imageUrl: String?
+    let localImageName: String?
     let badge: String
     
+    init(title: String, imageUrl: String? = nil, localImageName: String? = nil, badge: String) {
+        self.title = title
+        self.imageUrl = imageUrl
+        self.localImageName = localImageName
+        self.badge = badge
+    }
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            // Image with badge overlay
-            ZStack(alignment: .topTrailing) {
-                AsyncImage(url: URL(string: imageUrl)) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+        GeometryReader { geometry in
+            // Image - prefer local image if available
+            if let localImageName = localImageName {
+                Image(localImageName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .clipped()
+                    .cornerRadius(8)
+            } else if let imageUrl = imageUrl {
+                AsyncImage(url: URL(string: imageUrl)) { phase in
+                    switch phase {
+                    case .empty:
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .cornerRadius(8)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .clipped()
+                            .cornerRadius(8)
+                    case .failure:
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .cornerRadius(8)
+                    @unknown default:
+                        Rectangle()
+                            .fill(Color.gray.opacity(0.3))
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .cornerRadius(8)
+                    }
                 }
-                .frame(width: 120, height: 70)
-                .clipped()
-                .cornerRadius(7)
-                
-                // Badge
-                Text(badge)
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(
-                        badge == "KINOAKTUE" ? Color.red :
-                        badge == "Rent" ? Color.blue :
-                        badge == "Buy" ? Color.green : Color.gray
-                    )
-                    .cornerRadius(3)
-                    .padding(.top, 5)
-                    .padding(.trailing, 5)
+            } else {
+                Rectangle()
+                    .fill(Color.gray.opacity(0.3))
+                    .frame(width: geometry.size.width, height: geometry.size.height)
+                    .cornerRadius(8)
             }
-            
-            // Title
-            Text(title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white)
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
         }
-        .frame(width: 120, alignment: .leading)
     }
 }
 
 #Preview {
-    VStack(spacing: 16) {
-        RentBuyCard(
-            title: "The Conjuring 4",
-            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-            badge: "KINOAKTUE"
-        )
+    GeometryReader { geometry in
+        let cardWidth = (geometry.size.width - 32 - 24) / 3
         
-        RentBuyCard(
-            title: "Jurassic World",
-            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-            badge: "Rent"
-        )
-        
-        RentBuyCard(
-            title: "Movie 1",
-            imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
-            badge: "Buy"
-        )
+        ScrollView(.horizontal) {
+            HStack(spacing: 12) {
+                RentBuyCard(
+                    title: "The Conjuring 4",
+                    localImageName: "card1",
+                    badge: "KINOAKTUE"
+                )
+                .frame(width: cardWidth, height: 180)
+                
+                RentBuyCard(
+                    title: "Jurassic World",
+                    localImageName: "card2",
+                    badge: "Rent"
+                )
+                .frame(width: cardWidth, height: 180)
+                
+                RentBuyCard(
+                    title: "Movie 1",
+                    localImageName: "card3",
+                    badge: "Buy"
+                )
+                .frame(width: cardWidth, height: 180)
+            }
+            .padding(.horizontal, 16)
+        }
+        .background(Color(hex: "1B1B25"))
     }
-    .background(Color.black)
-    .padding()
 }

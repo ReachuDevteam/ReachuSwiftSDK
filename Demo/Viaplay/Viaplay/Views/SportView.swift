@@ -101,9 +101,10 @@ struct SportView: View {
                                         selectedTab: $selectedTab,
                                         logo: "PREMIER PADEL",
                                         logoIcon: "star.fill",
-                                        title: "New Giza P2",
+                                        title: "Barcelona - PSG",
                                         subtitle: "Premier Padel",
-                                        time: "15:00"
+                                        time: "15:00",
+                                        backgroundImage: "bg"
                                     )
                                     
                                     LiveSportCard(
@@ -144,29 +145,6 @@ struct SportView: View {
                             ]
                         )
                         
-                        // De beste motorklippene Section
-                        SportSection(
-                            title: "De beste motorklippene! 🏁",
-                            cards: [
-                                SportCard(
-                                    selectedTab: $selectedTab,
-                                    imageUrl: "img1",
-                                    time: "29:26",
-                                    title: "Dette er sikkeleg racing! Se høydepunktene fra Mexico Grand Prix",
-                                    subtitle: "FORMEL 1 | 2K. OKTOBER",
-                                    isLarge: false
-                                ),
-                                SportCard(
-                                    selectedTab: $selectedTab,
-                                    imageUrl: "img1",
-                                    time: "00:51",
-                                    title: "Haaland ofret sitt",
-                                    subtitle: "PREMIER LEAGUE",
-                                    isLarge: false
-                                )
-                            ]
-                        )
-                        
                         // Populær sport Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Populær sport")
@@ -177,23 +155,11 @@ struct SportView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             HStack(spacing: 8) {
-                                PopularSportCard(
-                                    color: Color(hex: "4A148C"),
-                                    icon: "soccerball",
-                                    title: "Premier League"
-                                )
+                                PopularSportCard(imageName: "cat1")
                                 
-                                PopularSportCard(
-                                    color: Color(hex: "00796B"),
-                                    icon: "trophy.fill",
-                                    title: "Carabao Cup"
-                                )
+                                PopularSportCard(imageName: "cat2")
                                 
-                                PopularSportCard(
-                                    color: Color(hex: "E65100"),
-                                    icon: "flag.fill",
-                                    title: "Europa League"
-                                )
+                                PopularSportCard(imageName: "cat3")
                             }
                             .padding(.horizontal, 16)
                         }
@@ -497,6 +463,17 @@ struct LiveSportCard: View {
     let title: String
     let subtitle: String
     let time: String
+    let backgroundImage: String?
+    
+    init(selectedTab: Binding<Int>, logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String? = nil) {
+        self._selectedTab = selectedTab
+        self.logo = logo
+        self.logoIcon = logoIcon
+        self.title = title
+        self.subtitle = subtitle
+        self.time = time
+        self.backgroundImage = backgroundImage
+    }
     
     var body: some View {
         NavigationLink(destination: SportDetailView(
@@ -507,10 +484,24 @@ struct LiveSportCard: View {
         )) {
             ZStack(alignment: .topLeading) {
                 // Background card
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(hex: "2C2D36"))
-                    .frame(width: 310, height: 190)
-                    .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                if let backgroundImage = backgroundImage {
+                    Image(backgroundImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 310, height: 190)
+                        .clipped()
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color.black.opacity(0.4))
+                        )
+                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                } else {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(hex: "2C2D36"))
+                        .frame(width: 310, height: 190)
+                        .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+                }
                 
                 // LIVE badge
                 Text("LIVE")
@@ -522,64 +513,70 @@ struct LiveSportCard: View {
                     .cornerRadius(5)
                     .padding(12)
                 
-                // Center content
-                VStack(spacing: 8) {
-                    // Logo with icon - centered
-                    HStack(spacing: 6) {
-                        Image(systemName: logoIcon)
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundColor(.yellow)
-                        
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(logo.components(separatedBy: " ").first ?? "")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(.white)
+                if backgroundImage == nil {
+                    // Center content - only show when there's no background image
+                    VStack(spacing: 8) {
+                        // Logo with icon - centered
+                        HStack(spacing: 6) {
+                            Image(systemName: logoIcon)
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(.yellow)
                             
-                            if let secondPart = logo.components(separatedBy: " ").dropFirst().first {
-                                Text(secondPart)
-                                    .font(.system(size: 18, weight: .bold))
+                            VStack(alignment: .leading, spacing: 0) {
+                                Text(logo.components(separatedBy: " ").first ?? "")
+                                    .font(.system(size: 14, weight: .regular))
                                     .foregroundColor(.white)
+                                
+                                if let secondPart = logo.components(separatedBy: " ").dropFirst().first {
+                                    Text(secondPart)
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
                             }
                         }
+                        .frame(maxWidth: .infinity)
+                        
+                        // Title
+                        Text(title)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        // Subtitle
+                        Text(subtitle)
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundColor(.white.opacity(0.7))
                     }
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.top, 30)
                     
-                    // Title
-                    Text(title)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                    
-                    // Subtitle
-                    Text(subtitle)
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundColor(.white.opacity(0.7))
+                    // Bottom content - only show when there's no background image
+                    VStack {
+                        Spacer()
+                        
+                        HStack {
+                            // Time
+                            Text(time)
+                                .font(.system(size: 13, weight: .regular))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            // Ellipsis menu
+                            Button(action: {}) {
+                                Image(systemName: "ellipsis")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .rotationEffect(.degrees(90))
+                            }
+                        }
+                        .padding(.horizontal, 12)
+                    }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, 30)
                 
-                // Bottom content
+                // Progress bar - always show
                 VStack {
                     Spacer()
                     
-                    HStack {
-                        // Time
-                        Text(time)
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        // Ellipsis menu
-                        Button(action: {}) {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                                .rotationEffect(.degrees(90))
-                        }
-                    }
-                    .padding(.horizontal, 12)
-                    
-                    // Progress bar
                     GeometryReader { progressGeometry in
                         HStack(spacing: 0) {
                             Rectangle()
@@ -606,26 +603,16 @@ struct LiveSportCard: View {
 }
 
 struct PopularSportCard: View {
-    let color: Color
-    let icon: String
-    let title: String
+    let imageName: String
     
     var body: some View {
-        VStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 32, weight: .bold))
-                .foregroundColor(.white)
-            
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 80)
-        .background(color)
-        .cornerRadius(10)
+        Image(imageName)
+            .resizable()
+            .aspectRatio(contentMode: .fill)
+            .frame(maxWidth: 120)
+            .frame(height: 200)
+            .clipped()
+            .cornerRadius(10)
     }
 }
 

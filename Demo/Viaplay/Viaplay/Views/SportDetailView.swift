@@ -32,8 +32,8 @@ struct SportDetailView: View {
                     VStack(spacing: 0) {
                         // Hero section with image and overlays
                         ZStack(alignment: .topLeading) {
-                            // Background image - use img1 for all images
-                            Image("img1")
+                            // Background image - use bg for Barcelona - PSG
+                            Image("bg")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: geometry.size.width, height: 320)
@@ -181,7 +181,7 @@ struct SportDetailView: View {
                             DetailRow(icon: "mappin.circle", text: "Newgiza Sports Club")
                             
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Padel: Premier Padel")
+                                Text("Padel: Champions League")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white)
                                 
@@ -196,7 +196,7 @@ struct SportDetailView: View {
                         
                         // Recommended section
                         VStack(alignment: .leading, spacing: 12) {
-                            Text("Kommende innen Premier Padel")
+                            Text("Kommende innen Champions League")
                                 .font(.system(size: 16, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
