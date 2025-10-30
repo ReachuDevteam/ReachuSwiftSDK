@@ -6,7 +6,7 @@ struct RentBuyCard: View {
     let badge: String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             // Image with badge overlay
             ZStack(alignment: .topTrailing) {
                 AsyncImage(url: URL(string: imageUrl)) { image in
@@ -17,34 +17,34 @@ struct RentBuyCard: View {
                     Rectangle()
                         .fill(Color.gray.opacity(0.3))
                 }
-                .frame(width: 140, height: 80)
+                .frame(width: 120, height: 70)
                 .clipped()
-                .cornerRadius(8)
+                .cornerRadius(7)
                 
                 // Badge
                 Text(badge)
-                    .font(.system(size: 10, weight: .semibold))
+                    .font(.system(size: 9, weight: .semibold))
                     .foregroundColor(.white)
-                    .padding(.horizontal, 6)
+                    .padding(.horizontal, 5)
                     .padding(.vertical, 2)
                     .background(
                         badge == "KINOAKTUE" ? Color.red :
                         badge == "Rent" ? Color.blue :
                         badge == "Buy" ? Color.green : Color.gray
                     )
-                    .cornerRadius(4)
-                    .padding(.top, 6)
-                    .padding(.trailing, 6)
+                    .cornerRadius(3)
+                    .padding(.top, 5)
+                    .padding(.trailing, 5)
             }
             
             // Title
             Text(title)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
         }
-        .frame(width: 140, alignment: .leading)
+        .frame(width: 120, alignment: .leading)
     }
 }
 

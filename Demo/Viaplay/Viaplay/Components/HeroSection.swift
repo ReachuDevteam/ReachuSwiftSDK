@@ -17,7 +17,7 @@ struct HeroSection: View {
                 Image("bg-main")
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: geometry.size.width, height: 620)
+                    .frame(width: geometry.size.width, height: 500)
                     .clipped()
                 
                 // Dark gradient overlay (fade to background color)
@@ -32,7 +32,7 @@ struct HeroSection: View {
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .frame(width: geometry.size.width, height: 620)
+                .frame(width: geometry.size.width, height: 500)
                 
                     VStack(spacing: 0) {
                         // Header with Logo and Avatar
@@ -43,53 +43,53 @@ struct HeroSection: View {
                             Image("logo")
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(height: 26)
+                                .frame(height: 22)
                             
                             Spacer()
                             
                             // Avatar/Profile circle (instead of boombox icon)
                             Circle()
                                 .fill(Color.cyan.opacity(0.3))
-                                .frame(width: 36, height: 36)
+                                .frame(width: 30, height: 30)
                                 .overlay(
                                     Image(systemName: "person.fill")
-                                        .font(.system(size: 16))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.cyan)
                                 )
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, 60)
+                        .padding(.top, 50)
                         
                         Spacer()
                         
                         // Content at bottom
-                        VStack(alignment: .center, spacing: 12) {
+                        VStack(alignment: .center, spacing: 10) {
                             // Title (centered)
                             Text(content.title)
-                                .font(.system(size: 28, weight: .bold))
+                                .font(.system(size: 24, weight: .bold))
                                 .foregroundColor(.white)
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
+                                .padding(.horizontal, 20)
                                 .fixedSize(horizontal: false, vertical: true)
                             
                             // Description (centered)
                             Text(content.description)
-                                .font(.system(size: 12, weight: .regular))
+                                .font(.system(size: 11, weight: .regular))
                                 .foregroundColor(.white.opacity(0.95))
                                 .lineLimit(2)
                                 .multilineTextAlignment(.center)
-                                .padding(.horizontal, 24)
+                                .padding(.horizontal, 20)
                                 .fixedSize(horizontal: false, vertical: true)
                             
                             // Action Buttons (centered) - Same size for both
-                            HStack(spacing: 12) {
+                            HStack(spacing: 10) {
                                 // Crown Button (Pink/Magenta) - Same size as Les mer
                                 Button(action: {}) {
                                     Image(systemName: "crown.fill")
-                                        .font(.system(size: 18, weight: .bold))
+                                        .font(.system(size: 16, weight: .bold))
                                         .foregroundColor(.white)
-                                        .frame(width: 160, height: 50)
+                                        .frame(width: 140, height: 44)
                                         .background(
                                             Color(red: 0.96, green: 0.08, blue: 0.42) // Magenta/Pink #F51569
                                         )
@@ -99,9 +99,9 @@ struct HeroSection: View {
                                 // Les mer Button (Dark Gray) - Same size as Crown
                                 Button(action: {}) {
                                     Text("Les mer")
-                                        .font(.system(size: 15, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .frame(width: 160, height: 50)
+                                        .frame(width: 140, height: 44)
                                         .background(Color(red: 0.23, green: 0.24, blue: 0.27))
                                         .cornerRadius(10)
                                 }
@@ -110,12 +110,12 @@ struct HeroSection: View {
                         }
                         .frame(maxWidth: geometry.size.width)
                         .padding(.horizontal, 16)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 18)
                     }
             }
-            .frame(width: geometry.size.width, height: 620)
+            .frame(width: geometry.size.width, height: 500)
         }
-        .frame(height: 620)
+        .frame(height: 500)
     }
 }
 

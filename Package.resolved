@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/klarna/klarna-mobile-sdk-spm.git",
       "state" : {
-        "revision" : "dcfb2d39b493a9b346f5b5ee86926800ef4aafd7",
-        "version" : "2.8.1"
+        "revision" : "ab4c6e3602e2338b8c772597f7a7d1b9369b5dbd",
+        "version" : "2.8.0"
       }
     },
     {

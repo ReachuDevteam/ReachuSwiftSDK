@@ -5,7 +5,7 @@ import ReachuUI
 /// Componente para mostrar un producto individual
 /// Estilo basado en las cards del SDK de Reachu
 /// Los productos se fetchean desde la API de Reachu usando el ID del WebSocket
-struct TV2ProductOverlay: View {
+struct ViaplayProductOverlay: View {
     let productEvent: ProductEventData  // Datos del WebSocket (incluye ID y fallback)
     let isChatExpanded: Bool
     let sdk: SdkClient
@@ -84,6 +84,12 @@ struct TV2ProductOverlay: View {
         .task(id: productEvent.productId) {
             // Fetch del producto cuando aparece el componente o cambia el productId
             await viewModel.fetchProduct(productId: productEvent.productId)
+        }
+        .onChange(of: productEvent.productId) { newProductId in
+            // Asegurar que el fetch se ejecute cuando cambia el productId
+            Task {
+                await viewModel.fetchProduct(productId: newProductId)
+            }
         }
         .sheet(isPresented: $showProductDetail) {
             if let apiProduct = viewModel.product {
@@ -379,7 +385,7 @@ struct TV2ProductOverlay: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
                                 .background(
-                                    Color(hex: "E93CAC")
+                                    ViaplayTheme.Colors.pink
                                 )
                                 .rotationEffect(.degrees(-10))
                                 .offset(x: 8, y: -8)
@@ -404,7 +410,7 @@ struct TV2ProductOverlay: View {
                         // Precio
                         Text(displayPrice)
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(TV2Theme.Colors.primary)
+                            .foregroundColor(ViaplayTheme.Colors.pink)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -433,7 +439,7 @@ struct TV2ProductOverlay: View {
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(showCheckmark ? Color.green : (viewModel.product != nil ? Color(hex: "2C0D65") : Color.gray))
+                            .fill(showCheckmark ? Color.green : (viewModel.product != nil ? ViaplayTheme.Colors.pink.opacity(0.8) : Color.gray))
                     )
                 }
                 .disabled(showCheckmark || viewModel.product == nil)
@@ -451,277 +457,3 @@ struct TV2ProductOverlay: View {
         }
     }
 }
-
-/// Componente para mostrar dos productos lado a lado
-/// Similar a RProductSlider pero más compacto
-struct TV2TwoProductsOverlay: View {
-    let product1: ProductEventData
-    let product2: ProductEventData
-    let onAddToCart: () -> Void
-    let onDismiss: () -> Void
-    
-    @State private var dragOffset: CGFloat = 0
-    @State private var addedProducts: Set<String> = []
-    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
-    @Environment(\.verticalSizeClass) private var verticalSizeClass
-    
-    private var isLandscape: Bool {
-        verticalSizeClass == .compact
-    }
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            productsCard
-                .padding(.horizontal, 16)
-                .padding(.bottom, isLandscape ? 16 : 80)
-                .offset(y: dragOffset)
-                .gesture(
-                    DragGesture()
-                        .onChanged { value in
-                            if value.translation.height > 0 {
-                                dragOffset = value.translation.height
-                            }
-                        }
-                        .onEnded { value in
-                            if value.translation.height > 100 {
-                                onDismiss()
-                            } else {
-                                withAnimation(.spring()) {
-                                    dragOffset = 0
-                                }
-                            }
-                        }
-                )
-        }
-    }
-    
-    private var productsCard: some View {
-        VStack(spacing: 0) {
-            VStack(spacing: 12) {
-                // Drag indicator
-                Capsule()
-                    .fill(Color.white.opacity(0.3))
-                    .frame(width: 32, height: 4)
-                
-                // Sponsor logo arriba a la izquierda
-                if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
-                    HStack {
-                        AsyncImage(url: URL(string: campaignLogo)) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 80, maxHeight: 30)
-                            case .empty:
-                                ProgressView()
-                                    .scaleEffect(0.5)
-                                    .frame(width: 80, height: 30)
-                            case .failure:
-                                EmptyView()
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.top, 4)
-                }
-                
-                // Header
-            HStack {
-                Text("🛍️ ANBEFALTE PRODUKTER")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundColor(Color(hex: "5B5FCF"))
-                Spacer()
-            }
-            
-            // Productos en grid
-            if isLandscape {
-                HStack(spacing: 12) {
-                    productMiniCard(product1)
-                    productMiniCard(product2)
-                }
-            } else {
-                VStack(spacing: 12) {
-                    productMiniCard(product1)
-                    productMiniCard(product2)
-                }
-            }
-            }
-            .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.4))
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(.ultraThinMaterial)
-                    )
-            )
-            .shadow(color: .black.opacity(0.6), radius: 20, x: 0, y: 8)
-            
-            // Sponsor badge debajo del contenido principal
-            if let campaignLogo = product1.campaignLogo, !campaignLogo.isEmpty {
-                HStack {
-                    Spacer()
-                    TV2SponsorBadge(logoUrl: campaignLogo)
-                        .padding(.top, 8)
-                        .padding(.trailing, 12)
-                }
-            }
-        }
-    }
-    
-    private func productMiniCard(_ product: ProductEventData) -> some View {
-        HStack(spacing: 12) {
-            // Imagen
-            AsyncImage(url: URL(string: product.imageUrl)) { phase in
-                switch phase {
-                case .empty:
-                    ProgressView()
-                        .frame(width: 80, height: 80)
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 80, height: 80)
-                        .clipped()
-                        .cornerRadius(8)
-                case .failure:
-                    Color.gray.opacity(0.3)
-                        .frame(width: 80, height: 80)
-                        .cornerRadius(8)
-                        .overlay(
-                            Image(systemName: "photo")
-                                .font(.system(size: 24))
-                                .foregroundColor(.white.opacity(0.5))
-                        )
-                @unknown default:
-                    EmptyView()
-                }
-            }
-            
-            // Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.name)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                    .lineLimit(2)
-                
-                Text(product.price)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(TV2Theme.Colors.primary)
-                
-                Spacer()
-                
-                // Botón compacto
-                Button(action: {
-                    onAddToCart()
-                    addedProducts.insert(product.id)
-                    
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        addedProducts.remove(product.id)
-                    }
-                }) {
-                    HStack(spacing: 4) {
-                        Image(systemName: addedProducts.contains(product.id) ? "checkmark.circle.fill" : "cart.fill")
-                            .font(.system(size: 12))
-                        Text(addedProducts.contains(product.id) ? "Lagt til" : "Legg til")
-                            .font(.system(size: 11, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(addedProducts.contains(product.id) ? Color.green : Color(hex: "5B5FCF"))
-                    )
-                }
-                .disabled(addedProducts.contains(product.id))
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
-        )
-    }
-}
-
-// MARK: - Previews
-
-#Preview("Single Product") {
-    let baseURL = URL(string: "https://api.reachu.io/graphql")!
-    let sdk = SdkClient(baseUrl: baseURL, apiKey: "DEMO_KEY")
-    
-    ZStack {
-        Color.black.ignoresSafeArea()
-        
-        TV2ProductOverlay(
-            productEvent: ProductEventData(
-                id: "prod_123",
-                productId: "408841",  // ID numérico real de Reachu
-                name: "iPhone 15 Pro Max (WebSocket Fallback)",
-                description: "El último modelo con titanio y cámara de 48MP",
-                price: "$1,199",
-                currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
-                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
-            ),
-            isChatExpanded: false,
-            sdk: sdk,
-            currency: "USD",
-            country: "US",
-            onAddToCart: { product in
-                if let p = product {
-                    print("Agregado al carrito (API): \(p.title)")
-                } else {
-                    print("Agregado al carrito (WebSocket fallback)")
-                }
-            },
-            onDismiss: {
-                print("Cerrado")
-            }
-        )
-    }
-}
-
-#Preview("Two Products") {
-    ZStack {
-        Color.black.ignoresSafeArea()
-        
-        TV2TwoProductsOverlay(
-            product1: ProductEventData(
-                id: "prod_1",
-                productId: "408841",
-                name: "iPhone 15 Pro",
-                description: "Titanio azul",
-                price: "$999",
-                currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1592286927505-b7e00a46f74f",
-                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
-            ),
-            product2: ProductEventData(
-                id: "prod_2",
-                productId: "408842",
-                name: "AirPods Pro",
-                description: "Con USB-C",
-                price: "$249",
-                currency: "USD",
-                imageUrl: "https://images.unsplash.com/photo-1572569511254-d8f925fe2cbb",
-                campaignLogo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Adidas_logo.png/800px-Adidas_logo.png"
-            ),
-            onAddToCart: {
-                print("Agregado")
-            },
-            onDismiss: {
-                print("Cerrado")
-            }
-        )
-    }
-}
-

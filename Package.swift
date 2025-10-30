@@ -75,8 +75,8 @@ let package = Package(
 
         .package(
             url: "https://github.com/klarna/klarna-mobile-sdk-spm.git",
-            .upToNextMajor(from: "2.2.0")),
-
+            exact: "2.8.0"
+        ),
         // Socket.IO client for Tipio realtime backend
         .package(url: "https://github.com/socketio/socket.io-client-swift", from: "16.0.0"),
 

@@ -6,53 +6,55 @@
 //
 
 import SwiftUI
+import ReachuUI
 
 struct ViaplayHomeView: View {
-    @State private var selectedTab = 0
+    @Binding var selectedTab: Int
+    @Binding var showSportView: Bool
     @State private var scrollOffset: CGFloat = 0
-    @State private var showSportView = false
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
     var body: some View {
-        NavigationView {
-            GeometryReader { geometry in
-                ZStack(alignment: .top) {
-                    // Background
-                    Color(hex: "1B1B25")
-                        .ignoresSafeArea()
-                
-                // Main Content
-                ScrollView {
+        GeometryReader { geometry in
+            ZStack(alignment: .top) {
+                // Background
+                Color(hex: "1B1B25")
+                    .ignoresSafeArea()
+            
+            // Main Content
+            ScrollView {
                     VStack(spacing: 0) {
                         // Hero Section (extends to top)
                         HeroSection(content: heroContent)
                             .frame(width: geometry.size.width)
                         
                         // Pagination dots after hero
-                        HStack(spacing: 7) {
+                        HStack(spacing: 5) {
                             Circle()
                                 .fill(.white)
-                                .frame(width: 8, height: 8)
+                                .frame(width: 6, height: 6)
                             
                             ForEach(0..<5) { _ in
                                 Circle()
                                     .fill(.white.opacity(0.4))
-                                    .frame(width: 7, height: 7)
+                                    .frame(width: 5, height: 5)
                             }
                         }
-                        .padding(.top, 20)
-                        .padding(.bottom, 24)
+                        .padding(.top, 16)
+                        .padding(.bottom, 20)
                         
                         // Category Buttons Grid (2x2 + Channels on left)
-                        VStack(spacing: 12) {
+                        VStack(spacing: 10) {
                             HStack(spacing: 12) {
                                 CategoryButton(title: "Series") {}
                                 CategoryButton(title: "Films") {}
                             }
                             
                             HStack(spacing: 12) {
-                                CategoryButton(title: "Sport") {}
+                                CategoryButton(title: "Sport") {
+                                    selectedTab = 1
+                                }
                                 CategoryButton(title: "Kids") {}
                             }
                             
@@ -69,16 +71,16 @@ struct ViaplayHomeView: View {
                         .frame(maxWidth: geometry.size.width)
                         
                         // Akkurat nå ser andre på Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
                             Text("Akkurat nå ser andre på")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
-                                .padding(.top, 32)
+                                .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 10) {
                                     CategoryCard(
                                         title: "Norske Truckers",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -115,16 +117,16 @@ struct ViaplayHomeView: View {
                         .frame(maxWidth: geometry.size.width)
                         
                         // Nytt hos oss Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
                             Text("Nytt hos oss")
-                                .font(.system(size: 17, weight: .semibold))
+                                .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
-                                .padding(.top, 32)
+                                .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 10) {
                                     CategoryCard(
                                         title: "American Gangster",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -161,26 +163,26 @@ struct ViaplayHomeView: View {
                         .frame(maxWidth: geometry.size.width)
                         
                         // Nytt og populært på Lei & kjøp Section
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 10) {
                             HStack {
                                 Text("Nytt og populært på Lei & kjøp")
-                                    .font(.system(size: 17, weight: .semibold))
+                                    .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white)
                                 
                                 Spacer()
                                 
                                 Button(action: {}) {
                                     Text("See all")
-                                        .font(.system(size: 14, weight: .medium))
+                                        .font(.system(size: 12, weight: .medium))
                                         .foregroundColor(.white.opacity(0.7))
                                 }
                             }
                             .padding(.horizontal, 16)
-                            .padding(.top, 32)
+                            .padding(.top, 24)
                             .frame(maxWidth: .infinity)
                             
                             ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
+                                HStack(spacing: 10) {
                                     RentBuyCard(
                                         title: "Movie 1",
                                         imageUrl: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=300",
@@ -215,6 +217,28 @@ struct ViaplayHomeView: View {
                             }
                         }
                         .frame(maxWidth: geometry.size.width)
+                        
+                        // Reachu Products - Auto-loaded slider (cards layout)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Shop")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 24)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // Auto-loads based on ReachuConfiguration (currency/country)
+                            RProductSlider(
+                                title: nil,
+                                products: nil,
+                                categoryId: nil,
+                                layout: .cards,
+                                showSeeAll: false,
+                                maxItems: 12
+                            )
+                            .padding(.bottom, 8)
+                        }
+                        .frame(maxWidth: geometry.size.width)
                         .padding(.bottom, 100) // Space for bottom nav
                     }
                 }
@@ -234,22 +258,22 @@ struct ViaplayHomeView: View {
                                 Image("logo")
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
-                                    .frame(height: 24)
+                                    .frame(height: 20)
                                 
                                 Spacer()
                                 
                                 // Avatar/Profile circle
                                 Circle()
                                     .fill(Color.cyan.opacity(0.3))
-                                    .frame(width: 32, height: 32)
+                                    .frame(width: 28, height: 28)
                                     .overlay(
                                         Image(systemName: "person.fill")
-                                            .font(.system(size: 14))
+                                            .font(.system(size: 12))
                                             .foregroundColor(.cyan)
                                     )
                             }
                             .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
+                            .padding(.vertical, 8)
                         }
                         
                         Divider()
@@ -266,30 +290,12 @@ struct ViaplayHomeView: View {
                     ViaplayBottomNav(selectedTab: $selectedTab)
                         .frame(width: geometry.size.width)
                 }
-                
-                // Hidden NavigationLink for Sport
-                NavigationLink(destination: SportView(), isActive: $showSportView) {
-                    EmptyView()
-                }
-                .hidden()
             }
             .frame(width: geometry.size.width)
-            .onChange(of: selectedTab) { newValue in
-                if newValue == 1 { // Sport tab
-                    showSportView = true
-                    // Reset tab to 0 after navigation
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        selectedTab = 0
-                    }
-                }
-            }
-            .navigationBarHidden(true)
-            }
-            .navigationViewStyle(StackNavigationViewStyle())
         }
     }
 }
 
 #Preview {
-    ViaplayHomeView()
+    ViaplayHomeView(selectedTab: .constant(0), showSportView: .constant(false))
 }
