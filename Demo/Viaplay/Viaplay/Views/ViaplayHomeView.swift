@@ -43,7 +43,40 @@ struct ViaplayHomeView: View {
                         }
                         .padding(.top, 16)
                         .padding(.bottom, 20)
-                        
+
+                        //Reachu
+                        VStack(alignment: .leading, spacing: 10) {                                          
+                            HStack(alignment: .top, spacing: 12) {
+                                Text("Ukens tilbud")
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .padding(.bottom, 20)
+                                Spacer()                            
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sponset av")
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.8))
+                                    
+                                    Image("logo1")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            RProductSlider(
+                                title: nil,
+                                products: nil,
+                                categoryId: nil,
+                                layout: .cards,
+                                showSeeAll: false,
+                                maxItems: 12
+                            )
+                            .padding(.bottom, 8)
+                        }
+                        .frame(maxWidth: geometry.size.width)
+                        .padding(.bottom, 10)
+                         //Reachu
                         // Category Buttons Grid (2x2 + Channels on left)
                         VStack(spacing: 10) {
                             HStack(spacing: 12) {
