@@ -6,7 +6,7 @@ struct CategoryCard: View {
     let seasonEpisode: String?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 6) {
             // Image
             AsyncImage(url: URL(string: imageUrl)) { image in
                 image
@@ -16,13 +16,13 @@ struct CategoryCard: View {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
             }
-            .frame(width: 140, height: 80)
+            .frame(width: 120, height: 70)
             .clipped()
-            .cornerRadius(8)
+            .cornerRadius(7)
             
             // Title
             Text(title)
-                .font(.system(size: 14, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white)
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
@@ -30,12 +30,12 @@ struct CategoryCard: View {
             // Season/Episode if available
             if let seasonEpisode = seasonEpisode {
                 Text(seasonEpisode)
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: 11, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
                     .lineLimit(1)
             }
         }
-        .frame(width: 140, alignment: .leading)
+        .frame(width: 120, alignment: .leading)
     }
 }
 

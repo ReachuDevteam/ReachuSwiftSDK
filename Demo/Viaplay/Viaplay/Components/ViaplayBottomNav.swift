@@ -67,12 +67,12 @@ struct TabButton: View {
         Button(action: action) {
             VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 22))
-                    .foregroundColor(isSelected ? .white : ViaplayTheme.Colors.lightGray)
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .white : .white.opacity(0.6))
                 
                 Text(label)
                     .font(.system(size: 11))
-                    .foregroundColor(isSelected ? .white : ViaplayTheme.Colors.lightGray)
+                    .foregroundColor(isSelected ? .white : .white.opacity(0.6))
             }
             .frame(maxWidth: .infinity)
         }

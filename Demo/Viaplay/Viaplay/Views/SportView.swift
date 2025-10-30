@@ -45,24 +45,6 @@ struct SportView: View {
                 
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Header with back button
-                        HStack {
-                            Button(action: {
-                                showSportView = false
-                                selectedTab = 0
-                            }) {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 20, weight: .semibold))
-                                    .foregroundColor(.white)
-                            }
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.top, 50)
-                        .padding(.bottom, 16)
-                        .frame(width: geometry.size.width)
-                        
                         // Vis sendeskjema button
                         Button(action: {}) {
                             HStack {
@@ -78,13 +60,14 @@ struct SportView: View {
                             .cornerRadius(12)
                         }
                         .padding(.horizontal, 16)
+                        .padding(.top, 50)
                         .padding(.bottom, 24)
                         .frame(width: geometry.size.width)
                         
                         // Vår beste sport Section with Carousel
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Vår beste sport")
-                                .font(.system(size: 22, weight: .regular))
+                                .font(.system(size: 19, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 24)
@@ -105,22 +88,37 @@ struct SportView: View {
                         // Live akkurat nå Section
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Live akkurat nå")
-                                .font(.system(size: 22, weight: .regular))
+                                .font(.system(size: 19, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             
-                            LiveSportCard(
-                                selectedTab: $selectedTab,
-                                imageUrl: "img1",
-                                title: "New Giza P2",
-                                subtitle: "Premier Padel",
-                                time: "08:00"
-                            )
-                            .padding(.horizontal, 16)
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    LiveSportCard(
+                                        selectedTab: $selectedTab,
+                                        logo: "PREMIER PADEL",
+                                        logoIcon: "star.fill",
+                                        title: "New Giza P2",
+                                        subtitle: "Premier Padel",
+                                        time: "15:00"
+                                    )
+                                    
+                                    LiveSportCard(
+                                        selectedTab: $selectedTab,
+                                        logo: "CHALLENGE TOUR",
+                                        logoIcon: "globe",
+                                        title: "Rolex Grand",
+                                        subtitle: "European Challenge",
+                                        time: "12:00"
+                                    )
+                                }
+                                .padding(.horizontal, 16)
+                            }
                         }
                         .frame(width: geometry.size.width)
+                        .padding(.bottom, 16)
                         
                         // De beste klippene akkurat nå Section
                         SportSection(
@@ -144,7 +142,6 @@ struct SportView: View {
                                 )
                             ]
                         )
-                        .frame(width: geometry.size.width)
                         
                         // De beste motorklippene Section
                         SportSection(
@@ -168,12 +165,11 @@ struct SportView: View {
                                 )
                             ]
                         )
-                        .frame(width: geometry.size.width)
                         
                         // Populær sport Section
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Populær sport")
-                                .font(.system(size: 20, weight: .regular))
+                                .font(.system(size: 17, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 32)
@@ -201,8 +197,11 @@ struct SportView: View {
                             .padding(.horizontal, 16)
                         }
                         .frame(width: geometry.size.width)
+                        .padding(.bottom, 16)
                         
-                        .padding(.bottom, 100)
+                        // Bottom padding for navigation
+                        Spacer()
+                            .frame(height: 100)
                     }
                 }
                 .ignoresSafeArea(edges: .top)
@@ -356,33 +355,32 @@ struct SportSection: View {
     let cards: [SportCard]
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack(alignment: .leading, spacing: 12) {
-                Text(title)
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundColor(.white)
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 17, weight: .regular))
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.top, 32)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            if cards.count == 1 && cards[0].isLarge {
+                // Large single card
+                cards[0]
                     .padding(.horizontal, 16)
-                    .padding(.top, 32)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                
-                if cards.count == 1 && cards[0].isLarge {
-                    // Large single card
-                    cards[0]
-                        .padding(.horizontal, 16)
-                } else {
-                    // Horizontal scroll for multiple cards
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(cards.indices, id: \.self) { index in
-                                cards[index]
-                            }
+            } else {
+                // Horizontal scroll for multiple cards
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(cards.indices, id: \.self) { index in
+                            cards[index]
                         }
-                        .padding(.horizontal, 16)
                     }
+                    .padding(.horizontal, 16)
                 }
             }
-            .frame(width: geometry.size.width)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 16)
     }
 }
 
@@ -458,7 +456,8 @@ struct SportCard: View {
 
 struct LiveSportCard: View {
     @Binding var selectedTab: Int
-    let imageUrl: String
+    let logo: String
+    let logoIcon: String
     let title: String
     let subtitle: String
     let time: String
@@ -468,89 +467,103 @@ struct LiveSportCard: View {
             selectedTab: $selectedTab,
             title: title,
             subtitle: subtitle,
-            imageUrl: imageUrl
+            imageUrl: "img1"
         )) {
-            VStack(alignment: .leading, spacing: 0) {
-                // Image section with LIVE badge and crown
-                ZStack(alignment: .topLeading) {
-                    Image(imageUrl)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(height: 140)
-                        .clipped()
-                        .cornerRadius(12, corners: [.topLeft, .topRight])
-                    
-                    // LIVE badge
-                    Text("LIVE")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .background(Color(red: 0.96, green: 0.08, blue: 0.42))
-                        .cornerRadius(5)
-                        .padding(12)
-                    
-                    // Crown icon centered
-                    ZStack {
-                        Circle()
-                            .fill(Color.black.opacity(0.5))
-                            .frame(width: 48, height: 48)
-                        
-                        Image(systemName: "crown.fill")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .frame(height: 140)
+            ZStack(alignment: .topLeading) {
+                // Background card
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(hex: "2C2D36"))
+                    .frame(width: 310, height: 190)
+                    .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
                 
-                // Info section
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text(title)
-                            .font(.system(size: 17, weight: .semibold))
+                // LIVE badge
+                Text("LIVE")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                    .cornerRadius(5)
+                    .padding(12)
+                
+                // Center content
+                VStack(spacing: 8) {
+                    // Logo with icon - centered
+                    HStack(spacing: 6) {
+                        Image(systemName: logoIcon)
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(.yellow)
+                        
+                        VStack(alignment: .leading, spacing: 0) {
+                            Text(logo.components(separatedBy: " ").first ?? "")
+                                .font(.system(size: 14, weight: .regular))
+                                .foregroundColor(.white)
+                            
+                            if let secondPart = logo.components(separatedBy: " ").dropFirst().first {
+                                Text(secondPart)
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    // Title
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                    
+                    // Subtitle
+                    Text(subtitle)
+                        .font(.system(size: 14, weight: .regular))
+                        .foregroundColor(.white.opacity(0.7))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top, 30)
+                
+                // Bottom content
+                VStack {
+                    Spacer()
+                    
+                    HStack {
+                        // Time
+                        Text(time)
+                            .font(.system(size: 13, weight: .regular))
                             .foregroundColor(.white)
                         
-                        Text(subtitle)
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundColor(.white.opacity(0.7))
+                        Spacer()
                         
-                        // Progress bar
+                        // Ellipsis menu
+                        Button(action: {}) {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .rotationEffect(.degrees(90))
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    
+                    // Progress bar
+                    GeometryReader { progressGeometry in
                         HStack(spacing: 0) {
                             Rectangle()
                                 .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                                .frame(width: 70, height: 3)
+                                .frame(width: progressGeometry.size.width * 0.25, height: 3)
+                                .cornerRadius(1.5)
                             
                             Rectangle()
                                 .fill(Color.white.opacity(0.3))
                                 .frame(height: 3)
+                                .cornerRadius(1.5)
                         }
                         .frame(height: 3)
-                        .padding(.top, 6)
-                        
-                        Text(time)
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
-                            .padding(.top, 4)
                     }
-                    
-                    Spacer()
-                    
-                    Button(action: {}) {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(.white)
-                            .rotationEffect(.degrees(90))
-                    }
+                    .frame(height: 3)
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 12)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color(hex: "2C2D36"))
-                .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
             }
-            .background(Color(hex: "2C2D36"))
-            .cornerRadius(12)
-            .shadow(color: Color.black.opacity(0.3), radius: 8, x: 0, y: 4)
+            .frame(width: 310, height: 190)
         }
         .buttonStyle(PlainButtonStyle())
     }
