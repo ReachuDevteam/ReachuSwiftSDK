@@ -1,9 +1,10 @@
 import SwiftUI
 
-/// Poll card para casting en Viaplay
-/// Copia EXACTA del estilo de tv2demo con colores de Viaplay
-struct ViaplayCastingPollCardView: View {
+/// Componente de encuesta/poll para Viaplay
+/// Copia EXACTA de TV2PollOverlay con colores de Viaplay
+struct ViaplayPollOverlay: View {
     let poll: PollEventData
+    let isChatExpanded: Bool
     let onVote: (String) -> Void
     let onDismiss: () -> Void
     
@@ -11,8 +12,81 @@ struct ViaplayCastingPollCardView: View {
     @State private var hasVoted = false
     @State private var showResults = false
     @State private var dragOffset: CGFloat = 0
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
+    private var isLandscape: Bool {
+        verticalSizeClass == .compact
+    }
+    
+    // Ajustar bottom padding basado en si el chat está expandido
+    private var bottomPadding: CGFloat {
+        if isLandscape {
+            return isChatExpanded ? 250 : 156 // En landscape, espacio para el chat con 2 mensajes (140 + 16)
+        } else {
+            return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
+        }
+    }
     
     var body: some View {
+        VStack(spacing: 0) {
+            if isLandscape {
+                // Horizontal: ocupa lado derecho
+                Spacer()
+                HStack(spacing: 0) {
+                    Spacer()
+                    pollCard
+                        .frame(width: 300)
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16)
+                        .offset(x: dragOffset)
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    if value.translation.width > 0 {
+                                        dragOffset = value.translation.width
+                                    }
+                                }
+                                .onEnded { value in
+                                    if value.translation.width > 100 {
+                                        onDismiss()
+                                    } else {
+                                        withAnimation(.spring()) {
+                                            dragOffset = 0
+                                        }
+                                    }
+                                }
+                        )
+                }
+            } else {
+                // Vertical: sobre el chat, más compacto
+                Spacer()
+                pollCard
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, bottomPadding) // Ajuste dinámico según estado del chat
+                    .offset(y: dragOffset)
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                if value.translation.height > 0 {
+                                    dragOffset = value.translation.height
+                                }
+                            }
+                            .onEnded { value in
+                                if value.translation.height > 100 {
+                                    onDismiss()
+                                } else {
+                                    withAnimation(.spring()) {
+                                        dragOffset = 0
+                                    }
+                                }
+                            }
+                    )
+            }
+        }
+    }
+    
+    private var pollCard: some View {
         ZStack {
             // Front side - Poll question
             if !showResults {
@@ -37,32 +111,11 @@ struct ViaplayCastingPollCardView: View {
             axis: (x: 0, y: 1, z: 0),
             perspective: 0.5
         )
-        .frame(maxWidth: UIScreen.main.bounds.width - 40) // Margen de 20px a cada lado
-        .offset(y: dragOffset)
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    if value.translation.height > 0 {
-                        dragOffset = value.translation.height
-                    }
-                }
-                .onEnded { value in
-                    if value.translation.height > 100 {
-                        onDismiss()
-                    } else {
-                        withAnimation(.spring()) {
-                            dragOffset = 0
-                        }
-                    }
-                }
-        )
     }
-    
-    // MARK: - Front View
     
     private var pollFrontView: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 10) {
+            VStack(spacing: isLandscape ? 12 : 10) {
                 // Drag indicator
                 Capsule()
                     .fill(Color.white.opacity(0.3))
@@ -86,24 +139,24 @@ struct ViaplayCastingPollCardView: View {
                 .padding(.horizontal, 12)
                 .padding(.top, 4)
                 
-                // Question
+                // Title (main question)
                 Text(poll.question)
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
                     .padding(.horizontal, 16)
                 
-                // Subtitle
+                // Subtitle (optional helper text)
                 Text("Få raskere tilgang til kampene fra forsiden")
-                    .font(.system(size: 10, weight: .regular))
+                    .font(.system(size: isLandscape ? 12 : 10, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
                     .lineLimit(1)
                     .padding(.horizontal, 16)
                 
                 // Options
-                VStack(spacing: 6) {
+                VStack(spacing: isLandscape ? 8 : 6) {
                     ForEach(Array(poll.options.enumerated()), id: \.offset) { index, option in
                         pollOptionButton(option: option, index: index)
                     }
@@ -112,14 +165,14 @@ struct ViaplayCastingPollCardView: View {
                 // Timer
                 HStack(spacing: 4) {
                     Image(systemName: "clock.fill")
-                        .font(.system(size: 9))
+                        .font(.system(size: isLandscape ? 10 : 9))
                     Text("\(poll.duration)s")
-                        .font(.system(size: 10))
+                        .font(.system(size: isLandscape ? 11 : 10))
                 }
                 .foregroundColor(.white.opacity(0.6))
                 .padding(.top, 4)
             }
-            .padding(14)
+            .padding(isLandscape ? 16 : 14)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
@@ -132,11 +185,9 @@ struct ViaplayCastingPollCardView: View {
         }
     }
     
-    // MARK: - Results View
-    
     private var pollResultsView: some View {
         VStack(spacing: 0) {
-            VStack(spacing: 10) {
+            VStack(spacing: isLandscape ? 12 : 10) {
                 // Drag indicator
                 Capsule()
                     .fill(Color.white.opacity(0.3))
@@ -145,24 +196,24 @@ struct ViaplayCastingPollCardView: View {
                 
                 // Title
                 Text("Resultater")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.system(size: isLandscape ? 18 : 14, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                 
                 Text("Takk for at du stemte!")
-                    .font(.system(size: 10, weight: .regular))
+                    .font(.system(size: isLandscape ? 13 : 10, weight: .regular))
                     .foregroundColor(ViaplayTheme.Colors.pink)
                     .padding(.horizontal, 16)
                 
                 // Results bars
-                VStack(spacing: 8) {
+                VStack(spacing: isLandscape ? 12 : 8) {
                     ForEach(Array(poll.options.enumerated()), id: \.offset) { index, option in
                         resultBar(option: option, isSelected: option.text == selectedOption)
                     }
                 }
-                .padding(.top, 8)
+                .padding(.top, isLandscape ? 12 : 8)
             }
-            .padding(14)
+            .padding(isLandscape ? 20 : 14)
             .background(
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color.black.opacity(0.4))
@@ -175,7 +226,52 @@ struct ViaplayCastingPollCardView: View {
         }
     }
     
-    // MARK: - Poll Option Button
+    private func resultBar(option: PollOption, isSelected: Bool) -> some View {
+        let percentage = calculatePercentage(for: option)
+        
+        return VStack(alignment: .leading, spacing: isLandscape ? 6 : 4) {
+            HStack {
+                Text(option.text)
+                    .font(.system(size: isLandscape ? 15 : 12, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                Spacer()
+                
+                Text("\(Int(percentage))%")
+                    .font(.system(size: isLandscape ? 15 : 12, weight: .bold))
+                    .foregroundColor(isSelected ? ViaplayTheme.Colors.pink : .white)
+            }
+            
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background
+                    RoundedRectangle(cornerRadius: isLandscape ? 10 : 8)
+                        .fill(Color.white.opacity(0.2))
+                    
+                    // Fill
+                    RoundedRectangle(cornerRadius: isLandscape ? 10 : 8)
+                        .fill(isSelected ? ViaplayTheme.Colors.pink : ViaplayTheme.Colors.pink.opacity(0.6))
+                        .frame(width: geometry.size.width * (percentage / 100))
+                }
+            }
+            .frame(height: isLandscape ? 12 : 6)
+        }
+        .padding(.horizontal, 16)
+    }
+    
+    private func calculatePercentage(for option: PollOption) -> Double {
+        // Simulate results - in production, this would come from the server
+        guard let selected = selectedOption else { return 0 }
+        
+        if option.text == selected {
+            return 75.0 // Selected option gets 75%
+        } else {
+            let remaining = 25.0
+            let otherOptions = poll.options.filter { $0.text != selected }.count
+            return remaining / Double(otherOptions)
+        }
+    }
     
     private func pollOptionButton(option: PollOption, index: Int) -> some View {
         Button(action: {
@@ -201,25 +297,25 @@ struct ViaplayCastingPollCardView: View {
                             // Logo/escudo sobre fondo circular blanco
                             Circle()
                                 .fill(Color.white)
-                                .frame(width: 36, height: 36)
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
                                 .overlay(
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
-                                        .frame(width: 26, height: 26)
+                                        .frame(width: isLandscape ? 30 : 26, height: isLandscape ? 30 : 26)
                                 )
                                 .shadow(color: Color.black.opacity(0.2), radius: 4, x: 0, y: 2)
                         case .empty:
                             Circle()
                                 .fill(Color.gray.opacity(0.3))
-                                .frame(width: 36, height: 36)
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
                                 .overlay(
                                     ProgressView()
                                         .scaleEffect(0.6)
                                         .tint(.white)
                                 )
                         case .failure:
-                            // Fallback: primera letra con gradiente de Viaplay
+                            // Fallback: primera letra
                             Circle()
                                 .fill(
                                     LinearGradient(
@@ -228,10 +324,10 @@ struct ViaplayCastingPollCardView: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .frame(width: 36, height: 36)
+                                .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
                                 .overlay(
                                     Text(String(option.text.prefix(1)).uppercased())
-                                        .font(.system(size: 14, weight: .bold))
+                                        .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                                         .foregroundColor(.white)
                                 )
                         @unknown default:
@@ -239,7 +335,7 @@ struct ViaplayCastingPollCardView: View {
                         }
                     }
                 } else {
-                    // Sin avatarUrl: mostrar círculo con primera letra y gradiente de Viaplay
+                    // Sin avatarUrl: mostrar círculo con primera letra
                     Circle()
                         .fill(
                             LinearGradient(
@@ -248,23 +344,23 @@ struct ViaplayCastingPollCardView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 36, height: 36)
+                        .frame(width: isLandscape ? 40 : 36, height: isLandscape ? 40 : 36)
                         .overlay(
                             Text(String(option.text.prefix(1)).uppercased())
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: isLandscape ? 16 : 14, weight: .bold))
                                 .foregroundColor(.white)
                         )
                 }
                 
                 Text(option.text)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: isLandscape ? 14 : 12, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .background(
-                RoundedRectangle(cornerRadius: 18)
+                RoundedRectangle(cornerRadius: isLandscape ? 20 : 18)
                     .fill(
                         selectedOption == option.text 
                         ? ViaplayTheme.Colors.pink.opacity(0.6)
@@ -274,75 +370,34 @@ struct ViaplayCastingPollCardView: View {
         }
         .disabled(hasVoted)
     }
-    
-    // MARK: - Result Bar
-    
-    private func resultBar(option: PollOption, isSelected: Bool) -> some View {
-        let percentage = calculatePercentage(for: option)
-        
-        return VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(option.text)
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white)
-                
-                Spacer()
-                
-                Text("\(Int(percentage))%")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(isSelected ? ViaplayTheme.Colors.pink : .white)
-            }
-            
-            // Progress bar con GeometryReader para ancho dinámico (como tv2demo)
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Background
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.2))
-                    
-                    // Fill
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? ViaplayTheme.Colors.pink : ViaplayTheme.Colors.pink.opacity(0.6))
-                        .frame(width: geometry.size.width * (percentage / 100))
-                }
-            }
-            .frame(height: 6)
-        }
-        .padding(.horizontal, 16)
-    }
-    
-    private func calculatePercentage(for option: PollOption) -> Double {
-        // Simulate results - in production, this would come from the server
-        guard let selected = selectedOption else { return 0 }
-        
-        if option.text == selected {
-            return 75.0 // Selected option gets 75%
-        } else {
-            let remaining = 25.0
-            let otherOptions = poll.options.filter { $0.text != selected }.count
-            return remaining / Double(otherOptions)
-        }
-    }
 }
 
 #Preview {
     ZStack {
         Color.black.ignoresSafeArea()
-        ViaplayCastingPollCardView(
+        
+        ViaplayPollOverlay(
             poll: PollEventData(
-                id: "1",
-                question: "Hvem vinner kampen?",
+                id: "poll_test",
+                question: "Hvilket lag vinner Champions League?",
                 options: [
-                    PollOption(text: "Barcelona", avatarUrl: "https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg"),
-                    PollOption(text: "PSG", avatarUrl: nil),
-                    PollOption(text: "Empate", avatarUrl: nil)
+                    PollOption(text: "Barcelona", avatarUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/200px-FC_Barcelona_%28crest%29.svg.png"),
+                    PollOption(text: "PSG", avatarUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/200px-Paris_Saint-Germain_F.C..svg.png"),
+                    PollOption(text: "Real Madrid", avatarUrl: nil),
+                    PollOption(text: "Bayern Munich", avatarUrl: nil)
                 ],
-                duration: 30,
+                duration: 60,
                 imageUrl: nil,
                 campaignLogo: nil
             ),
-            onVote: { _ in },
-            onDismiss: {}
+            isChatExpanded: false,
+            onVote: { option in
+                print("Votado: \(option)")
+            },
+            onDismiss: {
+                print("Cerrado")
+            }
         )
     }
 }
+

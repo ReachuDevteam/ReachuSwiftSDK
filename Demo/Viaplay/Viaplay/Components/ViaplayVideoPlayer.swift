@@ -123,24 +123,20 @@ struct ViaplayVideoPlayer: View {
             }
             
             // Poll Overlay (alineado con TV2: respeta estado del chat y onVote)
-            if showPoll, let poll = webSocketManager.currentPoll {
-                VStack {
-                    Spacer()
-                    
-                    PollOverlayView(
-                        poll: poll,
-                        isChatExpanded: isChatExpanded,
-                        onVote: { option in
-                            print("📊 [Poll] Votado: \(option)")
-                            // Aquí se podría enviar el voto al servidor
-                        },
-                        onDismiss: {
-                            withAnimation { showPoll = false }
+            if let poll = webSocketManager.currentPoll, showPoll {
+                ViaplayPollOverlay(
+                    poll: poll,
+                    isChatExpanded: isChatExpanded,
+                    onVote: { option in
+                        print("📊 [Poll] Votado: \(option)")
+                        // Aquí se enviará el voto al servidor después
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showPoll = false
                         }
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, isChatExpanded ? 250 : 100)
-                }
+                    }
+                )
             }
             
             // Product Overlay (sobre el chat y poll)
@@ -174,16 +170,19 @@ struct ViaplayVideoPlayer: View {
             }
             
             // Contest Overlay
-            if showContest, let contest = webSocketManager.currentContest {
-                VStack {
-                    Spacer()
-                    
-                    ContestOverlayView(contest: contest) {
-                        showContest = false
+            if let contest = webSocketManager.currentContest, showContest {
+                ViaplayContestOverlay(
+                    contest: contest,
+                    isChatExpanded: isChatExpanded,
+                    onJoin: {
+                        print("🎁 [Contest] Usuario se unió: \(contest.name)")
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showContest = false
+                        }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 100)
-                }
+                )
             }
             
             // Floating cart indicator - SIEMPRE visible en el video player
@@ -737,70 +736,8 @@ func setOrientation(_ orientation: UIInterfaceOrientationMask) {
     }
 }
 
-// MARK: - Overlay Views
-struct PollOverlayView: View {
-    let poll: PollEventData
-    let isChatExpanded: Bool
-    let onVote: (String) -> Void
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Text(poll.question)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white)
-                .multilineTextAlignment(.center)
-            
-            VStack(spacing: 12) {
-                ForEach(poll.options) { option in
-                    Button(action: {
-                        onVote(option.text)
-                        onDismiss()
-                    }) {
-                        HStack {
-                            Text(option.text)
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white)
-                            
-                            Spacer()
-                            
-                            if let avatarUrl = option.avatarUrl {
-                                AsyncImage(url: URL(string: avatarUrl)) { image in
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                } placeholder: {
-                                    Circle()
-                                        .fill(Color.gray.opacity(0.3))
-                                }
-                                .frame(width: 24, height: 24)
-                                .clipShape(Circle())
-                            }
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
-                    }
-                }
-            }
-            
-            Button(action: onDismiss) {
-                Text("Lukk")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 8)
-                    .background(Color.white.opacity(0.3))
-                    .cornerRadius(16)
-            }
-        }
-        .padding(20)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(16)
-    }
-}
-
+// MARK: - Overlay Views (legacy - no longer used)
+// ContestOverlayView has been replaced by ViaplayContestOverlay
 struct ContestOverlayView: View {
     let contest: ContestEventData
     let onDismiss: () -> Void
