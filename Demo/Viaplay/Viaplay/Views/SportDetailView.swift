@@ -22,7 +22,7 @@ struct SportDetailView: View {
         GeometryReader { geometry in
             ZStack(alignment: .top) {
                 // Background
-                Color.black
+                Color(hex: "1B1B25")
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -33,20 +33,22 @@ struct SportDetailView: View {
                             Image("img1")
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: geometry.size.width, height: 400)
+                                .frame(width: geometry.size.width, height: 320)
                                 .clipped()
                             
                             // Dark gradient overlay
                             LinearGradient(
                                 colors: [
-                                    Color.black.opacity(0.2),
-                                    Color.black.opacity(0.4),
-                                    Color.black.opacity(0.7)
+                                    Color.clear,
+                                    Color.clear,
+                                    Color(hex: "1B1B25").opacity(0.3),
+                                    Color(hex: "1B1B25").opacity(0.7),
+                                    Color(hex: "1B1B25")
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
-                            .frame(width: geometry.size.width, height: 400)
+                            .frame(width: geometry.size.width, height: 320)
                             
                             // Header with back button and cast icon
                             HStack {
@@ -54,7 +56,7 @@ struct SportDetailView: View {
                                     presentationMode.wrappedValue.dismiss()
                                 }) {
                                     Image(systemName: "chevron.left")
-                                        .font(.system(size: 20, weight: .semibold))
+                                        .font(.system(size: 18, weight: .semibold))
                                         .foregroundColor(.white)
                                 }
                                 
@@ -62,40 +64,40 @@ struct SportDetailView: View {
                                 
                                 Button(action: {}) {
                                     Image(systemName: "airplayvideo")
-                                        .font(.system(size: 20, weight: .semibold))
+                                        .font(.system(size: 18, weight: .semibold))
                                         .foregroundColor(.white)
                                 }
                             }
                             .padding(.horizontal, 16)
-                            .padding(.top, 50)
+                            .padding(.top, 44)
                             
                             // Content overlay (title, subtitle, progress bar)
-                            VStack(spacing: 16) {
+                            VStack(spacing: 12) {
                                 Spacer()
                                 
                                 // Title
                                 Text(title)
-                                    .font(.system(size: 32, weight: .bold))
+                                    .font(.system(size: 26, weight: .bold))
                                     .foregroundColor(.white)
                                     .multilineTextAlignment(.center)
                                 
                                 // Subtitle
                                 Text(subtitle)
-                                    .font(.system(size: 16, weight: .regular))
+                                    .font(.system(size: 14, weight: .regular))
                                     .foregroundColor(.white.opacity(0.9))
                                     .multilineTextAlignment(.center)
                                 
                                 // Progress bar
-                                VStack(spacing: 8) {
+                                VStack(spacing: 6) {
                                     HStack {
                                         Text("14:00")
-                                            .font(.system(size: 14, weight: .medium))
+                                            .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(.white.opacity(0.8))
                                         
                                         Spacer()
                                         
                                         Text("20:30")
-                                            .font(.system(size: 14, weight: .medium))
+                                            .font(.system(size: 12, weight: .medium))
                                             .foregroundColor(.white.opacity(0.5))
                                     }
                                     
@@ -103,96 +105,96 @@ struct SportDetailView: View {
                                         ZStack(alignment: .leading) {
                                             Rectangle()
                                                 .fill(Color.white.opacity(0.2))
-                                                .frame(height: 4)
+                                                .frame(height: 3)
                                             
                                             Rectangle()
                                                 .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                                                .frame(width: progressGeometry.size.width * 0.4, height: 4)
+                                                .frame(width: progressGeometry.size.width * 0.4, height: 3)
                                         }
                                     }
-                                    .frame(height: 4)
+                                    .frame(height: 3)
                                 }
                                 .padding(.horizontal, 20)
-                                .padding(.bottom, 30)
+                                .padding(.bottom, 24)
                             }
                             .frame(width: geometry.size.width)
                         }
-                        .frame(width: geometry.size.width, height: 400)
+                        .frame(width: geometry.size.width, height: 320)
                         
                         // Action Buttons
-                        VStack(spacing: 12) {
+                        VStack(spacing: 10) {
                             // Live button
                             Button(action: { showVideoPlayer = true }) {
-                                HStack(spacing: 10) {
+                                HStack(spacing: 8) {
                                     Image(systemName: "play.fill")
-                                        .font(.system(size: 18, weight: .bold))
+                                        .font(.system(size: 16, weight: .bold))
                                     
                                     Text("Live")
-                                        .font(.system(size: 17, weight: .semibold))
+                                        .font(.system(size: 15, weight: .semibold))
                                 }
                                 .foregroundColor(.white)
                                 .frame(width: geometry.size.width - 32)
-                                .frame(height: 52)
+                                .frame(height: 44)
                                 .background(Color(red: 0.96, green: 0.08, blue: 0.42))
                                 .cornerRadius(10)
                             }
                             
-                            HStack(spacing: 12) {
+                            HStack(spacing: 10) {
                                 // Previous button
                                 Button(action: {}) {
                                     Image(systemName: "backward.fill")
-                                        .font(.system(size: 20, weight: .semibold))
+                                        .font(.system(size: 18, weight: .semibold))
                                         .foregroundColor(.white)
-                                        .frame(width: (geometry.size.width - 44) / 2)
-                                        .frame(height: 52)
+                                        .frame(width: (geometry.size.width - 42) / 2)
+                                        .frame(height: 44)
                                         .background(Color(hex: "2C2D36"))
                                         .cornerRadius(10)
                                 }
                                 
                                 // Share button
                                 Button(action: {}) {
-                                    HStack(spacing: 8) {
+                                    HStack(spacing: 6) {
                                         Image(systemName: "square.and.arrow.up")
-                                            .font(.system(size: 16, weight: .semibold))
+                                            .font(.system(size: 14, weight: .semibold))
                                         
                                         Text("Share")
-                                            .font(.system(size: 15, weight: .semibold))
+                                            .font(.system(size: 13, weight: .semibold))
                                     }
                                     .foregroundColor(.white)
-                                    .frame(width: (geometry.size.width - 44) / 2)
-                                    .frame(height: 52)
+                                    .frame(width: (geometry.size.width - 42) / 2)
+                                    .frame(height: 44)
                                     .background(Color(hex: "2C2D36"))
                                     .cornerRadius(10)
                                 }
                             }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, 20)
+                        .padding(.top, 16)
                     
                         // Event details
-                        VStack(alignment: .leading, spacing: 18) {
+                        VStack(alignment: .leading, spacing: 14) {
                             DetailRow(icon: "clock", text: "Today 14:00")
                             DetailRow(icon: "mic", text: "Engelsk")
                             DetailRow(icon: "mappin.circle", text: "Newgiza Sports Club")
                             
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 3) {
                                 Text("Padel: Premier Padel")
-                                    .font(.system(size: 14, weight: .semibold))
+                                    .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white)
                                 
                                 Text("Available to: 31 October at 20:30")
-                                    .font(.system(size: 14, weight: .regular))
+                                    .font(.system(size: 12, weight: .regular))
                                     .foregroundColor(.white.opacity(0.6))
                             }
                         }
                         .padding(.horizontal, 16)
-                        .padding(.top, 30)
-                        .frame(width: geometry.size.width)
+                        .padding(.top, 24)
+                        .frame(width: geometry.size.width, alignment: .leading)
                         
                         // Recommended section
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Kommende innen Premier Padel")
-                                .font(.system(size: 18, weight: .regular))
+                                .font(.system(size: 16, weight: .regular))
                                 .foregroundColor(.white)
                                 .padding(.horizontal, 16)
                                 .frame(width: geometry.size.width, alignment: .leading)
@@ -202,45 +204,71 @@ struct SportDetailView: View {
                                 Image("img1")
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
-                                    .frame(width: geometry.size.width - 32, height: 180)
+                                    .frame(width: geometry.size.width - 32, height: 150)
                                     .clipped()
                                     .cornerRadius(10)
                                 
                                 Text("LIVE")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.white)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
                                     .background(Color(red: 0.96, green: 0.08, blue: 0.42))
-                                    .cornerRadius(5)
-                                    .padding(12)
+                                    .cornerRadius(4)
+                                    .padding(10)
                                 
                                 // Progress bar in card
                                 VStack {
                                     Spacer()
                                     HStack {
                                         Text("14:00")
-                                            .font(.system(size: 12, weight: .medium))
+                                            .font(.system(size: 11, weight: .medium))
                                             .foregroundColor(.white.opacity(0.8))
                                         
                                         Spacer()
                                     }
-                                    .padding(.horizontal, 12)
-                                    .padding(.bottom, 12)
+                                    .padding(.horizontal, 10)
+                                    .padding(.bottom, 10)
                                 }
                             }
                             .padding(.horizontal, 16)
                         }
-                        .padding(.top, 30)
+                        .padding(.top, 24)
                         .frame(width: geometry.size.width)
                         
                         // Products carousel from SDK
-                        RProductSlider(
-                            title: "Produkter",
-                            layout: .cards
-                        )
-                        .padding(.top, 30)
+                        VStack(alignment: .leading, spacing: 10) {
+                            // Header with title and sponsor badge
+                            HStack(alignment: .top, spacing: 12) {
+                                // Title
+                                Text("Produkter")
+                                    .font(.system(size: 18, weight: .regular))
+                                    .foregroundColor(.white)
+                                
+                                Spacer()
+                                
+                                // Sponsor badge
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Sponset av")
+                                        .font(.system(size: 9, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.8))
+                                    
+                                    Image("logo1")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                }
+                            }
+                            .padding(.horizontal, 16)
+                            
+                            RProductSlider(
+                                title: nil,
+                                layout: .cards
+                            )
+                        }
+                        .padding(.top, 24)
                         .padding(.bottom, 100)
+                        .frame(width: geometry.size.width)
                     }
                 }
                 .ignoresSafeArea(edges: .top)
@@ -270,16 +298,17 @@ struct DetailRow: View {
     let text: String
     
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Image(systemName: icon)
-                .font(.system(size: 16))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.7))
-                .frame(width: 22)
+                .frame(width: 20)
             
             Text(text)
-                .font(.system(size: 15, weight: .regular))
+                .font(.system(size: 13, weight: .regular))
                 .foregroundColor(.white)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
