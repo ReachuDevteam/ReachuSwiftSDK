@@ -122,16 +122,24 @@ struct ViaplayVideoPlayer: View {
                 Spacer()
             }
             
-            // Poll Overlay
+            // Poll Overlay (alineado con TV2: respeta estado del chat y onVote)
             if showPoll, let poll = webSocketManager.currentPoll {
                 VStack {
                     Spacer()
                     
-                    PollOverlayView(poll: poll) {
-                        showPoll = false
-                    }
+                    PollOverlayView(
+                        poll: poll,
+                        isChatExpanded: isChatExpanded,
+                        onVote: { option in
+                            print("📊 [Poll] Votado: \(option)")
+                            // Aquí se podría enviar el voto al servidor
+                        },
+                        onDismiss: {
+                            withAnimation { showPoll = false }
+                        }
+                    )
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 100)
+                    .padding(.bottom, isChatExpanded ? 250 : 100)
                 }
             }
             
@@ -215,8 +223,9 @@ struct ViaplayVideoPlayer: View {
             webSocketManager.disconnect()
         }
         .onReceive(webSocketManager.$currentPoll) { newPoll in
-            print("🎯 [VideoPlayer] Poll recibido: \(newPoll?.question ?? "nil")")
-            if newPoll != nil {
+            guard let poll = newPoll else { return }
+            print("🎯 [VideoPlayer] Poll recibido: \(poll.question)")
+            if true {
                 print("🎯 [VideoPlayer] Mostrando poll")
                 withAnimation {
                     showPoll = true
@@ -235,8 +244,9 @@ struct ViaplayVideoPlayer: View {
             }
         }
         .onReceive(webSocketManager.$currentProduct) { newProduct in
-            print("🎯 [VideoPlayer] Producto recibido: \(newProduct?.name ?? "nil")")
-            if newProduct != nil {
+            guard let product = newProduct else { return }
+            print("🎯 [VideoPlayer] Producto recibido: \(product.name)")
+            if true {
                 print("🎯 [VideoPlayer] Mostrando producto")
                 withAnimation {
                     showProduct = true
@@ -252,8 +262,9 @@ struct ViaplayVideoPlayer: View {
             }
         }
         .onReceive(webSocketManager.$currentContest) { newContest in
-            print("🎁 [VideoPlayer] Concurso recibido: \(newContest?.name ?? "nil")")
-            if newContest != nil {
+            guard let contest = newContest else { return }
+            print("🎁 [VideoPlayer] Concurso recibido: \(contest.name)")
+            if true {
                 print("🎁 [VideoPlayer] Mostrando concurso")
                 withAnimation {
                     showContest = true
@@ -729,6 +740,8 @@ func setOrientation(_ orientation: UIInterfaceOrientationMask) {
 // MARK: - Overlay Views
 struct PollOverlayView: View {
     let poll: PollEventData
+    let isChatExpanded: Bool
+    let onVote: (String) -> Void
     let onDismiss: () -> Void
     
     var body: some View {
@@ -740,7 +753,10 @@ struct PollOverlayView: View {
             
             VStack(spacing: 12) {
                 ForEach(poll.options) { option in
-                    Button(action: {}) {
+                    Button(action: {
+                        onVote(option.text)
+                        onDismiss()
+                    }) {
                         HStack {
                             Text(option.text)
                                 .font(.system(size: 16, weight: .medium))
