@@ -39,23 +39,9 @@ struct MatchDetailView: View {
                     .padding(.top, 10)
                     .padding(.bottom, 16)
                     
-                    // Main content area (placeholder for video)
+                    // Main content area (video)
                     VStack(spacing: 0) {
-                        // Video placeholder - will be replaced with actual video player
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(height: 220)
-                            .overlay(
-                                VStack {
-                                    Image(systemName: "play.circle.fill")
-                                        .font(.system(size: 50))
-                                        .foregroundColor(.white.opacity(0.8))
-                                    Text("Video Player Placeholder")
-                                        .font(.system(size: 14, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.6))
-                                        .padding(.top, 8)
-                                }
-                            )
+                        LivePreviewWithPlayButton()
                         
                         // Match details
                         VStack(alignment: .leading, spacing: 8) {
@@ -116,6 +102,55 @@ struct MatchDetailView: View {
                         .frame(height: 100)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Live preview hero with Play button
+
+private struct LivePreviewWithPlayButton: View {
+    @State private var showPlayer = false
+    
+    var body: some View {
+        ZStack(alignment: .bottomLeading) {
+            // Imagen del live (placeholder usando assets del proyecto)
+            Image("card2x1")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(height: 220)
+                .clipped()
+                .overlay(
+                    // Sutil degradado para legibilidad en la parte inferior
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.0), Color.black.opacity(0.45)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+            
+            // Botón Play en esquina inferior izquierda
+            Button(action: { showPlayer = true }) {
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Play")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .background(VGTheme.Colors.red)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
+            }
+            .padding(.leading, 16)
+            .padding(.bottom, 14)
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { showPlayer = true }
+        .fullScreenCover(isPresented: $showPlayer) {
+            VGFullScreenPlayerView()
+                .preferredColorScheme(.dark)
         }
     }
 }
