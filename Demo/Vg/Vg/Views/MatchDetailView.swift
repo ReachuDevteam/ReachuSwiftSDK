@@ -1,4 +1,5 @@
 import SwiftUI
+import ReachuUI
 
 struct MatchDetailView: View {
     let matchTitle: String
@@ -96,7 +97,42 @@ struct MatchDetailView: View {
                             .padding(.horizontal, 20)
                         }
                     }
-                    
+                    VStack(alignment: .leading, spacing: 10) {                                    
+                        // Header with title and sponsor badge
+                        HStack(alignment: .top, spacing: 12) {
+                            // Title
+                            Text("Ukens tilbud")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.bottom, 20)
+                            Spacer()
+                            
+                            // Sponsor badge
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Sponset av")
+                                    .font(.system(size: 9, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.8))
+                                
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            }
+                        }
+                        .padding(.top, 24)
+                        .padding(.horizontal, 16)
+                        // Auto-loads based on ReachuConfiguration (currency/country)
+                        RProductSlider(
+                            title: nil,
+                            products: nil,
+                            categoryId: nil,
+                            layout: .cards,
+                            showSeeAll: false,
+                            maxItems: 12
+                        )
+                        .padding(.bottom, 8)
+                    }
+                        
                     // Bottom padding
                     Spacer()
                         .frame(height: 100)
