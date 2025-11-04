@@ -191,6 +191,7 @@ Demos are managed in the `ReachuSwiftSDK-Demos` repository. Each demo consumes t
 ## 📚 Documentation
 
 - **[Complete Documentation](https://docs.reachu.io/swift-sdk)** - Full documentation site
+- **CHANGELOG.md** - Notable changes by version
 
 ## 🔧 Development
 
