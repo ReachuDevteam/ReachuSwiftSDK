@@ -10,7 +10,6 @@ public struct RProductBanner: View {
     // MARK: - Properties
     
     @ObservedObject private var campaignManager = CampaignManager.shared
-    @StateObject private var viewModel = RProductBannerViewModel()
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
@@ -24,14 +23,6 @@ public struct RProductBanner: View {
     
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
-    }
-    
-    private var resolvedCurrency: String {
-        ReachuConfiguration.shared.marketConfiguration.currencyCode
-    }
-    
-    private var resolvedCountry: String {
-        ReachuConfiguration.shared.marketConfiguration.countryCode
     }
     
     /// Get active product banner component from campaign
@@ -72,66 +63,33 @@ public struct RProductBanner: View {
         return activeComponent?.isActive == true && config != nil
     }
     
-    /// Product to display
-    private var product: Product? {
-        viewModel.product
-    }
-    
-    /// Should show loading state
-    private var shouldShowLoading: Bool {
-        viewModel.isLoading && viewModel.product == nil
-    }
-    
-    /// Should show error state
-    private var shouldShowError: Bool {
-        viewModel.errorMessage != nil && viewModel.product == nil && !viewModel.isMarketUnavailable
-    }
-    
-    /// Should hide component (market unavailable)
-    private var shouldHide: Bool {
-        viewModel.isMarketUnavailable
-    }
-    
     // MARK: - Body
     
     public var body: some View {
         Group {
             if !shouldShow {
                 EmptyView()
-            } else if shouldHide {
-                EmptyView()
-            } else if shouldShowLoading {
-                loadingView
-            } else if shouldShowError {
-                errorView
             } else if let config = config {
-                if let product = product {
-                    bannerContent(config: config, product: product)
-                } else {
-                    // Show banner even without product (may be loading or product not found)
-                    emptyBannerView(config: config)
-                }
+                // Show banner with config info, productId is only used for navigation
+                bannerContent(config: config)
             } else {
                 Color.clear.frame(height: 1)
             }
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
-            handleCampaignStateChange()
+            // React to campaign state changes
         }
         .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
-            handleCampaignStateChange()
+            // React to campaign pause/resume
         }
         .onChange(of: activeComponent?.id) { _ in
-            handleComponentChange()
-        }
-        .onAppear {
-            handleComponentChange()
+            // React to component changes
         }
     }
     
     // MARK: - Content Views
     
-    private func bannerContent(config: ProductBannerConfig, product: Product) -> some View {
+    private func bannerContent(config: ProductBannerConfig) -> some View {
         ZStack {
             // Background image
             AsyncImage(url: URL(string: config.backgroundImageUrl)) { phase in
@@ -184,7 +142,7 @@ public struct RProductBanner: View {
                 
                 // CTA Button
                 Button {
-                    handleCTATap(config: config)
+                    navigateToProduct(config: config)
                 } label: {
                     Text(config.ctaText)
                         .font(ReachuTypography.bodyBold)
@@ -201,257 +159,41 @@ public struct RProductBanner: View {
         .frame(height: 200)
         .cornerRadius(ReachuBorderRadius.large)
         .padding(.horizontal, ReachuSpacing.lg)
-    }
-    
-    private var loadingView: some View {
-        VStack(spacing: ReachuSpacing.md) {
-            ProgressView()
-                .tint(adaptiveColors.primary)
-            Text("Loading banner...")
-                .font(ReachuTypography.caption1)
-                .foregroundColor(adaptiveColors.textSecondary)
+        .onTapGesture {
+            // Tap anywhere on banner to navigate to product
+            navigateToProduct(config: config)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .padding(.vertical, ReachuSpacing.xl)
-    }
-    
-    private var errorView: some View {
-        VStack(spacing: ReachuSpacing.sm) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32))
-                .foregroundColor(adaptiveColors.error)
-            
-            Text("Error loading banner")
-                .font(ReachuTypography.bodyBold)
-                .foregroundColor(adaptiveColors.textPrimary)
-            
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(adaptiveColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, ReachuSpacing.lg)
-            }
-            
-            Button {
-                loadProduct()
-            } label: {
-                Text("Retry")
-                    .font(ReachuTypography.caption1.weight(.semibold))
-                    .foregroundColor(adaptiveColors.primary)
-                    .padding(.horizontal, ReachuSpacing.md)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(adaptiveColors.primary.opacity(0.1))
-                    .cornerRadius(ReachuBorderRadius.medium)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .padding(.vertical, ReachuSpacing.xl)
-    }
-    
-    private func emptyBannerView(config: ProductBannerConfig) -> some View {
-        ZStack {
-            // Background image
-            AsyncImage(url: URL(string: config.backgroundImageUrl)) { phase in
-                switch phase {
-                case .empty:
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                case .failure:
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
-                @unknown default:
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
-                }
-            }
-            .frame(height: 200)
-            .clipped()
-            
-            // Overlay gradient
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.6),
-                    Color.black.opacity(0.3)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            
-            // Content
-            VStack(spacing: ReachuSpacing.md) {
-                Text(config.title)
-                    .font(ReachuTypography.title2.weight(.bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                
-                if let subtitle = config.subtitle {
-                    Text(subtitle)
-                        .font(ReachuTypography.body)
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.center)
-                }
-                
-                // CTA Button
-                Button(action: {
-                    handleCTATap(config: config)
-                }) {
-                    Text(config.ctaText)
-                        .font(ReachuTypography.bodyBold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.xl)
-                        .padding(.vertical, ReachuSpacing.md)
-                        .background(adaptiveColors.primary)
-                        .cornerRadius(ReachuBorderRadius.medium)
-                }
-                .padding(.top, ReachuSpacing.sm)
-            }
-            .padding(ReachuSpacing.lg)
-        }
-        .frame(height: 200)
-        .cornerRadius(ReachuBorderRadius.large)
-        .padding(.horizontal, ReachuSpacing.lg)
     }
     
     // MARK: - Helper Methods
     
-    private func handleCampaignStateChange() {
-        if shouldShow {
-            loadProduct()
-        } else {
-            viewModel.product = nil
-        }
-    }
-    
-    private func handleComponentChange() {
-        if shouldShow {
-            loadProduct()
-        } else {
-            viewModel.product = nil
-        }
-    }
-    
-    private func loadProduct() {
-        guard let config = config else {
-            viewModel.product = nil
-            return
-        }
-        
-        Task {
-            await viewModel.loadProduct(
-                productId: config.productId,
-                currency: resolvedCurrency,
-                country: resolvedCountry
-            )
-        }
-    }
-    
-    private func handleCTATap(config: ProductBannerConfig) {
+    private func navigateToProduct(config: ProductBannerConfig) {
         // Handle deeplink first
         if let deeplink = config.deeplink {
             print("🔗 [RProductBanner] Opening deeplink: \(deeplink)")
-            // TODO: Implement deeplink handling
             if let url = URL(string: deeplink) {
+                #if os(iOS)
                 UIApplication.shared.open(url)
+                #endif
             }
+            return
         }
+        
         // Fallback to ctaLink
-        else if let ctaLink = config.ctaLink {
+        if let ctaLink = config.ctaLink {
             print("🔗 [RProductBanner] Opening link: \(ctaLink)")
             if let url = URL(string: ctaLink) {
+                #if os(iOS)
                 UIApplication.shared.open(url)
+                #endif
             }
-        }
-    }
-}
-
-// MARK: - ViewModel
-
-@MainActor
-class RProductBannerViewModel: ObservableObject {
-    
-    @Published var product: Product?
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
-    @Published var isMarketUnavailable: Bool = false
-    
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
-    }
-    
-    func loadProduct(productId: String, currency: String, country: String) async {
-        guard ReachuConfiguration.shared.shouldUseSDK else {
-            isMarketUnavailable = true
-            isLoading = false
             return
         }
         
-        guard !isLoading else { return }
-        
-        isLoading = true
-        errorMessage = nil
-        isMarketUnavailable = false
-        
-        print("🛍️ [RProductBanner] Loading product with ID: \(productId)")
-        
-        guard let intProductId = Int(productId) else {
-            errorMessage = "Invalid product ID"
-            isLoading = false
-            print("❌ [RProductBanner] Invalid product ID format: \(productId)")
-            return
-        }
-        
-        print("🔢 [RProductBanner] Product ID converted: \(productId) -> \(intProductId)")
-        print("   Currency: \(currency), Country: \(country)")
-        
-        do {
-            let dtoProducts = try await sdk.channel.product.get(
-                currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
-                productIds: [intProductId],
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
-            )
-            
-            print("📦 [RProductBanner] API returned \(dtoProducts.count) products")
-            if dtoProducts.isEmpty {
-                print("⚠️ [RProductBanner] No product found for ID: \(intProductId)")
-                print("   Currency: \(currency), Country: \(country)")
-            }
-            
-            product = dtoProducts.first?.toDomainProduct()
-            print("✅ [RProductBanner] Loaded product: \(product?.title ?? "unknown")")
-            
-        } catch let error as NotFoundException {
-            isMarketUnavailable = true
-            errorMessage = nil
-            print("⚠️ [RProductBanner] Market not available")
-        } catch let error as SdkException {
-            if error.code == "NOT_FOUND" || error.status == 404 {
-                isMarketUnavailable = true
-                errorMessage = nil
-            } else {
-                errorMessage = error.description
-                print("❌ [RProductBanner] Failed to load product: \(error.description)")
-            }
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ [RProductBanner] Failed to load product: \(error.localizedDescription)")
-        }
-        
-        isLoading = false
+        // Fallback: Use productId to navigate to product detail
+        // This would typically open a product detail view in your app
+        print("🔗 [RProductBanner] Navigating to product detail for ID: \(config.productId)")
+        // TODO: Implement product detail navigation in your app
+        // Example: openProductDetail(productId: config.productId)
     }
 }
-
