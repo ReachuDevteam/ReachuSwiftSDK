@@ -14,11 +14,13 @@ public struct Campaign: Codable, Identifiable {
     public let id: Int
     public let startDate: String?  // ISO 8601 timestamp
     public let endDate: String?    // ISO 8601 timestamp
+    public let isPaused: Bool?     // Campaign paused state (independent of dates)
     
-    public init(id: Int, startDate: String? = nil, endDate: String? = nil) {
+    public init(id: Int, startDate: String? = nil, endDate: String? = nil, isPaused: Bool? = nil) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
+        self.isPaused = isPaused
     }
     
     /// Determine current state based on dates
@@ -127,6 +129,28 @@ public struct CampaignEndedEvent: Codable {
         self.type = type
         self.campaignId = campaignId
         self.endDate = endDate
+    }
+}
+
+/// Campaign paused event
+public struct CampaignPausedEvent: Codable {
+    public let type: String
+    public let campaignId: Int
+    
+    public init(type: String = "campaign_paused", campaignId: Int) {
+        self.type = type
+        self.campaignId = campaignId
+    }
+}
+
+/// Campaign resumed event
+public struct CampaignResumedEvent: Codable {
+    public let type: String
+    public let campaignId: Int
+    
+    public init(type: String = "campaign_resumed", campaignId: Int) {
+        self.type = type
+        self.campaignId = campaignId
     }
 }
 

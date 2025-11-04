@@ -35,6 +35,7 @@ public class ReachuConfiguration: ObservableObject {
     @Published public private(set) var marketConfiguration: MarketConfiguration = .default
     @Published public private(set) var productDetailConfiguration: ProductDetailConfiguration = .default
     @Published public private(set) var localizationConfiguration: LocalizationConfiguration = .default
+    @Published public private(set) var campaignConfiguration: CampaignConfiguration = .default
     
     @Published public private(set) var isConfigured: Bool = false
     @Published public private(set) var isMarketAvailable: Bool = true  // If false, SDK should not be used
@@ -56,7 +57,8 @@ public class ReachuConfiguration: ObservableObject {
         liveShowConfig: LiveShowConfiguration? = nil,
         marketConfig: MarketConfiguration? = nil,
         productDetailConfig: ProductDetailConfiguration? = nil,
-        localizationConfig: LocalizationConfiguration? = nil
+        localizationConfig: LocalizationConfiguration? = nil,
+        campaignConfig: CampaignConfiguration? = nil
     ) {
         let instance = ReachuConfiguration.shared
         
@@ -70,6 +72,7 @@ public class ReachuConfiguration: ObservableObject {
         instance.marketConfiguration = marketConfig ?? .default
         instance.productDetailConfiguration = productDetailConfig ?? .default
         instance.localizationConfiguration = localizationConfig ?? .default
+        instance.campaignConfiguration = campaignConfig ?? .default
         
         // Configure localization system
         ReachuLocalization.shared.configure(instance.localizationConfiguration)

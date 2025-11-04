@@ -191,10 +191,11 @@ public class ConfigurationLoader {
         let cartConfig = createCartConfiguration(from: config.cart)
         let networkConfig = createNetworkConfiguration(from: config.network)
         let uiConfig = createUIConfiguration(from: config.ui)
-        let liveShowConfig = createLiveShowConfiguration(from: config.liveShow)
+        let liveShowConfig = createLiveShowConfiguration(from: config.liveShow, rootCampaignId: config.campaignId)
         let marketFallback = createMarketConfiguration(from: config.marketFallback)
         let productDetailConfig = createProductDetailConfiguration(from: config.productDetail)
         let localizationConfig = createLocalizationConfiguration(from: config.localization, bundle: bundle)
+        let campaignConfig = createCampaignConfiguration(from: config.campaigns)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -206,7 +207,8 @@ public class ConfigurationLoader {
             liveShowConfig: liveShowConfig,
             marketConfig: marketFallback,
             productDetailConfig: productDetailConfig,
-            localizationConfig: localizationConfig
+            localizationConfig: localizationConfig,
+            campaignConfig: campaignConfig
         )
         
         // Initialize Stripe automatically if available
@@ -523,8 +525,14 @@ public class ConfigurationLoader {
         )
     }
     
-    private static func createLiveShowConfiguration(from liveShowConfig: JSONLiveShowConfiguration?) -> LiveShowConfiguration {
-        guard let config = liveShowConfig else { return .default }
+    private static func createLiveShowConfiguration(from liveShowConfig: JSONLiveShowConfiguration?, rootCampaignId: Int? = nil) -> LiveShowConfiguration {
+        guard let config = liveShowConfig else {
+            // If no liveShow config, use root campaignId if provided
+            if let rootCampaignId = rootCampaignId {
+                return LiveShowConfiguration(campaignId: rootCampaignId)
+            }
+            return .default
+        }
         
         // Use streaming.autoJoinChat if available, otherwise fallback to legacy autoJoinChat
         let autoJoinChat = config.streaming?.autoJoinChat ?? config.autoJoinChat ?? true
@@ -540,7 +548,8 @@ public class ConfigurationLoader {
         let tipioBaseUrl = config.tipio?.baseUrl ?? "https://stg-dev-microservices.tipioapp.com"
         
         // Dynamic components configuration
-        let campaignId = config.campaignId ?? 0  // Default to 0 (no campaign)
+        // Priority: rootCampaignId > liveShow.campaignId > 0 (default)
+        let campaignId = rootCampaignId ?? config.campaignId ?? 0
         
         return LiveShowConfiguration(
             autoJoinChat: autoJoinChat,
@@ -552,6 +561,15 @@ public class ConfigurationLoader {
         )
     }
 
+    private static func createCampaignConfiguration(from campaignConfig: JSONCampaignConfiguration?) -> CampaignConfiguration {
+        guard let config = campaignConfig else { return .default }
+        
+        return CampaignConfiguration(
+            webSocketBaseURL: config.webSocketBaseURL ?? CampaignConfiguration.default.webSocketBaseURL,
+            restAPIBaseURL: config.restAPIBaseURL ?? CampaignConfiguration.default.restAPIBaseURL
+        )
+    }
+    
     private static func createMarketConfiguration(from marketConfig: JSONMarketFallbackConfiguration?) -> MarketConfiguration {
         guard let config = marketConfig else { return .default }
 
@@ -764,6 +782,7 @@ public class ConfigurationLoader {
 
 private struct JSONConfiguration: Codable {
     let apiKey: String
+    let campaignId: Int?  // Campaign ID at root level (preferred)
     let environment: String
     let theme: JSONThemeConfiguration?
     let cart: JSONCartConfiguration?
@@ -773,6 +792,7 @@ private struct JSONConfiguration: Codable {
     let marketFallback: JSONMarketFallbackConfiguration?
     let productDetail: JSONProductDetailConfiguration?
     let localization: JSONLocalizationConfiguration?
+    let campaigns: JSONCampaignConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -875,6 +895,11 @@ private struct JSONLocalizationConfiguration: Codable {
     let fallbackLanguage: String?
     let translations: [String: [String: String]]?
     let translationsFile: String?  // Nombre del archivo externo con traducciones
+}
+
+private struct JSONCampaignConfiguration: Codable {
+    let webSocketBaseURL: String?  // WebSocket endpoint (e.g., "https://dev-campaing.reachu.io")
+    let restAPIBaseURL: String?    // REST API endpoint (e.g., "https://campaing.reachu.io")
 }
 
 private struct JSONTipioConfiguration: Codable {

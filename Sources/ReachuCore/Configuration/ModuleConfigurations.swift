@@ -483,6 +483,24 @@ public struct LiveShowConfiguration {
     public static let `default` = LiveShowConfiguration()
 }
 
+// MARK: - Campaign Configuration
+
+/// Configuration for Campaign endpoints
+public struct CampaignConfiguration {
+    public let webSocketBaseURL: String  // WebSocket endpoint for campaigns (e.g., "https://dev-campaing.reachu.io")
+    public let restAPIBaseURL: String    // REST API endpoint for campaigns (same as WebSocket base URL)
+    
+    public init(
+        webSocketBaseURL: String = "https://dev-campaing.reachu.io",
+        restAPIBaseURL: String = "https://dev-campaing.reachu.io"
+    ) {
+        self.webSocketBaseURL = webSocketBaseURL
+        self.restAPIBaseURL = restAPIBaseURL
+    }
+    
+    public static let `default` = CampaignConfiguration()
+}
+
 public enum VideoQuality: String, CaseIterable {
     case low = "240p"
     case medium = "480p"

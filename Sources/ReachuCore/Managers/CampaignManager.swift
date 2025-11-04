@@ -21,7 +21,16 @@ public class CampaignManager: ObservableObject {
     private var campaignId: Int?
     private var webSocketManager: CampaignWebSocketManager?
     private var cancellables = Set<AnyCancellable>()
-    private var baseURL: String
+    private var baseURL: String  // For REST API (GraphQL base URL)
+    
+    // Campaign endpoints from configuration
+    private var campaignWebSocketBaseURL: String {
+        ReachuConfiguration.shared.campaignConfiguration.webSocketBaseURL
+    }
+    
+    private var campaignRestAPIBaseURL: String {
+        ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
+    }
     
     // MARK: - Initialization
     private init() {
@@ -100,9 +109,9 @@ public class CampaignManager: ObservableObject {
         // - If Active: No event sent, can fetch components
         await connectWebSocket(campaignId: campaignId)
         
-        // 3. Fetch active components ONLY if campaign is active
-        // Don't fetch if Upcoming (wait for campaign_started) or Ended (already handled)
-        if campaignState == .active {
+        // 3. Fetch active components ONLY if campaign is active AND not paused
+        // Don't fetch if Upcoming (wait for campaign_started), Ended (already handled), or Paused
+        if campaignState == .active && isCampaignActive && currentCampaign?.isPaused != true {
             await fetchActiveComponents(campaignId: campaignId)
         }
     }
@@ -141,7 +150,7 @@ public class CampaignManager: ObservableObject {
     
     /// Fetch campaign information from API
     private func fetchCampaignInfo(campaignId: Int) async {
-        let urlString = "\(baseURL)/api/campaigns/\(campaignId)"
+        let urlString = "\(campaignRestAPIBaseURL)/\(campaignId)"
         guard let url = URL(string: urlString) else {
             print("❌ [CampaignManager] Invalid campaign API URL: \(urlString)")
             return
@@ -163,6 +172,14 @@ public class CampaignManager: ObservableObject {
             let campaign = try JSONDecoder().decode(Campaign.self, from: data)
             self.currentCampaign = campaign
             self.campaignState = campaign.currentState
+            
+            // Check if campaign is paused first (takes priority over date-based state)
+            if campaign.isPaused == true {
+                self.isCampaignActive = false
+                self.activeComponents.removeAll()
+                print("⏸️ [CampaignManager] Campaign \(campaignId) is paused - hiding all components")
+                return
+            }
             
             // Update active state based on campaign state
             switch campaignState {
@@ -188,7 +205,7 @@ public class CampaignManager: ObservableObject {
     
     /// Fetch active components from API
     private func fetchActiveComponents(campaignId: Int) async {
-        let urlString = "\(baseURL)/api/campaigns/\(campaignId)/components"
+        let urlString = "\(campaignRestAPIBaseURL)/\(campaignId)/components"
         guard let url = URL(string: urlString) else {
             print("❌ [CampaignManager] Invalid components API URL")
             return
@@ -214,7 +231,8 @@ public class CampaignManager: ObservableObject {
     /// - If campaign is Upcoming: No event sent, waits for campaign_started
     /// - If campaign is Active: No event sent, can fetch components
     private func connectWebSocket(campaignId: Int) async {
-        webSocketManager = CampaignWebSocketManager(campaignId: campaignId, baseURL: baseURL)
+        // Use the campaign WebSocket endpoint, not the GraphQL endpoint
+        webSocketManager = CampaignWebSocketManager(campaignId: campaignId, baseURL: campaignWebSocketBaseURL)
         
         // Setup event handlers
         webSocketManager?.onCampaignStarted = { [weak self] event in
@@ -226,6 +244,18 @@ public class CampaignManager: ObservableObject {
         webSocketManager?.onCampaignEnded = { [weak self] event in
             Task { @MainActor in
                 self?.handleCampaignEnded(event)
+            }
+        }
+        
+        webSocketManager?.onCampaignPaused = { [weak self] event in
+            Task { @MainActor in
+                self?.handleCampaignPaused(event)
+            }
+        }
+        
+        webSocketManager?.onCampaignResumed = { [weak self] event in
+            Task { @MainActor in
+                self?.handleCampaignResumed(event)
             }
         }
         
@@ -268,7 +298,8 @@ public class CampaignManager: ObservableObject {
         currentCampaign = Campaign(
             id: event.campaignId,
             startDate: event.startDate,
-            endDate: event.endDate
+            endDate: event.endDate,
+            isPaused: false
         )
         
         // Fetch active components now that campaign is active
@@ -298,20 +329,84 @@ public class CampaignManager: ObservableObject {
             currentCampaign = Campaign(
                 id: campaign.id,
                 startDate: campaign.startDate,
-                endDate: event.endDate
+                endDate: event.endDate,
+                isPaused: campaign.isPaused
             )
         } else {
             // If campaign wasn't loaded yet, create it with end date
             currentCampaign = Campaign(
                 id: event.campaignId,
                 startDate: nil,
-                endDate: event.endDate
+                endDate: event.endDate,
+                isPaused: nil
             )
         }
         
         // Notify observers
         NotificationCenter.default.post(
             name: .campaignEnded,
+            object: nil,
+            userInfo: ["campaignId": event.campaignId]
+        )
+    }
+    
+    private func handleCampaignPaused(_ event: CampaignPausedEvent) {
+        print("⏸️ [CampaignManager] Campaign paused: \(event.campaignId)")
+        
+        isCampaignActive = false
+        
+        // Immediately hide ALL components
+        activeComponents.removeAll()
+        
+        // Update campaign with paused state
+        if let campaign = currentCampaign {
+            currentCampaign = Campaign(
+                id: campaign.id,
+                startDate: campaign.startDate,
+                endDate: campaign.endDate,
+                isPaused: true
+            )
+        } else {
+            // If campaign wasn't loaded yet, create it with paused state
+            currentCampaign = Campaign(
+                id: event.campaignId,
+                startDate: nil,
+                endDate: nil,
+                isPaused: true
+            )
+        }
+        
+        // Notify observers
+        NotificationCenter.default.post(
+            name: .campaignPaused,
+            object: nil,
+            userInfo: ["campaignId": event.campaignId]
+        )
+    }
+    
+    private func handleCampaignResumed(_ event: CampaignResumedEvent) {
+        print("▶️ [CampaignManager] Campaign resumed: \(event.campaignId)")
+        
+        isCampaignActive = true
+        
+        // Update campaign with resumed state
+        if let campaign = currentCampaign {
+            currentCampaign = Campaign(
+                id: campaign.id,
+                startDate: campaign.startDate,
+                endDate: campaign.endDate,
+                isPaused: false
+            )
+        }
+        
+        // Fetch active components now that campaign is resumed
+        Task {
+            await fetchActiveComponents(campaignId: event.campaignId)
+        }
+        
+        // Notify observers
+        NotificationCenter.default.post(
+            name: .campaignResumed,
             object: nil,
             userInfo: ["campaignId": event.campaignId]
         )
@@ -330,6 +425,12 @@ public class CampaignManager: ObservableObject {
         // Business rule: Components CANNOT be activated in Ended state
         if event.status == "active" && campaignState == .ended {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign has ended")
+            return
+        }
+        
+        // Business rule: Components CANNOT be activated if campaign is paused
+        if event.status == "active" && (currentCampaign?.isPaused == true || !isCampaignActive) {
+            print("⚠️ [CampaignManager] Ignoring component activation - campaign is paused")
             return
         }
         
@@ -364,6 +465,8 @@ public class CampaignManager: ObservableObject {
 extension Notification.Name {
     public static let campaignStarted = Notification.Name("ReachuCampaignStarted")
     public static let campaignEnded = Notification.Name("ReachuCampaignEnded")
+    public static let campaignPaused = Notification.Name("ReachuCampaignPaused")
+    public static let campaignResumed = Notification.Name("ReachuCampaignResumed")
     public static let componentStatusChanged = Notification.Name("ReachuComponentStatusChanged")
     public static let componentConfigUpdated = Notification.Name("ReachuComponentConfigUpdated")
 }
