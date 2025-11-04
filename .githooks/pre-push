@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "[pre-push] Running local CI checks before push"
+"$(git rev-parse --show-toplevel)"/scripts/ci_local.sh
+echo "[pre-push] CI checks passed"
+
