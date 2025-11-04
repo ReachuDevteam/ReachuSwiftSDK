@@ -266,7 +266,7 @@ public class ConfigurationLoader {
     /// Check if market is available for the given country code
     /// This verifies if Reachu SDK should be enabled for the user's country
     /// Also stores the complete list of available markets for component access
-    /// Uses Markets.GetAvailableMarkets (global) instead of Channel.GetAvailableMarkets (channel-specific)
+    /// Uses Channel.GetAvailableMarkets to get only markets enabled for this specific channel
     private static func checkMarketAvailability(countryCode: String) async {
         let config = ReachuConfiguration.shared
         
@@ -282,97 +282,60 @@ public class ConfigurationLoader {
             let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
             
             print("🔍 [Config] Checking market availability for country: \(countryCode)")
+            print("   Using Channel.GetAvailableMarkets (channel-specific markets)...")
+            print("   URL: \(sdk.baseUrl.absoluteString)")
+            print("   API Key: \(sdk.apiKey.prefix(8))...")
             
-            // Try global markets first
-            var markets: [GetAvailableMarketsDto] = []
-            var marketCodes: [String] = []
+            // Use Channel.GetAvailableMarkets - this returns only markets enabled for this specific channel
+            let channelMarkets = try await sdk.channel.market.getAvailable()
+            let marketCodes = channelMarkets.compactMap { $0.code?.uppercased() }
             
-            do {
-                print("   Attempting Markets.GetAvailableMarkets (global markets)...")
-                print("   URL: \(sdk.baseUrl.absoluteString)")
-                print("   API Key: \(sdk.apiKey.prefix(8))...")
-                let globalMarkets = try await sdk.market.getAvailable()
-                
-                // Convert GetAvailableGlobalMarketsDto to GetAvailableMarketsDto for compatibility
-                markets = globalMarkets.map { globalMarket in
-                    GetAvailableMarketsDto(
-                        code: globalMarket.code,
-                        name: globalMarket.name,
-                        official: globalMarket.official,
-                        flag: globalMarket.flag,
-                        phoneCode: globalMarket.phoneCode,
-                        currency: globalMarket.currency.map { CurrencyDto(code: $0.code, name: $0.name, symbol: $0.symbol) }
-                    )
-                }
-                
-                marketCodes = markets.compactMap { $0.code?.uppercased() }
-                print("   ✅ Global markets loaded: \(marketCodes.joined(separator: ", "))")
-            } catch {
-                // Fallback to channel-specific markets if global fails
-                print("   ⚠️ Global markets query failed, trying Channel.GetAvailableMarkets...")
-                print("   Error type: \(type(of: error))")
-                print("   Error description: \(error.localizedDescription)")
-                if let sdkError = error as? SdkException {
-                    print("   SDK Error code: \(sdkError.code)")
-                    print("   SDK Error status: \(sdkError.status ?? 0)")
-                    print("   SDK Error message: \(sdkError.description)")
-                }
-                
-                do {
-                    print("   Attempting Channel.GetAvailableMarkets (channel-specific)...")
-                    let channelMarkets = try await sdk.channel.market.getAvailable()
-                    markets = channelMarkets
-                    marketCodes = markets.compactMap { $0.code?.uppercased() }
-                    print("   ✅ Channel markets loaded: \(marketCodes.joined(separator: ", "))")
-                } catch {
-                    // Both failed, rethrow the error
-                    throw error
-                }
-            }
+            print("   ✅ Channel markets loaded: \(marketCodes.joined(separator: ", "))")
             
             let isAvailable = marketCodes.contains(countryCode.uppercased())
             
             await MainActor.run {
                 // Store the complete list of available markets for component access
-                ReachuConfiguration.setMarketAvailable(isAvailable, userCountryCode: countryCode, availableMarkets: markets)
+                ReachuConfiguration.setMarketAvailable(isAvailable, userCountryCode: countryCode, availableMarkets: channelMarkets)
             }
             
             if isAvailable {
                 print("✅ [Config] Market available for \(countryCode) - SDK enabled")
-                print("   Loaded \(markets.count) available markets: \(marketCodes.joined(separator: ", "))")
+                print("   Loaded \(channelMarkets.count) available markets: \(marketCodes.joined(separator: ", "))")
             } else {
                 print("⚠️ [Config] Market not available for \(countryCode) - SDK disabled")
-                print("   Available markets (\(markets.count)): \(marketCodes.joined(separator: ", "))")
+                print("   Available markets (\(channelMarkets.count)): \(marketCodes.joined(separator: ", "))")
             }
         } catch let error as NotFoundException {
             await MainActor.run {
                 ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
             }
-            print("❌ [Config] All market queries failed (404) - SDK disabled for \(countryCode)")
+            print("❌ [Config] Channel market query failed (404) - SDK disabled for \(countryCode)")
             print("   Error type: NotFoundException")
             print("   URL attempted: \(config.environment.graphQLURL)")
             print("   API Key: \(config.apiKey.prefix(8))...")
-            print("   Note: Both global and channel market queries returned 404")
+            print("   Query: Channel.GetAvailableMarkets")
             print("   Possible causes:")
-            print("   1. Endpoints not available in \(config.environment.rawValue) environment")
-            print("   2. API key doesn't have permissions for these endpoints")
-            print("   3. Endpoints not configured in backend")
+            print("   1. Endpoint not available in \(config.environment.rawValue) environment")
+            print("   2. API key doesn't have permissions for this endpoint")
+            print("   3. Endpoint not configured in backend")
             print("   4. Authentication header format issue")
         } catch let error as SdkException {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 await MainActor.run {
                     ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
                 }
-                print("❌ [Config] All market queries failed (404) - SDK disabled for \(countryCode)")
+                print("❌ [Config] Channel market query failed (404) - SDK disabled for \(countryCode)")
                 print("   Error code: \(error.code)")
                 print("   Error status: \(error.status ?? 0)")
                 print("   Error message: \(error.description)")
                 print("   URL attempted: \(config.environment.graphQLURL)")
                 print("   API Key: \(config.apiKey.prefix(8))...")
+                print("   Query: Channel.GetAvailableMarkets")
                 print("   Possible causes:")
-                print("   1. Endpoints not available in \(config.environment.rawValue) environment")
-                print("   2. API key doesn't have permissions for these endpoints")
-                print("   3. Endpoints not configured in backend")
+                print("   1. Endpoint not available in \(config.environment.rawValue) environment")
+                print("   2. API key doesn't have permissions for this endpoint")
+                print("   3. Endpoint not configured in backend")
                 print("   4. Authentication header format issue")
             } else {
                 // Other errors - assume available to not block SDK usage

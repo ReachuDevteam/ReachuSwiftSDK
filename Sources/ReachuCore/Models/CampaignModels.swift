@@ -23,6 +23,32 @@ public struct Campaign: Codable, Identifiable {
         self.isPaused = isPaused
     }
     
+    // Custom decoder to handle isPaused as both String and Bool
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(Int.self, forKey: .id)
+        startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+        
+        // Handle isPaused as either String or Bool
+        if let boolValue = try? container.decodeIfPresent(Bool.self, forKey: .isPaused) {
+            isPaused = boolValue
+        } else if let stringValue = try? container.decodeIfPresent(String.self, forKey: .isPaused) {
+            // Convert string "true"/"false" to Bool
+            isPaused = stringValue.lowercased() == "true"
+        } else {
+            isPaused = nil
+        }
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case startDate
+        case endDate
+        case isPaused
+    }
+    
     /// Determine current state based on dates
     /// Handles special cases:
     /// - No dates: Always active (legacy behavior)

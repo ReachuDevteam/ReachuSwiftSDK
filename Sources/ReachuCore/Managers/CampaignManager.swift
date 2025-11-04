@@ -22,6 +22,7 @@ public class CampaignManager: ObservableObject {
     private var webSocketManager: CampaignWebSocketManager?
     private var cancellables = Set<AnyCancellable>()
     private var baseURL: String  // For REST API (GraphQL base URL)
+    private var isInitializing = false  // Flag to prevent multiple simultaneous initializations
     
     // Campaign endpoints from configuration
     private var campaignWebSocketBaseURL: String {
@@ -97,6 +98,15 @@ public class CampaignManager: ObservableObject {
             return
         }
         
+        // Prevent multiple simultaneous initializations
+        guard !isInitializing else {
+            print("⚠️ [CampaignManager] Campaign initialization already in progress, skipping...")
+            return
+        }
+        
+        isInitializing = true
+        defer { isInitializing = false }
+        
         print("📋 [CampaignManager] Initializing campaign: \(campaignId)")
         
         // 1. Fetch campaign info and determine initial state
@@ -150,16 +160,31 @@ public class CampaignManager: ObservableObject {
     
     /// Fetch campaign information from API
     private func fetchCampaignInfo(campaignId: Int) async {
-        let urlString = "\(campaignRestAPIBaseURL)/\(campaignId)"
+        let urlString = "\(campaignRestAPIBaseURL)/api/campaigns/\(campaignId)"
         guard let url = URL(string: urlString) else {
             print("❌ [CampaignManager] Invalid campaign API URL: \(urlString)")
             return
         }
         
+        print("📡 [CampaignManager] Fetching campaign info from: \(urlString)")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Add API Key authentication
+        let config = ReachuConfiguration.shared
+        if !config.apiKey.isEmpty {
+            request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+        
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(for: request)
             
             if let httpResponse = response as? HTTPURLResponse {
+                print("📡 [CampaignManager] Campaign info response status: \(httpResponse.statusCode)")
+                
                 if httpResponse.statusCode == 404 {
                     print("⚠️ [CampaignManager] Campaign \(campaignId) not found - SDK works normally")
                     // Campaign not found - allow normal SDK behavior
@@ -167,6 +192,26 @@ public class CampaignManager: ObservableObject {
                     self.campaignState = .active
                     return
                 }
+                
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
+                    print("❌ [CampaignManager] Campaign info request failed with status \(httpResponse.statusCode)")
+                    print("   Response: \(responseString.prefix(200))")
+                    // On error, allow normal SDK behavior
+                    self.isCampaignActive = true
+                    self.campaignState = .active
+                    return
+                }
+            }
+            
+            // Validate that we received JSON, not HTML
+            if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                print("❌ [CampaignManager] Received HTML instead of JSON from campaign endpoint")
+                print("   Response preview: \(responseString.prefix(200))")
+                // On error, allow normal SDK behavior
+                self.isCampaignActive = true
+                self.campaignState = .active
+                return
             }
             
             let campaign = try JSONDecoder().decode(Campaign.self, from: data)
@@ -195,6 +240,15 @@ public class CampaignManager: ObservableObject {
                 print("❌ [CampaignManager] Campaign \(campaignId) has ended - hiding all components")
             }
             
+        } catch let decodingError as DecodingError {
+            print("❌ [CampaignManager] Failed to decode campaign info: \(decodingError)")
+            if let data = try? await URLSession.shared.data(for: request).0,
+               let responseString = String(data: data, encoding: .utf8) {
+                print("   Response received: \(responseString.prefix(500))")
+            }
+            // On error, allow normal SDK behavior
+            self.isCampaignActive = true
+            self.campaignState = .active
         } catch {
             print("⚠️ [CampaignManager] Failed to fetch campaign info: \(error)")
             // On error, allow normal SDK behavior
@@ -205,14 +259,54 @@ public class CampaignManager: ObservableObject {
     
     /// Fetch active components from API
     private func fetchActiveComponents(campaignId: Int) async {
-        let urlString = "\(campaignRestAPIBaseURL)/\(campaignId)/components"
+        let urlString = "\(campaignRestAPIBaseURL)/api/campaigns/\(campaignId)/components"
         guard let url = URL(string: urlString) else {
             print("❌ [CampaignManager] Invalid components API URL")
             return
         }
         
+        print("📡 [CampaignManager] Fetching components from: \(urlString)")
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        
+        // Add API Key authentication
+        let config = ReachuConfiguration.shared
+        if !config.apiKey.isEmpty {
+            request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
+        }
+        
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            // Validate HTTP response before decoding
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 [CampaignManager] Components response status: \(httpResponse.statusCode)")
+                
+                guard (200...299).contains(httpResponse.statusCode) else {
+                    let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
+                    print("❌ [CampaignManager] Components request failed with status \(httpResponse.statusCode)")
+                    print("   Response: \(responseString.prefix(500))")
+                    
+                    // If 404, campaign might not have components configured - this is OK
+                    if httpResponse.statusCode == 404 {
+                        print("ℹ️ [CampaignManager] No components endpoint found - campaign may not have components configured")
+                        self.activeComponents = []
+                        return
+                    }
+                    return
+                }
+            }
+            
+            // Validate that we received JSON, not HTML
+            if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                print("❌ [CampaignManager] Received HTML instead of JSON from components endpoint")
+                print("   Response preview: \(responseString.prefix(200))")
+                return
+            }
+            
             let components = try JSONDecoder().decode([Component].self, from: data)
             
             // Filter to only active components
@@ -220,6 +314,9 @@ public class CampaignManager: ObservableObject {
             
             print("✅ [CampaignManager] Loaded \(self.activeComponents.count) active components")
             
+        } catch let decodingError as DecodingError {
+            print("❌ [CampaignManager] Failed to decode components: \(decodingError)")
+            // The response data is already logged above if status code was not 200-299
         } catch {
             print("⚠️ [CampaignManager] Failed to fetch active components: \(error)")
         }
