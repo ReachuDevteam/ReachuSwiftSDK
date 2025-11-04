@@ -133,17 +133,17 @@ public struct RProductBanner: View {
                 switch phase {
                 case .empty:
                     Rectangle()
-                        .fill(adaptiveColors.backgroundSecondary)
+                        .fill(adaptiveColors.surfaceSecondary)
                 case .success(let image):
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 case .failure:
                     Rectangle()
-                        .fill(adaptiveColors.backgroundSecondary)
+                        .fill(adaptiveColors.surfaceSecondary)
                 @unknown default:
                     Rectangle()
-                        .fill(adaptiveColors.backgroundSecondary)
+                        .fill(adaptiveColors.surfaceSecondary)
                 }
             }
             .frame(height: 200)
@@ -349,7 +349,7 @@ class RProductBannerViewModel: ObservableObject {
             )
             
             product = dtoProducts.first?.toDomainProduct()
-            print("✅ [RProductBanner] Loaded product: \(product?.name ?? "unknown")")
+            print("✅ [RProductBanner] Loaded product: \(product?.title ?? "unknown")")
             
         } catch let error as NotFoundException {
             isMarketUnavailable = true
