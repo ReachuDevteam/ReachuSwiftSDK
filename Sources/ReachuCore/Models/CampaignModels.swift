@@ -102,8 +102,8 @@ internal struct ComponentResponse: Codable {
     let campaignId: Int
     let componentId: String
     let status: String
-    let customConfig: [String: AnyCodable]?
-    let component: ComponentData?
+    fileprivate let customConfig: [String: AnyCodable]?
+    fileprivate let component: ComponentData?
     
     struct ComponentData: Codable {
         let id: String
@@ -114,7 +114,7 @@ internal struct ComponentResponse: Codable {
 }
 
 /// Helper type to decode arbitrary JSON values
-private struct AnyCodable: Codable {
+internal struct AnyCodable: Codable {
     let value: Any
     
     init(_ value: Any) {
@@ -223,6 +223,17 @@ public struct Component: Codable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         config = try container.decode(ComponentConfig.self, forKey: .config)
         status = try container.decodeIfPresent(String.self, forKey: .status)
+    }
+    
+    /// Encode to JSON (for WebSocket events)
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(id, forKey: .id)
+        try container.encode(type, forKey: .type)
+        try container.encode(name, forKey: .name)
+        try container.encode(config, forKey: .config)
+        try container.encodeIfPresent(status, forKey: .status)
     }
     
     private enum CodingKeys: String, CodingKey {
