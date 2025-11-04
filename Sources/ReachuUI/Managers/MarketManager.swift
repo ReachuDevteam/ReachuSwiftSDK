@@ -19,6 +19,12 @@ extension CartManager {
     }
 
     private func loadMarkets() async {
+        // Check if SDK should be used before attempting operations
+        guard ReachuConfiguration.shared.shouldUseSDK else {
+            print("⚠️ [Markets] Skipping market load - SDK disabled (market not available)")
+            return
+        }
+        
         let fallbackConfig = ReachuConfiguration.shared.marketConfiguration
         let fallbackMarket = Market(
             code: fallbackConfig.countryCode,
@@ -50,6 +56,23 @@ extension CartManager {
             let shouldRefresh = (country != target.code) || (currency != target.currencyCode)
 
             await applyMarket(target, refreshData: shouldRefresh)
+        } catch let error as NotFoundException {
+            // Market not available - use fallback silently
+            print("⚠️ [Markets] Market not available, using fallback: \(fallbackMarket.code)")
+            markets = [fallbackMarket]
+            didLoadMarkets = false
+            await applyMarket(fallbackMarket, refreshData: false)
+        } catch let error as SdkException {
+            // Only log if it's not a NOT_FOUND error
+            if error.code == "NOT_FOUND" || error.status == 404 {
+                print("⚠️ [Markets] Market not available, using fallback: \(fallbackMarket.code)")
+            } else {
+                print("❌ [Markets] Failed to load markets: \(error.description)")
+                logError("sdk.market.getAvailable", error: error)
+            }
+            markets = [fallbackMarket]
+            didLoadMarkets = false
+            await applyMarket(fallbackMarket, refreshData: false)
         } catch {
             print("❌ [Markets] Failed to load markets: \(error.localizedDescription)")
             logError("sdk.market.getAvailable", error: error)

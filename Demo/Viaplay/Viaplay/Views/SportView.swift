@@ -203,7 +203,12 @@ struct SportView: View {
                             .padding(.bottom, 8)
                         }
                         .frame(maxWidth: geometry.size.width)
-                        .padding(.bottom, 100)
+                        
+                        // Offer Banner Section
+                        ViaplayOfferBannerView()
+                            .padding(.horizontal, 16)
+                            .padding(.top, 24)
+                            .padding(.bottom, 100)
                     }
                 }
                 .ignoresSafeArea(edges: .top)

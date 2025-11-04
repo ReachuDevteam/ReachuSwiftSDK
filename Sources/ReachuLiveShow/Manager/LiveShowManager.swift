@@ -4,6 +4,8 @@ import Combine
 import ReachuCore
 import struct Foundation.Date
 
+// LiveShowCartManaging protocol is now in ReachuCore, so no additional import needed
+
 // ReachuTesting import removed - using hardcoded demo data instead
 
 /// Global manager for LiveShow functionality with Tipio.no integration

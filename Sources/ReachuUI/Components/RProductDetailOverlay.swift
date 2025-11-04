@@ -95,6 +95,15 @@ public struct RProductDetailOverlay: View {
     
     // MARK: - Body
     public var body: some View {
+        // Hide if SDK should not be used (market not available) or campaign not active
+        if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
+            EmptyView()
+        } else {
+            productDetailContent
+        }
+    }
+    
+    private var productDetailContent: some View {
         NavigationView {
             ZStack(alignment: .top) {
                 ScrollView {
@@ -203,7 +212,7 @@ public struct RProductDetailOverlay: View {
                             Image(systemName: "photo")
                                 .font(.system(size: 48))
                                 .foregroundColor(ReachuColors.textSecondary)
-                            Text("No Image Available")
+                            Text(RLocalizedString(ReachuTranslationKey.noImageAvailable.rawValue))
                                 .font(ReachuTypography.body)
                                 .foregroundColor(ReachuColors.textSecondary)
                         }
@@ -389,7 +398,7 @@ public struct RProductDetailOverlay: View {
         VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
             if !product.variants.isEmpty {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text("Options")
+                    Text(RLocalizedString(ReachuTranslationKey.options.rawValue))
                         .font(ReachuTypography.caption1)
                         .fontWeight(.semibold)
                         .foregroundColor(ReachuColors.textPrimary)
@@ -445,7 +454,7 @@ public struct RProductDetailOverlay: View {
     // MARK: - Quantity Selection Section
     private var quantitySelectionSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            Text("Quantity")
+            Text(RLocalizedString(ReachuTranslationKey.quantity.rawValue))
                 .font(ReachuTypography.caption1)
                 .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
@@ -507,7 +516,7 @@ public struct RProductDetailOverlay: View {
     private var descriptionSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
             if let description = product.description, !description.isEmpty {
-                Text("Description")
+                Text(RLocalizedString(ReachuTranslationKey.productDescription.rawValue))
                     .font(ReachuTypography.caption1)
                     .fontWeight(.semibold)
                     .foregroundColor(ReachuColors.textPrimary)
@@ -542,28 +551,28 @@ public struct RProductDetailOverlay: View {
     // MARK: - Specifications Section
     private var specificationsSection: some View {
         VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            Text("Details")
+            Text(RLocalizedString(ReachuTranslationKey.productDetails.rawValue))
                 .font(ReachuTypography.caption1)
                 .fontWeight(.semibold)
                 .foregroundColor(ReachuColors.textPrimary)
             
             VStack(spacing: ReachuSpacing.xs) {
                 if !product.sku.isEmpty {
-                    specificationRow(title: "SKU", value: product.sku)
+                    specificationRow(title: RLocalizedString(ReachuTranslationKey.sku.rawValue), value: product.sku)
                 }
                 
                 if let categories = product.categories, !categories.isEmpty {
                     specificationRow(
-                        title: "Category", 
+                        title: RLocalizedString(ReachuTranslationKey.category.rawValue), 
                         value: categories.map(\.name).joined(separator: ", ")
                     )
                 }
                 
                 if !product.supplier.isEmpty {
-                    specificationRow(title: "Supplier", value: product.supplier)
+                    specificationRow(title: RLocalizedString(ReachuTranslationKey.supplier.rawValue), value: product.supplier)
                 }
                 
-                specificationRow(title: "Stock", value: "\(selectedVariant?.quantity ?? product.quantity ?? 0) available")
+                specificationRow(title: RLocalizedString(ReachuTranslationKey.stock.rawValue), value: "\(selectedVariant?.quantity ?? product.quantity ?? 0) \(RLocalizedString(ReachuTranslationKey.available.rawValue))")
             }
         }
     }
@@ -630,7 +639,7 @@ public struct RProductDetailOverlay: View {
                     }
                     
                     // Button text
-                    Text(showCheckmark ? "Added to Cart!" : isAddingToCart ? "Adding..." : "Add to Cart")
+                    Text(showCheckmark ? RLocalizedString(ReachuTranslationKey.completePurchase.rawValue) : isAddingToCart ? RLocalizedString(ReachuTranslationKey.loading.rawValue) : RLocalizedString(ReachuTranslationKey.addToCart.rawValue))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                     
@@ -848,7 +857,7 @@ public struct RProductDetailOverlay: View {
                 
                 // Success text
                 VStack(spacing: ReachuSpacing.xs) {
-                    Text("Added to Cart!")
+                    Text(RLocalizedString(ReachuTranslationKey.completePurchase.rawValue))
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .opacity(showSuccessAnimation ? 1.0 : 0.0)

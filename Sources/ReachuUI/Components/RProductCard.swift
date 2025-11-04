@@ -222,7 +222,7 @@ public struct RProductCard: View {
                     priceView
                     Spacer()
                     RButton(
-                        title: showCheckmark ? "Added!" : "Add to Cart",
+                        title: showCheckmark ? RLocalizedString(ReachuTranslationKey.success.rawValue) : RLocalizedString(ReachuTranslationKey.addToCart.rawValue),
                         style: .primary,
                         size: .large,
                         isLoading: isAddingToCart,
@@ -330,7 +330,7 @@ public struct RProductCard: View {
                         .foregroundColor(color)
                     
                     if systemImage == "exclamationmark.triangle" {
-                        Text("Image unavailable")
+                        Text(RLocalizedString(ReachuTranslationKey.noImageAvailable.rawValue))
                             .font(ReachuTypography.caption1)
                             .foregroundColor(color)
                             .multilineTextAlignment(.center)
@@ -403,7 +403,7 @@ public struct RProductCard: View {
                 EmptyView()
             } else if isInStock {
                 RButton(
-                    title: showCheckmark ? (variant == .list ? "✓" : variant == .grid ? "" : "Added!") : (variant == .list ? "Add" : variant == .grid ? "" : "Add to Cart"),
+                    title: showCheckmark ? (variant == .list ? "✓" : variant == .grid ? "" : RLocalizedString(ReachuTranslationKey.success.rawValue)) : (variant == .list ? RLocalizedString(ReachuTranslationKey.addToCart.rawValue) : variant == .grid ? "" : RLocalizedString(ReachuTranslationKey.addToCart.rawValue)),
                     style: .primary,
                     size: variant == .list ? .small : variant == .grid ? .small : .medium,
                     isLoading: isAddingToCart,
@@ -415,7 +415,7 @@ public struct RProductCard: View {
                 .scaleEffect(buttonScale)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: buttonScale)
             } else {
-                Text("Out of Stock")
+                Text(RLocalizedString(ReachuTranslationKey.outOfStock.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(adaptiveColors.error)
                     .padding(.horizontal, ReachuSpacing.sm)

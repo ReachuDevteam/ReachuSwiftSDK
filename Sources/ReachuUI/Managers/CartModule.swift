@@ -22,6 +22,12 @@ extension CartManager {
     // MARK: - Cart Lifecycle
 
     public func createCart(currency: String = "USD", country: String = "US") async {
+        // Check if SDK should be used before attempting operations
+        guard ReachuConfiguration.shared.shouldUseSDK else {
+            print("⚠️ [Cart] Skipping cart creation - SDK disabled (market not available)")
+            return
+        }
+        
         if currentCartId != nil {
             print("🛒 [Cart] createCart skipped — existing cartId=\(currentCartId ?? "nil")")
             return

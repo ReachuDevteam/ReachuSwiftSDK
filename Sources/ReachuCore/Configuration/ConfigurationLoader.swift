@@ -28,17 +28,21 @@ public class ConfigurationLoader {
     /// 
     /// // Option 3: Custom bundle (for frameworks/modules)
     /// ConfigurationLoader.loadConfiguration(bundle: Bundle(for: MyClass.self))
+    /// 
+    /// // Option 4: With user country check
+    /// ConfigurationLoader.loadConfiguration(userCountryCode: "US")
     /// ```
     /// 
     /// - Parameters:
     ///   - fileName: Optional specific config file name (without .json extension)
     ///   - bundle: Bundle to search for config files (defaults to main app bundle)
-    public static func loadConfiguration(fileName: String? = nil, bundle: Bundle = .main) {
+    ///   - userCountryCode: Optional user's country code (e.g., "US", "NO"). If provided, SDK will check if market is available for this country before enabling.
+    public static func loadConfiguration(fileName: String? = nil, bundle: Bundle = .main, userCountryCode: String? = nil) {
         do {
             // 1. If specific fileName provided, use it directly
             if let fileName = fileName {
                 print("🔧 [Config] Loading specific config: \(fileName).json")
-                try loadFromJSON(fileName: fileName, bundle: bundle)
+                try loadFromJSON(fileName: fileName, bundle: bundle, userCountryCode: userCountryCode)
                 return
             }
             
@@ -46,7 +50,7 @@ public class ConfigurationLoader {
             if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
                 print("🔧 [Config] Using environment config type: \(configType)")
                 let envFileName = "reachu-config-\(configType)"
-                try loadFromJSON(fileName: envFileName, bundle: bundle)
+                try loadFromJSON(fileName: envFileName, bundle: bundle, userCountryCode: userCountryCode)
                 return
             }
             
@@ -61,24 +65,24 @@ public class ConfigurationLoader {
             for configFile in configFiles {
                 if bundle.path(forResource: configFile, ofType: "json") != nil {
                     print("🔧 [Config] Found config file: \(configFile).json")
-                    try loadFromJSON(fileName: configFile, bundle: bundle)
+                    try loadFromJSON(fileName: configFile, bundle: bundle, userCountryCode: userCountryCode)
                     return
                 }
             }
             
             // 4. No config file found - use defaults
             print("⚠️ [Config] No config file found in bundle, using SDK defaults")
-            applyDefaultConfiguration()
+            applyDefaultConfiguration(userCountryCode: userCountryCode)
             
         } catch {
             print("❌ [Config] Error loading configuration: \(error)")
             print("🔧 [Config] Falling back to SDK defaults")
-            applyDefaultConfiguration()
+            applyDefaultConfiguration(userCountryCode: userCountryCode)
         }
     }
     
     /// Apply default SDK configuration when no config file is found
-    private static func applyDefaultConfiguration() {
+    private static func applyDefaultConfiguration(userCountryCode: String? = nil) {
         // Configure with minimal defaults
         ReachuConfiguration.configure(
             apiKey: "",
@@ -92,9 +96,19 @@ public class ConfigurationLoader {
             marketConfig: .default
         )
         print("✅ [Config] Applied default SDK configuration")
+        
+        // Check market availability if user country provided
+        if let countryCode = userCountryCode {
+            Task {
+                await checkMarketAvailability(countryCode: countryCode)
+            }
+        } else {
+            // Default to available if no country check
+            ReachuConfiguration.setMarketAvailable(true)
+        }
     }
     
-    public static func loadFromJSON(fileName: String, bundle: Bundle = .main) throws {
+    public static func loadFromJSON(fileName: String, bundle: Bundle = .main, userCountryCode: String? = nil) throws {
         guard let path = bundle.path(forResource: fileName, ofType: "json"),
               let data = FileManager.default.contents(atPath: path) else {
             throw ConfigurationError.fileNotFound(fileName: "\(fileName).json")
@@ -102,7 +116,11 @@ public class ConfigurationLoader {
         
         print("📄 [Config] Loading configuration from: \(fileName).json")
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
-        applyConfiguration(config)
+        
+        // Use provided userCountryCode or check environment variable
+        let userCountry = userCountryCode ?? ProcessInfo.processInfo.environment["REACHU_USER_COUNTRY"]
+        
+        applyConfiguration(config, bundle: bundle, userCountryCode: userCountry)
         print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
         print("🎨 [Config] Theme mode: \(config.theme?.mode ?? "unknown")")
         if let lightColors = config.theme?.lightColors {
@@ -114,13 +132,13 @@ public class ConfigurationLoader {
     }
     
     /// Load configuration from JSON string
-    public static func loadFromJSONString(_ jsonString: String) throws {
+    public static func loadFromJSONString(_ jsonString: String, bundle: Bundle = .main, userCountryCode: String? = nil) throws {
         guard let data = jsonString.data(using: .utf8) else {
             throw ConfigurationError.invalidJSON
         }
         
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
-        applyConfiguration(config)
+        applyConfiguration(config, bundle: bundle, userCountryCode: userCountryCode)
     }
     
     // MARK: - Plist Configuration Loading
@@ -157,18 +175,18 @@ public class ConfigurationLoader {
     // MARK: - Remote Configuration Loading
     
     /// Load configuration from a remote URL
-    public static func loadFromRemote(url: URL) async throws {
+    public static func loadFromRemote(url: URL, bundle: Bundle = .main, userCountryCode: String? = nil) async throws {
         let (data, _) = try await URLSession.shared.data(from: url)
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         
         await MainActor.run {
-            applyConfiguration(config)
+            applyConfiguration(config, bundle: bundle, userCountryCode: userCountryCode)
         }
     }
     
     // MARK: - Apply Configurations
     
-    private static func applyConfiguration(_ config: JSONConfiguration) {
+    private static func applyConfiguration(_ config: JSONConfiguration, bundle: Bundle = .main, userCountryCode: String? = nil) {
         let theme = createTheme(from: config.theme)
         let cartConfig = createCartConfiguration(from: config.cart)
         let networkConfig = createNetworkConfiguration(from: config.network)
@@ -176,6 +194,7 @@ public class ConfigurationLoader {
         let liveShowConfig = createLiveShowConfiguration(from: config.liveShow)
         let marketFallback = createMarketConfiguration(from: config.marketFallback)
         let productDetailConfig = createProductDetailConfiguration(from: config.productDetail)
+        let localizationConfig = createLocalizationConfiguration(from: config.localization, bundle: bundle)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -186,12 +205,193 @@ public class ConfigurationLoader {
             uiConfig: uiConfig,
             liveShowConfig: liveShowConfig,
             marketConfig: marketFallback,
-            productDetailConfig: productDetailConfig
+            productDetailConfig: productDetailConfig,
+            localizationConfig: localizationConfig
         )
         
         // Initialize Stripe automatically if available
         initializeStripeIfAvailable()
+        
+        // Check market availability if user country provided
+        if let countryCode = userCountryCode {
+            // Set initial language based on user country
+            let languageCode = languageCodeForCountry(countryCode)
+            let hasTranslations = localizationConfig.translations[languageCode] != nil
+            
+            print("🌍 [Config] Country: \(countryCode) → Language: \(languageCode)")
+            print("🌍 [Config] Translations available for '\(languageCode)': \(hasTranslations)")
+            print("🌍 [Config] Available languages in config: \(localizationConfig.translations.keys.joined(separator: ", "))")
+            
+            if hasTranslations {
+                ReachuLocalization.shared.setLanguage(languageCode)
+                print("✅ [Config] Language set to '\(languageCode)' based on user country '\(countryCode)'")
+            } else {
+                print("⚠️ [Config] Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'")
+                ReachuLocalization.shared.setLanguage(localizationConfig.defaultLanguage)
+            }
+            
+            Task {
+                await checkMarketAvailability(countryCode: countryCode)
+            }
+        } else {
+            // Default to available if no country check
+            // Set language based on market fallback (countryCode is always a String, not optional)
+            let fallbackCountry = marketFallback.countryCode
+            let languageCode = languageCodeForCountry(fallbackCountry)
+            let hasTranslations = localizationConfig.translations[languageCode] != nil
+            
+            print("🌍 [Config] Market fallback country: \(fallbackCountry) → Language: \(languageCode)")
+            print("🌍 [Config] Translations available for '\(languageCode)': \(hasTranslations)")
+            print("🌍 [Config] Available languages in config: \(localizationConfig.translations.keys.joined(separator: ", "))")
+            
+            if hasTranslations {
+                ReachuLocalization.shared.setLanguage(languageCode)
+                print("✅ [Config] Language set to '\(languageCode)' based on market fallback country '\(fallbackCountry)'")
+            } else {
+                print("⚠️ [Config] Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'")
+                ReachuLocalization.shared.setLanguage(localizationConfig.defaultLanguage)
+            }
+            
+            ReachuConfiguration.setMarketAvailable(true)
+        }
+        
+        // Reinitialize CampaignManager with new configuration
+        Task { @MainActor in
+            CampaignManager.shared.reinitialize()
+        }
     }
+    
+    /// Check if market is available for the given country code
+    /// This verifies if Reachu SDK should be enabled for the user's country
+    /// Also stores the complete list of available markets for component access
+    /// Uses Markets.GetAvailableMarkets (global) instead of Channel.GetAvailableMarkets (channel-specific)
+    private static func checkMarketAvailability(countryCode: String) async {
+        let config = ReachuConfiguration.shared
+        
+        // Skip check if API key is empty (demo mode)
+        guard !config.apiKey.isEmpty else {
+            print("⚠️ [Config] Skipping market check - API key not configured")
+            ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
+            return
+        }
+        
+        do {
+            let baseURL = URL(string: config.environment.graphQLURL)!
+            let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
+            
+            print("🔍 [Config] Checking market availability for country: \(countryCode)")
+            
+            // Try global markets first
+            var markets: [GetAvailableMarketsDto] = []
+            var marketCodes: [String] = []
+            
+            do {
+                print("   Attempting Markets.GetAvailableMarkets (global markets)...")
+                print("   URL: \(sdk.baseUrl.absoluteString)")
+                print("   API Key: \(sdk.apiKey.prefix(8))...")
+                let globalMarkets = try await sdk.market.getAvailable()
+                
+                // Convert GetAvailableGlobalMarketsDto to GetAvailableMarketsDto for compatibility
+                markets = globalMarkets.map { globalMarket in
+                    GetAvailableMarketsDto(
+                        code: globalMarket.code,
+                        name: globalMarket.name,
+                        official: globalMarket.official,
+                        flag: globalMarket.flag,
+                        phoneCode: globalMarket.phoneCode,
+                        currency: globalMarket.currency.map { CurrencyDto(code: $0.code, name: $0.name, symbol: $0.symbol) }
+                    )
+                }
+                
+                marketCodes = markets.compactMap { $0.code?.uppercased() }
+                print("   ✅ Global markets loaded: \(marketCodes.joined(separator: ", "))")
+            } catch {
+                // Fallback to channel-specific markets if global fails
+                print("   ⚠️ Global markets query failed, trying Channel.GetAvailableMarkets...")
+                print("   Error type: \(type(of: error))")
+                print("   Error description: \(error.localizedDescription)")
+                if let sdkError = error as? SdkException {
+                    print("   SDK Error code: \(sdkError.code)")
+                    print("   SDK Error status: \(sdkError.status ?? 0)")
+                    print("   SDK Error message: \(sdkError.description)")
+                }
+                
+                do {
+                    print("   Attempting Channel.GetAvailableMarkets (channel-specific)...")
+                    let channelMarkets = try await sdk.channel.market.getAvailable()
+                    markets = channelMarkets
+                    marketCodes = markets.compactMap { $0.code?.uppercased() }
+                    print("   ✅ Channel markets loaded: \(marketCodes.joined(separator: ", "))")
+                } catch {
+                    // Both failed, rethrow the error
+                    throw error
+                }
+            }
+            
+            let isAvailable = marketCodes.contains(countryCode.uppercased())
+            
+            await MainActor.run {
+                // Store the complete list of available markets for component access
+                ReachuConfiguration.setMarketAvailable(isAvailable, userCountryCode: countryCode, availableMarkets: markets)
+            }
+            
+            if isAvailable {
+                print("✅ [Config] Market available for \(countryCode) - SDK enabled")
+                print("   Loaded \(markets.count) available markets: \(marketCodes.joined(separator: ", "))")
+            } else {
+                print("⚠️ [Config] Market not available for \(countryCode) - SDK disabled")
+                print("   Available markets (\(markets.count)): \(marketCodes.joined(separator: ", "))")
+            }
+        } catch let error as NotFoundException {
+            await MainActor.run {
+                ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
+            }
+            print("❌ [Config] All market queries failed (404) - SDK disabled for \(countryCode)")
+            print("   Error type: NotFoundException")
+            print("   URL attempted: \(config.environment.graphQLURL)")
+            print("   API Key: \(config.apiKey.prefix(8))...")
+            print("   Note: Both global and channel market queries returned 404")
+            print("   Possible causes:")
+            print("   1. Endpoints not available in \(config.environment.rawValue) environment")
+            print("   2. API key doesn't have permissions for these endpoints")
+            print("   3. Endpoints not configured in backend")
+            print("   4. Authentication header format issue")
+        } catch let error as SdkException {
+            if error.code == "NOT_FOUND" || error.status == 404 {
+                await MainActor.run {
+                    ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
+                }
+                print("❌ [Config] All market queries failed (404) - SDK disabled for \(countryCode)")
+                print("   Error code: \(error.code)")
+                print("   Error status: \(error.status ?? 0)")
+                print("   Error message: \(error.description)")
+                print("   URL attempted: \(config.environment.graphQLURL)")
+                print("   API Key: \(config.apiKey.prefix(8))...")
+                print("   Possible causes:")
+                print("   1. Endpoints not available in \(config.environment.rawValue) environment")
+                print("   2. API key doesn't have permissions for these endpoints")
+                print("   3. Endpoints not configured in backend")
+                print("   4. Authentication header format issue")
+            } else {
+                // Other errors - assume available to not block SDK usage
+                await MainActor.run {
+                    ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
+                }
+                print("⚠️ [Config] Market check failed but assuming available: \(error.description)")
+                print("   Error code: \(error.code), Status: \(error.status ?? 0)")
+            }
+        } catch {
+            // Network or other errors - assume available to not block SDK usage
+            await MainActor.run {
+                ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
+            }
+            print("⚠️ [Config] Market check failed (network error) but assuming available")
+            print("   Error: \(error.localizedDescription)")
+            print("   Type: \(type(of: error))")
+        }
+    }
+    
+    // MARK: - Helper Methods
     
     private static func applyPlistConfiguration(_ config: PlistConfiguration) {
         ReachuConfiguration.configure(
@@ -340,7 +540,7 @@ public class ConfigurationLoader {
         let tipioBaseUrl = config.tipio?.baseUrl ?? "https://stg-dev-microservices.tipioapp.com"
         
         // Dynamic components configuration
-        let campaignId = config.campaignId ?? 3
+        let campaignId = config.campaignId ?? 0  // Default to 0 (no campaign)
         
         return LiveShowConfiguration(
             autoJoinChat: autoJoinChat,
@@ -387,6 +587,117 @@ public class ConfigurationLoader {
         )
     }
     
+    private static func createLocalizationConfiguration(from localizationConfig: JSONLocalizationConfiguration?, bundle: Bundle = .main) -> LocalizationConfiguration {
+        guard let config = localizationConfig else { 
+            // No localization config provided, use default with English translations
+            return .default
+        }
+        
+        var translations = config.translations ?? [:]
+        
+        // Si hay un archivo externo de traducciones, cargarlo
+        if let translationsFile = config.translationsFile {
+            print("📚 [Config] Loading translations from file: \(translationsFile).json")
+            if let externalTranslations = loadTranslationsFromFile(translationsFile, bundle: bundle) {
+                // Merge: las traducciones del archivo externo tienen prioridad
+                for (language, langTranslations) in externalTranslations {
+                    if translations[language] == nil {
+                        translations[language] = [:]
+                    }
+                    translations[language]?.merge(langTranslations) { (_, new) in new }
+                    print("   ✅ Loaded \(langTranslations.count) translations for language '\(language)'")
+                }
+                print("📚 [Config] Total languages loaded: \(externalTranslations.keys.joined(separator: ", "))")
+            } else {
+                print("⚠️ [Config] Failed to load translations file: \(translationsFile).json")
+            }
+        }
+        
+        // If no translations provided, use default English translations
+        if translations.isEmpty {
+            return LocalizationConfiguration(
+                defaultLanguage: config.defaultLanguage ?? "en",
+                translations: ["en": ReachuTranslationKey.defaultEnglish],
+                fallbackLanguage: config.fallbackLanguage ?? "en"
+            )
+        }
+        
+        // Ensure English translations are always available as fallback (from default)
+        // Don't add them if they're not in the file, they're already in defaultEnglish
+        if translations["en"] == nil {
+            // English is always available from ReachuTranslationKey.defaultEnglish, no need to add it here
+            print("ℹ️ [Config] English translations not in file, will use default built-in translations")
+        }
+        
+        return LocalizationConfiguration(
+            defaultLanguage: config.defaultLanguage ?? "en",
+            translations: translations,
+            fallbackLanguage: config.fallbackLanguage ?? "en"
+        )
+    }
+    
+    /// Map country codes to language codes (same as in ReachuConfiguration)
+    private static func languageCodeForCountry(_ countryCode: String?) -> String {
+        guard let countryCode = countryCode?.uppercased() else { return "en" }
+        
+        let countryToLanguage: [String: String] = [
+            "DE": "de", "AT": "de", "CH": "de",
+            "US": "en", "GB": "en", "CA": "en", "AU": "en",
+            "NO": "no", "SE": "sv", "DK": "da", "FI": "fi",
+            "ES": "es", "FR": "fr", "IT": "it", "NL": "nl", "PL": "pl",
+            "PT": "pt", "BR": "pt", "MX": "es", "AR": "es", "CL": "es", "CO": "es",
+            "JP": "ja", "CN": "zh", "KR": "ko",
+        ]
+        
+        return countryToLanguage[countryCode] ?? "en"
+    }
+    
+    /// Load translations from external JSON file
+    /// Looks for files like: translations.json, localization.json, translations-{language}.json
+    private static func loadTranslationsFromFile(_ fileName: String, bundle: Bundle = .main) -> [String: [String: String]]? {
+        // Try to find the file in the bundle
+        guard let path = bundle.path(forResource: fileName, ofType: "json"),
+              let data = FileManager.default.contents(atPath: path) else {
+            print("⚠️ [Config] Translations file not found: \(fileName).json")
+            print("   Searched in bundle: \(bundle.bundlePath)")
+            print("   Make sure the file is included in 'Copy Bundle Resources' in Xcode")
+            return nil
+        }
+        
+        do {
+            // Try to decode as translations object
+            let decoder = JSONDecoder()
+            
+            // Format 1: { "translations": { "en": {...}, "es": {...} } }
+            if let wrapper = try? decoder.decode(TranslationsFileWrapper.self, from: data) {
+                print("✅ [Config] Loaded translations from \(fileName).json")
+                return wrapper.translations
+            }
+            
+            // Format 2: Direct { "en": {...}, "es": {...} }
+            if let directTranslations = try? decoder.decode([String: [String: String]].self, from: data) {
+                let languages = directTranslations.keys.joined(separator: ", ")
+                let totalKeys = directTranslations.values.reduce(0) { $0 + $1.count }
+                print("✅ [Config] Loaded translations from \(fileName).json")
+                print("   Languages: \(languages)")
+                print("   Total translation keys: \(totalKeys)")
+                return directTranslations
+            }
+            
+            print("❌ [Config] Invalid format in translations file: \(fileName).json")
+            print("   Expected format: { \"en\": {...}, \"de\": {...} }")
+            return nil
+        } catch {
+            print("❌ [Config] Error loading translations file: \(error)")
+            return nil
+        }
+    }
+    
+    /// Helper struct for decoding translations file wrapper
+    private struct TranslationsFileWrapper: Codable {
+        let translations: [String: [String: String]]
+    }
+    
     // MARK: - Stripe Initialization
     
     /// Initialize Stripe automatically by fetching publishable key from Reachu API
@@ -430,8 +741,13 @@ public class ConfigurationLoader {
                 // API call failed, use default key
                 await MainActor.run {
                     StripeAPI.defaultPublishableKey = defaultPublishableKey
-                    print("❌ [Config] Failed to fetch payment methods: \(error)")
                     print("💳 [Config] Using default Stripe key")
+                    if let sdkError = error as? SdkException {
+                        print("   Payment methods fetch failed: \(sdkError.description)")
+                        print("   Error code: \(sdkError.code), Status: \(sdkError.status ?? 0)")
+                    } else {
+                        print("   Payment methods fetch failed: \(error.localizedDescription)")
+                    }
                 }
             }
         }
@@ -456,6 +772,7 @@ private struct JSONConfiguration: Codable {
     let liveShow: JSONLiveShowConfiguration?
     let marketFallback: JSONMarketFallbackConfiguration?
     let productDetail: JSONProductDetailConfiguration?
+    let localization: JSONLocalizationConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -551,6 +868,13 @@ private struct JSONProductDetailConfiguration: Codable {
     let closeButtonStyle: String?
     let showDescription: Bool?
     let showSpecifications: Bool?
+}
+
+private struct JSONLocalizationConfiguration: Codable {
+    let defaultLanguage: String?
+    let fallbackLanguage: String?
+    let translations: [String: [String: String]]?
+    let translationsFile: String?  // Nombre del archivo externo con traducciones
 }
 
 private struct JSONTipioConfiguration: Codable {
@@ -675,3 +999,4 @@ private struct PlistConfiguration {
         return PlistConfiguration(apiKey: apiKey, environment: environment)
     }
 }
+

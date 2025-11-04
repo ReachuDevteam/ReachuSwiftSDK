@@ -116,7 +116,6 @@ let package = Package(
             dependencies: [
                 "ReachuCore",
                 "ReachuDesignSystem",
-                "ReachuLiveShow",  // For CartManager live features
                 "ReachuTesting",  // For previews and mock data
                 .product(
                     name: "StripePaymentSheet", package: "stripe-ios",

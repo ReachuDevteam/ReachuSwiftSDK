@@ -1,6 +1,5 @@
 import Foundation
 import ReachuCore
-import ReachuLiveShow
 import SwiftUI
 
 public protocol CartManagingSDK {
@@ -90,6 +89,12 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
 
         if autoBootstrap {
             Task { [currency, country] in
+                // Check if SDK should be used before attempting operations
+                guard ReachuConfiguration.shared.shouldUseSDK else {
+                    print("⚠️ [Cart] Skipping cart creation - SDK disabled (market not available)")
+                    return
+                }
+                
                 print(
                     "🛒 [Cart] init → scheduling createCart(currency:\(currency), country:\(country))"
                 )

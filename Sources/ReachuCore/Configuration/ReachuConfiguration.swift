@@ -34,8 +34,12 @@ public class ReachuConfiguration: ObservableObject {
     @Published public private(set) var liveShowConfiguration: LiveShowConfiguration = .default
     @Published public private(set) var marketConfiguration: MarketConfiguration = .default
     @Published public private(set) var productDetailConfiguration: ProductDetailConfiguration = .default
+    @Published public private(set) var localizationConfiguration: LocalizationConfiguration = .default
     
     @Published public private(set) var isConfigured: Bool = false
+    @Published public private(set) var isMarketAvailable: Bool = true  // If false, SDK should not be used
+    @Published public private(set) var userCountryCode: String? = nil  // User's country code if provided
+    @Published public private(set) var availableMarkets: [GetAvailableMarketsDto] = []  // List of available markets from backend
     
     private init() {}
     
@@ -51,7 +55,8 @@ public class ReachuConfiguration: ObservableObject {
         uiConfig: UIConfiguration? = nil,
         liveShowConfig: LiveShowConfiguration? = nil,
         marketConfig: MarketConfiguration? = nil,
-        productDetailConfig: ProductDetailConfiguration? = nil
+        productDetailConfig: ProductDetailConfiguration? = nil,
+        localizationConfig: LocalizationConfiguration? = nil
     ) {
         let instance = ReachuConfiguration.shared
         
@@ -64,7 +69,17 @@ public class ReachuConfiguration: ObservableObject {
         instance.liveShowConfiguration = liveShowConfig ?? .default
         instance.marketConfiguration = marketConfig ?? .default
         instance.productDetailConfiguration = productDetailConfig ?? .default
+        instance.localizationConfiguration = localizationConfig ?? .default
+        
+        // Configure localization system
+        ReachuLocalization.shared.configure(instance.localizationConfiguration)
+        
         instance.isConfigured = true
+        
+        // Initialize CampaignManager with new configuration
+        Task { @MainActor in
+            CampaignManager.shared.reinitialize()
+        }
         
         print("🔧 Reachu SDK configured successfully")
         print("   API Key: \(apiKey.prefix(8))...")
@@ -83,6 +98,126 @@ public class ReachuConfiguration: ObservableObject {
             uiConfig: nil,
             liveShowConfig: nil
         )
+    }
+    
+    /// Map country codes to language codes
+    /// Used to automatically select language based on market
+    private static func languageCodeForCountry(_ countryCode: String?) -> String {
+        guard let countryCode = countryCode?.uppercased() else { return "en" }
+        
+        // Map country codes to language codes
+        let countryToLanguage: [String: String] = [
+            "DE": "de",  // Germany → German
+            "AT": "de",  // Austria → German
+            "CH": "de",  // Switzerland → German
+            "US": "en",  // United States → English
+            "GB": "en",  // United Kingdom → English
+            "CA": "en",  // Canada → English
+            "AU": "en",  // Australia → English
+            "NO": "no",  // Norway → Norwegian
+            "SE": "sv",  // Sweden → Swedish
+            "DK": "da",  // Denmark → Danish
+            "FI": "fi",  // Finland → Finnish
+            "ES": "es",  // Spain → Spanish
+            "FR": "fr",  // France → French
+            "IT": "it",  // Italy → Italian
+            "NL": "nl",  // Netherlands → Dutch
+            "PL": "pl",  // Poland → Polish
+            "PT": "pt",  // Portugal → Portuguese
+            "BR": "pt",  // Brazil → Portuguese
+            "MX": "es",  // Mexico → Spanish
+            "AR": "es",  // Argentina → Spanish
+            "CL": "es",  // Chile → Spanish
+            "CO": "es",  // Colombia → Spanish
+            "JP": "ja",  // Japan → Japanese
+            "CN": "zh",  // China → Chinese
+            "KR": "ko",  // South Korea → Korean
+        ]
+        
+        return countryToLanguage[countryCode] ?? "en"  // Default to English
+    }
+    
+    /// Set market availability status and store available markets
+    /// Also automatically updates language based on country code
+    internal static func setMarketAvailable(_ available: Bool, userCountryCode: String? = nil, availableMarkets: [GetAvailableMarketsDto] = []) {
+        shared.isMarketAvailable = available
+        shared.userCountryCode = userCountryCode
+        shared.availableMarkets = availableMarkets
+        
+        // Automatically update language based on country code
+        if let countryCode = userCountryCode {
+            let languageCode = languageCodeForCountry(countryCode)
+            let localizationConfig = shared.localizationConfiguration
+            
+            // Check if translations exist for this language
+            let hasTranslations = localizationConfig.translations[languageCode] != nil
+            
+            print("🌍 [ReachuSDK] Country: \(countryCode) → Language: \(languageCode)")
+            print("🌍 [ReachuSDK] Translations available for '\(languageCode)': \(hasTranslations)")
+            print("🌍 [ReachuSDK] Available languages: \(localizationConfig.translations.keys.joined(separator: ", "))")
+            
+            if hasTranslations {
+                // Update language if translations are available
+                ReachuLocalization.shared.setLanguage(languageCode)
+                print("✅ [ReachuSDK] Language set to '\(languageCode)' based on country '\(countryCode)'")
+            } else {
+                // Use default language if translations not available
+                let defaultLang = localizationConfig.defaultLanguage
+                ReachuLocalization.shared.setLanguage(defaultLang)
+                print("⚠️ [ReachuSDK] Language '\(languageCode)' not available, using default '\(defaultLang)' for country '\(countryCode)'")
+            }
+        }
+        
+        if !available {
+            print("⚠️ [ReachuSDK] Market not available for country: \(userCountryCode ?? "unknown") - SDK disabled")
+            if !availableMarkets.isEmpty {
+                let marketCodes = availableMarkets.compactMap { $0.code?.uppercased() }
+                print("   Available markets: \(marketCodes.joined(separator: ", "))")
+            }
+        } else {
+            print("✅ [ReachuSDK] Market available for country: \(userCountryCode ?? "default") - SDK enabled")
+            if !availableMarkets.isEmpty {
+                print("   Loaded \(availableMarkets.count) available markets")
+            }
+        }
+    }
+    
+    /// Check if a specific country code is available in the markets list
+    /// Returns true if the country is in the available markets list
+    /// 
+    /// **Usage:**
+    /// ```swift
+    /// if ReachuConfiguration.shared.isMarketAvailableForCountry("DE") {
+    ///     // Show Germany-specific content
+    /// }
+    /// ```
+    public func isMarketAvailableForCountry(_ countryCode: String) -> Bool {
+        guard !availableMarkets.isEmpty else {
+            // If markets list is empty, assume available (backward compatibility)
+            return true
+        }
+        let upperCountryCode = countryCode.uppercased()
+        return availableMarkets.contains { $0.code?.uppercased() == upperCountryCode }
+    }
+    
+    /// Get market info for a specific country code
+    /// Returns the full market information including currency, phone code, flag, etc.
+    /// 
+    /// **Usage:**
+    /// ```swift
+    /// if let marketInfo = ReachuConfiguration.shared.getMarketInfo(for: "DE") {
+    ///     print("Currency: \(marketInfo.currency?.code ?? "EUR")")
+    ///     print("Phone code: \(marketInfo.phoneCode ?? "+49")")
+    /// }
+    /// ```
+    public func getMarketInfo(for countryCode: String) -> GetAvailableMarketsDto? {
+        let upperCountryCode = countryCode.uppercased()
+        return availableMarkets.first { $0.code?.uppercased() == upperCountryCode }
+    }
+    
+    /// Check if SDK should be used (market is available)
+    public var shouldUseSDK: Bool {
+        return isConfigured && isMarketAvailable
     }
     
     /// Update specific configurations after initial setup
@@ -125,7 +260,7 @@ public enum ReachuEnvironment: String, CaseIterable {
         case .development:
             return "https://graph-ql-dev.reachu.io"
         case .sandbox:
-            return "https://api-sandbox.reachu.io"
+            return "https://graph-ql-dev.reachu.io"  // Sandbox uses same endpoint as development
         case .production:
             return "https://api.reachu.io"
         }

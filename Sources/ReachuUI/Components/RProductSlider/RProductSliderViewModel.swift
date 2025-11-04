@@ -11,6 +11,7 @@ class RProductSliderViewModel: ObservableObject {
     @Published var products: [Product] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var isMarketUnavailable: Bool = false  // True when market/404 error occurs
     
     // MARK: - Private Properties
     private var hasLoaded: Bool = false
@@ -36,6 +37,14 @@ class RProductSliderViewModel: ObservableObject {
         country: String = "US",
         forceRefresh: Bool = false
     ) async {
+        // Check if SDK should be used before attempting operations
+        guard ReachuConfiguration.shared.shouldUseSDK else {
+            print("⚠️ [RProductSlider] Skipping product load - SDK disabled (market not available)")
+            isMarketUnavailable = true
+            isLoading = false
+            return
+        }
+        
         // Skip if already loaded and not forcing refresh
         guard !hasLoaded || forceRefresh else { return }
         
@@ -49,6 +58,7 @@ class RProductSliderViewModel: ObservableObject {
 
         isLoading = true
         errorMessage = nil
+        isMarketUnavailable = false
         
         print("🛍️ [RProductSlider] Loading products from API...")
         print("   Currency: \(currency), Country: \(country)")
@@ -73,9 +83,21 @@ class RProductSliderViewModel: ObservableObject {
             
             print("✅ [RProductSlider] Loaded \(products.count) products")
             
+        } catch let error as NotFoundException {
+            // Market not available - hide component silently
+            isMarketUnavailable = true
+            errorMessage = nil  // Don't show error message
+            print("⚠️ [RProductSlider] Market not available for \(currency)/\(country) - hiding component")
         } catch let error as SdkException {
-            errorMessage = error.description
-            print("❌ [RProductSlider] Failed to load products: \(error.description)")
+            // Only show error if it's not a NOT_FOUND error
+            if error.code == "NOT_FOUND" || error.status == 404 {
+                isMarketUnavailable = true
+                errorMessage = nil
+                print("⚠️ [RProductSlider] Market not available for \(currency)/\(country) - hiding component")
+            } else {
+                errorMessage = error.description
+                print("❌ [RProductSlider] Failed to load products: \(error.description)")
+            }
         } catch {
             errorMessage = error.localizedDescription
             print("❌ [RProductSlider] Failed to load products: \(error.localizedDescription)")

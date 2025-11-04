@@ -116,7 +116,10 @@ public struct RFloatingCartIndicator: View {
     }
     
     public var body: some View {
-        if cartManager.itemCount > 0 {
+        // Hide if SDK should not be used (market not available) or campaign not active
+        if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
+            EmptyView()
+        } else if cartManager.itemCount > 0 {
             ZStack {
                 Color.clear.edgesIgnoringSafeArea(.all)
                 
@@ -192,7 +195,7 @@ public struct RFloatingCartIndicator: View {
             
             // Price info
             VStack(alignment: .leading, spacing: 2) {
-                Text("Cart")
+                Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
                     .font(ReachuTypography.caption1)
                     .fontWeight(.medium)
                     .foregroundColor(.white.opacity(0.9))

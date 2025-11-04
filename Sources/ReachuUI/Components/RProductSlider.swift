@@ -162,13 +162,28 @@ public struct RProductSlider: View {
     
     /// Should show error state
     private var shouldShowError: Bool {
-        manualProducts == nil && viewModel.errorMessage != nil && viewModel.products.isEmpty
+        manualProducts == nil && viewModel.errorMessage != nil && viewModel.products.isEmpty && !viewModel.isMarketUnavailable
+    }
+    
+    /// Should hide component (market unavailable)
+    private var shouldHide: Bool {
+        manualProducts == nil && viewModel.isMarketUnavailable
     }
     
     // MARK: - Body
     public var body: some View {
         Group {
-            if shouldShowLoading {
+            // Check if SDK should be used (market available)
+            if !ReachuConfiguration.shared.shouldUseSDK {
+                // SDK disabled - hide component completely
+                EmptyView()
+            } else if shouldHide {
+                // Market not available - hide component silently
+                EmptyView()
+            } else if !CampaignManager.shared.isCampaignActive {
+                // Campaign not active - hide component
+                EmptyView()
+            } else if shouldShowLoading {
                 loadingView
             } else if shouldShowError {
                 errorView
@@ -219,7 +234,7 @@ public struct RProductSlider: View {
         VStack(spacing: ReachuSpacing.md) {
             ProgressView()
                 .tint(adaptiveColors.primary)
-            Text("Loading products...")
+            Text(RLocalizedString(ReachuTranslationKey.loading.rawValue) + " products...")
                 .font(ReachuTypography.caption1)
                 .foregroundColor(adaptiveColors.textSecondary)
         }
@@ -233,7 +248,7 @@ public struct RProductSlider: View {
                 .font(.system(size: 32))
                 .foregroundColor(adaptiveColors.error)
             
-            Text("Unable to load products")
+            Text(RLocalizedString(ReachuTranslationKey.networkError.rawValue))
                 .font(ReachuTypography.bodyBold)
                 .foregroundColor(adaptiveColors.textPrimary)
             
@@ -254,7 +269,7 @@ public struct RProductSlider: View {
                     )
                 }
             } label: {
-                Text("Retry")
+                Text(RLocalizedString(ReachuTranslationKey.retry.rawValue))
                     .font(ReachuTypography.caption1.weight(.semibold))
                     .foregroundColor(adaptiveColors.primary)
                     .padding(.horizontal, ReachuSpacing.md)
@@ -279,7 +294,7 @@ public struct RProductSlider: View {
             if showSeeAll {
                 Button(action: { onSeeAllTap?() }) {
                     HStack(spacing: ReachuSpacing.xs) {
-                        Text("See All")
+                        Text(RLocalizedString(ReachuTranslationKey.continueButton.rawValue))
                             .font(ReachuTypography.callout)
                             .foregroundColor(ReachuColors.primary)
                         

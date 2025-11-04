@@ -179,7 +179,7 @@ public struct RCheckoutOverlay: View {
                     errorStepView
                 }
             }
-            .navigationTitle("Checkout")
+            .navigationTitle(RLocalizedString(ReachuTranslationKey.checkout.rawValue))
             #if os(iOS) || os(tvOS) || os(watchOS)
                 .navigationBarTitleDisplayMode(.inline)
             #endif
@@ -204,38 +204,42 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Body
     public var body: some View {
-        let timestamp = Date().timeIntervalSince1970
-        let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
-        let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
-        
-        return mainContent
-            .onAppear {
-                print("🟣 [RCheckoutOverlay] onAppear triggered")
-                syncSelectedMarket()
-                Task {
-                    await loadAvailablePaymentMethods()
-                }
-            }
-            .onChange(of: cartManager.phoneCode) { newValue in
-                syncPhoneCode(newValue)
-            }
-            .onChange(of: cartManager.selectedMarket) { _ in
-                syncSelectedMarket()
-            }
-            .onChange(of: vippsHandler.paymentStatus) { newStatus in
-                handleVippsPaymentStatusChange(newStatus)
-            }
-            .onDisappear {
-                // Clean up timer when view disappears
-                stopVippsRetryTimer()
-            }
-            .overlay {
-            if isLoading {
-                loadingOverlay
-            }
+        // Hide if SDK should not be used (market not available) or campaign not active
+        if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
+            EmptyView()
+        } else {
+            let timestamp = Date().timeIntervalSince1970
+            let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
+            let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
             
-            // Vipps Payment in Progress Overlay
-            if vippsPaymentInProgress {
+            mainContent
+                .onAppear {
+                    print("🟣 [RCheckoutOverlay] onAppear triggered")
+                    syncSelectedMarket()
+                    Task {
+                        await loadAvailablePaymentMethods()
+                    }
+                }
+                .onChange(of: cartManager.phoneCode) { newValue in
+                    syncPhoneCode(newValue)
+                }
+                .onChange(of: cartManager.selectedMarket) { _ in
+                    syncSelectedMarket()
+                }
+                .onChange(of: vippsHandler.paymentStatus) { newStatus in
+                    handleVippsPaymentStatusChange(newStatus)
+                }
+                .onDisappear {
+                    // Clean up timer when view disappears
+                    stopVippsRetryTimer()
+                }
+                .overlay {
+                if isLoading {
+                    loadingOverlay
+                }
+                
+                // Vipps Payment in Progress Overlay
+                if vippsPaymentInProgress {
                 VStack {
                     Spacer()
                     HStack(spacing: 12) {
@@ -244,17 +248,17 @@ public struct RCheckoutOverlay: View {
                             .foregroundColor(.white)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Processing Payment")
+                            Text(RLocalizedString(ReachuTranslationKey.processingPayment.rawValue))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white)
                             
-                            Text("Please complete your payment in Vipps...")
+                            Text(RLocalizedString(ReachuTranslationKey.processingPaymentMessage.rawValue))
                                 .font(.system(size: 12))
                                 .foregroundColor(.white.opacity(0.9))
                                 .lineLimit(2)
                             
                             if vippsRetryCount > 0 {
-                                Text("Verifying payment... (\(vippsRetryCount)/\(vippsMaxRetries))")
+                                Text(RLocalizedString(ReachuTranslationKey.verifyingPayment.rawValue) + " (\(vippsRetryCount)/\(vippsMaxRetries))")
                                     .font(.system(size: 10))
                                     .foregroundColor(.white.opacity(0.7))
                             }
@@ -286,7 +290,7 @@ public struct RCheckoutOverlay: View {
                             .foregroundColor(.white)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Payment Failed")
+                            Text(RLocalizedString(ReachuTranslationKey.paymentFailed.rawValue))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white)
                             
@@ -497,6 +501,7 @@ public struct RCheckoutOverlay: View {
         .onChange(of: draftSyncKey) { _ in
             syncDraftFromState()
         }
+        }
     }
 
     // MARK: - Address Step View
@@ -506,7 +511,7 @@ public struct RCheckoutOverlay: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xl) {
                     // 1. CART SECTION (Products first)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        Text("Cart")
+                        Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
@@ -519,7 +524,7 @@ public struct RCheckoutOverlay: View {
                     // 2. SHIPPING ADDRESS SECTION (consistent sizing)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                         HStack {
-                            Text("Shipping Address")
+                            Text(RLocalizedString(ReachuTranslationKey.shippingAddress.rawValue))
                                 .font(.system(size: 17, weight: .bold))
                                 .foregroundColor(ReachuColors.textPrimary)
 
@@ -572,7 +577,7 @@ public struct RCheckoutOverlay: View {
 
                     // 3. ORDER SUMMARY SECTION (at bottom)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        Text("Order Summary")
+                        Text(RLocalizedString(ReachuTranslationKey.orderSummary.rawValue))
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
@@ -617,7 +622,7 @@ public struct RCheckoutOverlay: View {
                 }
                 
                 RButton(
-                    title: "Proceed to Checkout",
+                    title: RLocalizedString(ReachuTranslationKey.proceedToCheckout.rawValue),
                     style: .primary,
                     size: .large,
                     isDisabled: !canProceedToNext
@@ -693,7 +698,7 @@ public struct RCheckoutOverlay: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xl) {
                     // Cart Section (smaller, readonly)
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        Text("Cart")
+                        Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
                             .padding(.horizontal, ReachuSpacing.lg)
@@ -704,7 +709,7 @@ public struct RCheckoutOverlay: View {
 
                     // Payment Method Selection
                     VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                        Text("Payment Method")
+                        Text(RLocalizedString(ReachuTranslationKey.paymentMethod.rawValue))
                             .font(.system(size: 17, weight: .bold))
                             .foregroundColor(ReachuColors.textPrimary)
 
@@ -719,7 +724,7 @@ public struct RCheckoutOverlay: View {
                             }
                             
                             if availablePaymentMethods.isEmpty {
-                                Text("No payment methods available")
+                                Text(RLocalizedString(ReachuTranslationKey.noPaymentMethods.rawValue))
                                     .font(ReachuTypography.body)
                                     .foregroundColor(ReachuColors.textSecondary)
                                     .padding()
@@ -779,7 +784,7 @@ public struct RCheckoutOverlay: View {
                 
                 let _ = print("🔵🔵🔵 [OrderSummary] Renderizando botón 'Initiate Payment' - isDisabled: \(!canProceedToNext)")
                 RButton(
-                    title: "Initiate Payment",
+                    title: RLocalizedString(ReachuTranslationKey.initiatePayment.rawValue),
                     style: .primary,
                     size: .large,
                     isDisabled: !canProceedToNext
@@ -854,7 +859,7 @@ public struct RCheckoutOverlay: View {
                 VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
                     // Product Summary Header - EXACTLY like the image
                     HStack {
-                        Text("Product Summary")
+                        Text(RLocalizedString(ReachuTranslationKey.productSummary.rawValue))
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(ReachuColors.textPrimary)
 
@@ -934,16 +939,16 @@ public struct RCheckoutOverlay: View {
                                 // Product details
                                 VStack(spacing: ReachuSpacing.xs) {
                                     HStack {
-                                        Text("Order ID:")
-                                            .font(
-                                                .system(
-                                                    size: 14,
-                                                    weight: .regular
-                                                )
+                                    Text(RLocalizedString(ReachuTranslationKey.orderId.rawValue))
+                                        .font(
+                                            .system(
+                                                size: 14,
+                                                weight: .regular
                                             )
-                                            .foregroundColor(
-                                                ReachuColors.textSecondary
-                                            )
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textSecondary
+                                        )
 
                                         Spacer()
 
@@ -960,16 +965,16 @@ public struct RCheckoutOverlay: View {
                                     }
 
                                     HStack {
-                                        Text("Colors:")
-                                            .font(
-                                                .system(
-                                                    size: 14,
-                                                    weight: .regular
-                                                )
+                                    Text(RLocalizedString(ReachuTranslationKey.colors.rawValue))
+                                        .font(
+                                            .system(
+                                                size: 14,
+                                                weight: .regular
                                             )
-                                            .foregroundColor(
-                                                ReachuColors.textSecondary
-                                            )
+                                        )
+                                        .foregroundColor(
+                                            ReachuColors.textSecondary
+                                        )
 
                                         Spacer()
 
@@ -988,7 +993,7 @@ public struct RCheckoutOverlay: View {
 
                                 // Read-only Quantity Display (NO controls in payment step)
                                 HStack {
-                                    Text("Quantity")
+                                    Text(RLocalizedString(ReachuTranslationKey.quantity.rawValue))
                                         .font(
                                             .system(size: 16, weight: .semibold)
                                         )
@@ -1009,7 +1014,7 @@ public struct RCheckoutOverlay: View {
 
                                 // Show total for this product
                                 HStack {
-                                    Text("Total for this item:")
+                                    Text(RLocalizedString(ReachuTranslationKey.totalForItem.rawValue))
                                         .font(
                                             .system(size: 14, weight: .medium)
                                         )
@@ -1035,7 +1040,7 @@ public struct RCheckoutOverlay: View {
                     // Payment Schedule (if Klarna installments selected)
                     if selectedPaymentMethod == .klarna {
                         VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                            Text("Payment Schedule")
+                            Text(RLocalizedString(ReachuTranslationKey.paymentSchedule.rawValue))
                                 .font(ReachuTypography.bodyBold)
                                 .foregroundColor(ReachuColors.textPrimary)
                                 .padding(.horizontal, ReachuSpacing.lg)
@@ -1099,7 +1104,7 @@ public struct RCheckoutOverlay: View {
                                 alignment: .leading,
                                 spacing: ReachuSpacing.lg
                             ) {
-                                Text("Review Order")
+                                Text(RLocalizedString(ReachuTranslationKey.reviewOrder.rawValue))
                                     .font(ReachuTypography.title2)
                                     .foregroundColor(ReachuColors.textPrimary)
                                     .padding(.horizontal, ReachuSpacing.lg)
@@ -1114,7 +1119,7 @@ public struct RCheckoutOverlay: View {
 
                         VStack {
                             RButton(
-                                title: "Complete Purchase",
+                                title: RLocalizedString(ReachuTranslationKey.completePurchase.rawValue),
                                 style: .primary,
                                 size: .large
                             ) {
@@ -1195,7 +1200,7 @@ public struct RCheckoutOverlay: View {
 
                 // Success Message (smaller and more compact)
                 VStack(spacing: ReachuSpacing.sm) {
-                    Text("Purchase Complete!")
+                    Text(RLocalizedString(ReachuTranslationKey.purchaseComplete.rawValue))
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(ReachuColors.textPrimary)
                         .multilineTextAlignment(.center)
@@ -1207,8 +1212,8 @@ public struct RCheckoutOverlay: View {
 
                     Text(
                         selectedPaymentMethod == .klarna
-                            ? "You'll pay in 4x interest-free. We'll send you a reminder a few days before each payment."
-                            : "Your order has been confirmed. You'll receive an email confirmation shortly."
+                            ? RLocalizedString(ReachuTranslationKey.purchaseCompleteMessageKlarna.rawValue)
+                            : RLocalizedString(ReachuTranslationKey.purchaseCompleteMessage.rawValue)
                     )
                     .font(.system(size: 16, weight: .regular))
                     .foregroundColor(ReachuColors.textSecondary)
@@ -1227,7 +1232,7 @@ public struct RCheckoutOverlay: View {
             // Bottom Close Button
             VStack {
                 RButton(
-                    title: "Close",
+                    title: RLocalizedString(ReachuTranslationKey.close.rawValue),
                     style: .primary,
                     size: .large
                 ) {
@@ -1388,20 +1393,32 @@ public struct RCheckoutOverlay: View {
     private var validationMessage: String {
         // Check cart first
         if cartManager.items.isEmpty {
-            return "Your cart is empty. Add products to continue."
+            return RLocalizedString(ReachuTranslationKey.cartEmptyMessage.rawValue)
         }
         
         switch checkoutStep {
         case .address:
-            if firstName.isEmpty || lastName.isEmpty { return "Please enter your name" }
-            if email.isEmpty { return "Please enter your email address" }
-            if phone.isEmpty { return "Please enter your phone number" }
-            if address1.isEmpty { return "Please enter your street address" }
-            if city.isEmpty { return "Please enter your city" }
-            if zip.isEmpty { return "Please enter your postal code" }
-            return "Please complete all required fields"
+            if firstName.isEmpty || lastName.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.required.rawValue)
+            }
+            if email.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.invalidEmail.rawValue)
+            }
+            if phone.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.invalidPhone.rawValue)
+            }
+            if address1.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.invalidAddress.rawValue)
+            }
+            if city.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.required.rawValue)
+            }
+            if zip.isEmpty { 
+                return RLocalizedString(ReachuTranslationKey.required.rawValue)
+            }
+            return RLocalizedString(ReachuTranslationKey.required.rawValue)
         case .orderSummary:
-            return "Please select shipping method for all items"
+            return RLocalizedString(ReachuTranslationKey.shippingRequired.rawValue)
         default:
             return ""
         }
@@ -2310,7 +2327,7 @@ extension RCheckoutOverlay {
                 .foregroundColor(ReachuColors.textPrimary)
 
             HStack {
-                Text("Phone :")
+                Text(RLocalizedString(ReachuTranslationKey.phoneColon.rawValue))
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
 
@@ -2327,7 +2344,7 @@ extension RCheckoutOverlay {
             // Name fields
             HStack(spacing: ReachuSpacing.md) {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text("First Name")
+                    Text(RLocalizedString(ReachuTranslationKey.firstName.rawValue))
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("John", text: $firstName)
@@ -2339,7 +2356,7 @@ extension RCheckoutOverlay {
                 }
 
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text("Last Name")
+                    Text(RLocalizedString(ReachuTranslationKey.lastName.rawValue))
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("Doe", text: $lastName)
@@ -2353,7 +2370,7 @@ extension RCheckoutOverlay {
 
             // Email
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                Text("Email")
+                Text(RLocalizedString(ReachuTranslationKey.email.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("your@email.com", text: $email)
@@ -2370,7 +2387,7 @@ extension RCheckoutOverlay {
 
             // Phone with country code
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                Text("Phone")
+                Text(RLocalizedString(ReachuTranslationKey.phone.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
 
@@ -2389,7 +2406,7 @@ extension RCheckoutOverlay {
 
             // Address
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                Text("Address")
+                Text(RLocalizedString(ReachuTranslationKey.address.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("Street address", text: $address1)
@@ -2405,7 +2422,7 @@ extension RCheckoutOverlay {
             // City, State, ZIP
             HStack(spacing: ReachuSpacing.md) {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text("City")
+                    Text(RLocalizedString(ReachuTranslationKey.city.rawValue))
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("City", text: $city)
@@ -2425,7 +2442,7 @@ extension RCheckoutOverlay {
                 }
 
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    Text("ZIP")
+                    Text(RLocalizedString(ReachuTranslationKey.zip.rawValue))
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("ZIP", text: $zip)
@@ -2442,7 +2459,7 @@ extension RCheckoutOverlay {
 
             // Country
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                Text("Country")
+                Text(RLocalizedString(ReachuTranslationKey.country.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                 CountryPicker(selectedCountry: $country)
@@ -2460,7 +2477,7 @@ extension RCheckoutOverlay {
                         .font(.system(size: 48))
                         .foregroundColor(ReachuColors.textSecondary.opacity(0.5))
                     
-                    Text("Your cart is empty")
+                    Text(RLocalizedString(ReachuTranslationKey.cartEmpty.rawValue))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(ReachuColors.textPrimary)
                     
@@ -2858,7 +2875,7 @@ extension RCheckoutOverlay {
 
                 // Shipping
                 HStack {
-                    Text("Shipping")
+                    Text(RLocalizedString(ReachuTranslationKey.shipping.rawValue))
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(ReachuColors.textSecondary)
 
@@ -2872,7 +2889,7 @@ extension RCheckoutOverlay {
                 // Show discount if applied
                 if appliedDiscount > 0 {
                     HStack {
-                        Text("Discount")
+                        Text(RLocalizedString(ReachuTranslationKey.discount.rawValue))
                             .font(.system(size: 14, weight: .regular))
                             .foregroundColor(ReachuColors.success)
 
@@ -3055,7 +3072,7 @@ extension RCheckoutOverlay {
                         }
                     }
                 } else {
-                    Text("Shipping is calculated automatically for this order.")
+                    Text(RLocalizedString(ReachuTranslationKey.shippingCalculated.rawValue))
                         .font(.system(size: 12))
                         .foregroundColor(ReachuColors.textSecondary)
                 }
@@ -3074,12 +3091,12 @@ extension RCheckoutOverlay {
         return VStack(alignment: .leading, spacing: ReachuSpacing.md) {
             if cartManager.items.contains(where: { !$0.availableShippings.isEmpty }) {
                 HStack(spacing: 8) {
-                    Text("Shipping Options")
+                    Text(RLocalizedString(ReachuTranslationKey.shippingOptions.rawValue))
                         .font(.system(size: 17, weight: .bold))
                         .foregroundColor(ReachuColors.textPrimary)
                     
                     if hasItemsWithoutShipping {
-                        Text("Required")
+                        Text(RLocalizedString(ReachuTranslationKey.shippingRequired.rawValue))
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundColor(ReachuColors.primary)
                             .padding(.horizontal, 8)
@@ -3116,7 +3133,7 @@ extension RCheckoutOverlay {
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
             } else {
-                Text("No shipping methods available for this order yet.")
+                Text(RLocalizedString(ReachuTranslationKey.noShippingMethods.rawValue))
                     .font(.system(size: 12))
                     .foregroundColor(ReachuColors.textSecondary)
                     .padding(.horizontal, ReachuSpacing.lg)
@@ -3129,7 +3146,7 @@ extension RCheckoutOverlay {
         VStack(spacing: ReachuSpacing.sm) {
             // Subtotal
             HStack {
-                Text("Subtotal")
+                Text(RLocalizedString(ReachuTranslationKey.subtotal.rawValue))
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textSecondary)
 
@@ -3162,7 +3179,7 @@ extension RCheckoutOverlay {
 
             // Total
             HStack {
-                Text("Total")
+                Text(RLocalizedString(ReachuTranslationKey.total.rawValue))
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(ReachuColors.textPrimary)
 
@@ -3187,7 +3204,7 @@ extension RCheckoutOverlay {
                         .font(.system(size: 40))
                         .foregroundColor(ReachuColors.textSecondary.opacity(0.5))
                     
-                    Text("Your cart is empty")
+                    Text(RLocalizedString(ReachuTranslationKey.cartEmpty.rawValue))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(ReachuColors.textPrimary)
                 }
@@ -3263,7 +3280,7 @@ extension RCheckoutOverlay {
 
                 // Shipping
                 HStack {
-                    Text("Shipping")
+                    Text(RLocalizedString(ReachuTranslationKey.shipping.rawValue))
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(ReachuColors.textSecondary)
 
@@ -3277,7 +3294,7 @@ extension RCheckoutOverlay {
                 // Discount (if applied)
                 if appliedDiscount > 0 {
                     HStack {
-                        Text("Discount")
+                        Text(RLocalizedString(ReachuTranslationKey.discount.rawValue))
                             .font(.system(size: 16, weight: .regular))
                             .foregroundColor(ReachuColors.success)
 

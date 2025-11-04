@@ -442,7 +442,7 @@ public struct LiveShowConfiguration {
     public let tipioBaseUrl: String
     
     // Dynamic Components
-    public let campaignId: Int
+    public let campaignId: Int  // 0 = no campaign (SDK works normally)
     
     public init(
         autoJoinChat: Bool = true,
@@ -460,7 +460,7 @@ public struct LiveShowConfiguration {
         enablePictureInPicture: Bool = true,
         tipioApiKey: String = "",
         tipioBaseUrl: String = "https://stg-dev-microservices.tipioapp.com",
-        campaignId: Int = 3
+        campaignId: Int = 0  // Default to 0 (no campaign restrictions)
     ) {
         self.autoJoinChat = autoJoinChat
         self.enableChatModeration = enableChatModeration

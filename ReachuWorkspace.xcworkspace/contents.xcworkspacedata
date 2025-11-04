@@ -26,5 +26,8 @@
      <FileRef
         location = "container:Demo/Vg/Vg.xcodeproj">
      </FileRef>
+     <FileRef
+        location = "group:../PregancyDemo/PregancyDemo.xcodeproj">
+     </FileRef>
    </Group>
 </Workspace>

@@ -65,8 +65,8 @@ public enum ComponentConfig: Codable {
     case offerBadge(OfferBadgeConfig)
     
     enum CodingKeys: String, CodingKey {
-        case imageUrl, title, subtitle, ctaText, ctaLink // banner
-        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor, deeplinkUrl, deeplinkAction // offer_banner
+        case imageUrl, title, subtitle, ctaText, ctaLink, deeplinkUrl, deeplinkAction // banner
+        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor // offer_banner
         case productId, highlightText // product_spotlight
         case endDate, style // countdown
         case channelId, displayCount // carousel_auto
@@ -83,6 +83,7 @@ public enum ComponentConfig: Codable {
             self = .offerBanner(config)
         }
         // Then try Banner (has imageUrl but not logoUrl)
+        // Banner can have deeplinkUrl/deeplinkAction like OfferBanner
         else if container.contains(.imageUrl) {
             let config = try BannerConfig(from: decoder)
             self = .banner(config)
@@ -130,6 +131,26 @@ public struct BannerConfig: Codable {
     public let subtitle: String?
     public let ctaText: String?
     public let ctaLink: String?
+    public let deeplinkUrl: String?
+    public let deeplinkAction: String?
+    
+    public init(
+        imageUrl: String,
+        title: String,
+        subtitle: String? = nil,
+        ctaText: String? = nil,
+        ctaLink: String? = nil,
+        deeplinkUrl: String? = nil,
+        deeplinkAction: String? = nil
+    ) {
+        self.imageUrl = imageUrl
+        self.title = title
+        self.subtitle = subtitle
+        self.ctaText = ctaText
+        self.ctaLink = ctaLink
+        self.deeplinkUrl = deeplinkUrl
+        self.deeplinkAction = deeplinkAction
+    }
 }
 
 /// Product Spotlight Config
