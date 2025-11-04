@@ -187,13 +187,20 @@ public struct RProductSlider: View {
         
         // Campaign must be active
         guard campaignManager.isCampaignActive else {
-            print("🚫 [RProductSlider] Component hidden - Campaign not active (isCampaignActive: \(campaignManager.isCampaignActive))")
+            let state = campaignManager.campaignState
+            let isPaused = campaignManager.currentCampaign?.isPaused ?? false
+            print("🚫 [RProductSlider] Component hidden - Campaign not active")
+            print("   Campaign ID: \(campaignId)")
+            print("   Campaign State: \(state)")
+            print("   Is Paused: \(isPaused)")
+            print("   Is Campaign Active: \(campaignManager.isCampaignActive)")
             return false
         }
         
         // Campaign must not be paused
         if campaignManager.currentCampaign?.isPaused == true {
             print("🚫 [RProductSlider] Component hidden - Campaign is paused")
+            print("   Campaign ID: \(campaignId)")
             return false
         }
         
