@@ -102,8 +102,8 @@ internal struct ComponentResponse: Codable {
     let campaignId: Int
     let componentId: String
     let status: String
-    fileprivate let customConfig: [String: AnyCodable]?
-    fileprivate let component: ComponentData?
+    internal let customConfig: [String: AnyCodable]?
+    internal let component: ComponentData?
     
     struct ComponentData: Codable {
         let id: String
