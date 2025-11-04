@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file. This project follows Semantic Versioning.
 
+## [3.2.0]
+
+Features
+- Auto‑configured campaign components: `RProductCarousel`, `RProductBanner`, `RProductStore` (63fd591)
+
+Fixes & Improvements
+- Improve WebSocket message handling and `RProductSlider` reactivity to campaign state (741a619)
+- Fix `RProductCard` initialization (remove currency/country params) (d03fbe3)
+- Fix `RProductBanner` colors and title usage (071aecc)
+- Add detailed logging to `RProductSlider` for campaign state debugging (7582288)
+- Docs: Kotlin migration guide for campaign features (b52dfc9)
+
+Notes: Backward‑compatible minor release (builds on 3.1.0 campaign configuration).
+
 ## [3.1.0]
 
 Features
