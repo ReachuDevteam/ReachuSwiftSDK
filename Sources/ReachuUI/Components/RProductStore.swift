@@ -303,10 +303,15 @@ class RProductStoreViewModel: ObservableObject {
         do {
             let intProductIds: [Int]?
             
-            if mode == "filtered", let productIds = productIds {
-                intProductIds = productIds.compactMap { Int($0) }
+            // Determine if we should use filtered mode
+            let shouldUseFiltered = mode == "filtered" && 
+                                   productIds != nil && 
+                                   !productIds!.isEmpty
+            
+            if shouldUseFiltered {
+                intProductIds = productIds!.compactMap { Int($0) }
                 print("   Filtered mode - Product IDs:")
-                print("   String IDs: \(productIds)")
+                print("   String IDs: \(productIds!)")
                 print("   Int IDs: \(intProductIds ?? [])")
                 
                 guard let ids = intProductIds, !ids.isEmpty else {
@@ -316,8 +321,12 @@ class RProductStoreViewModel: ObservableObject {
                     return
                 }
             } else {
+                // All mode: productIds is empty or null, or mode is "all"
                 intProductIds = nil
-                print("   All mode - Loading all products")
+                print("   All mode - Loading all products from channel")
+                if let productIds = productIds {
+                    print("   productIds array: \(productIds.isEmpty ? "empty" : "\(productIds.count) items")")
+                }
             }
             
             var dtoProducts = try await sdk.channel.product.get(
