@@ -36,7 +36,7 @@ public struct RFloatingCartIndicator: View {
         
         var iconSize: Font {
             switch self {
-            case .small: return .title3
+            case .small: return .system(size: 16, weight: .medium)
             case .medium: return .title2
             case .large: return .title
             }
@@ -44,7 +44,7 @@ public struct RFloatingCartIndicator: View {
         
         var horizontalPadding: CGFloat {
             switch self {
-            case .small: return ReachuSpacing.md
+            case .small: return 10
             case .medium: return ReachuSpacing.lg
             case .large: return ReachuSpacing.xl
             }
@@ -52,7 +52,7 @@ public struct RFloatingCartIndicator: View {
         
         var verticalPadding: CGFloat {
             switch self {
-            case .small: return ReachuSpacing.md
+            case .small: return 8
             case .medium: return ReachuSpacing.md
             case .large: return ReachuSpacing.lg
             }
@@ -69,7 +69,7 @@ public struct RFloatingCartIndicator: View {
         
         var circleSize: CGFloat {
             switch self {
-            case .small: return 60
+            case .small: return 52
             case .medium: return 68
             case .large: return 76
             }
@@ -77,7 +77,7 @@ public struct RFloatingCartIndicator: View {
         
         var shadowRadius: CGFloat {
             switch self {
-            case .small: return 4
+            case .small: return 2
             case .medium: return 8
             case .large: return 12
             }
@@ -113,6 +113,15 @@ public struct RFloatingCartIndicator: View {
         self.size = size ?? Size.from(cartConfig.floatingCartSize)
         self.customPadding = customPadding
         self.onTapAction = onTap
+        
+        // Debug logging
+        print("🛒 [RFloatingCartIndicator] Initialized:")
+        print("   Position: \(self.position)")
+        print("   DisplayMode: \(self.displayMode)")
+        print("   Size: \(self.size)")
+        print("   Config position: \(cartConfig.floatingCartPosition)")
+        print("   Config displayMode: \(cartConfig.floatingCartDisplayMode)")
+        print("   Config size: \(cartConfig.floatingCartSize)")
     }
     
     public var body: some View {
@@ -120,26 +129,22 @@ public struct RFloatingCartIndicator: View {
         if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
             EmptyView()
         } else if cartManager.itemCount > 0 {
-            ZStack {
-                Color.clear.edgesIgnoringSafeArea(.all)
-                
-                // Position the cart indicator
-                VStack {
-                    if position.isTop {
-                        cartIndicatorButton
-                        Spacer()
-                    } else if position.isCenter {
-                        Spacer()
-                        cartIndicatorButton
-                        Spacer()
-                    } else {
-                        Spacer()
-                        cartIndicatorButton
-                    }
+            // Position the cart indicator directly without full-screen overlay
+            VStack {
+                if position.isTop {
+                    cartIndicatorButton
+                    Spacer()
+                } else if position.isCenter {
+                    Spacer()
+                    cartIndicatorButton
+                    Spacer()
+                } else {
+                    Spacer()
+                    cartIndicatorButton
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
-                .padding(customPadding ?? defaultPadding)
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
+            .padding(customPadding ?? defaultPadding)
             .animation(.spring(response: 0.6, dampingFraction: 0.8), value: cartManager.itemCount)
             .onChange(of: cartManager.itemCount) { newCount in
                 triggerBounceAnimation()
@@ -190,24 +195,24 @@ public struct RFloatingCartIndicator: View {
     // MARK: - Display Mode Implementations
     
     private var fullModeContent: some View {
-        HStack(spacing: ReachuSpacing.sm) {
+        HStack(spacing: size == .small ? ReachuSpacing.xs : ReachuSpacing.sm) {
             cartIconWithBadge
             
             // Price info
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 1) {
                 Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
-                    .font(ReachuTypography.caption1)
+                    .font(size == .small ? .system(size: 10, weight: .medium) : ReachuTypography.caption1)
                     .fontWeight(.medium)
                     .foregroundColor(.white.opacity(0.9))
                 
                 Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
-                    .font(ReachuTypography.bodyBold)
+                    .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
                     .foregroundColor(.white)
             }
             
             // Checkout arrow
             Image(systemName: "chevron.right")
-                .font(.caption)
+                .font(size == .small ? .system(size: 10) : .caption)
                 .foregroundColor(.white.opacity(0.8))
         }
         .padding(.horizontal, size.horizontalPadding)
@@ -220,12 +225,12 @@ public struct RFloatingCartIndicator: View {
     }
     
     private var compactModeContent: some View {
-        HStack(spacing: ReachuSpacing.sm) {
+        HStack(spacing: size == .small ? ReachuSpacing.xs : ReachuSpacing.sm) {
             cartIconWithBadge
             
             // Price only
             Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
-                .font(ReachuTypography.bodyBold)
+                .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, size.horizontalPadding)
@@ -238,12 +243,12 @@ public struct RFloatingCartIndicator: View {
     }
     
     private var minimalModeContent: some View {
-        HStack(spacing: ReachuSpacing.xs) {
+        HStack(spacing: size == .small ? 6 : ReachuSpacing.xs) {
             cartIconWithBadge
             
             // Count only
             Text("\(cartManager.itemCount)")
-                .font(ReachuTypography.bodyBold)
+                .font(size == .small ? .system(size: 10, weight: .semibold) : ReachuTypography.bodyBold)
                 .foregroundColor(.white)
         }
         .padding(.horizontal, size.horizontalPadding)
@@ -282,15 +287,14 @@ public struct RFloatingCartIndicator: View {
                 HStack {
                     Spacer()
                     Text("\(cartManager.itemCount)")
-                        .font(.system(size: size == .small ? 10 : 11, weight: .bold))
+                        .font(.system(size: size == .small ? 11 : 11, weight: .bold))
                         .foregroundColor(ReachuColors.primary)
-                        .frame(minWidth: size == .small ? 18 : 20)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
+                        .frame(minWidth: size == .small ? 20 : 20)
+                        .padding(.horizontal, size == .small ? 4 : 4)
+                        .padding(.vertical, size == .small ? 2 : 2)
                         .background(
                             Capsule()
                                 .fill(.white)
-                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
                         )
                         .scaleEffect(bounceAnimation ? 1.15 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
@@ -318,15 +322,15 @@ public struct RFloatingCartIndicator: View {
     private var defaultPadding: EdgeInsets {
         switch position {
         case .bottomRight, .bottomLeft:
-            return EdgeInsets(top: 0, leading: ReachuSpacing.lg, bottom: ReachuSpacing.xl, trailing: ReachuSpacing.lg)
+            return EdgeInsets(top: 0, leading: size == .small ? 12 : ReachuSpacing.md, bottom: size == .small ? 90 : ReachuSpacing.xl, trailing: size == .small ? 12 : ReachuSpacing.md)
         case .bottomCenter:
-            return EdgeInsets(top: 0, leading: ReachuSpacing.lg, bottom: ReachuSpacing.xl, trailing: ReachuSpacing.lg)
+            return EdgeInsets(top: 0, leading: size == .small ? 12 : ReachuSpacing.md, bottom: size == .small ? 90 : ReachuSpacing.xl, trailing: size == .small ? 12 : ReachuSpacing.md)
         case .topRight, .topLeft:
-            return EdgeInsets(top: ReachuSpacing.xl, leading: ReachuSpacing.lg, bottom: 0, trailing: ReachuSpacing.lg)
+            return EdgeInsets(top: ReachuSpacing.xl, leading: size == .small ? 12 : ReachuSpacing.md, bottom: 0, trailing: size == .small ? 12 : ReachuSpacing.md)
         case .topCenter:
-            return EdgeInsets(top: ReachuSpacing.xl, leading: ReachuSpacing.lg, bottom: 0, trailing: ReachuSpacing.lg)
+            return EdgeInsets(top: ReachuSpacing.xl, leading: size == .small ? 12 : ReachuSpacing.md, bottom: 0, trailing: size == .small ? 12 : ReachuSpacing.md)
         case .centerRight, .centerLeft:
-            return EdgeInsets(top: 0, leading: ReachuSpacing.lg, bottom: 0, trailing: ReachuSpacing.lg)
+            return EdgeInsets(top: 0, leading: size == .small ? 12 : ReachuSpacing.md, bottom: 0, trailing: size == .small ? 12 : ReachuSpacing.md)
         }
     }
     

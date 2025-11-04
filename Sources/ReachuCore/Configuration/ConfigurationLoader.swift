@@ -489,8 +489,8 @@ public class ConfigurationLoader {
         
         return CartConfiguration(
             floatingCartPosition: FloatingCartPosition(rawValue: config.floatingCartPosition) ?? .bottomRight,
-            floatingCartDisplayMode: FloatingCartDisplayMode(rawValue: config.floatingCartDisplayMode) ?? .full,
-            floatingCartSize: FloatingCartSize(rawValue: config.floatingCartSize) ?? .medium,
+            floatingCartDisplayMode: FloatingCartDisplayMode(rawValue: config.floatingCartDisplayMode) ?? .minimal,
+            floatingCartSize: FloatingCartSize(rawValue: config.floatingCartSize) ?? .small,
             autoSaveCart: config.autoSaveCart,
             showCartNotifications: config.showCartNotifications,
             enableGuestCheckout: config.enableGuestCheckout,

@@ -29,8 +29,8 @@ public struct CartConfiguration {
     
     public init(
         floatingCartPosition: FloatingCartPosition = .bottomRight,
-        floatingCartDisplayMode: FloatingCartDisplayMode = .full,
-        floatingCartSize: FloatingCartSize = .medium,
+        floatingCartDisplayMode: FloatingCartDisplayMode = .minimal,
+        floatingCartSize: FloatingCartSize = .small,
         autoSaveCart: Bool = true,
         cartPersistenceKey: String = "reachu_cart",
         maxQuantityPerItem: Int = 99,
