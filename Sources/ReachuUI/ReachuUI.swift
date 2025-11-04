@@ -47,6 +47,11 @@ public typealias ReachuProductSlider = RProductSlider
 public typealias ReachuCheckoutOverlay = RCheckoutOverlay
 public typealias ReachuProductDetailOverlay = RProductDetailOverlay
 
+// Export auto-configured campaign components
+public typealias ReachuProductCarousel = RProductCarousel
+public typealias ReachuProductBanner = RProductBanner
+public typealias ReachuProductStore = RProductStore
+
 // Export UX enhancement components
 public typealias ReachuFloatingCartIndicator = RFloatingCartIndicator
 

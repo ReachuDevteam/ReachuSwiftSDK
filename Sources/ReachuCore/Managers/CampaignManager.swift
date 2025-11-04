@@ -149,6 +149,12 @@ public class CampaignManager: ObservableObject {
         return activeComponents.first { $0.type == type && $0.isActive }
     }
     
+    /// Get all active components by type
+    public func getActiveComponents(type: String) -> [Component] {
+        guard isCampaignActive else { return [] }
+        return activeComponents.filter { $0.type == type && $0.isActive }
+    }
+    
     /// Disconnect from campaign
     public func disconnect() {
         webSocketManager?.disconnect()
