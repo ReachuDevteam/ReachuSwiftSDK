@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import ReachuCore
 
 /// Global Campaign Manager for handling campaign lifecycle
 /// Manages campaign states, WebSocket connections, and component visibility
@@ -284,8 +283,13 @@ public class CampaignManager: ObservableObject {
             request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
         }
         
+        var responseData: Data?
+        var responseString: String?
+        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
+            responseData = data
+            responseString = String(data: data, encoding: .utf8)
             
             // Validate HTTP response before decoding
             if let httpResponse = response as? HTTPURLResponse {
@@ -307,24 +311,71 @@ public class CampaignManager: ObservableObject {
             }
             
             // Validate that we received JSON, not HTML
-            if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+            if let responseString = responseString, responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
                 print("❌ [CampaignManager] Received HTML instead of JSON from components endpoint")
                 print("   Response preview: \(responseString.prefix(200))")
                 return
             }
             
-            let components = try JSONDecoder().decode([Component].self, from: data)
+            // Log raw JSON response for debugging
+            if let responseString = responseString {
+                print("📋 [CampaignManager] Raw components response:")
+                print("   \(responseString.prefix(1000))")
+            }
+            
+            guard let data = responseData else {
+                print("❌ [CampaignManager] No data received")
+                return
+            }
+            
+            // Decode backend response format
+            let responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
+            
+            // Convert to Component model
+            let components = try responses.map { try Component(from: $0) }
+            
+            print("📦 [CampaignManager] Decoded \(components.count) components from API")
+            for (index, component) in components.enumerated() {
+                print("   [\(index)] Type: \(component.type), ID: \(component.id), Active: \(component.isActive)")
+            }
             
             // Filter to only active components
             self.activeComponents = components.filter { $0.isActive }
             
             print("✅ [CampaignManager] Loaded \(self.activeComponents.count) active components")
+            if !self.activeComponents.isEmpty {
+                print("   Active component types: \(self.activeComponents.map { $0.type }.joined(separator: ", "))")
+            }
             
         } catch let decodingError as DecodingError {
             print("❌ [CampaignManager] Failed to decode components: \(decodingError)")
-            // The response data is already logged above if status code was not 200-299
+            
+            // Log detailed decoding error information
+            switch decodingError {
+            case .typeMismatch(let type, let context):
+                print("   Type mismatch: Expected \(type), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .valueNotFound(let type, let context):
+                print("   Value not found: \(type), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .keyNotFound(let key, let context):
+                print("   Key not found: \(key.stringValue), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .dataCorrupted(let context):
+                print("   Data corrupted: \(context.debugDescription)")
+                print("   Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            @unknown default:
+                print("   Unknown decoding error")
+            }
+            
+            // Log raw response for debugging
+            if let responseString = responseString {
+                print("   Raw response: \(responseString.prefix(1000))")
+            }
         } catch {
             print("⚠️ [CampaignManager] Failed to fetch active components: \(error)")
+            
+            // Log raw response for debugging
+            if let responseString = responseString {
+                print("   Raw response: \(responseString.prefix(1000))")
+            }
         }
     }
     

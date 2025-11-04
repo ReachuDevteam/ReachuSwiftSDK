@@ -95,6 +95,74 @@ public struct Campaign: Codable, Identifiable {
     }
 }
 
+/// Backend response model for campaign components
+/// This is the actual structure returned by the API
+internal struct ComponentResponse: Codable {
+    let id: Int
+    let campaignId: Int
+    let componentId: String
+    let status: String
+    let customConfig: [String: AnyCodable]?
+    let component: ComponentData?
+    
+    struct ComponentData: Codable {
+        let id: String
+        let type: String
+        let name: String
+        let config: [String: AnyCodable]
+    }
+}
+
+/// Helper type to decode arbitrary JSON values
+private struct AnyCodable: Codable {
+    let value: Any
+    
+    init(_ value: Any) {
+        self.value = value
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        
+        if let bool = try? container.decode(Bool.self) {
+            value = bool
+        } else if let int = try? container.decode(Int.self) {
+            value = int
+        } else if let double = try? container.decode(Double.self) {
+            value = double
+        } else if let string = try? container.decode(String.self) {
+            value = string
+        } else if let array = try? container.decode([AnyCodable].self) {
+            value = array.map { $0.value }
+        } else if let dictionary = try? container.decode([String: AnyCodable].self) {
+            value = dictionary.mapValues { $0.value }
+        } else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot decode AnyCodable")
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        
+        switch value {
+        case let bool as Bool:
+            try container.encode(bool)
+        case let int as Int:
+            try container.encode(int)
+        case let double as Double:
+            try container.encode(double)
+        case let string as String:
+            try container.encode(string)
+        case let array as [Any]:
+            try container.encode(array.map { AnyCodable($0) })
+        case let dictionary as [String: Any]:
+            try container.encode(dictionary.mapValues { AnyCodable($0) })
+        default:
+            throw EncodingError.invalidValue(value, EncodingError.Context(codingPath: [], debugDescription: "Cannot encode AnyCodable"))
+        }
+    }
+}
+
 /// Component model for dynamic campaign components
 /// Uses ComponentConfig from OfferBannerModels for compatibility
 public struct Component: Codable, Identifiable {
@@ -114,6 +182,56 @@ public struct Component: Codable, Identifiable {
     
     public var isActive: Bool {
         return status == "active"
+    }
+    
+    /// Decode from backend response format
+    init(from response: ComponentResponse) throws {
+        // Use componentId as the id (it's the template ID)
+        self.id = response.componentId
+        
+        // Get type and name from nested component, or use defaults
+        guard let componentData = response.component else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.component,
+                DecodingError.Context(codingPath: [], debugDescription: "Component data is missing")
+            )
+        }
+        
+        self.type = componentData.type
+        self.name = componentData.name
+        self.status = response.status
+        
+        // Use customConfig if available, otherwise use component.config
+        let configToUse: [String: AnyCodable]
+        if let customConfig = response.customConfig, !customConfig.isEmpty {
+            configToUse = customConfig
+        } else {
+            configToUse = componentData.config
+        }
+        
+        // Convert [String: AnyCodable] to JSON Data and decode as ComponentConfig
+        let jsonData = try JSONSerialization.data(withJSONObject: configToUse.mapValues { $0.value })
+        self.config = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+    }
+    
+    /// Decode from JSON (for WebSocket events)
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(String.self, forKey: .id)
+        type = try container.decode(String.self, forKey: .type)
+        name = try container.decode(String.self, forKey: .name)
+        config = try container.decode(ComponentConfig.self, forKey: .config)
+        status = try container.decodeIfPresent(String.self, forKey: .status)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case type
+        case name
+        case config
+        case status
+        case component
     }
 }
 
