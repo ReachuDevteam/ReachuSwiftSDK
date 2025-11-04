@@ -320,7 +320,7 @@ class RProductStoreViewModel: ObservableObject {
                 print("   All mode - Loading all products")
             }
             
-            let dtoProducts = try await sdk.channel.product.get(
+            var dtoProducts = try await sdk.channel.product.get(
                 currency: currency,
                 imageSize: "large",
                 barcodeList: nil,
@@ -332,7 +332,27 @@ class RProductStoreViewModel: ObservableObject {
             )
             
             print("📦 [RProductStore] API returned \(dtoProducts.count) products")
-            if dtoProducts.isEmpty && intProductIds != nil {
+            
+            // Fallback: If filtered mode returned 0 products, load all products instead
+            if dtoProducts.isEmpty && mode == "filtered" && intProductIds != nil {
+                print("⚠️ [RProductStore] No products found for filtered IDs: \(intProductIds ?? [])")
+                print("   Falling back to loading all products from channel")
+                print("   Currency: \(currency), Country: \(country)")
+                
+                // Retry with all products (no productIds filter)
+                dtoProducts = try await sdk.channel.product.get(
+                    currency: currency,
+                    imageSize: "large",
+                    barcodeList: nil,
+                    categoryIds: nil,
+                    productIds: nil,  // Load all products
+                    skuList: nil,
+                    useCache: true,
+                    shippingCountryCode: country
+                )
+                
+                print("📦 [RProductStore] Fallback returned \(dtoProducts.count) products")
+            } else if dtoProducts.isEmpty && intProductIds != nil {
                 print("⚠️ [RProductStore] No products found for IDs: \(intProductIds ?? [])")
                 print("   Currency: \(currency), Country: \(country)")
             }
