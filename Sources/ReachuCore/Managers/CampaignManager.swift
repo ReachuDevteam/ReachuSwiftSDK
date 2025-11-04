@@ -331,8 +331,56 @@ public class CampaignManager: ObservableObject {
             // Decode backend response format
             let responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
             
+            print("📦 [CampaignManager] Decoded \(responses.count) ComponentResponse objects")
+            for (index, response) in responses.enumerated() {
+                print("   [\(index)] Response:")
+                print("      ID: \(response.id)")
+                print("      Campaign ID: \(response.campaignId)")
+                print("      Component ID: \(response.componentId)")
+                print("      Status: \(response.status)")
+                print("      Has customConfig: \(response.customConfig != nil)")
+                print("      Has component: \(response.component != nil)")
+                
+                if let customConfig = response.customConfig {
+                    print("      CustomConfig keys: \(customConfig.keys.joined(separator: ", "))")
+                }
+                
+                if let component = response.component {
+                    print("      Component type: \(component.type)")
+                    print("      Component name: \(component.name)")
+                    print("      Component config keys: \(component.config.keys.joined(separator: ", "))")
+                }
+            }
+            
             // Convert to Component model
-            let components = try responses.map { try Component(from: $0) }
+            let components = try responses.map { response -> Component in
+                print("🔄 [CampaignManager] Converting ComponentResponse to Component:")
+                print("   Component ID: \(response.componentId)")
+                print("   Status: \(response.status)")
+                
+                let component = try Component(from: response)
+                
+                // Log which config was used
+                if let customConfig = response.customConfig, !customConfig.isEmpty {
+                    print("   ✅ Using customConfig (overriding template)")
+                } else if let componentData = response.component {
+                    print("   📋 Using template config from component")
+                }
+                
+                // Log final component config type
+                switch component.config {
+                case .productCarousel(let config):
+                    print("   📦 Final config: ProductCarousel(productIds: \(config.productIds))")
+                case .productBanner(let config):
+                    print("   📦 Final config: ProductBanner(productId: \(config.productId))")
+                case .productStore(let config):
+                    print("   📦 Final config: ProductStore(mode: \(config.mode), productIds: \(config.productIds ?? []))")
+                default:
+                    print("   📦 Final config: Other type")
+                }
+                
+                return component
+            }
             
             print("📦 [CampaignManager] Decoded \(components.count) components from API")
             for (index, component) in components.enumerated() {
