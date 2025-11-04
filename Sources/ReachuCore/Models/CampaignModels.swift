@@ -14,11 +14,39 @@ public struct Campaign: Codable, Identifiable {
     public let id: Int
     public let startDate: String?  // ISO 8601 timestamp
     public let endDate: String?    // ISO 8601 timestamp
+    public let isPaused: Bool?     // Campaign paused state (independent of dates)
     
-    public init(id: Int, startDate: String? = nil, endDate: String? = nil) {
+    public init(id: Int, startDate: String? = nil, endDate: String? = nil, isPaused: Bool? = nil) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
+        self.isPaused = isPaused
+    }
+    
+    // Custom decoder to handle isPaused as both String and Bool
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(Int.self, forKey: .id)
+        startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
+        endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+        
+        // Handle isPaused as either String or Bool
+        if let boolValue = try? container.decodeIfPresent(Bool.self, forKey: .isPaused) {
+            isPaused = boolValue
+        } else if let stringValue = try? container.decodeIfPresent(String.self, forKey: .isPaused) {
+            // Convert string "true"/"false" to Bool
+            isPaused = stringValue.lowercased() == "true"
+        } else {
+            isPaused = nil
+        }
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case startDate
+        case endDate
+        case isPaused
     }
     
     /// Determine current state based on dates
@@ -127,6 +155,28 @@ public struct CampaignEndedEvent: Codable {
         self.type = type
         self.campaignId = campaignId
         self.endDate = endDate
+    }
+}
+
+/// Campaign paused event
+public struct CampaignPausedEvent: Codable {
+    public let type: String
+    public let campaignId: Int
+    
+    public init(type: String = "campaign_paused", campaignId: Int) {
+        self.type = type
+        self.campaignId = campaignId
+    }
+}
+
+/// Campaign resumed event
+public struct CampaignResumedEvent: Codable {
+    public let type: String
+    public let campaignId: Int
+    
+    public init(type: String = "campaign_resumed", campaignId: Int) {
+        self.type = type
+        self.campaignId = campaignId
     }
 }
 

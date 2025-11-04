@@ -1,4 +1,5 @@
 import Foundation
+import ReachuCore
 
 /// WebSocket Manager for Campaign Lifecycle Events
 @MainActor
@@ -16,6 +17,8 @@ public class CampaignWebSocketManager: ObservableObject {
     // MARK: - Event Callbacks
     public var onCampaignStarted: ((CampaignStartedEvent) -> Void)?
     public var onCampaignEnded: ((CampaignEndedEvent) -> Void)?
+    public var onCampaignPaused: ((CampaignPausedEvent) -> Void)?
+    public var onCampaignResumed: ((CampaignResumedEvent) -> Void)?
     public var onComponentStatusChanged: ((ComponentStatusChangedEvent) -> Void)?
     public var onComponentConfigUpdated: ((ComponentConfigUpdatedEvent) -> Void)?
     public var onConnectionStatusChanged: ((Bool) -> Void)?
@@ -39,12 +42,27 @@ public class CampaignWebSocketManager: ObservableObject {
         
         guard let url = URL(string: urlString) else {
             print("❌ [CampaignWebSocket] Invalid WebSocket URL: \(urlString)")
+            print("   Base URL: \(baseURL)")
+            print("   Campaign ID: \(campaignId)")
             return
         }
         
         print("🔌 [CampaignWebSocket] Connecting to: \(urlString)")
+        print("   Base URL: \(baseURL)")
+        print("   Campaign ID: \(campaignId)")
         
-        webSocketTask = urlSession.webSocketTask(with: url)
+        // Create URLRequest with potential authentication headers
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 10.0
+        
+        // Add API key to headers if available
+        let config = ReachuConfiguration.shared
+        if !config.apiKey.isEmpty {
+            request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
+            print("   Using API Key: \(config.apiKey.prefix(8))...")
+        }
+        
+        webSocketTask = urlSession.webSocketTask(with: request)
         webSocketTask?.resume()
         
         onConnectionStatusChanged?(true)
@@ -84,6 +102,19 @@ public class CampaignWebSocketManager: ObservableObject {
             } catch {
                 print("❌ [CampaignWebSocket] WebSocket error: \(error)")
                 
+                // Check if it's a connection error that we should retry
+                if let urlError = error as? URLError {
+                    print("   Error code: \(urlError.code.rawValue)")
+                    print("   Error description: \(urlError.localizedDescription)")
+                    
+                    // Don't retry for certain errors (like authentication failures)
+                    if urlError.code == .userAuthenticationRequired || urlError.code == .userCancelledAuthentication {
+                        print("⚠️ [CampaignWebSocket] Authentication error - stopping reconnection attempts")
+                        onConnectionStatusChanged?(false)
+                        return
+                    }
+                }
+                
                 // Try to reconnect
                 await attemptReconnect()
                 break
@@ -116,6 +147,14 @@ public class CampaignWebSocketManager: ObservableObject {
             case "campaign_ended":
                 let event = try JSONDecoder().decode(CampaignEndedEvent.self, from: data)
                 onCampaignEnded?(event)
+                
+            case "campaign_paused":
+                let event = try JSONDecoder().decode(CampaignPausedEvent.self, from: data)
+                onCampaignPaused?(event)
+                
+            case "campaign_resumed":
+                let event = try JSONDecoder().decode(CampaignResumedEvent.self, from: data)
+                onCampaignResumed?(event)
                 
             case "component_status_changed":
                 let event = try JSONDecoder().decode(ComponentStatusChangedEvent.self, from: data)
