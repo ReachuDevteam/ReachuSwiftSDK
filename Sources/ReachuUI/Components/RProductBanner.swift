@@ -333,8 +333,12 @@ class RProductBannerViewModel: ObservableObject {
         guard let intProductId = Int(productId) else {
             errorMessage = "Invalid product ID"
             isLoading = false
+            print("❌ [RProductBanner] Invalid product ID format: \(productId)")
             return
         }
+        
+        print("🔢 [RProductBanner] Product ID converted: \(productId) -> \(intProductId)")
+        print("   Currency: \(currency), Country: \(country)")
         
         do {
             let dtoProducts = try await sdk.channel.product.get(
@@ -347,6 +351,12 @@ class RProductBannerViewModel: ObservableObject {
                 useCache: true,
                 shippingCountryCode: country
             )
+            
+            print("📦 [RProductBanner] API returned \(dtoProducts.count) products")
+            if dtoProducts.isEmpty {
+                print("⚠️ [RProductBanner] No product found for ID: \(intProductId)")
+                print("   Currency: \(currency), Country: \(country)")
+            }
             
             product = dtoProducts.first?.toDomainProduct()
             print("✅ [RProductBanner] Loaded product: \(product?.title ?? "unknown")")

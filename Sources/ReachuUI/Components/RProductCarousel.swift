@@ -283,16 +283,33 @@ class RProductCarouselViewModel: ObservableObject {
             // Convert String IDs to Int IDs
             let intProductIds = productIds.compactMap { Int($0) }
             
+            print("🛍️ [RProductCarousel] Converting product IDs:")
+            print("   String IDs: \(productIds)")
+            print("   Int IDs: \(intProductIds)")
+            
+            guard !intProductIds.isEmpty else {
+                print("⚠️ [RProductCarousel] No valid product IDs after conversion")
+                errorMessage = "No valid product IDs"
+                isLoading = false
+                return
+            }
+            
             let dtoProducts = try await sdk.channel.product.get(
                 currency: currency,
                 imageSize: "large",
                 barcodeList: nil,
                 categoryIds: nil,
-                productIds: intProductIds.isEmpty ? nil : intProductIds,
+                productIds: intProductIds,
                 skuList: nil,
                 useCache: true,
                 shippingCountryCode: country
             )
+            
+            print("📦 [RProductCarousel] API returned \(dtoProducts.count) products")
+            if dtoProducts.isEmpty {
+                print("⚠️ [RProductCarousel] No products found for IDs: \(intProductIds)")
+                print("   Currency: \(currency), Country: \(country)")
+            }
             
             products = dtoProducts.map { $0.toDomainProduct() }
             print("✅ [RProductCarousel] Loaded \(products.count) products")

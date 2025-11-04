@@ -280,7 +280,16 @@ class RProductStoreViewModel: ObservableObject {
             
             if mode == "filtered", let productIds = productIds {
                 intProductIds = productIds.compactMap { Int($0) }
-                print("   Filtered mode - Product IDs: \(intProductIds ?? [])")
+                print("   Filtered mode - Product IDs:")
+                print("   String IDs: \(productIds)")
+                print("   Int IDs: \(intProductIds ?? [])")
+                
+                guard let ids = intProductIds, !ids.isEmpty else {
+                    print("⚠️ [RProductStore] No valid product IDs after conversion")
+                    errorMessage = "No valid product IDs"
+                    isLoading = false
+                    return
+                }
             } else {
                 intProductIds = nil
                 print("   All mode - Loading all products")
@@ -296,6 +305,12 @@ class RProductStoreViewModel: ObservableObject {
                 useCache: true,
                 shippingCountryCode: country
             )
+            
+            print("📦 [RProductStore] API returned \(dtoProducts.count) products")
+            if dtoProducts.isEmpty && intProductIds != nil {
+                print("⚠️ [RProductStore] No products found for IDs: \(intProductIds ?? [])")
+                print("   Currency: \(currency), Country: \(country)")
+            }
             
             products = dtoProducts.map { $0.toDomainProduct() }
             print("✅ [RProductStore] Loaded \(products.count) products")
