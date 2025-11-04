@@ -2108,14 +2108,13 @@ struct PaymentMethodRowCompact: View {
                 }
 
                 // Payment Method Logo Card
-                if let imageName = method.imageName,
-                   let uiImage = UIImage(named: imageName, in: Bundle.module, compatibleWith: nil) {
-                    // Logo container with white background
+                if let imageName = method.imageName {
+                    // Prefer SwiftUI Image loading from the package module to avoid UIKit dependency
                     ZStack {
                         RoundedRectangle(cornerRadius: 6)
                             .fill(Color.white)
-                        
-                        Image(uiImage: uiImage)
+
+                        Image(imageName, bundle: .module)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .padding(3)

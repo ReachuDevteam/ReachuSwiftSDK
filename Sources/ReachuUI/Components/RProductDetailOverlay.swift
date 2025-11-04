@@ -157,7 +157,9 @@ public struct RProductDetailOverlay: View {
                     }
                     }
                 }
+                #if os(iOS)
                 .navigationBarHidden(true)
+                #endif
                 .toolbar {
                     // No close button - use drawer handle instead
                 }
@@ -967,6 +969,7 @@ struct ProductDetailPresentationModifier: ViewModifier {
         #endif
     }
     
+    #if os(iOS)
     @available(iOS 16.0, *)
     private var presentationDetentsSet: Set<PresentationDetent> {
         switch config.modalHeight {
@@ -978,6 +981,7 @@ struct ProductDetailPresentationModifier: ViewModifier {
             return [.medium, .large]
         }
     }
+    #endif
 }
 
 // MARK: - View Extensions
