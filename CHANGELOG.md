@@ -2,6 +2,20 @@
 
 All notable changes to this project are documented in this file. This project follows Semantic Versioning.
 
+## [3.1.0]
+
+Features
+- feat: Make campaign endpoints configurable from JSON config file (e2484f1)
+- feat: Fix campaign endpoints and improve market availability check (4c78d73)
+
+Fixes
+- fix: Adjust cart indicator size and remove badge shadow (f24c4d4)
+
+Merges
+- Merge pull request #16: feature/campaign-integration (df7517a)
+
+Notes: Backward‑compatible improvements; minor version bump.
+
 ## [3.0.0]
 
 - Docs: Update installation snippet to `from: "3.0.0"`
