@@ -98,8 +98,13 @@ public struct RProductCarousel: View {
                 loadingView
             } else if shouldShowError {
                 errorView
-            } else if !products.isEmpty {
-                carouselContent
+            } else if config != nil {
+                if !products.isEmpty {
+                    carouselContent
+                } else {
+                    // Show empty state message
+                    emptyStateView
+                }
             } else {
                 Color.clear.frame(height: 1)
             }
@@ -187,6 +192,26 @@ public struct RProductCarousel: View {
                     .background(adaptiveColors.primary.opacity(0.1))
                     .cornerRadius(ReachuBorderRadius.medium)
             }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, ReachuSpacing.xl)
+    }
+    
+    private var emptyStateView: some View {
+        VStack(spacing: ReachuSpacing.sm) {
+            Image(systemName: "cart.badge.questionmark")
+                .font(.system(size: 32))
+                .foregroundColor(adaptiveColors.textSecondary)
+            
+            Text("No products available")
+                .font(ReachuTypography.bodyBold)
+                .foregroundColor(adaptiveColors.textPrimary)
+            
+            Text("Products will appear here when available")
+                .font(ReachuTypography.caption1)
+                .foregroundColor(adaptiveColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, ReachuSpacing.lg)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, ReachuSpacing.xl)

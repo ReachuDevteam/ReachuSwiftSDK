@@ -104,8 +104,13 @@ public struct RProductBanner: View {
                 loadingView
             } else if shouldShowError {
                 errorView
-            } else if let config = config, let product = product {
-                bannerContent(config: config, product: product)
+            } else if let config = config {
+                if let product = product {
+                    bannerContent(config: config, product: product)
+                } else {
+                    // Show banner even without product (may be loading or product not found)
+                    emptyBannerView(config: config)
+                }
             } else {
                 Color.clear.frame(height: 1)
             }
@@ -244,6 +249,74 @@ public struct RProductBanner: View {
         .frame(maxWidth: .infinity)
         .frame(height: 200)
         .padding(.vertical, ReachuSpacing.xl)
+    }
+    
+    private func emptyBannerView(config: ProductBannerConfig) -> some View {
+        ZStack {
+            // Background image
+            AsyncImage(url: URL(string: config.backgroundImageUrl)) { phase in
+                switch phase {
+                case .empty:
+                    Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary)
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                case .failure:
+                    Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary)
+                @unknown default:
+                    Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary)
+                }
+            }
+            .frame(height: 200)
+            .clipped()
+            
+            // Overlay gradient
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.6),
+                    Color.black.opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            
+            // Content
+            VStack(spacing: ReachuSpacing.md) {
+                Text(config.title)
+                    .font(ReachuTypography.title2.weight(.bold))
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                
+                if let subtitle = config.subtitle {
+                    Text(subtitle)
+                        .font(ReachuTypography.body)
+                        .foregroundColor(.white.opacity(0.9))
+                        .multilineTextAlignment(.center)
+                }
+                
+                // CTA Button
+                Button(action: {
+                    handleCTATap(config: config)
+                }) {
+                    Text(config.ctaText)
+                        .font(ReachuTypography.bodyBold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, ReachuSpacing.xl)
+                        .padding(.vertical, ReachuSpacing.md)
+                        .background(adaptiveColors.primary)
+                        .cornerRadius(ReachuBorderRadius.medium)
+                }
+                .padding(.top, ReachuSpacing.sm)
+            }
+            .padding(ReachuSpacing.lg)
+        }
+        .frame(height: 200)
+        .cornerRadius(ReachuBorderRadius.large)
+        .padding(.horizontal, ReachuSpacing.lg)
     }
     
     // MARK: - Helper Methods
