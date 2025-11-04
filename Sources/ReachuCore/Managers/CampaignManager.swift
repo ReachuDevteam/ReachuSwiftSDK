@@ -363,7 +363,7 @@ public class CampaignManager: ObservableObject {
                 // Log which config was used
                 if let customConfig = response.customConfig, !customConfig.isEmpty {
                     print("   ✅ Using customConfig (overriding template)")
-                } else if let componentData = response.component {
+                } else if response.component != nil {
                     print("   📋 Using template config from component")
                 }
                 
