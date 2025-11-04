@@ -74,6 +74,44 @@ struct ContentView: View {
                     }
                     .padding(.vertical, ReachuSpacing.md)
 
+                    // NEW: Auto-Configured Campaign Components
+                    VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                        Text("✨ Auto-Configured Campaign Components")
+                            .font(ReachuTypography.headline)
+                            .foregroundColor(adaptiveColors.textPrimary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        Text("These components automatically configure themselves from the active campaign!")
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(adaptiveColors.textSecondary)
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Product Banner (auto-configured)
+                        RProductBanner()
+                            .padding(.horizontal, ReachuSpacing.lg)
+                        
+                        // Product Carousel (auto-configured)
+                        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                            Text("Featured Products")
+                                .font(ReachuTypography.headline)
+                                .foregroundColor(adaptiveColors.textPrimary)
+                                .padding(.horizontal, ReachuSpacing.lg)
+                            
+                            RProductCarousel()
+                        }
+                        
+                        // Product Store (auto-configured)
+                        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+                            Text("Product Store")
+                                .font(ReachuTypography.headline)
+                                .foregroundColor(adaptiveColors.textPrimary)
+                                .padding(.horizontal, ReachuSpacing.lg)
+                            
+                            RProductStore()
+                        }
+                    }
+                    .padding(.vertical, ReachuSpacing.md)
+
                     // Demo Sections
                     VStack(spacing: ReachuSpacing.lg) {
                         DemoSection(

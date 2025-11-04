@@ -1,5 +1,6 @@
 {
   "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
+  "campaignId": 3,
   "environment": "development",
   "theme": {
     "name": "Reachu Demo Theme",
@@ -135,7 +136,6 @@
     "flag": "https://flagcdn.com/w320/us.png"
   },
   "liveShow": {
-    "campaignId": 3,
     "autoJoinChat": true,
     "enableChatModeration": true,
     "maxChatMessageLength": 200,
@@ -153,5 +153,9 @@
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
     }
+  },
+  "campaigns": {
+    "webSocketBaseURL": "https://dev-campaing.reachu.io",
+    "restAPIBaseURL": "https://dev-campaing.reachu.io"
   }
 }
