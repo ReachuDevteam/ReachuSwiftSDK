@@ -28,14 +28,6 @@ public struct RProductCarousel: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    private var resolvedCurrency: String {
-        ReachuConfiguration.shared.marketConfiguration.currencyCode
-    }
-    
-    private var resolvedCountry: String {
-        ReachuConfiguration.shared.marketConfiguration.countryCode
-    }
-    
     /// Get active product carousel component from campaign
     private var activeComponent: Component? {
         campaignManager.getActiveComponent(type: "product_carousel")
@@ -150,12 +142,8 @@ public struct RProductCarousel: View {
     }
     
     private func productCardView(product: Product) -> some View {
-        RProductCard(
-            product: product,
-            currency: resolvedCurrency,
-            country: resolvedCountry
-        )
-        .padding(.horizontal, ReachuSpacing.md)
+        RProductCard(product: product)
+            .padding(.horizontal, ReachuSpacing.md)
     }
     
     private var loadingView: some View {
@@ -232,8 +220,8 @@ public struct RProductCarousel: View {
         Task {
             await viewModel.loadProducts(
                 productIds: config.productIds,
-                currency: resolvedCurrency,
-                country: resolvedCountry
+                currency: ReachuConfiguration.shared.marketConfiguration.currencyCode,
+                country: ReachuConfiguration.shared.marketConfiguration.countryCode
             )
         }
     }

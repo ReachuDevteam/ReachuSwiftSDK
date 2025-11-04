@@ -26,14 +26,6 @@ public struct RProductStore: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    private var resolvedCurrency: String {
-        ReachuConfiguration.shared.marketConfiguration.currencyCode
-    }
-    
-    private var resolvedCountry: String {
-        ReachuConfiguration.shared.marketConfiguration.countryCode
-    }
-    
     /// Get active product store component from campaign
     private var activeComponent: Component? {
         campaignManager.getActiveComponent(type: "product_store")
@@ -152,11 +144,7 @@ public struct RProductStore: View {
         return ScrollView {
             LazyVGrid(columns: columns, spacing: ReachuSpacing.md) {
                 ForEach(products) { product in
-                    RProductCard(
-                        product: product,
-                        currency: resolvedCurrency,
-                        country: resolvedCountry
-                    )
+                    RProductCard(product: product)
                 }
             }
             .padding(ReachuSpacing.lg)
@@ -167,11 +155,7 @@ public struct RProductStore: View {
         ScrollView {
             LazyVStack(spacing: ReachuSpacing.md) {
                 ForEach(products) { product in
-                    RProductCard(
-                        product: product,
-                        currency: resolvedCurrency,
-                        country: resolvedCountry
-                    )
+                    RProductCard(product: product)
                 }
             }
             .padding(ReachuSpacing.lg)
@@ -252,8 +236,8 @@ public struct RProductStore: View {
             await viewModel.loadProducts(
                 mode: config.mode,
                 productIds: config.productIds,
-                currency: resolvedCurrency,
-                country: resolvedCountry
+                currency: ReachuConfiguration.shared.marketConfiguration.currencyCode,
+                country: ReachuConfiguration.shared.marketConfiguration.countryCode
             )
         }
     }
