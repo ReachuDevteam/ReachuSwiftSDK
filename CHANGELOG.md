@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented in this file. This project follows Semantic Versioning.
 
+## [3.0.0]
+
+- Docs: Update installation snippet to `from: "3.0.0"`
+- Demos: Pin example projects to ReachuSwiftSDK `3.0.0`
+- Notes: No functional changes over 2.0.0; version bump for alignment across repos and documentation.
+
 ## [2.0.0]
 
 - Fix: Guard iOS‑only APIs for cross‑platform SwiftPM builds
@@ -22,4 +28,3 @@ Notes: This release contains fixes and infrastructure/doc updates only. Public A
   - ReachuCore, ReachuNetwork, ReachuDesignSystem, ReachuUI, ReachuLiveShow, ReachuLiveUI, ReachuComplete
 - Demos extracted to external repository `ReachuSwiftSDK-Demos` and consume the SDK by SPM (version‑pinned)
 - Platforms: iOS 15+, macOS 12+, tvOS 15+, watchOS 8+
-

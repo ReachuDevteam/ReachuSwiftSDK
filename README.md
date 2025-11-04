@@ -20,7 +20,7 @@ Add the Reachu Swift SDK to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "2.0.0")
+    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "3.0.0")
 ]
 ```
 
