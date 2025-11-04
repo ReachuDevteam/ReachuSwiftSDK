@@ -56,3 +56,7 @@ Notes: This release contains fixes and infrastructure/doc updates only. Public A
   - ReachuCore, ReachuNetwork, ReachuDesignSystem, ReachuUI, ReachuLiveShow, ReachuLiveUI, ReachuComplete
 - Demos extracted to external repository `ReachuSwiftSDK-Demos` and consume the SDK by SPM (version‑pinned)
 - Platforms: iOS 15+, macOS 12+, tvOS 15+, watchOS 8+
+## [3.2.1]
+
+Maintenance
+- No functional code changes since 3.2.0. Patch release to align documentation and dependency pins.
