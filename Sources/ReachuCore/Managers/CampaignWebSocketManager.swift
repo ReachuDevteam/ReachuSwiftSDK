@@ -13,6 +13,7 @@ public class CampaignWebSocketManager: ObservableObject {
     private var reconnectTimer: Timer?
     private var reconnectAttempts: Int = 0
     private let maxReconnectAttempts: Int = 5
+    private var isConnected: Bool = false
     
     // MARK: - Event Callbacks
     public var onCampaignStarted: ((CampaignStartedEvent) -> Void)?
@@ -65,16 +66,27 @@ public class CampaignWebSocketManager: ObservableObject {
         webSocketTask = urlSession.webSocketTask(with: request)
         webSocketTask?.resume()
         
+        // Wait a moment for connection to establish
+        try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+        
+        isConnected = true
+        reconnectAttempts = 0 // Reset reconnect attempts on successful connection
         onConnectionStatusChanged?(true)
         
-        // Start listening for messages
-        await listenForMessages()
+        print("✅ [CampaignWebSocket] WebSocket connected successfully")
+        
+        // Start listening for messages in a separate task so it doesn't block
+        // URLSessionWebSocketTask handles keep-alive automatically
+        Task {
+            await listenForMessages()
+        }
     }
     
     /// Disconnect from WebSocket
     public func disconnect() {
         print("🔌 [CampaignWebSocket] Disconnecting from campaign \(campaignId)")
         
+        isConnected = false
         stopReconnectTimer()
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
@@ -84,23 +96,37 @@ public class CampaignWebSocketManager: ObservableObject {
     // MARK: - Message Handling
     
     private func listenForMessages() async {
-        while let webSocketTask = webSocketTask {
+        print("👂 [CampaignWebSocket] Started listening for messages...")
+        
+        while let webSocketTask = webSocketTask, isConnected {
             do {
                 let message = try await webSocketTask.receive()
                 
                 switch message {
                 case .string(let text):
+                    print("📩 [CampaignWebSocket] Received string message: \(text.prefix(100))")
                     await handleMessage(text)
                 case .data(let data):
                     if let text = String(data: data, encoding: .utf8) {
+                        print("📩 [CampaignWebSocket] Received data message: \(text.prefix(100))")
                         await handleMessage(text)
+                    } else {
+                        print("⚠️ [CampaignWebSocket] Received binary data (unable to decode)")
                     }
                 @unknown default:
-                    break
+                    print("⚠️ [CampaignWebSocket] Unknown message type")
                 }
+                
+                // Continue listening - the while loop will automatically continue
                 
             } catch {
                 print("❌ [CampaignWebSocket] WebSocket error: \(error)")
+                
+                // Check if we're still supposed to be connected
+                guard isConnected else {
+                    print("🛑 [CampaignWebSocket] Connection closed intentionally")
+                    break
+                }
                 
                 // Check if it's a connection error that we should retry
                 if let urlError = error as? URLError {
@@ -110,19 +136,26 @@ public class CampaignWebSocketManager: ObservableObject {
                     // Don't retry for certain errors (like authentication failures)
                     if urlError.code == .userAuthenticationRequired || urlError.code == .userCancelledAuthentication {
                         print("⚠️ [CampaignWebSocket] Authentication error - stopping reconnection attempts")
+                        isConnected = false
                         onConnectionStatusChanged?(false)
                         return
                     }
                 }
                 
-                // Try to reconnect
+                // Connection lost - try to reconnect
+                isConnected = false
+                onConnectionStatusChanged?(false)
                 await attemptReconnect()
                 break
             }
         }
+        
+        print("🛑 [CampaignWebSocket] Stopped listening for messages")
     }
     
     private func handleMessage(_ text: String) async {
+        print("📥 [CampaignWebSocket] Raw message received: \(text.prefix(200))")
+        
         guard let data = text.data(using: .utf8) else {
             print("❌ [CampaignWebSocket] Invalid message data")
             return
@@ -132,6 +165,7 @@ public class CampaignWebSocketManager: ObservableObject {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let eventType = json["type"] as? String else {
             print("❌ [CampaignWebSocket] Failed to parse event type")
+            print("   Raw JSON: \(text)")
             return
         }
         
@@ -142,26 +176,32 @@ public class CampaignWebSocketManager: ObservableObject {
             switch eventType {
             case "campaign_started":
                 let event = try JSONDecoder().decode(CampaignStartedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded campaign_started event")
                 onCampaignStarted?(event)
                 
             case "campaign_ended":
                 let event = try JSONDecoder().decode(CampaignEndedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded campaign_ended event")
                 onCampaignEnded?(event)
                 
             case "campaign_paused":
                 let event = try JSONDecoder().decode(CampaignPausedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded campaign_paused event")
                 onCampaignPaused?(event)
                 
             case "campaign_resumed":
                 let event = try JSONDecoder().decode(CampaignResumedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded campaign_resumed event")
                 onCampaignResumed?(event)
                 
             case "component_status_changed":
                 let event = try JSONDecoder().decode(ComponentStatusChangedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded component_status_changed event")
                 onComponentStatusChanged?(event)
                 
             case "component_config_updated":
                 let event = try JSONDecoder().decode(ComponentConfigUpdatedEvent.self, from: data)
+                print("✅ [CampaignWebSocket] Decoded component_config_updated event")
                 onComponentConfigUpdated?(event)
                 
             default:
@@ -169,6 +209,7 @@ public class CampaignWebSocketManager: ObservableObject {
             }
         } catch {
             print("❌ [CampaignWebSocket] Failed to decode \(eventType): \(error)")
+            print("   Raw message: \(text)")
         }
     }
     

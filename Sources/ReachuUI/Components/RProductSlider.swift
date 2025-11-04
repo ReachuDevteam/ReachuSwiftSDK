@@ -92,6 +92,9 @@ public struct RProductSlider: View {
     // ViewModel for automatic product loading
     @StateObject private var viewModel = RProductSliderViewModel()
     
+    // Observe CampaignManager for reactive updates
+    @ObservedObject private var campaignManager = CampaignManager.shared
+    
     // Environment for adaptive colors
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
@@ -170,6 +173,60 @@ public struct RProductSlider: View {
         manualProducts == nil && viewModel.isMarketUnavailable
     }
     
+    /// Should show component based on campaign state
+    /// - If no campaign configured (campaignId == 0): Always show (legacy behavior)
+    /// - If campaign configured: Only show if campaign is active AND not paused
+    private var shouldShowCampaignComponent: Bool {
+        let config = ReachuConfiguration.shared
+        let campaignId = config.liveShowConfiguration.campaignId
+        
+        // If no campaign configured (campaignId == 0), show everything (legacy behavior)
+        guard campaignId > 0 else {
+            return true
+        }
+        
+        // Campaign must be active
+        guard campaignManager.isCampaignActive else {
+            let state = campaignManager.campaignState
+            let isPaused = campaignManager.currentCampaign?.isPaused ?? false
+            print("🚫 [RProductSlider] Component hidden - Campaign not active")
+            print("   Campaign ID: \(campaignId)")
+            print("   Campaign State: \(state)")
+            print("   Is Paused: \(isPaused)")
+            print("   Is Campaign Active: \(campaignManager.isCampaignActive)")
+            return false
+        }
+        
+        // Campaign must not be paused
+        if campaignManager.currentCampaign?.isPaused == true {
+            print("🚫 [RProductSlider] Component hidden - Campaign is paused")
+            print("   Campaign ID: \(campaignId)")
+            return false
+        }
+        
+        // If campaign has active components configured, check if this component type is active
+        // Component type "product_slider" or "recommended_products" for recommended products
+        if !campaignManager.activeComponents.isEmpty {
+            // Check if product slider component is active
+            let isActive = campaignManager.shouldShowComponent(type: "product_slider") ||
+                          campaignManager.shouldShowComponent(type: "recommended_products") ||
+                          campaignManager.shouldShowComponent(type: "products")
+            
+            if !isActive {
+                print("🚫 [RProductSlider] Component hidden - Not in active components list")
+                print("   Active components: \(campaignManager.activeComponents.map { $0.type })")
+            } else {
+                print("✅ [RProductSlider] Component visible - Found in active components")
+            }
+            
+            return isActive
+        }
+        
+        // If no components configured, show if campaign is active and not paused (default behavior)
+        print("✅ [RProductSlider] Component visible - Campaign active (\(campaignManager.campaignState)), no specific components configured")
+        return true
+    }
+    
     // MARK: - Body
     public var body: some View {
         Group {
@@ -180,8 +237,8 @@ public struct RProductSlider: View {
             } else if shouldHide {
                 // Market not available - hide component silently
                 EmptyView()
-            } else if !CampaignManager.shared.isCampaignActive {
-                // Campaign not active - hide component
+            } else if !shouldShowCampaignComponent {
+                // Campaign not active or paused - hide component
                 EmptyView()
             } else if shouldShowLoading {
                 loadingView
@@ -193,6 +250,14 @@ public struct RProductSlider: View {
                 // Empty placeholder to ensure onAppear fires
                 Color.clear.frame(height: 1)
             }
+        }
+        .onChange(of: campaignManager.isCampaignActive) { _ in
+            // Force view update when campaign active state changes
+            print("🔄 [RProductSlider] Campaign active state changed: \(campaignManager.isCampaignActive)")
+        }
+        .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
+            // Force view update when campaign paused state changes
+            print("🔄 [RProductSlider] Campaign paused state changed: \(campaignManager.currentCampaign?.isPaused ?? false)")
         }
         .task(id: autoLoadTaskKey) {
             guard manualProducts == nil else { return }

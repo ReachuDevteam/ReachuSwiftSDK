@@ -63,6 +63,9 @@ public enum ComponentConfig: Codable {
     case carouselAuto(CarouselAutoConfig)
     case carouselManual(CarouselManualConfig)
     case offerBadge(OfferBadgeConfig)
+    case productCarousel(ProductCarouselConfig)
+    case productBanner(ProductBannerConfig)
+    case productStore(ProductStoreConfig)
     
     enum CodingKeys: String, CodingKey {
         case imageUrl, title, subtitle, ctaText, ctaLink, deeplinkUrl, deeplinkAction // banner
@@ -70,8 +73,11 @@ public enum ComponentConfig: Codable {
         case productId, highlightText // product_spotlight
         case endDate, style // countdown
         case channelId, displayCount // carousel_auto
-        case productIds // carousel_manual
+        case productIds // carousel_manual, product_carousel, product_store
         case text, color // offer_badge
+        case autoPlay, interval // product_carousel
+        case mode, displayType, columns // product_store
+        case message, deeplink // banner, product_banner
     }
     
     public init(from decoder: Decoder) throws {
@@ -82,18 +88,53 @@ public enum ComponentConfig: Codable {
             let config = try OfferBannerConfig(from: decoder)
             self = .offerBanner(config)
         }
+        // Try ProductBanner (has productId AND backgroundImageUrl, different from ProductSpotlight)
+        else if container.contains(.productId) && container.contains(.backgroundImageUrl) {
+            let config = try ProductBannerConfig(from: decoder)
+            self = .productBanner(config)
+        }
         // Then try Banner (has imageUrl but not logoUrl)
         // Banner can have deeplinkUrl/deeplinkAction like OfferBanner
         else if container.contains(.imageUrl) {
             let config = try BannerConfig(from: decoder)
             self = .banner(config)
         }
-        // Then try ProductSpotlight
+        // Try ProductCarousel (has productIds AND autoPlay)
+        else if container.contains(.productIds) && container.contains(.autoPlay) {
+            let config = try ProductCarouselConfig(from: decoder)
+            self = .productCarousel(config)
+        }
+        // Try ProductStore (has mode AND displayType)
+        else if container.contains(.mode) && container.contains(.displayType) {
+            let config = try ProductStoreConfig(from: decoder)
+            self = .productStore(config)
+        }
+        // Try CarouselManual (has productIds but no autoPlay)
+        else if container.contains(.productIds) {
+            let config = try CarouselManualConfig(from: decoder)
+            self = .carouselManual(config)
+        }
+        // Then try ProductSpotlight (has productId but no backgroundImageUrl)
         else if container.contains(.productId) {
             let config = try ProductSpotlightConfig(from: decoder)
             self = .productSpotlight(config)
         }
-        // Continue for other types...
+        // Try Countdown (has endDate)
+        else if container.contains(.endDate) {
+            let config = try CountdownConfig(from: decoder)
+            self = .countdown(config)
+        }
+        // Try CarouselAuto (has channelId)
+        else if container.contains(.channelId) {
+            let config = try CarouselAutoConfig(from: decoder)
+            self = .carouselAuto(config)
+        }
+        // Try OfferBadge (has text)
+        else if container.contains(.text) {
+            let config = try OfferBadgeConfig(from: decoder)
+            self = .offerBadge(config)
+        }
+        // Unknown type
         else {
             throw DecodingError.dataCorrupted(
                 DecodingError.Context(
@@ -119,6 +160,12 @@ public enum ComponentConfig: Codable {
         case .carouselManual(let config):
             try config.encode(to: encoder)
         case .offerBadge(let config):
+            try config.encode(to: encoder)
+        case .productCarousel(let config):
+            try config.encode(to: encoder)
+        case .productBanner(let config):
+            try config.encode(to: encoder)
+        case .productStore(let config):
             try config.encode(to: encoder)
         }
     }
@@ -180,6 +227,63 @@ public struct CarouselManualConfig: Codable {
 public struct OfferBadgeConfig: Codable {
     public let text: String
     public let color: String?
+}
+
+/// Product Carousel Config
+public struct ProductCarouselConfig: Codable {
+    public let productIds: [String]
+    public let autoPlay: Bool
+    public let interval: Int  // milliseconds
+    
+    public init(productIds: [String], autoPlay: Bool = true, interval: Int = 3000) {
+        self.productIds = productIds
+        self.autoPlay = autoPlay
+        self.interval = interval
+    }
+}
+
+/// Product Banner Config
+public struct ProductBannerConfig: Codable {
+    public let productId: String
+    public let backgroundImageUrl: String
+    public let title: String
+    public let subtitle: String?
+    public let ctaText: String
+    public let ctaLink: String?
+    public let deeplink: String?
+    
+    public init(
+        productId: String,
+        backgroundImageUrl: String,
+        title: String,
+        subtitle: String? = nil,
+        ctaText: String,
+        ctaLink: String? = nil,
+        deeplink: String? = nil
+    ) {
+        self.productId = productId
+        self.backgroundImageUrl = backgroundImageUrl
+        self.title = title
+        self.subtitle = subtitle
+        self.ctaText = ctaText
+        self.ctaLink = ctaLink
+        self.deeplink = deeplink
+    }
+}
+
+/// Product Store Config
+public struct ProductStoreConfig: Codable {
+    public let mode: String  // "all" or "filtered"
+    public let productIds: [String]?
+    public let displayType: String  // "grid" or "list"
+    public let columns: Int
+    
+    public init(mode: String, productIds: [String]? = nil, displayType: String = "grid", columns: Int = 2) {
+        self.mode = mode
+        self.productIds = productIds
+        self.displayType = displayType
+        self.columns = columns
+    }
 }
 
 /// WebSocket message for component status changes
