@@ -5,9 +5,10 @@ xcuserdata/
 DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/
+.clangModuleCache/
 .netrc
-# Demo app build artifacts
-Demo/*/.build/
-Demo/*/Package.resolved
-Demo/*/.swiftpm/
+Package.resolved
 **/ins.instructions.md
+
+.vscode/

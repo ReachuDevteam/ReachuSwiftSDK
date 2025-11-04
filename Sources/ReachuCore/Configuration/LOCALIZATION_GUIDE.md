@@ -1,14 +1,14 @@
-# 🌍 Sistema de Localización del SDK
+# 🌍 SDK Localization System
 
-## Descripción
+## Description
 
-El SDK ahora soporta múltiples idiomas mediante un sistema de traducciones configurable. Puedes definir traducciones directamente en tu archivo de configuración JSON o en un archivo separado.
+The SDK supports multiple languages through a configurable translations system. You can define translations directly in your JSON configuration file or in a separate file.
 
-## Configuración
+## Configuration
 
-### Opción 1: Archivo de Traducciones Separado (Recomendado)
+### Option 1: Separate Translations File (Recommended)
 
-Para mantener el archivo de configuración limpio, puedes usar un archivo separado para las traducciones:
+To keep your configuration file clean, use a separate file for translations:
 
 **reachu-config.json:**
 ```json
@@ -23,7 +23,7 @@ Para mantener el archivo de configuración limpio, puedes usar un archivo separa
 }
 ```
 
-**reachu-translations.json** (en la misma carpeta):
+**reachu-translations.json** (in the same folder):
 ```json
 {
   "translations": {
@@ -46,9 +46,9 @@ Para mantener el archivo de configuración limpio, puedes usar un archivo separa
 }
 ```
 
-### Opción 2: Traducciones Inline (Para pocas traducciones)
+### Option 2: Inline Translations (for small sets)
 
-Si prefieres tener todo en un solo archivo:
+If you prefer everything in a single file:
 
 ```json
 {
@@ -71,56 +71,56 @@ Si prefieres tener todo en un solo archivo:
 }
 ```
 
-### Estructura de Archivos
+### File Structure
 
 ```
-TuApp/
+YourApp/
 ├── Configuration/
-│   ├── reachu-config.json          ← Configuración principal
-│   └── reachu-translations.json    ← Traducciones (opcional)
+│   ├── reachu-config.json          ← Main configuration
+│   └── reachu-translations.json    ← Translations (optional)
 ```
 
-### Propiedades
+### Properties
 
-- **`defaultLanguage`**: Idioma por defecto (ej: "en", "es", "no", "sv")
-- **`fallbackLanguage`**: Idioma de respaldo si falta una traducción (por defecto: "en")
-- **`translationsFile`**: Nombre del archivo externo con traducciones (sin extensión .json)
-- **`translations`**: Objeto con traducciones por idioma (opcional si usas `translationsFile`)
+- **`defaultLanguage`**: Default language (e.g., "en", "es", "no", "sv")
+- **`fallbackLanguage`**: Fallback language if a translation is missing (default: "en")
+- **`translationsFile`**: External translations filename (without .json extension)
+- **`translations`**: Object with per-language translations (optional if you use `translationsFile`)
 
-## Uso en el Código
+## Usage in Code
 
-### Opción 1: Función Helper (Recomendado)
+### Option 1: Helper Function (Recommended)
 
 ```swift
 import ReachuCore
 
 Text(RLocalizedString("cart.title"))
-// O con valor por defecto
+// Or with a default value
 Text(RLocalizedString("cart.title", defaultValue: "Cart"))
 ```
 
-### Opción 2: Clase ReachuLocalization
+### Option 2: ReachuLocalization class
 
 ```swift
 import ReachuCore
 
-// Obtener string en idioma actual
+// Get string in current language
 let text = ReachuLocalization.shared.string(for: "cart.title")
 
-// Obtener string en idioma específico
+// Get string in a specific language
 let spanishText = ReachuLocalization.shared.string(
     for: "cart.title",
     language: "es"
 )
 
-// Cambiar idioma dinámicamente
+// Change language dynamically
 ReachuLocalization.shared.setLanguage("es")
 
-// Obtener idioma actual
+// Get current language
 let currentLang = ReachuLocalization.shared.language
 ```
 
-### Opción 3: Usar en SwiftUI Views
+### Option 3: Use in SwiftUI Views
 
 ```swift
 import SwiftUI
@@ -140,11 +140,11 @@ struct MyView: View {
 }
 ```
 
-## Keys de Traducción Disponibles
+## Available Translation Keys
 
-El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principales categorías son:
+The SDK defines standard keys in `ReachuTranslationKey`. Main categories:
 
-### Common (Común)
+### Common
 - `common.addToCart`
 - `common.remove`
 - `common.close`
@@ -159,7 +159,7 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `common.success`
 - `common.retry`
 
-### Cart (Carrito)
+### Cart
 - `cart.title`
 - `cart.empty`
 - `cart.emptyMessage`
@@ -189,7 +189,7 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `checkout.processingPaymentMessage`
 - `checkout.verifyingPayment`
 
-### Address (Dirección)
+### Address
 - `address.shipping`
 - `address.billing`
 - `address.firstName`
@@ -202,7 +202,7 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `address.zip`
 - `address.country`
 
-### Payment (Pago)
+### Payment
 - `payment.method`
 - `payment.selectMethod`
 - `payment.noMethods`
@@ -214,7 +214,7 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `payment.cancel`
 - `payment.klarnaCheckout`
 
-### Product (Producto)
+### Product
 - `product.details`
 - `product.description`
 - `product.options`
@@ -227,7 +227,7 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `product.available`
 - `product.noImage`
 
-### Order (Pedido)
+### Order
 - `order.summary`
 - `order.id`
 - `order.review`
@@ -236,75 +236,74 @@ El SDK define todas las keys estándar en `ReachuTranslationKey`. Las principale
 - `order.totalForItem`
 - `order.colors`
 
-### Shipping (Envío)
+### Shipping
 - `shipping.options`
 - `shipping.required`
 - `shipping.noMethods`
 - `shipping.calculated`
 - `shipping.total`
 
-### Discount (Descuento)
+### Discount
 - `discount.code`
 - `discount.applied`
 - `discount.removed`
 - `discount.invalid`
 
-### Validation (Validación)
+### Validation
 - `validation.required`
 - `validation.invalidEmail`
 - `validation.invalidPhone`
 - `validation.invalidAddress`
 
-### Errors (Errores)
+### Errors
 - `error.network`
 - `error.server`
 - `error.unknown`
 - `error.tryAgainLater`
 
-## Valores por Defecto
+## Default Values
 
-Si no proporcionas una traducción para una key, el SDK usará:
-1. **Valor por defecto en inglés** (si está disponible)
-2. **Fallback language** (si está configurado)
-3. **La key misma** (como último recurso)
+If you don’t provide a translation for a key, the SDK will use:
+1. The default English value (if available)
+2. The fallback language (if configured)
+3. The key itself (as a last resort)
 
-## Ejemplo Completo
+## Complete Example
 
-Ver el archivo de ejemplo:
+See the example file:
 `Sources/ReachuCore/Configuration/theme-examples/reachu-config-with-localization.json`
 
-Este archivo incluye traducciones completas para:
-- Inglés (en)
-- Español (es)
-- Noruego (no)
-- Sueco (sv)
+This file includes complete translations for:
+- English (en)
+- Spanish (es)
+- Norwegian (no)
+- Swedish (sv)
 
-## Cambiar Idioma Dinámicamente
+## Change Language Dynamically
 
 ```swift
-// Cambiar idioma en tiempo de ejecución
+// Change language at runtime
 ReachuLocalization.shared.setLanguage("es")
 
-// Los componentes del SDK se actualizarán automáticamente
-// (si están usando RLocalizedString)
+// SDK components will update automatically
+// (if using RLocalizedString)
 ```
 
-## Integración con iOS Localization
+## Integration with iOS Localization
 
-Puedes combinar esto con el sistema de localización nativo de iOS:
+You can combine this with iOS native localization:
 
 ```swift
-// Usar sistema nativo de iOS como fallback
+// Use iOS native system as fallback
 let localized = RLocalizedString(
     "cart.title",
     defaultValue: NSLocalizedString("cart.title", comment: "")
 )
 ```
 
-## Notas
+## Notes
 
-- Las traducciones se cargan automáticamente cuando llamas a `ConfigurationLoader.loadConfiguration()`
-- El sistema es completamente opcional - si no proporcionas traducciones, usa inglés por defecto
-- Puedes agregar tus propias keys personalizadas además de las estándar del SDK
-- Las keys son case-sensitive: `cart.title` ≠ `Cart.Title`
-
+- Translations load automatically when you call `ConfigurationLoader.loadConfiguration()`
+- The system is optional — if you don’t provide translations, English is used by default
+- You can add your own custom keys in addition to SDK standard keys
+- Keys are case-sensitive: `cart.title` ≠ `Cart.Title`

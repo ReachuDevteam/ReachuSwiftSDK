@@ -97,7 +97,24 @@ let package = Package(
             dependencies: [
                 "ReachuNetwork"
             ],
-            path: "Sources/ReachuCore"
+            path: "Sources/ReachuCore",
+            exclude: [
+                // Documentation and examples (not part of the target build)
+                "Configuration/LOCALIZATION_GUIDE.md",
+                "Configuration/MARKET_AVAILABILITY_GUIDE.md",
+                "Configuration/CAMPAIGN_LIFECYCLE_GUIDE.md",
+                "Configuration/ThemeConfigurationSystem.md",
+                "Sdk/README.md",
+                // Theme example JSONs and readme
+                "Configuration/theme-examples/README.md",
+                "Configuration/theme-examples/automatic-theme.json",
+                "Configuration/theme-examples/reachu-translations.json",
+                "Configuration/theme-examples/green-ecommerce-theme.json",
+                "Configuration/theme-examples/dark-only-theme.json",
+                "Configuration/theme-examples/minimal-theme.json",
+                "Configuration/theme-examples/professional-blue-theme.json",
+                "Configuration/theme-examples/reachu-config-with-localization.json",
+            ]
         ),
 
         // MARK: - INTERNAL: Design System Target (Shared)
@@ -126,6 +143,11 @@ let package = Package(
 
             ],
             path: "Sources/ReachuUI",
+            exclude: [
+                "Components/RProductSlider/README.md",
+                "Components/README.md",
+                "Components/ROfferBanner.md",
+            ],
             resources: [
                 .process("Resources")
             ]
@@ -163,65 +185,6 @@ let package = Package(
                 "ReachuNetwork",
             ],
             path: "Sources/ReachuTesting"
-        ),
-        .target(
-            name: "ReachuDemoKit",
-            dependencies: [],
-            path: "Demo/ReachuDemoSdk/Utils"
-        ),
-        // === DEMOS (ejecutables de consola) ===
-        .executableTarget(
-            name: "CartDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/CartDemo"
-        ),
-        .executableTarget(
-            name: "ChannelDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/ChannelDemo",
-            exclude: ["CategoryDemo", "InfoDemo", "ProductDemo"]
-        ),
-        .executableTarget(
-            name: "CategoryDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/ChannelDemo/CategoryDemo"
-        ),
-        .executableTarget(
-            name: "InfoDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/ChannelDemo/InfoDemo"
-        ),
-        .executableTarget(
-            name: "ProductDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/ChannelDemo/ProductDemo"
-        ),
-        .executableTarget(
-            name: "CheckoutDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/CheckoutDemo"
-        ),
-        .executableTarget(
-            name: "DiscountDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/DiscountDemo"
-        ),
-        .executableTarget(
-            name: "MarketDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/MarketDemo"
-        ),
-        .executableTarget(
-            name: "PaymentDemo",
-            dependencies: ["ReachuCore", "ReachuDemoKit"],
-            path: "Demo/ReachuDemoSdk/PaymentDemo"
-        ),
-        .executableTarget(
-            name: "SdkDemo",
-            dependencies: [
-                "ReachuCore", "ReachuDemoKit",
-            ],
-            path: "Demo/ReachuDemoSdk/Sdk"
         ),
         // MARK: - Test Targets
         .testTarget(

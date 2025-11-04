@@ -1,8 +1,8 @@
 # 🎨 Theme Configuration System - Complete Guide
 
-## 🎯 **How Theme Configuration Works**
+## 🎯 How Theme Configuration Works
 
-### **🔄 Three Configuration Modes**
+### 🔄 Three Configuration Modes
 
 #### **1. Automatic Mode (Recommended)**
 ```json
@@ -23,7 +23,7 @@
 }
 ```
 
-**Result:**
+Result:
 - **iOS Light Mode** → Uses lightColors (your primary + SDK defaults)
 - **iOS Dark Mode** → Uses darkColors (your colors + SDK defaults)
 - **Partial customization** → Only specify what you want to change
@@ -42,7 +42,7 @@
 }
 ```
 
-**Result:**
+Result:
 - **Always light theme** → Ignores iOS system setting
 - **Your brand colors** → Primary/secondary custom
 - **SDK defaults** → Background, surface, text optimized for light
@@ -62,7 +62,7 @@
 }
 ```
 
-**Result:**
+Result:
 - **Always dark theme** → Perfect for streaming apps
 - **Your custom colors** → Background, surface, primary
 - **SDK defaults** → Text colors optimized for dark
@@ -113,9 +113,9 @@ public static let darkDefaults = ColorScheme(
 
 ---
 
-## ⚙️ **Configuration Logic**
+## ⚙️ Configuration Logic
 
-### **🔄 Color Resolution Process**
+### 🔄 Color Resolution Process
 
 ```swift
 // 1. Load JSON configuration
@@ -345,6 +345,4 @@ extension ColorScheme {
 - **Automatic optimization** → SDK fills the gaps
 - **Theme switching** → Seamless light/dark transitions
 
-**¡Este sistema permite que con mínima configuración tengas máxima personalización, y el SDK se encarga de optimizar todo lo que no especifiques!** 🎨✨
-
-¿Te gusta esta aproximación de defaults inteligentes + overrides selectivos?
+This system aims to deliver maximum customization with minimal configuration, while the SDK optimizes sensible defaults for everything you don’t specify. 🎨✨

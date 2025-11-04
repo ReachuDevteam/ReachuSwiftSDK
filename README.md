@@ -1,5 +1,7 @@
 # Reachu Swift SDK
 
+Note: Demos live in the separate repository `ReachuSwiftSDK-Demos`. Each demo depends on this SDK via SPM (by URL and version tag).
+
 A modular Swift SDK for the Reachu ecommerce platform. Add shopping cart, checkout, and livestream features to any iOS, macOS, tvOS or watchOS application.
 
 ## 🏗️ Modular Architecture
@@ -18,15 +20,15 @@ Add the Reachu Swift SDK to your project using Swift Package Manager:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/angelosv/ReachuSwiftSDK.git", from: "1.0.0")
+    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "1.0.0")
 ]
 ```
 
 ### 🎨 Configuration Setup
 
-1. **Copy configuration files** from the demo app to your project:
+1. **Copy configuration files** from the demos repo to your project:
    ```bash
-   # Copy from: Demo/ReachuDemoApp/ReachuDemoApp/Configuration/
+   # Copy from: ReachuSwiftSDK-Demos/ReachuDemoApp/ReachuDemoApp/Configuration/
    # To your app bundle as: reachu-config.json
    ```
 
@@ -182,28 +184,13 @@ Button("Join Live Show") {
 }
 ```
 
-## 📱 Demo App
+## 📱 Demos
 
-Run the demo app to see all components in action:
-
-```bash
-cd Demo/ReachuDemoApp
-open ReachuDemoApp.xcodeproj
-```
-
-The demo app includes:
-- Design System showcase
-- Product Card variants (4 styles)
-- Product Slider layouts (6 styles)
-- Shopping Cart and Checkout flow
-- LiveShow Experience (3 layouts)
-- Interactive examples with real data
-- Dark/Light mode support
+Demos are managed in the `ReachuSwiftSDK-Demos` repository. Each demo consumes the SDK via SPM pinned to a version tag (`vX.Y.Z`).
 
 ## 📚 Documentation
 
 - **[Complete Documentation](https://docs.reachu.io/swift-sdk)** - Full documentation site
-- **[PROJECT_STATUS.md](./PROJECT_STATUS.md)** - Current development status and context
 
 ## 🔧 Development
 
@@ -229,14 +216,13 @@ swift build --target ReachuLiveUI
 # Build complete SDK
 swift build --product ReachuComplete
 
-# Test demo app
-cd Demo/ReachuDemoApp
-xcodebuild -scheme ReachuDemoApp build
+# SDK testing
+# (Demos are built from the ReachuSwiftSDK-Demos repository)
 ```
 
 ### Current Branch
 
-Development is happening on `feature/ui-components` branch. See `PROJECT_STATUS.md` for detailed context and next steps.
+Active development happens on feature branches merged into `main`.
 
 ## 🤝 Contributing
 

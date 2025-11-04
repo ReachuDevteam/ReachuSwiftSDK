@@ -357,18 +357,18 @@ Conexión WebSocket para recibir eventos en tiempo real.
 - Máximo 5 intentos
 - Si falla, el SDK funciona normalmente basándose en el estado inicial
 
-### Componente Desconocido
-- Se ignora silenciosamente
-- No afecta otros componentes
+### Unknown Component
+- Silently ignored
+- Does not affect other components
 
 ## Logs
 
-### Sin Campaña
+### No Campaign
 ```
 📋 [CampaignManager] No campaign configured (campaignId: 0) - SDK works normally
 ```
 
-### Campaña Activa
+### Active Campaign
 ```
 📋 [CampaignManager] Initializing campaign: 10
 ✅ [CampaignManager] Campaign 10 is active
@@ -376,17 +376,16 @@ Conexión WebSocket para recibir eventos en tiempo real.
 🔌 [CampaignWebSocket] Connecting to: wss://your-domain/ws/10
 ```
 
-### Campaña Terminada
+### Campaign Ended
 ```
 ❌ [CampaignManager] Campaign 10 has ended - hiding all components
 📨 [CampaignWebSocket] Received event: campaign_ended
 ```
 
-## Notas Importantes
+## Important Notes
 
-1. **Si `campaignId` es 0 o no está configurado:** El SDK funciona normalmente sin restricciones
-2. **Conexión WebSocket:** Se conecta automáticamente si `campaignId > 0`
-3. **Reconexión automática:** Si se pierde la conexión, se intenta reconectar automáticamente
-4. **Un componente por tipo:** Solo un componente de cada tipo puede estar activo a la vez
-5. **Fecha no configurada:** Si no hay `startDate` o `endDate`, la campaña se considera siempre activa
-
+1. **If `campaignId` is 0 or not set:** the SDK works normally without restrictions
+2. **WebSocket connection:** connects automatically if `campaignId > 0`
+3. **Auto-reconnect:** if the connection drops, reconnection is attempted automatically
+4. **One component per type:** only one component of each type can be active at a time
+5. **No dates configured:** if `startDate` or `endDate` are missing, the campaign is considered always active

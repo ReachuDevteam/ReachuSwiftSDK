@@ -1,7 +1,7 @@
 # Reachu Swift SDK
 
 A native Swift SDK for integrating Reachu's commerce platform into iOS/macOS apps and Swift services.  
-It includes production‑ready repositories, typed models, a tiny GraphQL client, and a set of runnable console demos that exercise end‑to‑end flows (cart, discounts, checkout, and payments).
+It includes production‑ready repositories, typed models, and a tiny GraphQL client. Demo projects live in a separate repository `ReachuSwiftSDK-Demos` and exercise end‑to‑end flows (cart, discounts, checkout, and payments).
 
 ---
 
@@ -48,7 +48,7 @@ It includes production‑ready repositories, typed models, a tiny GraphQL client
 ### Add as a Swift Package (remote)
 If you host this repo, you can add it by URL in **Add Packages…** and pick the products as above.
 
-> The SDK ships with runnable **console demos** under `Demo/ReachuDemoSdk/…`. These are separate executable targets for fast manual testing.
+> Runnable demos are maintained in `ReachuSwiftSDK-Demos`. Build them with `swift run <DemoName>` from that repo.
 
 ---
 
@@ -261,7 +261,7 @@ let available = try await sdk.market.getAvailable()
 
 ## Console Demos
 
-Every module ships a runnable console demo with hardcoded values and pretty JSON logs:
+Console demos are available in the `ReachuSwiftSDK-Demos` repository. Clone that repo and:
 
 ```bash
 swift build
@@ -276,7 +276,7 @@ swift run PaymentDemo
 swift run Sdk
 ```
 
-> In Xcode, open `Package.swift`, pick the demo **scheme** (▸) and run on **My Mac**.
+> In Xcode, open the demos repo `Package.swift`, pick the demo scheme and run on My Mac.
 
 ---
 
@@ -300,27 +300,16 @@ Sources/ReachuCore/
     MarketModule.swift
     PaymentModule.swift
   Sdk.swift                # SdkClient wiring
-
-Demo/ReachuDemoSdk/
-  CartDemo/ …
-  DiscountDemo/ …
-  MarketDemo/ …
-  ChannelDemo/
-    InfoDemo/ …
-    CategoryDemo/ …
-    ProductDemo/ …
-  CheckoutDemo/ …
-  PaymentDemo/ …
-  Sdk/ …
-Utils/Logger.swift         # JSON + colored sections
 ```
+
+> For demo layout, see the `ReachuSwiftSDK-Demos` repository.
 
 ---
 
 ## Troubleshooting
 
 - **'@main' attribute cannot be used in a module that contains top-level code'**  
-  Each demo target must contain exactly one `main.swift`. If you nest sub‑demos (e.g., under `ChannelDemo/…`), add `exclude: ["SubDemoA", …]` in the parent target or set `sources: ["main.swift"]` in each sub‑demo target to compile only that file.
+  Each demo target (in the `ReachuSwiftSDK-Demos` repo) must contain exactly one `main.swift`. If you nest sub‑demos (e.g., under `ChannelDemo/…`), add `exclude: ["SubDemoA", …]` in the parent target or set `sources: ["main.swift"]` in each sub‑demo target to compile only that file.
 
 - **Xcode runs `ReachuSwiftSDK-Package` instead of the demo**  
   `Product → Scheme → Edit Scheme… → Build`: keep only the row with the **▸** icon for your demo. Clean the build folder (⇧⌘K) and run again.

@@ -1,12 +1,12 @@
 # 🌍 Market Availability Check - Reachu SDK
 
-## Descripción
+## Description
 
-El SDK ahora verifica automáticamente si el mercado está disponible para el país del usuario antes de habilitar los componentes. Si el mercado no está disponible, todos los componentes de Reachu se ocultan automáticamente.
+The SDK automatically checks if the market is available for the user’s country before enabling components. If the market is not available, all Reachu components are hidden automatically.
 
-## Uso Básico
+## Basic Usage
 
-### Opción 1: Sin verificación de país (SDK siempre habilitado)
+### Option 1: Without country check (SDK always enabled)
 
 ```swift
 import ReachuCore
@@ -25,7 +25,7 @@ struct MyApp: App {
 }
 ```
 
-### Opción 2: Con verificación de país del usuario
+### Option 2: With user country check
 
 ```swift
 import ReachuCore
@@ -33,8 +33,8 @@ import ReachuCore
 @main
 struct MyApp: App {
     init() {
-        // Pasar el país del usuario
-        // El SDK verificará si el mercado está disponible para este país
+        // Pass user country code
+        // The SDK will check market availability for this country
         ConfigurationLoader.loadConfiguration(userCountryCode: "US")
     }
     
@@ -46,7 +46,7 @@ struct MyApp: App {
 }
 ```
 
-### Opción 3: Detectar país del usuario automáticamente
+### Option 3: Auto-detect user country
 
 ```swift
 import ReachuCore
@@ -55,7 +55,7 @@ import CoreLocation
 @main
 struct MyApp: App {
     init() {
-        // Detectar país del usuario desde el sistema
+        // Detect user country from system locale
         let userCountry = Locale.current.region?.identifier ?? "US"
         ConfigurationLoader.loadConfiguration(userCountryCode: userCountry)
     }
@@ -68,32 +68,32 @@ struct MyApp: App {
 }
 ```
 
-### Opción 4: Usar variable de entorno
+### Option 4: Use environment variable
 
 ```swift
-// En Xcode: Edit Scheme → Run → Arguments → Environment Variables
-// Agregar: REACHU_USER_COUNTRY = US
+// In Xcode: Edit Scheme → Run → Arguments → Environment Variables
+// Add: REACHU_USER_COUNTRY = US
 
 ConfigurationLoader.loadConfiguration()
-// Automáticamente lee REACHU_USER_COUNTRY si está configurada
+// Automatically reads REACHU_USER_COUNTRY if set
 ```
 
-## Comportamiento
+## Behavior
 
-### Si el mercado está disponible:
-- ✅ SDK se habilita (`isMarketAvailable = true`)
-- ✅ Todos los componentes de Reachu se muestran normalmente
-- ✅ Los productos se cargan correctamente
+### If the market is available:
+- ✅ SDK enables (`isMarketAvailable = true`)
+- ✅ All Reachu components render normally
+- ✅ Products load as expected
 
-### Si el mercado NO está disponible:
-- ❌ SDK se deshabilita (`isMarketAvailable = false`)
-- ❌ Todos los componentes de Reachu se ocultan automáticamente
-- ❌ No se hacen llamadas a la API
-- ⚠️ Solo se muestra un warning en los logs (no errores)
+### If the market is NOT available:
+- ❌ SDK disables (`isMarketAvailable = false`)
+- ❌ All Reachu components are hidden automatically
+- ❌ No API calls are made
+- ⚠️ Only a warning is logged (no errors)
 
-## Componentes que se Oculten Automáticamente
+## Components Hidden Automatically
 
-Cuando `isMarketAvailable = false`, estos componentes se ocultan automáticamente:
+When `isMarketAvailable = false`, these components hide automatically:
 
 - ✅ `RProductSlider` - Se oculta completamente
 - ✅ `RProductCard` - Se oculta (si usa datos del API)
@@ -102,41 +102,41 @@ Cuando `isMarketAvailable = false`, estos componentes se ocultan automáticament
 - ✅ `RProductDetailOverlay` - Se oculta completamente
 - ✅ Cualquier otro componente que verifique `ReachuConfiguration.shared.shouldUseSDK`
 
-## Verificación Manual
+## Manual Check
 
-Puedes verificar manualmente si el SDK está disponible:
+You can manually check if the SDK is available:
 
 ```swift
 import ReachuCore
 
 if ReachuConfiguration.shared.shouldUseSDK {
-    // SDK está disponible, mostrar componentes
+    // SDK available — show components
     RProductSlider(...)
 } else {
-    // SDK no disponible, ocultar o mostrar alternativa
+    // SDK not available — hide or show fallback
     Text("Shopping not available in your region")
 }
 ```
 
-## Usar Helper View Wrapper
+## Helper View Wrapper
 
-También puedes usar el wrapper helper para ocultar automáticamente:
+You can also use the helper wrapper to hide automatically:
 
 ```swift
 import ReachuUI
 
 ReachuComponentWrapper {
-    // Todos estos componentes se ocultan si el mercado no está disponible
+    // All these components hide if market is not available
     RProductSlider(...)
     RFloatingCartIndicator()
 }
 
-// O usar el modifier
+// Or use the modifier
 RProductSlider(...)
     .reachuOnly()
 ```
 
-## Ejemplo Completo
+## Complete Example
 
 ```swift
 import SwiftUI
@@ -201,18 +201,18 @@ func getUserCountry() -> String {
         return region
     }
     
-    // Opción 2: Desde tu backend/API
+    // Option 2: From your backend/API
     // let userProfile = await fetchUserProfile()
     // return userProfile.countryCode
     
-    // Opción 3: Fallback
+    // Option 3: Fallback
     return "US"
 }
 ```
 
 ## Logs
 
-Cuando el mercado no está disponible, verás:
+When the market is not available, you’ll see:
 
 ```
 🔍 [Config] Checking market availability for country: XX
@@ -220,7 +220,7 @@ Cuando el mercado no está disponible, verás:
 ⚠️ [ReachuSDK] Market not available for country: XX - SDK disabled
 ```
 
-Cuando el mercado está disponible:
+When the market is available:
 
 ```
 🔍 [Config] Checking market availability for country: US
@@ -228,10 +228,9 @@ Cuando el mercado está disponible:
 ✅ [ReachuSDK] Market available for country: US - SDK enabled
 ```
 
-## Notas
+## Notes
 
-- Si no pasas `userCountryCode`, el SDK se habilita por defecto (comportamiento anterior)
-- La verificación es asíncrona y no bloquea la inicialización de la app
-- Si hay un error de red durante la verificación, el SDK se habilita por defecto (para no bloquear el uso)
-- Solo los errores 404/NOT_FOUND deshabilitan el SDK
-
+- If you don’t pass `userCountryCode`, the SDK enables by default (previous behavior)
+- The check is asynchronous and does not block app initialization
+- If a network error occurs during the check, the SDK enables by default (to avoid blocking usage)
+- Only 404/NOT_FOUND disables the SDK
