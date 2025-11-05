@@ -8,7 +8,55 @@ import UIKit
 
 /// Auto-configured Product Carousel component
 /// Automatically loads configuration from active campaign
-/// Usage: Just drag RProductCarousel() into your view - no parameters needed!
+/// 
+/// **Usage:**
+/// ```swift
+/// // Basic usage - uses layout from backend config
+/// RProductCarousel()
+///
+/// // Override layout for testing/comparison
+/// RProductCarousel(layout: "full")      // Large vertical cards (full width)
+/// RProductCarousel(layout: "compact")   // Small vertical cards (2 cards visible)
+/// RProductCarousel(layout: "horizontal") // Horizontal cards (image left, info right)
+/// ```
+///
+/// **Parameters:**
+/// - `layout: String?` - Optional layout override. Options: `"full"`, `"compact"`, `"horizontal"`. If `nil`, uses layout from backend config.
+///
+/// **Backend Configuration (from API):**
+/// The component reads configuration from `GET /api/campaigns/{campaignId}/components`:
+/// ```json
+/// {
+///   "components": [{
+///     "componentId": "product_carousel_1",
+///     "status": "active",
+///     "customConfig": {
+///       "productIds": ["408841", "408842", "408843"],
+///       "autoPlay": true,
+///       "interval": 4000,
+///       "layout": "full"
+///     }
+///   }]
+/// }
+/// ```
+///
+/// **Configuration Properties:**
+/// - `productIds: [String]` - Array of product IDs. Empty array loads all products from channel.
+/// - `autoPlay: Bool` - Enable/disable auto-scroll (default: `false`)
+/// - `interval: Int` - Auto-scroll interval in milliseconds (default: `3000`)
+/// - `layout: String?` - Layout type: `"full"`, `"compact"`, or `"horizontal"` (default: `"full"`)
+///
+/// **Layout Details:**
+/// - `"full"`: Cards use full width minus padding, height is 2.0x width
+/// - `"compact"`: Shows 2 cards at once, each card is ~47% of screen width
+/// - `"horizontal"`: Cards are 90% width, 140px height, image left/description right
+///
+/// **Features:**
+/// - ✅ Skeleton loader while loading
+/// - ✅ Auto-scroll support (configurable interval)
+/// - ✅ Automatic fallback to all products if no IDs provided
+/// - ✅ Responsive card sizing
+/// - ✅ Uses design system tokens (colors, spacing, shadows, border radius)
 public struct RProductCarousel: View {
     
     // MARK: - Cached Config Values
@@ -44,6 +92,8 @@ public struct RProductCarousel: View {
     @StateObject private var viewModel = RProductCarouselViewModel()
     @State private var currentIndex: Int = 0
     @State private var autoScrollTimer: Timer?
+    @State private var showingProductDetail: Product? // For product detail overlay
+    @State private var scrollOffset: CGFloat = 0 // For tracking scroll position
     
     // Cache parsed config values - only recalculated when config changes
     @State private var cachedConfig: CachedConfig?
@@ -58,12 +108,17 @@ public struct RProductCarousel: View {
     /// Options: "full", "compact", "horizontal"
     private let layout: String?
     
+    /// Whether to show the "Add to Cart" button in full layout cards
+    /// Default: false (button hidden)
+    private let showAddToCartButton: Bool
+    
     // MARK: - Initializer
     
-    public init(layout: String? = nil) {
+    public init(layout: String? = nil, showAddToCartButton: Bool = false) {
         // Optional layout override for demo/testing (e.g., "full", "compact", "horizontal")
         // If nil, uses layout from backend config
         self.layout = layout
+        self.showAddToCartButton = showAddToCartButton
     }
     
     // MARK: - Computed Properties
@@ -213,6 +268,14 @@ public struct RProductCarousel: View {
         .onDisappear {
             stopAutoScroll()
         }
+        .sheet(item: $showingProductDetail) { product in
+            RProductDetailOverlay(
+                product: product,
+                onDismiss: {
+                    showingProductDetail = nil
+                }
+            )
+        }
     }
     
     // MARK: - Content Views
@@ -238,34 +301,59 @@ public struct RProductCarousel: View {
             let horizontalPadding = ReachuSpacing.md * 2 // Padding on both sides
             // Use full width minus padding
             let cardWidth = screenWidth - horizontalPadding
-            let cardHeight = cardWidth * 1.2 // Maintain aspect ratio (height is 1.2x width)
+            let cardHeight = cardWidth * 1.3 // Balanced aspect ratio (approximately 3:4)
             
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: ReachuSpacing.md) {
-                        ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
-                            productCardView(product: product)
-                                .frame(width: cardWidth, height: cardHeight)
-                                .id(index)
+            VStack(spacing: ReachuSpacing.sm) {
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.md) {
+                            ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
+                                productCardView(product: product)
+                                    .frame(width: cardWidth, height: cardHeight)
+                                    .id(index)
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear.preference(
+                                                key: ScrollOffsetPreferenceKey.self,
+                                                value: geo.frame(in: .named("scroll")).minX
+                                            )
+                                        }
+                                    )
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.md)
+                    }
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        // Calculate current index based on scroll position
+                        let cardWidthWithSpacing = cardWidth + ReachuSpacing.md
+                        let index = Int(round(-value / cardWidthWithSpacing))
+                        if index >= 0 && index < viewModel.products.count {
+                            currentIndex = index
                         }
                     }
-                    .padding(.horizontal, ReachuSpacing.md)
+                    .onAppear {
+                        startAutoScroll(proxy: proxy)
+                    }
+                    .onChange(of: products.count) { _ in
+                        // Restart auto-scroll when products change
+                        startAutoScroll(proxy: proxy)
+                        currentIndex = 0
+                    }
+                    .onChange(of: cachedConfig?.configId) { _ in
+                        // Restart auto-scroll when config changes (e.g., interval or autoPlay)
+                        startAutoScroll(proxy: proxy)
+                    }
                 }
-                .onAppear {
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: products.count) { _ in
-                    // Restart auto-scroll when products change
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: cachedConfig?.configId) { _ in
-                    // Restart auto-scroll when config changes (e.g., interval or autoPlay)
-                    startAutoScroll(proxy: proxy)
+                .frame(width: screenWidth, height: cardHeight)
+                
+                // Page indicators
+                if viewModel.products.count > 1 {
+                    pageIndicators
                 }
             }
-            .frame(width: screenWidth, height: cardHeight)
         }
-        .frame(height: (UIScreen.main.bounds.width - (ReachuSpacing.md * 2)) * 1.2) // Fixed height based on full width
+        .aspectRatio(1.0 / 1.3, contentMode: .fit) // Maintain balanced aspect ratio
     }
     
     /// Compact layout carousel
@@ -278,27 +366,52 @@ public struct RProductCarousel: View {
             let cardWidth = (screenWidth - horizontalPadding - spacing) / 2.1
             let cardHeight = cardWidth * 0.8 // Shorter aspect ratio for compact
             
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: ReachuSpacing.sm) {
-                        ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
-                            productCardView(product: product)
-                                .frame(width: cardWidth, height: cardHeight)
-                                .id(index)
+            VStack(spacing: ReachuSpacing.sm) {
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.sm) {
+                            ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
+                                productCardView(product: product)
+                                    .frame(width: cardWidth, height: cardHeight)
+                                    .id(index)
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear.preference(
+                                                key: ScrollOffsetPreferenceKey.self,
+                                                value: geo.frame(in: .named("scroll")).minX
+                                            )
+                                        }
+                                    )
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.md)
+                    }
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        // Calculate current index based on scroll position
+                        let cardWidthWithSpacing = cardWidth + ReachuSpacing.sm
+                        let index = Int(round(-value / cardWidthWithSpacing))
+                        if index >= 0 && index < viewModel.products.count {
+                            currentIndex = index
                         }
                     }
-                    .padding(.horizontal, ReachuSpacing.md)
+                    .onAppear {
+                        startAutoScroll(proxy: proxy)
+                    }
+                    .onChange(of: products.count) { _ in
+                        // Restart auto-scroll when products change
+                        startAutoScroll(proxy: proxy)
+                        currentIndex = 0
+                    }
+                    .onChange(of: cachedConfig?.configId) { _ in
+                        // Restart auto-scroll when config changes (e.g., interval or autoPlay)
+                        startAutoScroll(proxy: proxy)
+                    }
                 }
-                .onAppear {
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: products.count) { _ in
-                    // Restart auto-scroll when products change
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: cachedConfig?.configId) { _ in
-                    // Restart auto-scroll when config changes (e.g., interval or autoPlay)
-                    startAutoScroll(proxy: proxy)
+                
+                // Page indicators
+                if viewModel.products.count > 1 {
+                    pageIndicators
                 }
             }
         }
@@ -312,27 +425,52 @@ public struct RProductCarousel: View {
             let cardWidth = screenWidth * 0.9 // 90% of screen width for horizontal cards
             let cardHeight: CGFloat = 140 // Fixed height for horizontal cards
             
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: ReachuSpacing.md) {
-                        ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
-                            horizontalProductCardView(product: product)
-                                .frame(width: cardWidth, height: cardHeight)
-                                .id(index)
+            VStack(spacing: ReachuSpacing.sm) {
+                ScrollViewReader { proxy in
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: ReachuSpacing.md) {
+                            ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
+                                horizontalProductCardView(product: product)
+                                    .frame(width: cardWidth, height: cardHeight)
+                                    .id(index)
+                                    .background(
+                                        GeometryReader { geo in
+                                            Color.clear.preference(
+                                                key: ScrollOffsetPreferenceKey.self,
+                                                value: geo.frame(in: .named("scroll")).minX
+                                            )
+                                        }
+                                    )
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.md)
+                    }
+                    .coordinateSpace(name: "scroll")
+                    .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
+                        // Calculate current index based on scroll position
+                        let cardWidthWithSpacing = cardWidth + ReachuSpacing.md
+                        let index = Int(round(-value / cardWidthWithSpacing))
+                        if index >= 0 && index < viewModel.products.count {
+                            currentIndex = index
                         }
                     }
-                    .padding(.horizontal, ReachuSpacing.md)
+                    .onAppear {
+                        startAutoScroll(proxy: proxy)
+                    }
+                    .onChange(of: products.count) { _ in
+                        // Restart auto-scroll when products change
+                        startAutoScroll(proxy: proxy)
+                        currentIndex = 0
+                    }
+                    .onChange(of: cachedConfig?.configId) { _ in
+                        // Restart auto-scroll when config changes (e.g., interval or autoPlay)
+                        startAutoScroll(proxy: proxy)
+                    }
                 }
-                .onAppear {
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: products.count) { _ in
-                    // Restart auto-scroll when products change
-                    startAutoScroll(proxy: proxy)
-                }
-                .onChange(of: cachedConfig?.configId) { _ in
-                    // Restart auto-scroll when config changes (e.g., interval or autoPlay)
-                    startAutoScroll(proxy: proxy)
+                
+                // Page indicators
+                if viewModel.products.count > 1 {
+                    pageIndicators
                 }
             }
         }
@@ -340,8 +478,133 @@ public struct RProductCarousel: View {
     }
     
     private func productCardView(product: Product) -> some View {
-        RProductCard(product: product)
+        let currentLayout = layout ?? cachedConfig?.layout ?? "full"
+        
+        // Use custom layout for "full" to avoid oversized hero variant
+        if currentLayout == "full" {
+            return AnyView(fullLayoutProductCardView(product: product))
+        } else {
+            return AnyView(RProductCard(product: product, variant: .grid)
+                .padding(.horizontal, ReachuSpacing.md))
+        }
+    }
+    
+    /// Custom full layout product card with balanced sizing
+    @ViewBuilder
+    private func fullLayoutProductCardView(product: Product) -> some View {
+        let adaptiveColors = ReachuColors.adaptive(for: colorScheme)
+        
+        // Sort images by order field (prioritizing 0 and 1)
+        let sortedImages = product.images.sorted { first, second in
+            let firstPriority = (first.order == 0 || first.order == 1) ? first.order : Int.max
+            let secondPriority = (second.order == 0 || second.order == 1) ? second.order : Int.max
+            
+            if firstPriority != secondPriority {
+                return firstPriority < secondPriority
+            }
+            return first.order < second.order
+        }
+        
+        let primaryImageUrl = sortedImages.first?.url
+        
+        Button(action: {
+            // Handle tap - show product detail
+            showingProductDetail = product
+        }) {
+            VStack(alignment: .leading, spacing: 0) {
+                // Product Image
+                if let imageUrl = primaryImageUrl, let url = URL(string: imageUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            Rectangle()
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .overlay { ProgressView().tint(adaptiveColors.primary) }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit) // Use fit instead of fill to avoid cropping
+                        case .failure:
+                            Rectangle()
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(adaptiveColors.textSecondary)
+                                }
+                        @unknown default:
+                            Rectangle()
+                                .fill(adaptiveColors.surfaceSecondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity) // Use full width, let height adjust naturally
+                } else {
+                    Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary)
+                        .frame(height: 200)
+                        .overlay {
+                            Image(systemName: "photo")
+                                .foregroundColor(adaptiveColors.textSecondary)
+                        }
+                }
+                
+                // Product Info
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    if let brand = product.brand {
+                        Text(brand)
+                            .font(.system(size: 10, weight: .medium)) // Smaller brand text
+                            .foregroundColor(adaptiveColors.textSecondary)
+                            .textCase(.uppercase)
+                    }
+                    
+                    Text(product.title)
+                        .font(.system(size: 14, weight: .semibold)) // Smaller title
+                        .foregroundColor(adaptiveColors.textPrimary)
+                        .lineLimit(2)
+                    
+                    HStack {
+                        // Price
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(product.price.displayAmount)
+                                .font(.system(size: 16, weight: .bold)) // Adjusted price size
+                                .foregroundColor(adaptiveColors.primary)
+                            
+                            if let compareAtAmount = product.price.displayCompareAtAmount {
+                                Text(compareAtAmount)
+                                    .font(.system(size: 12, weight: .regular)) // Smaller compare price
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                                    .strikethrough()
+                            }
+                        }
+                        
+                        if showAddToCartButton {
+                            Spacer()
+                            
+                            // Add to Cart Button (only shown if showAddToCartButton is true)
+                            Button(action: {
+                                // Handle add to cart - prevent tap propagation to card
+                                // TODO: Add actual cart functionality if needed
+                            }) {
+                                RButton(
+                                    title: RLocalizedString(ReachuTranslationKey.addToCart.rawValue),
+                                    style: .primary,
+                                    size: .medium,
+                                    isLoading: false
+                                ) {
+                                    // Empty - action handled by Button wrapper
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                        }
+                    }
+                }
+                .padding(ReachuSpacing.md)
+            }
+            .background(adaptiveColors.surface)
+            .cornerRadius(ReachuBorderRadius.large)
+            .reachuCardShadow(for: colorScheme)
             .padding(.horizontal, ReachuSpacing.md)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
     
     /// Horizontal product card layout (image left, description right)
@@ -511,7 +774,7 @@ public struct RProductCarousel: View {
             let horizontalPadding = ReachuSpacing.md * 2 // Padding on both sides
             // Use full width minus padding
             let cardWidth = screenWidth - horizontalPadding
-            let cardHeight = cardWidth * 1.2 // Maintain aspect ratio (height is 1.2x width)
+            let cardHeight = cardWidth * 1.3 // Balanced aspect ratio (approximately 3:4)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.md) {
@@ -523,7 +786,7 @@ public struct RProductCarousel: View {
             }
             .frame(width: screenWidth, height: cardHeight)
         }
-        .frame(height: (UIScreen.main.bounds.width - (ReachuSpacing.md * 2)) * 1.2) // Fixed height based on full width
+        .aspectRatio(1.0 / 1.3, contentMode: .fit) // Maintain balanced aspect ratio
     }
     
     /// Compact layout skeleton
@@ -698,10 +961,17 @@ public struct RProductCarousel: View {
         stopAutoScroll()
         
         // Use cached interval (already converted to TimeInterval)
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: cachedConfig.autoPlayInterval, repeats: true) { _ in
-            withAnimation(.easeInOut(duration: 0.5)) {
-                currentIndex = (currentIndex + 1) % products.count
-                proxy.scrollTo(currentIndex, anchor: .leading)
+        let productCount = viewModel.products.count
+        guard productCount > 0 else { return }
+        
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: cachedConfig.autoPlayInterval, repeats: true) { [proxy, productCount] _ in
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    // Use captured product count
+                    guard productCount > 0 else { return }
+                    currentIndex = (currentIndex + 1) % productCount
+                    proxy.scrollTo(currentIndex, anchor: .leading)
+                }
             }
         }
     }
@@ -709,6 +979,19 @@ public struct RProductCarousel: View {
     private func stopAutoScroll() {
         autoScrollTimer?.invalidate()
         autoScrollTimer = nil
+    }
+    
+    /// Page indicators (dots) for carousel
+    private var pageIndicators: some View {
+        HStack(spacing: ReachuSpacing.xs) {
+            ForEach(0..<viewModel.products.count, id: \.self) { index in
+                Circle()
+                    .fill(index == currentIndex ? adaptiveColors.primary : adaptiveColors.textSecondary.opacity(0.3))
+                    .frame(width: 8, height: 8)
+                    .animation(.easeInOut(duration: 0.2), value: currentIndex)
+            }
+        }
+        .padding(.vertical, ReachuSpacing.xs)
     }
 }
 
@@ -808,7 +1091,15 @@ class RProductCarouselViewModel: ObservableObject {
     }
 }
 
-// MARK: - Shimmer Effect Extension
+// MARK: - Scroll Offset Preference Key
+
+private struct ScrollOffsetPreferenceKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
+    }
+}
 
 private extension View {
     func shimmerEffect() -> some View {
