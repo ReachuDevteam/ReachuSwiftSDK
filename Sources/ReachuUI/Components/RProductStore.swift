@@ -7,10 +7,47 @@ import ReachuDesignSystem
 /// Usage: Just drag RProductStore() into your view - no parameters needed!
 public struct RProductStore: View {
     
+    // MARK: - Cached Config Values
+    
+    /// Internal structure to cache parsed config values
+    /// This avoids recalculating layout and conversions on every render
+    private struct CachedConfig {
+        let mode: String
+        let productIds: [Int]?
+        let displayType: String
+        let columns: Int
+        let gridItems: [GridItem] // Pre-computed grid layout
+        let configId: String // Used to detect config changes
+        
+        init(config: ProductStoreConfig) {
+            self.mode = config.mode
+            self.displayType = config.displayType
+            self.columns = config.columns
+            
+            // Cache converted product IDs if available (String → Int)
+            if let stringIds = config.productIds, !stringIds.isEmpty {
+                self.productIds = stringIds.compactMap { Int($0) }
+            } else {
+                self.productIds = nil
+            }
+            
+            // Pre-compute grid layout (expensive operation)
+            self.gridItems = Array(repeating: GridItem(.flexible(), spacing: ReachuSpacing.md), count: config.columns)
+            
+            // Create unique identifier for this config (detects changes)
+            let productIdsString = config.productIds?.joined(separator: "-") ?? "all"
+            self.configId = "\(config.mode)-\(productIdsString)-\(config.displayType)-\(config.columns)"
+        }
+    }
+    
     // MARK: - Properties
     
     @ObservedObject private var campaignManager = CampaignManager.shared
     @StateObject private var viewModel = RProductStoreViewModel()
+    
+    // Cache parsed config values - only recalculated when config changes
+    @State private var cachedConfig: CachedConfig?
+    @State private var currentConfigId: String?
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
@@ -38,6 +75,26 @@ public struct RProductStore: View {
             return nil
         }
         return config
+    }
+    
+    /// Update cached config when config changes
+    private func updateCachedConfigIfNeeded() {
+        guard let config = config else {
+            if cachedConfig != nil {
+                cachedConfig = nil
+                currentConfigId = nil
+            }
+            return
+        }
+        
+        let productIdsString = config.productIds?.joined(separator: "-") ?? "all"
+        let newConfigId = "\(config.mode)-\(productIdsString)-\(config.displayType)-\(config.columns)"
+        
+        // Only recalculate if config actually changed
+        if currentConfigId != newConfigId {
+            cachedConfig = CachedConfig(config: config)
+            currentConfigId = newConfigId
+        }
     }
     
     /// Should show component
@@ -84,16 +141,6 @@ public struct RProductStore: View {
         viewModel.isMarketUnavailable
     }
     
-    /// Display type (grid or list)
-    private var displayType: String {
-        config?.displayType ?? "grid"
-    }
-    
-    /// Number of columns
-    private var columns: Int {
-        config?.columns ?? 2
-    }
-    
     // MARK: - Body
     
     public var body: some View {
@@ -118,15 +165,19 @@ public struct RProductStore: View {
             }
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
+            updateCachedConfigIfNeeded()
             handleCampaignStateChange()
         }
         .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
+            updateCachedConfigIfNeeded()
             handleCampaignStateChange()
         }
         .onChange(of: activeComponent?.id) { _ in
+            updateCachedConfigIfNeeded()
             handleComponentChange()
         }
         .onAppear {
+            updateCachedConfigIfNeeded()
             handleComponentChange()
         }
     }
@@ -135,24 +186,25 @@ public struct RProductStore: View {
     
     private var storeContent: some View {
         Group {
-            if displayType == "grid" {
-                gridView
-            } else {
-                listView
+            if let cachedConfig = cachedConfig {
+                if cachedConfig.displayType == "grid" {
+                    gridView(columns: cachedConfig.gridItems)
+                } else {
+                    listView
+                }
             }
         }
     }
     
-    private var gridView: some View {
-        let columns = Array(repeating: GridItem(.flexible(), spacing: ReachuSpacing.md), count: self.columns)
-        
-        return ScrollView {
+    private func gridView(columns: [GridItem]) -> some View {
+        ScrollView {
             LazyVGrid(columns: columns, spacing: ReachuSpacing.md) {
                 ForEach(products) { product in
                     RProductCard(product: product)
                 }
             }
-            .padding(ReachuSpacing.lg)
+            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, ReachuSpacing.md)
         }
     }
     
@@ -163,7 +215,8 @@ public struct RProductStore: View {
                     RProductCard(product: product)
                 }
             }
-            .padding(ReachuSpacing.lg)
+            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, ReachuSpacing.md)
         }
     }
     
@@ -252,15 +305,16 @@ public struct RProductStore: View {
     }
     
     private func loadProducts() {
-        guard let config = config else {
+        guard let cachedConfig = cachedConfig else {
             viewModel.products = []
             return
         }
         
         Task {
+            // Use cached config values (no conversion needed)
             await viewModel.loadProducts(
-                mode: config.mode,
-                productIds: config.productIds,
+                mode: cachedConfig.mode,
+                productIds: cachedConfig.productIds,
                 currency: ReachuConfiguration.shared.marketConfiguration.currencyCode,
                 country: ReachuConfiguration.shared.marketConfiguration.countryCode
             )
@@ -285,7 +339,7 @@ class RProductStoreViewModel: ObservableObject {
         return SdkClient(baseUrl: baseURL, apiKey: apiKey)
     }
     
-    func loadProducts(mode: String, productIds: [String]?, currency: String, country: String) async {
+    func loadProducts(mode: String, productIds: [Int]?, currency: String, country: String) async {
         guard ReachuConfiguration.shared.shouldUseSDK else {
             isMarketUnavailable = true
             isLoading = false
@@ -301,40 +355,33 @@ class RProductStoreViewModel: ObservableObject {
         print("🛍️ [RProductStore] Loading products - Mode: \(mode)")
         
         do {
-            let intProductIds: [Int]?
+            // Product IDs are already converted to Int (cached)
+            let hasValidIds = productIds != nil && !productIds!.isEmpty
+            let shouldUseFiltered = mode == "filtered" && hasValidIds
             
-            // Determine if we should use filtered mode
-            let shouldUseFiltered = mode == "filtered" && 
-                                   productIds != nil && 
-                                   !productIds!.isEmpty
-            
+            // Determine which IDs to use (if any)
+            let idsToUse: [Int]?
             if shouldUseFiltered {
-                intProductIds = productIds!.compactMap { Int($0) }
-                print("   Filtered mode - Product IDs:")
-                print("   String IDs: \(productIds!)")
-                print("   Int IDs: \(intProductIds ?? [])")
-                
-                guard let ids = intProductIds, !ids.isEmpty else {
-                    print("⚠️ [RProductStore] No valid product IDs after conversion")
-                    errorMessage = "No valid product IDs"
-                    isLoading = false
-                    return
-                }
+                print("   Filtered mode - Product IDs: \(productIds ?? [])")
+                idsToUse = productIds
+            } else if mode == "filtered" && !hasValidIds {
+                // Filtered mode but no IDs - fallback to all products
+                print("⚠️ [RProductStore] Filtered mode requires product IDs but none provided")
+                print("   Falling back to loading all products from channel")
+                idsToUse = nil
             } else {
-                // All mode: productIds is empty or null, or mode is "all"
-                intProductIds = nil
+                // All mode - load all products
                 print("   All mode - Loading all products from channel")
-                if let productIds = productIds {
-                    print("   productIds array: \(productIds.isEmpty ? "empty" : "\(productIds.count) items")")
-                }
+                idsToUse = nil
             }
             
+            // Load products with determined IDs
             var dtoProducts = try await sdk.channel.product.get(
                 currency: currency,
                 imageSize: "large",
                 barcodeList: nil,
                 categoryIds: nil,
-                productIds: intProductIds,
+                productIds: idsToUse,
                 skuList: nil,
                 useCache: true,
                 shippingCountryCode: country
@@ -342,9 +389,9 @@ class RProductStoreViewModel: ObservableObject {
             
             print("📦 [RProductStore] API returned \(dtoProducts.count) products")
             
-            // Fallback: If filtered mode returned 0 products, load all products instead
-            if dtoProducts.isEmpty && mode == "filtered" && intProductIds != nil {
-                print("⚠️ [RProductStore] No products found for filtered IDs: \(intProductIds ?? [])")
+            // Fallback: If filtered mode returned 0 products, try loading all products instead
+            if dtoProducts.isEmpty && mode == "filtered" && hasValidIds {
+                print("⚠️ [RProductStore] No products found for filtered IDs: \(productIds ?? [])")
                 print("   Falling back to loading all products from channel")
                 print("   Currency: \(currency), Country: \(country)")
                 
@@ -361,18 +408,26 @@ class RProductStoreViewModel: ObservableObject {
                 )
                 
                 print("📦 [RProductStore] Fallback returned \(dtoProducts.count) products")
-            } else if dtoProducts.isEmpty && intProductIds != nil {
-                print("⚠️ [RProductStore] No products found for IDs: \(intProductIds ?? [])")
+            } else if dtoProducts.isEmpty && hasValidIds {
+                print("⚠️ [RProductStore] No products found for IDs: \(productIds ?? [])")
                 print("   Currency: \(currency), Country: \(country)")
             }
             
             products = dtoProducts.map { $0.toDomainProduct() }
             print("✅ [RProductStore] Loaded \(products.count) products")
             
+            // Clear any previous error if we successfully loaded products
+            if !products.isEmpty {
+                errorMessage = nil
+            } else if mode == "filtered" && (productIds == nil || productIds!.isEmpty) {
+                // Only show error if we're in filtered mode and really have no IDs
+                errorMessage = "No valid product IDs"
+            }
+            
         } catch let error as NotFoundException {
             isMarketUnavailable = true
             errorMessage = nil
-            print("⚠️ [RProductStore] Market not available")
+            print("⚠️ [RProductStore] Market not available: \(error)")
         } catch let error as SdkException {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 isMarketUnavailable = true

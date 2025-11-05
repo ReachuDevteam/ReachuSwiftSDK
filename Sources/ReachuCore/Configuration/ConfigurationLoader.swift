@@ -414,11 +414,22 @@ public class ConfigurationLoader {
             darkColors = .autoDark(from: lightColors)
         }
         
+        // Parse borderRadius from config
+        let borderRadius = BorderRadiusScheme(
+            none: config.borderRadius?.none ?? 0,
+            small: config.borderRadius?.small ?? 4,
+            medium: config.borderRadius?.medium ?? 8,
+            large: config.borderRadius?.large ?? 12,
+            xl: config.borderRadius?.normalizedXL ?? 16,
+            circle: config.borderRadius?.normalizedCircle ?? 999
+        )
+        
         return ReachuTheme(
             name: config.name,
             mode: mode,
             lightColors: lightColors,
-            darkColors: darkColors
+            darkColors: darkColors,
+            borderRadius: borderRadius
         )
     }
     
@@ -479,11 +490,33 @@ public class ConfigurationLoader {
     private static func createUIConfiguration(from uiConfig: JSONUIConfiguration?) -> UIConfiguration {
         guard let config = uiConfig else { return .default }
         
+        // Parse shadow configuration
+        let shadowConfig: ShadowConfiguration
+        if let shadowJSON = config.shadowConfig {
+            shadowConfig = ShadowConfiguration(
+                cardShadowRadius: shadowJSON.cardShadowRadius ?? 4,
+                cardShadowOpacity: shadowJSON.cardShadowOpacity ?? 0.1,
+                cardShadowOffset: shadowJSON.cardShadowOffset.map { CGSize(width: $0.width, height: $0.height) } ?? CGSize(width: 0, height: 2),
+                cardShadowColor: ShadowColor(rawValue: shadowJSON.cardShadowColor ?? "adaptive") ?? .adaptive,
+                buttonShadowEnabled: shadowJSON.buttonShadowEnabled ?? true,
+                buttonShadowRadius: shadowJSON.buttonShadowRadius ?? 2,
+                buttonShadowOpacity: shadowJSON.buttonShadowOpacity ?? 0.15,
+                modalShadowRadius: shadowJSON.modalShadowRadius ?? 20,
+                modalShadowOpacity: shadowJSON.modalShadowOpacity ?? 0.3,
+                enableBlurEffects: shadowJSON.enableBlurEffects ?? true,
+                blurIntensity: shadowJSON.blurIntensity ?? 0.3,
+                blurStyle: BlurStyle(rawValue: shadowJSON.blurStyle ?? "systemMaterial") ?? .systemMaterial
+            )
+        } else {
+            shadowConfig = .default
+        }
+        
         return UIConfiguration(
             enableProductCardAnimations: config.enableAnimations,
             showProductBrands: config.showProductBrands,
             showDiscountBadge: config.showDiscountBadge ?? false,
             discountBadgeText: config.discountBadgeText,
+            shadowConfig: shadowConfig,
             enableHapticFeedback: config.enableHapticFeedback
         )
     }
@@ -764,6 +797,7 @@ private struct JSONThemeConfiguration: Codable {
     let colors: JSONColorConfiguration? // Legacy support
     let lightColors: JSONColorConfiguration?
     let darkColors: JSONColorConfiguration?
+    let borderRadius: JSONBorderRadiusConfiguration?
 }
 
 private struct JSONColorConfiguration: Codable {
@@ -781,6 +815,25 @@ private struct JSONColorConfiguration: Codable {
     let textTertiary: String?
     let border: String?
     let borderSecondary: String?
+}
+
+private struct JSONBorderRadiusConfiguration: Codable {
+    let none: CGFloat?
+    let small: CGFloat?
+    let medium: CGFloat?
+    let large: CGFloat?
+    let xl: CGFloat?
+    let extraLarge: CGFloat?  // Support both xl and extraLarge from JSON
+    let round: CGFloat?  // Support round from JSON (maps to circle)
+    let circle: CGFloat?
+    
+    var normalizedXL: CGFloat? {
+        return xl ?? extraLarge
+    }
+    
+    var normalizedCircle: CGFloat? {
+        return circle ?? round
+    }
 }
 
 private struct JSONCartConfiguration: Codable {
@@ -802,12 +855,33 @@ private struct JSONNetworkConfiguration: Codable {
     let enableLogging: Bool
 }
 
+private struct JSONShadowConfiguration: Codable {
+    let cardShadowRadius: CGFloat?
+    let cardShadowOpacity: Double?
+    let cardShadowOffset: JSONCGSize?
+    let cardShadowColor: String?
+    let buttonShadowEnabled: Bool?
+    let buttonShadowRadius: CGFloat?
+    let buttonShadowOpacity: Double?
+    let modalShadowRadius: CGFloat?
+    let modalShadowOpacity: Double?
+    let enableBlurEffects: Bool?
+    let blurIntensity: Double?
+    let blurStyle: String?
+}
+
+private struct JSONCGSize: Codable {
+    let width: CGFloat
+    let height: CGFloat
+}
+
 private struct JSONUIConfiguration: Codable {
     let enableAnimations: Bool
     let showProductBrands: Bool
     let showDiscountBadge: Bool?
     let discountBadgeText: String?
     let enableHapticFeedback: Bool
+    let shadowConfig: JSONShadowConfiguration?
 }
 
 private struct JSONLiveShowConfiguration: Codable {

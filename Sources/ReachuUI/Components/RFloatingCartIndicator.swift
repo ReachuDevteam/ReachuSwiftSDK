@@ -88,6 +88,10 @@ public struct RFloatingCartIndicator: View {
     @EnvironmentObject private var cartManager: CartManager
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     @State private var isPressed = false
     @State private var bounceAnimation = false
     
@@ -130,21 +134,21 @@ public struct RFloatingCartIndicator: View {
             EmptyView()
         } else if cartManager.itemCount > 0 {
             // Position the cart indicator directly without full-screen overlay
-            VStack {
-                if position.isTop {
-                    cartIndicatorButton
-                    Spacer()
-                } else if position.isCenter {
-                    Spacer()
-                    cartIndicatorButton
-                    Spacer()
-                } else {
-                    Spacer()
-                    cartIndicatorButton
+                VStack {
+                    if position.isTop {
+                        cartIndicatorButton
+                        Spacer()
+                    } else if position.isCenter {
+                        Spacer()
+                        cartIndicatorButton
+                        Spacer()
+                    } else {
+                        Spacer()
+                        cartIndicatorButton
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
-            .padding(customPadding ?? defaultPadding)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: position.alignment)
+                .padding(customPadding ?? defaultPadding)
             .animation(.spring(response: 0.6, dampingFraction: 0.8), value: cartManager.itemCount)
             .onChange(of: cartManager.itemCount) { newCount in
                 triggerBounceAnimation()
@@ -203,23 +207,23 @@ public struct RFloatingCartIndicator: View {
                 Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
                     .font(size == .small ? .system(size: 10, weight: .medium) : ReachuTypography.caption1)
                     .fontWeight(.medium)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(adaptiveColors.surface.opacity(0.9))
                 
                 Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
                     .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
-                    .foregroundColor(.white)
+                    .foregroundColor(adaptiveColors.surface)
             }
             
             // Checkout arrow
             Image(systemName: "chevron.right")
                 .font(size == .small ? .system(size: 10) : .caption)
-                .foregroundColor(.white.opacity(0.8))
+                .foregroundColor(adaptiveColors.surface.opacity(0.8))
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .reachuCardShadow(for: colorScheme)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -231,13 +235,13 @@ public struct RFloatingCartIndicator: View {
             // Price only
             Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
                 .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
-                .foregroundColor(.white)
+                .foregroundColor(adaptiveColors.surface)
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .reachuCardShadow(for: colorScheme)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -249,13 +253,13 @@ public struct RFloatingCartIndicator: View {
             // Count only
             Text("\(cartManager.itemCount)")
                 .font(size == .small ? .system(size: 10, weight: .semibold) : ReachuTypography.bodyBold)
-                .foregroundColor(.white)
+                .foregroundColor(adaptiveColors.surface)
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
         .background(cartBackground)
         .clipShape(Capsule())
-        .shadow(color: ReachuColors.primary.opacity(0.3), radius: size.shadowRadius, x: 0, y: 4)
+        .reachuCardShadow(for: colorScheme)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -269,7 +273,7 @@ public struct RFloatingCartIndicator: View {
             Circle()
                 .fill(ReachuColors.primary)
         )
-        .shadow(color: .black.opacity(0.2), radius: size.shadowRadius, x: 0, y: 4)
+        .reachuCardShadow(for: colorScheme)
         .scaleEffect(isPressed ? 0.95 : 1.0)
         .animation(.easeInOut(duration: 0.1), value: isPressed)
     }
@@ -280,7 +284,7 @@ public struct RFloatingCartIndicator: View {
             // Cart icon centered
             Image(systemName: "cart.fill")
                 .font(size.iconSize)
-                .foregroundColor(.white)
+                .foregroundColor(adaptiveColors.surface)
             
             // Item count badge - top right corner
             VStack {
@@ -294,7 +298,7 @@ public struct RFloatingCartIndicator: View {
                         .padding(.vertical, size == .small ? 2 : 2)
                         .background(
                             Capsule()
-                                .fill(.white)
+                                .fill(adaptiveColors.surface)
                         )
                         .scaleEffect(bounceAnimation ? 1.15 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)

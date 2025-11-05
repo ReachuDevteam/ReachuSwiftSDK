@@ -95,6 +95,12 @@ public struct Campaign: Codable, Identifiable {
     }
 }
 
+/// Backend response wrapper for GET /api/campaigns/:campaignId/components
+/// Backend sends: { "components": [...] }
+internal struct ComponentsResponseWrapper: Codable {
+    let components: [ComponentResponse]
+}
+
 /// Backend response model for campaign components
 /// This is the actual structure returned by the API
 internal struct ComponentResponse: Codable {
@@ -114,14 +120,14 @@ internal struct ComponentResponse: Codable {
 }
 
 /// Helper type to decode arbitrary JSON values
-internal struct AnyCodable: Codable {
-    let value: Any
+public struct AnyCodable: Codable {
+    public let value: Any
     
-    init(_ value: Any) {
+    public init(_ value: Any) {
         self.value = value
     }
     
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         
         if let bool = try? container.decode(Bool.self) {
@@ -141,7 +147,7 @@ internal struct AnyCodable: Codable {
         }
     }
     
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         
         switch value {
@@ -310,34 +316,109 @@ public struct CampaignResumedEvent: Codable {
 }
 
 /// Component status changed event
+/// Supports two formats:
+/// 1. New format: { "type": "component_status_changed", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "status": "active", "config": {...} } }
+/// 2. Legacy format: { "type": "component_status_changed", "campaignId": 14, "componentId": "product-banner-template", "status": "inactive", "component": {...} }
 public struct ComponentStatusChangedEvent: Codable {
     public let type: String
-    public let campaignId: Int
-    public let componentId: String
-    public let status: String  // "active" or "inactive"
-    public let component: Component?
+    public let data: ComponentStatusData?
     
-    public init(type: String = "component_status_changed", campaignId: Int, componentId: String, status: String, component: Component? = nil) {
+    // Legacy format fields
+    public let campaignId: Int?
+    public let componentId: String?  // Legacy: string ID
+    public let status: String?  // Legacy: status at root level
+    public let component: LegacyComponentData?  // Legacy: component object
+    
+    public struct ComponentStatusData: Codable {
+        public let componentId: Int  // Template component ID
+        public let campaignComponentId: Int  // Campaign-specific component ID
+        public let componentType: String  // "product_banner", "product_carousel", etc.
+        public let status: String  // "active" or "inactive"
+        public let config: [String: AnyCodable]  // Already merged config (customConfig + defaults)
+    }
+    
+    public struct LegacyComponentData: Codable {
+        public let id: String
+        public let type: String
+        public let name: String
+        public let config: [String: AnyCodable]
+    }
+    
+    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil) {
         self.type = type
+        self.data = data
         self.campaignId = campaignId
         self.componentId = componentId
         self.status = status
         self.component = component
     }
+    
+    /// Helper to convert to Component model
+    public func toComponent() throws -> Component {
+        // Try new format first
+        if let data = data {
+            let jsonData = try JSONSerialization.data(withJSONObject: data.config.mapValues { $0.value })
+            let componentConfig = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+            
+            return Component(
+                id: String(data.campaignComponentId),
+                type: data.componentType,
+                name: "",  // Name not provided in WebSocket event
+                config: componentConfig,
+                status: data.status
+            )
+        }
+        
+        // Fallback to legacy format
+        guard let component = component,
+              let status = status else {
+            throw DecodingError.dataCorrupted(DecodingError.Context(codingPath: [], debugDescription: "Missing required fields for component_status_changed event"))
+        }
+        
+        let jsonData = try JSONSerialization.data(withJSONObject: component.config.mapValues { $0.value })
+        let componentConfig = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+        
+        return Component(
+            id: component.id,
+            type: component.type,
+            name: component.name,
+            config: componentConfig,
+            status: status
+        )
+    }
 }
 
 /// Component config updated event
+/// Backend sends: { "type": "component_config_updated", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "config": {...} } }
 public struct ComponentConfigUpdatedEvent: Codable {
     public let type: String
-    public let campaignId: Int
-    public let componentId: String
-    public let component: Component
+    public let data: ComponentConfigData
     
-    public init(type: String = "component_config_updated", campaignId: Int, componentId: String, component: Component) {
+    public struct ComponentConfigData: Codable {
+        public let componentId: Int  // Template component ID
+        public let campaignComponentId: Int  // Campaign-specific component ID
+        public let componentType: String  // "product_banner", "product_carousel", etc.
+        public let config: [String: AnyCodable]  // New merged config (customConfig + defaults)
+    }
+    
+    public init(type: String = "component_config_updated", data: ComponentConfigData) {
         self.type = type
-        self.campaignId = campaignId
-        self.componentId = componentId
-        self.component = component
+        self.data = data
+    }
+    
+    /// Helper to convert to Component model
+    public func toComponent() throws -> Component {
+        // Convert config dictionary to ComponentConfig
+        let jsonData = try JSONSerialization.data(withJSONObject: data.config.mapValues { $0.value })
+        let componentConfig = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+        
+        return Component(
+            id: String(data.campaignComponentId),
+            type: data.componentType,
+            name: "",  // Name not provided in WebSocket event
+            config: componentConfig,
+            status: "active"  // Config updates are always for active components
+        )
     }
 }
 

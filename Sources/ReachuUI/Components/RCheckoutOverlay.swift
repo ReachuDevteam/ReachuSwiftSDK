@@ -20,7 +20,11 @@ public struct RCheckoutOverlay: View {
     @EnvironmentObject private var checkoutDraft: CheckoutDraft  // ⬅️ Exponemos estado al contexto
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     @StateObject private var vippsHandler = VippsPaymentHandler.shared
-
+    
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     // MARK: - State
     @State private var checkoutStep: CheckoutStep = .address
     @State private var isLoading = false
@@ -208,59 +212,59 @@ public struct RCheckoutOverlay: View {
         if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
             EmptyView()
         } else {
-            let timestamp = Date().timeIntervalSince1970
-            let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
-            let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
-            
+        let timestamp = Date().timeIntervalSince1970
+        let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
+        let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
+        
             mainContent
-                .onAppear {
-                    print("🟣 [RCheckoutOverlay] onAppear triggered")
-                    syncSelectedMarket()
-                    Task {
-                        await loadAvailablePaymentMethods()
-                    }
+            .onAppear {
+                print("🟣 [RCheckoutOverlay] onAppear triggered")
+                syncSelectedMarket()
+                Task {
+                    await loadAvailablePaymentMethods()
                 }
-                .onChange(of: cartManager.phoneCode) { newValue in
-                    syncPhoneCode(newValue)
-                }
-                .onChange(of: cartManager.selectedMarket) { _ in
-                    syncSelectedMarket()
-                }
-                .onChange(of: vippsHandler.paymentStatus) { newStatus in
-                    handleVippsPaymentStatusChange(newStatus)
-                }
-                .onDisappear {
-                    // Clean up timer when view disappears
-                    stopVippsRetryTimer()
-                }
-                .overlay {
-                if isLoading {
-                    loadingOverlay
-                }
-                
-                // Vipps Payment in Progress Overlay
-                if vippsPaymentInProgress {
+            }
+            .onChange(of: cartManager.phoneCode) { newValue in
+                syncPhoneCode(newValue)
+            }
+            .onChange(of: cartManager.selectedMarket) { _ in
+                syncSelectedMarket()
+            }
+            .onChange(of: vippsHandler.paymentStatus) { newStatus in
+                handleVippsPaymentStatusChange(newStatus)
+            }
+            .onDisappear {
+                // Clean up timer when view disappears
+                stopVippsRetryTimer()
+            }
+            .overlay {
+            if isLoading {
+                loadingOverlay
+            }
+            
+            // Vipps Payment in Progress Overlay
+            if vippsPaymentInProgress {
                 VStack {
                     Spacer()
                     HStack(spacing: 12) {
                         ProgressView()
                             .scaleEffect(0.8)
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(RLocalizedString(ReachuTranslationKey.processingPayment.rawValue))
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
+                                .foregroundColor(adaptiveColors.surface)
                             
                             Text(RLocalizedString(ReachuTranslationKey.processingPaymentMessage.rawValue))
                                 .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(adaptiveColors.surface.opacity(0.9))
                                 .lineLimit(2)
                             
                             if vippsRetryCount > 0 {
                                 Text(RLocalizedString(ReachuTranslationKey.verifyingPayment.rawValue) + " (\(vippsRetryCount)/\(vippsMaxRetries))")
                                     .font(.system(size: 10))
-                                    .foregroundColor(.white.opacity(0.7))
+                                    .foregroundColor(adaptiveColors.surface.opacity(0.7))
                             }
                         }
                         
@@ -268,9 +272,9 @@ public struct RCheckoutOverlay: View {
                     }
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
                             .fill(Color.orange)
-                            .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+                            .reachuCardShadow(for: colorScheme)
                     )
                     .padding(.horizontal, 20)
                     .padding(.bottom, 40)
@@ -611,11 +615,11 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .fill(ReachuColors.primary.opacity(0.1))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
                     )
                     .padding(.horizontal, ReachuSpacing.lg)
@@ -772,11 +776,11 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .fill(ReachuColors.primary.opacity(0.1))
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 8)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
                     )
                     .padding(.horizontal, ReachuSpacing.lg)
@@ -940,15 +944,15 @@ public struct RCheckoutOverlay: View {
                                 VStack(spacing: ReachuSpacing.xs) {
                                     HStack {
                                     Text(RLocalizedString(ReachuTranslationKey.orderId.rawValue))
-                                        .font(
-                                            .system(
-                                                size: 14,
-                                                weight: .regular
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
                                             )
-                                        )
-                                        .foregroundColor(
-                                            ReachuColors.textSecondary
-                                        )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
 
                                         Spacer()
 
@@ -966,15 +970,15 @@ public struct RCheckoutOverlay: View {
 
                                     HStack {
                                     Text(RLocalizedString(ReachuTranslationKey.colors.rawValue))
-                                        .font(
-                                            .system(
-                                                size: 14,
-                                                weight: .regular
+                                            .font(
+                                                .system(
+                                                    size: 14,
+                                                    weight: .regular
+                                                )
                                             )
-                                        )
-                                        .foregroundColor(
-                                            ReachuColors.textSecondary
-                                        )
+                                            .foregroundColor(
+                                                ReachuColors.textSecondary
+                                            )
 
                                         Spacer()
 
@@ -2112,7 +2116,7 @@ struct PaymentMethodRowCompact: View {
                    let uiImage = UIImage(named: imageName, in: Bundle.module, compatibleWith: nil) {
                     // Logo container with white background
                     ZStack {
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                             .fill(Color.white)
                         
                         Image(uiImage: uiImage)
@@ -2122,7 +2126,7 @@ struct PaymentMethodRowCompact: View {
                     }
                     .frame(width: 50, height: 30)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                             .stroke(ReachuColors.border, lineWidth: 1)
                     )
                 } else {
@@ -2143,11 +2147,11 @@ struct PaymentMethodRowCompact: View {
             .padding(.vertical, 12)
             .padding(.horizontal, 14)
             .background(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                     .fill(isSelected ? ReachuColors.primary.opacity(0.08) : ReachuColors.surface)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                     .stroke(isSelected ? ReachuColors.primary : ReachuColors.border, lineWidth: isSelected ? 2 : 1)
             )
         }
@@ -2350,7 +2354,7 @@ extension RCheckoutOverlay {
                     TextField("John", text: $firstName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                 .stroke(firstName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                         )
                 }
@@ -2362,7 +2366,7 @@ extension RCheckoutOverlay {
                     TextField("Doe", text: $lastName)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                 .stroke(lastName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                         )
                 }
@@ -2376,7 +2380,7 @@ extension RCheckoutOverlay {
                 TextField("your@email.com", text: $email)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                             .stroke(email.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                     )
                     #if os(iOS) || os(tvOS) || os(watchOS)
@@ -2398,7 +2402,7 @@ extension RCheckoutOverlay {
                     TextField("555 123 4456", text: $phone)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                 .stroke(phone.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                         )
                 }
@@ -2412,7 +2416,7 @@ extension RCheckoutOverlay {
                 TextField("Street address", text: $address1)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .overlay(
-                        RoundedRectangle(cornerRadius: 6)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                             .stroke(address1.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                     )
                 TextField("Apt, suite, etc. (optional)", text: $address2)
@@ -2428,7 +2432,7 @@ extension RCheckoutOverlay {
                     TextField("City", text: $city)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                 .stroke(city.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                         )
                 }
@@ -2448,7 +2452,7 @@ extension RCheckoutOverlay {
                     TextField("ZIP", text: $zip)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .overlay(
-                            RoundedRectangle(cornerRadius: 6)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                 .stroke(zip.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
                         )
                         #if os(iOS) || os(tvOS) || os(watchOS)
@@ -3121,11 +3125,11 @@ extension RCheckoutOverlay {
                             )
                             .padding(itemNeedsShipping ? 8 : 0)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                                     .fill(itemNeedsShipping ? ReachuColors.primary.opacity(0.05) : Color.clear)
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                                     .stroke(ReachuColors.primary.opacity(itemNeedsShipping ? 0.4 : 0), lineWidth: 2)
                             )
                         }
@@ -3678,7 +3682,7 @@ struct CountryCodePicker: View {
             .background(ReachuColors.surfaceSecondary)
             .cornerRadius(6)
             .overlay(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                     .stroke(ReachuColors.border, lineWidth: 1)
             )
         }

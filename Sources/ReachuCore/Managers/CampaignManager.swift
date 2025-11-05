@@ -329,7 +329,16 @@ public class CampaignManager: ObservableObject {
             }
             
             // Decode backend response format
-            let responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
+            // Backend sends: { "components": [...] }
+            // Try wrapped format first, then fallback to direct array
+            let responses: [ComponentResponse]
+            do {
+                let wrapper = try JSONDecoder().decode(ComponentsResponseWrapper.self, from: data)
+                responses = wrapper.components
+            } catch {
+                // Fallback: try direct array format
+                responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
+            }
             
             print("📦 [CampaignManager] Decoded \(responses.count) ComponentResponse objects")
             for (index, response) in responses.enumerated() {
@@ -615,50 +624,89 @@ public class CampaignManager: ObservableObject {
     }
     
     private func handleComponentStatusChanged(_ event: ComponentStatusChangedEvent) {
-        print("📨 [CampaignManager] Component status changed: \(event.componentId) -> \(event.status)")
+        // Determine status and component ID based on format
+        let status: String
+        let componentId: String
+        
+        if let data = event.data {
+            // New format
+            status = data.status
+            componentId = String(data.campaignComponentId)
+            print("📨 [CampaignManager] Component status changed (new format): \(data.componentId) -> \(status)")
+        } else if let legacyStatus = event.status, let legacyComponent = event.component {
+            // Legacy format
+            status = legacyStatus
+            componentId = legacyComponent.id
+            print("📨 [CampaignManager] Component status changed (legacy format): \(legacyComponent.id) -> \(status)")
+        } else {
+            print("❌ [CampaignManager] Invalid component_status_changed event - missing required fields")
+            return
+        }
         
         // Business rule: Components CANNOT be activated in Upcoming state
         // Even if backend sends activation event, ignore it if campaign hasn't started
-        if event.status == "active" && campaignState == .upcoming {
+        if status == "active" && campaignState == .upcoming {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign is upcoming")
             return
         }
         
         // Business rule: Components CANNOT be activated in Ended state
-        if event.status == "active" && campaignState == .ended {
+        if status == "active" && campaignState == .ended {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign has ended")
             return
         }
         
         // Business rule: Components CANNOT be activated if campaign is paused
-        if event.status == "active" && (currentCampaign?.isPaused == true || !isCampaignActive) {
+        if status == "active" && (currentCampaign?.isPaused == true || !isCampaignActive) {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign is paused")
             return
         }
         
-        if event.status == "active", let component = event.component {
-            // Only one component of each type can be active at a time
-            // Remove any existing component of the same type first
-            activeComponents.removeAll { $0.type == component.type && $0.id != event.componentId }
+        do {
+            let component = try event.toComponent()
             
-            // Add or update component
-            if let index = activeComponents.firstIndex(where: { $0.id == event.componentId }) {
-                activeComponents[index] = component
+            if status == "active" {
+                // Only one component of each type can be active at a time
+                // Remove any existing component of the same type first
+                activeComponents.removeAll { $0.type == component.type && $0.id != componentId }
+                
+                // Add or update component
+                if let index = activeComponents.firstIndex(where: { $0.id == componentId }) {
+                    activeComponents[index] = component
+                } else {
+                    activeComponents.append(component)
+                }
             } else {
-                activeComponents.append(component)
+                // Remove component
+                activeComponents.removeAll { $0.id == componentId }
             }
-        } else {
-            // Remove component
-            activeComponents.removeAll { $0.id == event.componentId }
+        } catch {
+            print("❌ [CampaignManager] Failed to convert component event: \(error)")
         }
     }
     
     private func handleComponentConfigUpdated(_ event: ComponentConfigUpdatedEvent) {
-        print("📨 [CampaignManager] Component config updated: \(event.componentId)")
+        print("📨 [CampaignManager] Component config updated: \(event.data.componentId)")
         
-        // Update existing component's config
-        if let index = activeComponents.firstIndex(where: { $0.id == event.componentId }) {
-            activeComponents[index] = event.component
+        do {
+            let component = try event.toComponent()
+            let componentId = String(event.data.campaignComponentId)
+            
+            // Update existing component's config
+            if let index = activeComponents.firstIndex(where: { $0.id == componentId }) {
+                activeComponents[index] = component
+                print("✅ [CampaignManager] Updated component config: \(componentId)")
+            } else {
+                // If component doesn't exist yet, add it (only if campaign is active)
+                if isCampaignActive && currentCampaign?.isPaused != true {
+                    activeComponents.append(component)
+                    print("✅ [CampaignManager] Added new component from config update: \(componentId)")
+                } else {
+                    print("⚠️ [CampaignManager] Cannot add component - campaign not active or paused")
+                }
+            }
+        } catch {
+            print("❌ [CampaignManager] Failed to convert component event: \(error)")
         }
     }
 }
