@@ -90,7 +90,6 @@ public struct RProductCarousel: View {
     
     @ObservedObject private var campaignManager = CampaignManager.shared
     @StateObject private var viewModel = RProductCarouselViewModel()
-    @State private var currentIndex: Int = 0
     @State private var autoScrollTimer: Timer?
     @State private var showingProductDetail: Product? // For product detail overlay
     @State private var scrollOffset: CGFloat = 0 // For tracking scroll position
@@ -100,6 +99,12 @@ public struct RProductCarousel: View {
     @State private var currentConfigId: String?
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    
+    // MARK: - Properties
+    
+    /// Optional component ID to identify a specific component
+    /// If nil, uses the first matching component from the campaign
+    private let componentId: String?
     
     // MARK: - Properties for Demo/Testing
     
@@ -114,7 +119,9 @@ public struct RProductCarousel: View {
     
     // MARK: - Initializer
     
-    public init(layout: String? = nil, showAddToCartButton: Bool = false) {
+    public init(componentId: String? = nil, layout: String? = nil, showAddToCartButton: Bool = false) {
+        // Optional component ID to identify a specific component
+        self.componentId = componentId
         // Optional layout override for demo/testing (e.g., "full", "compact", "horizontal")
         // If nil, uses layout from backend config
         self.layout = layout
@@ -129,7 +136,7 @@ public struct RProductCarousel: View {
     
     /// Get active product carousel component from campaign
     private var activeComponent: Component? {
-        campaignManager.getActiveComponent(type: "product_carousel")
+        campaignManager.getActiveComponent(type: "product_carousel", componentId: componentId)
     }
     
     /// Extract ProductCarouselConfig from component
@@ -303,7 +310,7 @@ public struct RProductCarousel: View {
             let cardWidth = screenWidth - horizontalPadding
             let cardHeight = cardWidth * 1.3 // Balanced aspect ratio (approximately 3:4)
             
-            VStack(spacing: ReachuSpacing.sm) {
+            VStack(spacing: 4) { // Reduced spacing between card and indicators for full layout
                 ScrollViewReader { proxy in
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: ReachuSpacing.md) {
@@ -329,16 +336,16 @@ public struct RProductCarousel: View {
                         let cardWidthWithSpacing = cardWidth + ReachuSpacing.md
                         let index = Int(round(-value / cardWidthWithSpacing))
                         if index >= 0 && index < viewModel.products.count {
-                            currentIndex = index
+                            viewModel.currentIndex = index
                         }
                     }
                     .onAppear {
                         startAutoScroll(proxy: proxy)
                     }
-                    .onChange(of: products.count) { _ in
+                    .onChange(of: viewModel.products.count) { _ in
                         // Restart auto-scroll when products change
                         startAutoScroll(proxy: proxy)
-                        currentIndex = 0
+                        viewModel.currentIndex = 0
                     }
                     .onChange(of: cachedConfig?.configId) { _ in
                         // Restart auto-scroll when config changes (e.g., interval or autoPlay)
@@ -347,9 +354,9 @@ public struct RProductCarousel: View {
                 }
                 .frame(width: screenWidth, height: cardHeight)
                 
-                // Page indicators
+                // Page indicators (closer spacing for full layout)
                 if viewModel.products.count > 1 {
-                    pageIndicators
+                    pageIndicatorsFull
                 }
             }
         }
@@ -361,18 +368,17 @@ public struct RProductCarousel: View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let horizontalPadding = ReachuSpacing.md * 2 // Padding on both sides
-            let spacing = ReachuSpacing.sm // Spacing between cards
-            // Calculate card width to show 2 cards at once with a bit of preview for the third
-            let cardWidth = (screenWidth - horizontalPadding - spacing) / 2.1
-            let cardHeight = cardWidth * 0.8 // Shorter aspect ratio for compact
+            let spacing = ReachuSpacing.md // Spacing between cards
+            // Calculate card width to show 2 cards at once
+            let cardWidth = (screenWidth - horizontalPadding - spacing) / 2.0
             
             VStack(spacing: ReachuSpacing.sm) {
                 ScrollViewReader { proxy in
                     ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: ReachuSpacing.sm) {
+                        HStack(spacing: ReachuSpacing.md) {
                             ForEach(Array(products.enumerated()), id: \.element.id) { index, product in
                                 productCardView(product: product)
-                                    .frame(width: cardWidth, height: cardHeight)
+                                    .frame(width: cardWidth) // Let card height adjust naturally
                                     .id(index)
                                     .background(
                                         GeometryReader { geo in
@@ -389,19 +395,19 @@ public struct RProductCarousel: View {
                     .coordinateSpace(name: "scroll")
                     .onPreferenceChange(ScrollOffsetPreferenceKey.self) { value in
                         // Calculate current index based on scroll position
-                        let cardWidthWithSpacing = cardWidth + ReachuSpacing.sm
+                        let cardWidthWithSpacing = cardWidth + ReachuSpacing.md
                         let index = Int(round(-value / cardWidthWithSpacing))
                         if index >= 0 && index < viewModel.products.count {
-                            currentIndex = index
+                            viewModel.currentIndex = index
                         }
                     }
                     .onAppear {
                         startAutoScroll(proxy: proxy)
                     }
-                    .onChange(of: products.count) { _ in
+                    .onChange(of: viewModel.products.count) { _ in
                         // Restart auto-scroll when products change
                         startAutoScroll(proxy: proxy)
-                        currentIndex = 0
+                        viewModel.currentIndex = 0
                     }
                     .onChange(of: cachedConfig?.configId) { _ in
                         // Restart auto-scroll when config changes (e.g., interval or autoPlay)
@@ -415,7 +421,7 @@ public struct RProductCarousel: View {
                 }
             }
         }
-        .aspectRatio(2.1 / 1.68, contentMode: .fit) // Maintain aspect ratio for compact layout (2 cards + spacing)
+        .frame(height: 300) // Fixed height to prevent overlap with other components
     }
     
     /// Horizontal layout carousel (image left, description right)
@@ -423,7 +429,7 @@ public struct RProductCarousel: View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let cardWidth = screenWidth * 0.9 // 90% of screen width for horizontal cards
-            let cardHeight: CGFloat = 140 // Fixed height for horizontal cards
+            let cardHeight: CGFloat = 110 // Reduced height for horizontal cards
             
             VStack(spacing: ReachuSpacing.sm) {
                 ScrollViewReader { proxy in
@@ -451,16 +457,16 @@ public struct RProductCarousel: View {
                         let cardWidthWithSpacing = cardWidth + ReachuSpacing.md
                         let index = Int(round(-value / cardWidthWithSpacing))
                         if index >= 0 && index < viewModel.products.count {
-                            currentIndex = index
+                            viewModel.currentIndex = index
                         }
                     }
                     .onAppear {
                         startAutoScroll(proxy: proxy)
                     }
-                    .onChange(of: products.count) { _ in
+                    .onChange(of: viewModel.products.count) { _ in
                         // Restart auto-scroll when products change
                         startAutoScroll(proxy: proxy)
-                        currentIndex = 0
+                        viewModel.currentIndex = 0
                     }
                     .onChange(of: cachedConfig?.configId) { _ in
                         // Restart auto-scroll when config changes (e.g., interval or autoPlay)
@@ -474,7 +480,7 @@ public struct RProductCarousel: View {
                 }
             }
         }
-        .frame(height: 140) // Fixed height for horizontal cards
+        .frame(height: 110) // Reduced height for horizontal cards
     }
     
     private func productCardView(product: Product) -> some View {
@@ -484,8 +490,8 @@ public struct RProductCarousel: View {
         if currentLayout == "full" {
             return AnyView(fullLayoutProductCardView(product: product))
         } else {
-            return AnyView(RProductCard(product: product, variant: .grid)
-                .padding(.horizontal, ReachuSpacing.md))
+            // For compact and horizontal layouts, use grid variant without extra padding
+            return AnyView(RProductCard(product: product, variant: .grid))
         }
     }
     
@@ -609,79 +615,85 @@ public struct RProductCarousel: View {
     
     /// Horizontal product card layout (image left, description right)
     private func horizontalProductCardView(product: Product) -> some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Image on the left
-            if let imageUrl = product.images.first?.url, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { phase in
-                    switch phase {
-                    case .empty:
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .frame(width: 120, height: 120)
-                            .overlay { ProgressView().tint(adaptiveColors.primary) }
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 120, height: 120)
-                            .clipped()
-                            .cornerRadius(ReachuBorderRadius.medium)
-                    case .failure:
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .frame(width: 120, height: 120)
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundColor(adaptiveColors.textSecondary)
-                            }
-                    @unknown default:
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .frame(width: 120, height: 120)
+        Button(action: {
+            // Handle tap - show product detail
+            showingProductDetail = product
+        }) {
+            HStack(spacing: ReachuSpacing.sm) { // Reduced spacing
+                // Image on the left (smaller)
+                if let imageUrl = product.images.first?.url, let url = URL(string: imageUrl) {
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .empty:
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .frame(width: 90, height: 90) // Reduced image size
+                                .overlay { ProgressView().tint(adaptiveColors.primary) }
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 90, height: 90) // Reduced image size
+                                .clipped()
+                                .cornerRadius(ReachuBorderRadius.medium)
+                        case .failure:
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .frame(width: 90, height: 90) // Reduced image size
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(adaptiveColors.textSecondary)
+                                }
+                        @unknown default:
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .frame(width: 90, height: 90) // Reduced image size
+                        }
                     }
-                }
-            } else {
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                    .fill(adaptiveColors.surfaceSecondary)
-                    .frame(width: 120, height: 120)
-            }
-            
-            // Description on the right
-            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                Text(product.title)
-                    .font(ReachuTypography.bodyBold)
-                    .foregroundColor(adaptiveColors.textPrimary)
-                    .lineLimit(2)
-                
-                if let brand = product.brand {
-                    Text(brand)
-                        .font(ReachuTypography.caption1)
-                        .foregroundColor(adaptiveColors.textSecondary)
-                        .lineLimit(1)
+                } else {
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .fill(adaptiveColors.surfaceSecondary)
+                        .frame(width: 90, height: 90) // Reduced image size
                 }
                 
-                Spacer()
-                
-                // Price
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(product.price.displayAmount)
-                        .font(ReachuTypography.bodyBold)
-                        .foregroundColor(adaptiveColors.primary)
+                // Description on the right
+                VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                    Text(product.title)
+                        .font(.system(size: 13, weight: .semibold)) // Smaller title
+                        .foregroundColor(adaptiveColors.textPrimary)
+                        .lineLimit(2)
                     
-                    if let compareAtAmount = product.price.displayCompareAtAmount {
-                        Text(compareAtAmount)
-                            .font(ReachuTypography.caption1)
+                    if let brand = product.brand {
+                        Text(brand)
+                            .font(.system(size: 10, weight: .regular)) // Smaller brand
                             .foregroundColor(adaptiveColors.textSecondary)
-                            .strikethrough()
+                            .lineLimit(1)
                     }
+                    
+                    // Price (moved up, right after brand)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(product.price.displayAmount)
+                            .font(.system(size: 14, weight: .bold)) // Smaller price
+                            .foregroundColor(adaptiveColors.primary)
+                        
+                        if let compareAtAmount = product.price.displayCompareAtAmount {
+                            Text(compareAtAmount)
+                                .font(.system(size: 11, weight: .regular)) // Smaller compare price
+                                .foregroundColor(adaptiveColors.textSecondary)
+                                .strikethrough()
+                        }
+                    }
+                    
+                    Spacer() // Push everything to top
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(ReachuSpacing.sm) // Reduced padding
+            .background(adaptiveColors.surface)
+            .cornerRadius(ReachuBorderRadius.large)
+            .reachuCardShadow(for: colorScheme)
         }
-        .padding(ReachuSpacing.md)
-        .background(adaptiveColors.surface)
-        .cornerRadius(ReachuBorderRadius.large)
-        .reachuCardShadow(for: colorScheme)
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var loadingView: some View {
@@ -954,7 +966,7 @@ public struct RProductCarousel: View {
     private func startAutoScroll(proxy: ScrollViewProxy) {
         guard let cachedConfig = cachedConfig,
               cachedConfig.shouldAutoPlay,
-              products.count > 1 else {
+              viewModel.products.count > 1 else {
             return
         }
         
@@ -964,13 +976,26 @@ public struct RProductCarousel: View {
         let productCount = viewModel.products.count
         guard productCount > 0 else { return }
         
-        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: cachedConfig.autoPlayInterval, repeats: true) { [proxy, productCount] _ in
+        // Store references safely
+        let timerProxy = proxy
+        let viewModelRef = viewModel
+        
+        autoScrollTimer = Timer.scheduledTimer(withTimeInterval: cachedConfig.autoPlayInterval, repeats: true) { timer in
+            // Access must be on main thread
             Task { @MainActor in
+                guard viewModelRef.products.count > 0 else {
+                    timer.invalidate()
+                    return
+                }
+                
+                let currentCount = viewModelRef.products.count
+                guard currentCount > 0 else { return }
+                
                 withAnimation(.easeInOut(duration: 0.5)) {
-                    // Use captured product count
-                    guard productCount > 0 else { return }
-                    currentIndex = (currentIndex + 1) % productCount
-                    proxy.scrollTo(currentIndex, anchor: .leading)
+                    // Update index through ViewModel (safe)
+                    let nextIndex = (viewModelRef.currentIndex + 1) % currentCount
+                    viewModelRef.currentIndex = nextIndex
+                    timerProxy.scrollTo(nextIndex, anchor: .leading)
                 }
             }
         }
@@ -986,9 +1011,22 @@ public struct RProductCarousel: View {
         HStack(spacing: ReachuSpacing.xs) {
             ForEach(0..<viewModel.products.count, id: \.self) { index in
                 Circle()
-                    .fill(index == currentIndex ? adaptiveColors.primary : adaptiveColors.textSecondary.opacity(0.3))
+                    .fill(index == viewModel.currentIndex ? adaptiveColors.primary : adaptiveColors.textSecondary.opacity(0.3))
                     .frame(width: 8, height: 8)
-                    .animation(.easeInOut(duration: 0.2), value: currentIndex)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.currentIndex)
+            }
+        }
+        .padding(.vertical, ReachuSpacing.xs)
+    }
+    
+    /// Page indicators for full layout (tighter spacing)
+    private var pageIndicatorsFull: some View {
+        HStack(spacing: 4) { // Fixed smaller spacing for full layout
+            ForEach(0..<viewModel.products.count, id: \.self) { index in
+                Circle()
+                    .fill(index == viewModel.currentIndex ? adaptiveColors.primary : adaptiveColors.textSecondary.opacity(0.3))
+                    .frame(width: 8, height: 8)
+                    .animation(.easeInOut(duration: 0.2), value: viewModel.currentIndex)
             }
         }
         .padding(.vertical, ReachuSpacing.xs)
@@ -1004,6 +1042,7 @@ class RProductCarouselViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var isMarketUnavailable: Bool = false
+    @Published var currentIndex: Int = 0 // Move currentIndex to ViewModel for safe Timer access
     
     private var sdk: SdkClient {
         let config = ReachuConfiguration.shared

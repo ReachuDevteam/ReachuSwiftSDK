@@ -143,9 +143,22 @@ public class CampaignManager: ObservableObject {
     }
     
     /// Get active component by type
-    public func getActiveComponent(type: String) -> Component? {
+    /// - Parameters:
+    ///   - type: Component type (e.g., "product_spotlight", "product_carousel")
+    ///   - componentId: Optional component ID to identify a specific component. If nil, returns the first matching component.
+    /// - Returns: Active component matching the type and optional componentId, or nil if not found
+    public func getActiveComponent(type: String, componentId: String? = nil) -> Component? {
         guard isCampaignActive else { return nil }
-        return activeComponents.first { $0.type == type && $0.isActive }
+        
+        if let componentId = componentId {
+            // Buscar por type Y componentId específico
+            return activeComponents.first { 
+                $0.type == type && $0.id == componentId && $0.isActive 
+            }
+        } else {
+            // Comportamiento actual: devolver el primero que encuentra
+            return activeComponents.first { $0.type == type && $0.isActive }
+        }
     }
     
     /// Get all active components by type

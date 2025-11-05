@@ -42,6 +42,10 @@ public struct RProductStore: View {
     
     // MARK: - Properties
     
+    /// Optional component ID to identify a specific component
+    /// If nil, uses the first matching component from the campaign
+    private let componentId: String?
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
     @StateObject private var viewModel = RProductStoreViewModel()
     
@@ -53,8 +57,8 @@ public struct RProductStore: View {
     
     // MARK: - Initializer
     
-    public init() {
-        // No parameters needed - component auto-configures from campaign
+    public init(componentId: String? = nil) {
+        self.componentId = componentId
     }
     
     // MARK: - Computed Properties
@@ -65,7 +69,7 @@ public struct RProductStore: View {
     
     /// Get active product store component from campaign
     private var activeComponent: Component? {
-        campaignManager.getActiveComponent(type: "product_store")
+        campaignManager.getActiveComponent(type: "product_store", componentId: componentId)
     }
     
     /// Extract ProductStoreConfig from component

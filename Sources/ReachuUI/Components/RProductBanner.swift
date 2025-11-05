@@ -204,6 +204,10 @@ public struct RProductBanner: View {
     
     // MARK: - Properties
     
+    /// Optional component ID to identify a specific component
+    /// If nil, uses the first matching component from the campaign
+    private let componentId: String?
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
@@ -214,8 +218,8 @@ public struct RProductBanner: View {
     
     // MARK: - Initializer
     
-    public init() {
-        // No parameters needed - component auto-configures from campaign
+    public init(componentId: String? = nil) {
+        self.componentId = componentId
     }
     
     // MARK: - Computed Properties
@@ -226,7 +230,7 @@ public struct RProductBanner: View {
     
     /// Get active product banner component from campaign
     private var activeComponent: Component? {
-        campaignManager.getActiveComponent(type: "product_banner")
+        campaignManager.getActiveComponent(type: "product_banner", componentId: componentId)
     }
     
     /// Extract ProductBannerConfig from component
