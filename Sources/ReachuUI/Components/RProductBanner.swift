@@ -117,29 +117,57 @@ public struct RProductBanner: View {
     // MARK: - Content Views
     
     private func bannerContent(config: ProductBannerConfig) -> some View {
-        ZStack {
+        // Validate URL before using it
+        guard let imageURL = URL(string: config.backgroundImageUrl), !config.backgroundImageUrl.isEmpty else {
+            print("❌ [RProductBanner] Invalid backgroundImageUrl: '\(config.backgroundImageUrl)'")
+            return errorBannerView(config: config)
+        }
+        
+        return ZStack {
             // Background image from config - THIS IS THE MAIN IMAGE TO SHOW
-            AsyncImage(url: URL(string: config.backgroundImageUrl)) { phase in
+            AsyncImage(url: imageURL) { phase in
                 switch phase {
                 case .empty:
+                    // Loading state - show placeholder
                     Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
+                        .overlay {
+                            ProgressView()
+                                .tint(.white)
+                        }
                         .onAppear {
-                            print("🖼️ [RProductBanner] Loading background image: \(config.backgroundImageUrl)")
+                            print("⏳ [RProductBanner] Loading background image: \(config.backgroundImageUrl)")
                         }
                 case .success(let image):
+                    // Success - show image
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onAppear {
                             print("✅ [RProductBanner] Background image loaded successfully from: \(config.backgroundImageUrl)")
                         }
                 case .failure(let error):
+                    // Error - show placeholder with error
                     Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
+                        .overlay {
+                            VStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .foregroundColor(.white)
+                                    .font(.system(size: 24))
+                                Text("Failed to load image")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.8))
+                            }
+                        }
                         .onAppear {
                             print("❌ [RProductBanner] Failed to load background image: \(error.localizedDescription)")
                             print("   URL: \(config.backgroundImageUrl)")
+                            if let urlError = error as? URLError {
+                                print("   URL Error Code: \(urlError.code.rawValue)")
+                                print("   URL Error Description: \(urlError.localizedDescription)")
+                            }
                         }
                 @unknown default:
                     Rectangle()
@@ -205,6 +233,44 @@ public struct RProductBanner: View {
             // Tap anywhere on banner to navigate to product
             navigateToProduct(config: config)
         }
+    }
+    
+    private func errorBannerView(config: ProductBannerConfig) -> some View {
+        ZStack {
+            Rectangle()
+                .fill(adaptiveColors.surfaceSecondary)
+            
+            VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                Text(config.title)
+                    .font(.system(size: 28, weight: .bold))
+                    .foregroundColor(adaptiveColors.textPrimary)
+                
+                if let subtitle = config.subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 18))
+                        .foregroundColor(adaptiveColors.textSecondary)
+                }
+                
+                Spacer()
+                
+                Button {
+                    navigateToProduct(config: config)
+                } label: {
+                    Text(config.ctaText)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, ReachuSpacing.xl)
+                        .padding(.vertical, ReachuSpacing.md)
+                        .background(adaptiveColors.primary)
+                        .cornerRadius(ReachuBorderRadius.large)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(ReachuSpacing.xl)
+        }
+        .frame(height: 280)
+        .cornerRadius(ReachuBorderRadius.large)
+        .padding(.horizontal, ReachuSpacing.lg)
     }
     
     // MARK: - Helper Methods
