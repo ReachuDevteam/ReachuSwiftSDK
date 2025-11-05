@@ -175,7 +175,7 @@ public struct RProductBanner: View {
                         .fill(adaptiveColors.surfaceSecondary)
                 }
             }
-            .frame(height: 280)
+            .frame(height: 200)
             .clipped()
             
             // Overlay gradient for text readability
@@ -192,7 +192,7 @@ public struct RProductBanner: View {
             VStack(alignment: .leading, spacing: ReachuSpacing.md) {
                 // Title from config - larger and bold
                 Text(config.title)
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundColor(.white)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -201,7 +201,7 @@ public struct RProductBanner: View {
                 // Subtitle from config - larger font
                 if let subtitle = config.subtitle {
                     Text(subtitle)
-                        .font(.system(size: 18))
+                        .font(.system(size: 16))
                         .foregroundColor(.white.opacity(0.95))
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
@@ -215,19 +215,19 @@ public struct RProductBanner: View {
                     navigateToProduct(config: config)
                 } label: {
                     Text(config.ctaText)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.xl)
-                        .padding(.vertical, ReachuSpacing.md)
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.vertical, ReachuSpacing.sm)
                         .background(adaptiveColors.primary)
-                        .cornerRadius(ReachuBorderRadius.large)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(ReachuSpacing.xl)
+            .padding(ReachuSpacing.lg)
         }
-        .frame(height: 280)
+        .frame(height: 200)
         .cornerRadius(ReachuBorderRadius.large)
         .padding(.horizontal, ReachuSpacing.lg)
         .onTapGesture {
