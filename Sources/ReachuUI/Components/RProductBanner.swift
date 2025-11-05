@@ -55,6 +55,39 @@ public struct RProductBanner: View {
         print("   - ctaLink: \(config.ctaLink ?? "nil")")
         print("   - deeplink: \(config.deeplink ?? "nil")")
         
+        // Log styling properties if provided
+        if config.titleColor != nil || config.subtitleColor != nil || config.buttonBackgroundColor != nil || 
+           config.bannerHeight != nil || config.titleFontSize != nil {
+            print("   🎨 Styling properties:")
+            if let titleColor = config.titleColor {
+                print("      - titleColor: \(titleColor)")
+            }
+            if let subtitleColor = config.subtitleColor {
+                print("      - subtitleColor: \(subtitleColor)")
+            }
+            if let buttonBg = config.buttonBackgroundColor {
+                print("      - buttonBackgroundColor: \(buttonBg)")
+            }
+            if let buttonText = config.buttonTextColor {
+                print("      - buttonTextColor: \(buttonText)")
+            }
+            if let overlay = config.overlayOpacity {
+                print("      - overlayOpacity: \(overlay)")
+            }
+            if let height = config.bannerHeight {
+                print("      - bannerHeight: \(height)")
+            }
+            if let titleSize = config.titleFontSize {
+                print("      - titleFontSize: \(titleSize)")
+            }
+            if let subtitleSize = config.subtitleFontSize {
+                print("      - subtitleFontSize: \(subtitleSize)")
+            }
+            if let buttonSize = config.buttonFontSize {
+                print("      - buttonFontSize: \(buttonSize)")
+            }
+        }
+        
         return config
     }
     
@@ -121,6 +154,22 @@ public struct RProductBanner: View {
         let fullImageURL = buildFullURL(from: config.backgroundImageUrl)
         let imageURL = URL(string: fullImageURL)
         
+        // Get styling values with defaults
+        let bannerHeight = CGFloat(getClampedSize(config.bannerHeight, min: 150, max: 400, default: 200))
+        let titleFontSize = CGFloat(getClampedSize(config.titleFontSize, min: 16, max: 32, default: 24))
+        let subtitleFontSize = CGFloat(getClampedSize(config.subtitleFontSize, min: 12, max: 20, default: 16))
+        let buttonFontSize = CGFloat(getClampedSize(config.buttonFontSize, min: 12, max: 18, default: 14))
+        
+        // Get colors with defaults
+        let titleColor = getColor(from: config.titleColor, defaultColor: .white)
+        let subtitleColor = getColor(from: config.subtitleColor, defaultColor: .white.opacity(0.95))
+        let buttonBackgroundColor = getColor(from: config.buttonBackgroundColor, defaultColor: adaptiveColors.primary)
+        let buttonTextColor = getColor(from: config.buttonTextColor, defaultColor: .white)
+        
+        // Get overlay opacity with default
+        let overlayBottomOpacity = config.overlayOpacity ?? 0.5
+        let overlayTopOpacity = (config.overlayOpacity ?? 0.5) * 0.6 // Top is 60% of bottom
+        
         return ZStack {
             // Background image from config - THIS IS THE MAIN IMAGE TO SHOW
             AsyncImage(url: imageURL ?? URL(string: "about:blank")) { phase in
@@ -175,34 +224,34 @@ public struct RProductBanner: View {
                         .fill(adaptiveColors.surfaceSecondary)
                 }
             }
-            .frame(height: 200)
+            .frame(height: bannerHeight)
             .clipped()
             
-            // Overlay gradient for text readability
+            // Overlay gradient for text readability (configurable opacity)
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.5),
-                    Color.black.opacity(0.3)
+                    Color.black.opacity(overlayBottomOpacity),
+                    Color.black.opacity(overlayTopOpacity)
                 ],
                 startPoint: .bottom,
                 endPoint: .top
             )
             
-            // Content overlay: text from config
+            // Content overlay: text from config with configurable styling
             VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                // Title from config - larger and bold
+                // Title from config - configurable size and color
                 Text(config.title)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .font(.system(size: titleFontSize, weight: .bold))
+                    .foregroundColor(titleColor)
                     .multilineTextAlignment(.leading)
                     .fixedSize(horizontal: false, vertical: true)
                     .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                 
-                // Subtitle from config - larger font
+                // Subtitle from config - configurable size and color
                 if let subtitle = config.subtitle {
                     Text(subtitle)
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.95))
+                        .font(.system(size: subtitleFontSize))
+                        .foregroundColor(subtitleColor)
                         .multilineTextAlignment(.leading)
                         .fixedSize(horizontal: false, vertical: true)
                         .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
@@ -210,16 +259,16 @@ public struct RProductBanner: View {
                 
                 Spacer()
                 
-                // CTA Button with text from config - larger and more prominent
+                // CTA Button with configurable styling
                 Button {
                     navigateToProduct(config: config)
                 } label: {
                     Text(config.ctaText)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .font(.system(size: buttonFontSize, weight: .semibold))
+                        .foregroundColor(buttonTextColor)
                         .padding(.horizontal, ReachuSpacing.lg)
                         .padding(.vertical, ReachuSpacing.sm)
-                        .background(adaptiveColors.primary)
+                        .background(buttonBackgroundColor)
                         .cornerRadius(ReachuBorderRadius.medium)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -227,7 +276,7 @@ public struct RProductBanner: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(ReachuSpacing.lg)
         }
-        .frame(height: 200)
+        .frame(height: bannerHeight)
         .cornerRadius(ReachuBorderRadius.large)
         .padding(.horizontal, ReachuSpacing.lg)
         .onTapGesture {
@@ -237,6 +286,67 @@ public struct RProductBanner: View {
     }
     
     // MARK: - Helper Methods
+    
+    /// Parse hex color string to SwiftUI Color
+    /// Supports formats: #RRGGBB, #RRGGBBAA, RRGGBB
+    private func parseColor(from hexString: String?) -> Color? {
+        guard let hexString = hexString, !hexString.isEmpty else { return nil }
+        
+        var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Remove # if present
+        if hex.hasPrefix("#") {
+            hex.removeFirst()
+        }
+        
+        // Validate length
+        guard hex.count == 6 || hex.count == 8 else {
+            print("⚠️ [RProductBanner] Invalid hex color format: \(hexString)")
+            return nil
+        }
+        
+        // Parse RGB components
+        var rgb: UInt64 = 0
+        guard Scanner(string: hex).scanHexInt64(&rgb) else {
+            print("⚠️ [RProductBanner] Failed to parse hex color: \(hexString)")
+            return nil
+        }
+        
+        let r: Double
+        let g: Double
+        let b: Double
+        let a: Double
+        
+        if hex.count == 8 {
+            // Format: RRGGBBAA
+            r = Double((rgb >> 24) & 0xFF) / 255.0
+            g = Double((rgb >> 16) & 0xFF) / 255.0
+            b = Double((rgb >> 8) & 0xFF) / 255.0
+            a = Double(rgb & 0xFF) / 255.0
+        } else {
+            // Format: RRGGBB (alpha = 1.0)
+            r = Double((rgb >> 16) & 0xFF) / 255.0
+            g = Double((rgb >> 8) & 0xFF) / 255.0
+            b = Double(rgb & 0xFF) / 255.0
+            a = 1.0
+        }
+        
+        return Color(red: r, green: g, blue: b, opacity: a)
+    }
+    
+    /// Get color with fallback to default
+    private func getColor(from hexString: String?, defaultColor: Color) -> Color {
+        if let color = parseColor(from: hexString) {
+            return color
+        }
+        return defaultColor
+    }
+    
+    /// Get clamped size value
+    private func getClampedSize(_ value: Int?, min: Int, max: Int, default: Int) -> Int {
+        guard let value = value else { return `default` }
+        return max(min, min(max, value))
+    }
     
     /// Build full URL from relative path
     private func buildFullURL(from path: String) -> String {

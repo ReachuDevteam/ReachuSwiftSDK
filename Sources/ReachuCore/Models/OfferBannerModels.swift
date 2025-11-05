@@ -252,6 +252,17 @@ public struct ProductBannerConfig: Codable {
     public let ctaLink: String?
     public let deeplink: String?
     
+    // Optional styling properties
+    public let titleColor: String?
+    public let subtitleColor: String?
+    public let buttonBackgroundColor: String?
+    public let buttonTextColor: String?
+    public let overlayOpacity: Double?
+    public let bannerHeight: Int?
+    public let titleFontSize: Int?
+    public let subtitleFontSize: Int?
+    public let buttonFontSize: Int?
+    
     public init(
         productId: String,
         backgroundImageUrl: String,
@@ -259,7 +270,16 @@ public struct ProductBannerConfig: Codable {
         subtitle: String? = nil,
         ctaText: String,
         ctaLink: String? = nil,
-        deeplink: String? = nil
+        deeplink: String? = nil,
+        titleColor: String? = nil,
+        subtitleColor: String? = nil,
+        buttonBackgroundColor: String? = nil,
+        buttonTextColor: String? = nil,
+        overlayOpacity: Double? = nil,
+        bannerHeight: Int? = nil,
+        titleFontSize: Int? = nil,
+        subtitleFontSize: Int? = nil,
+        buttonFontSize: Int? = nil
     ) {
         self.productId = productId
         self.backgroundImageUrl = backgroundImageUrl
@@ -268,6 +288,15 @@ public struct ProductBannerConfig: Codable {
         self.ctaText = ctaText
         self.ctaLink = ctaLink
         self.deeplink = deeplink
+        self.titleColor = titleColor
+        self.subtitleColor = subtitleColor
+        self.buttonBackgroundColor = buttonBackgroundColor
+        self.buttonTextColor = buttonTextColor
+        self.overlayOpacity = overlayOpacity
+        self.bannerHeight = bannerHeight
+        self.titleFontSize = titleFontSize
+        self.subtitleFontSize = subtitleFontSize
+        self.buttonFontSize = buttonFontSize
     }
 }
 
