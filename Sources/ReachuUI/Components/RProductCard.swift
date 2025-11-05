@@ -2,6 +2,10 @@ import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
 
+#if os(iOS)
+import UIKit
+#endif
+
 #if DEBUG
 import ReachuTesting
 #endif
@@ -148,7 +152,7 @@ public struct RProductCard: View {
         }
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
-        .shadow(color: adaptiveColors.textPrimary.opacity(0.1), radius: 4, x: 0, y: 2)
+        .reachuCardShadow(for: colorScheme)
     }
     
     /// List Layout - Horizontal card for search results
@@ -189,7 +193,7 @@ public struct RProductCard: View {
         .padding(ReachuSpacing.sm)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.small)
-        .shadow(color: adaptiveColors.textPrimary.opacity(0.05), radius: 1, x: 0, y: 1)
+        .reachuCardShadow(for: colorScheme)
     }
     
     /// Hero Layout - Large featured product
@@ -239,7 +243,7 @@ public struct RProductCard: View {
         }
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.xl)
-        .shadow(color: adaptiveColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
+        .reachuCardShadow(for: colorScheme)
     }
     
     /// Minimal Layout - Compact for carousels
@@ -261,7 +265,7 @@ public struct RProductCard: View {
         .frame(width: 100, height: 140)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.small)
-        .shadow(color: adaptiveColors.textPrimary.opacity(0.06), radius: 1, x: 0, y: 1)
+        .reachuCardShadow(for: colorScheme)
     }
     
     // MARK: - Image Components
@@ -357,7 +361,7 @@ public struct RProductCard: View {
     private func discountBadge(text: String) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
-            .foregroundColor(.white)
+            .foregroundColor(adaptiveColors.surface)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(

@@ -1,5 +1,10 @@
 import SwiftUI
 import ReachuCore
+import ReachuDesignSystem
+
+#if os(iOS)
+import UIKit
+#endif
 
 /// Dynamic Offer Banner component that receives configuration from backend
 public struct ROfferBanner: View {
@@ -8,6 +13,12 @@ public struct ROfferBanner: View {
     @State private var timer: Timer?
     @State private var isImageLoaded = false
     @State private var isLogoLoaded = false
+    
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     public init(config: OfferBannerConfig) {
         self.config = config
@@ -32,10 +43,10 @@ public struct ROfferBanner: View {
                                 isLogoLoaded = true
                             }
                     } placeholder: {
-                        // Simple skeleton for logo
-                        Rectangle()
-                            .fill(Color.gray.opacity(0.3))
-                            .frame(height: 16)
+                    // Simple skeleton for logo
+                    Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
+                        .frame(height: 16)
                     }
                     .onAppear {
                         print("🏷️ [ROfferBanner] Loading logo: \(buildFullURL(from: config.logoUrl))")
@@ -45,15 +56,15 @@ public struct ROfferBanner: View {
                     if isImageLoaded {
                         Text(config.title)
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                             .transition(.opacity)
                     } else {
                         // Simple skeleton for title
                         Rectangle()
-                            .fill(Color.gray.opacity(0.3))
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
                             .frame(height: 24)
                             .frame(maxWidth: 150)
-                            .cornerRadius(4)
+                            .cornerRadius(ReachuBorderRadius.small)
                     }
                     
                     // Subtitle
@@ -61,15 +72,15 @@ public struct ROfferBanner: View {
                         if isImageLoaded {
                             Text(subtitle)
                                 .font(.system(size: 11, weight: .regular))
-                                .foregroundColor(.white.opacity(0.9))
+                                .foregroundColor(adaptiveColors.surface.opacity(0.9))
                                 .transition(.opacity)
                         } else {
                             // Simple skeleton for subtitle
                             Rectangle()
-                                .fill(Color.gray.opacity(0.2))
+                                .fill(adaptiveColors.surfaceSecondary.opacity(0.2))
                                 .frame(height: 11)
                                 .frame(maxWidth: 120)
-                                .cornerRadius(2)
+                                .cornerRadius(ReachuBorderRadius.small / 2)
                         }
                     }
                     
@@ -82,9 +93,9 @@ public struct ROfferBanner: View {
                         HStack(spacing: 4) {
                             ForEach(0..<4) { _ in
                                 Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
+                                    .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
                                     .frame(width: 30, height: 20)
-                                    .cornerRadius(4)
+                                    .cornerRadius(ReachuBorderRadius.small)
                             }
                         }
                         .padding(.vertical, 3)
@@ -99,20 +110,20 @@ public struct ROfferBanner: View {
                     if isImageLoaded {
                         Text(config.discountBadgeText)
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 8)
                             .background(
                                 Capsule()
-                                    .fill(Color.black.opacity(0.8))
+                                    .fill(adaptiveColors.textPrimary.opacity(0.8))
                             )
                             .transition(.opacity)
                     } else {
                         // Simple skeleton for discount badge
                         Rectangle()
-                            .fill(Color.gray.opacity(0.4))
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.4))
                             .frame(width: 80, height: 32)
-                            .cornerRadius(16)
+                            .cornerRadius(ReachuBorderRadius.circle)
                     }
                     
                     // Button
@@ -123,11 +134,11 @@ public struct ROfferBanner: View {
                             HStack(spacing: 6) {
                                 Text(config.ctaText)
                                     .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(adaptiveColors.surface)
                                 
                                 Image(systemName: "arrow.right")
                                     .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(adaptiveColors.surface)
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
@@ -140,9 +151,9 @@ public struct ROfferBanner: View {
                     } else {
                         // Simple skeleton for button
                         Rectangle()
-                            .fill(Color.gray.opacity(0.4))
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.4))
                             .frame(width: 100, height: 28)
-                            .cornerRadius(14)
+                            .cornerRadius(ReachuBorderRadius.circle)
                     }
                 }
             }
@@ -150,8 +161,8 @@ public struct ROfferBanner: View {
             .padding(.vertical, 12)
         }
         .frame(height: 160)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .cornerRadius(ReachuBorderRadius.large)
+        .reachuCardShadow(for: colorScheme)
         .onAppear {
             startCountdown()
         }
@@ -200,7 +211,7 @@ public struct ROfferBanner: View {
                 } placeholder: {
                     // Simple skeleton for background image
                     Rectangle()
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.2))
                         .overlay(
                             // Subtle shimmer effect
                             Rectangle()
@@ -208,7 +219,7 @@ public struct ROfferBanner: View {
                                     LinearGradient(
                                         colors: [
                                             Color.clear,
-                                            Color.white.opacity(0.1),
+                                            adaptiveColors.textPrimary.opacity(0.1),
                                             Color.clear
                                         ],
                                         startPoint: .leading,
@@ -230,8 +241,8 @@ public struct ROfferBanner: View {
                 // Dark overlay for readability (same gradient as hardcoded)
                 LinearGradient(
                     colors: [
-                        Color.black.opacity(0.4),
-                        Color.black.opacity(0.2)
+                        adaptiveColors.textPrimary.opacity(0.4),
+                        adaptiveColors.textPrimary.opacity(0.2)
                     ],
                     startPoint: .leading,
                     endPoint: .trailing
@@ -366,19 +377,25 @@ struct TimeUnit: View {
     let value: Int
     let label: String
     
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         VStack(spacing: 2) {
             Text(String(format: "%02d", value))
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(adaptiveColors.surface)
             Text(label)
                 .font(.system(size: 10))
-                .foregroundColor(.white.opacity(0.7))
+                .foregroundColor(adaptiveColors.surface.opacity(0.7))
         }
         .frame(width: 40, height: 50)
         .background(
-            RoundedRectangle(cornerRadius: 4)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                .stroke(adaptiveColors.surface.opacity(0.3), lineWidth: 1)
         )
     }
 }
@@ -413,28 +430,34 @@ struct CountdownUnit: View {
     let value: Int
     let label: String
     
+    @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
+    
     var body: some View {
         VStack(spacing: 1) {
             // Dígitos
             Text(String(format: "%02d", value))
                 .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(adaptiveColors.surface)
                 .frame(minWidth: 24)
                 .padding(.vertical, 2)
                 .padding(.horizontal, 5)
                 .background(
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.white.opacity(0.15))
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(adaptiveColors.surface.opacity(0.15))
                         .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                .stroke(adaptiveColors.surface.opacity(0.3), lineWidth: 1)
                         )
                 )
             
             // Label
             Text(label)
                 .font(.system(size: 7, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundColor(adaptiveColors.surface.opacity(0.85))
         }
     }
 }

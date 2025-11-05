@@ -39,6 +39,9 @@ public struct RProductDetailOverlay: View {
         ReachuConfiguration.shared.productDetailConfiguration
     }
     
+    private var adaptiveColors: AdaptiveColors {
+        ReachuColors.adaptive(for: colorScheme)
+    }
     
     // MARK: - State
     @State private var selectedImageIndex = 0
@@ -115,14 +118,14 @@ public struct RProductDetailOverlay: View {
                         // Drawer handle overlay on image
                         VStack {
                             Capsule()
-                                .fill(Color.white.opacity(0.8))
+                                .fill(adaptiveColors.surface.opacity(0.8))
                                 .frame(width: 36, height: 5)
-                                .shadow(color: .black.opacity(0.2), radius: 2, x: 0, y: 1)
+                                .reachuTextShadow(for: colorScheme)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 12)
                         .padding(.bottom, 8)
-                        .background(Color.black.opacity(0.01)) // Invisible but tappable
+                        .background(adaptiveColors.textPrimary.opacity(0.01)) // Invisible but tappable
                         .contentShape(Rectangle())
                         .gesture(
                             DragGesture()
@@ -433,7 +436,7 @@ public struct RProductDetailOverlay: View {
                                                     )
                                                     .foregroundColor(
                                                         selectedOptions[optionName] == optionValue ? 
-                                                        .white : ReachuColors.textPrimary
+                                                        adaptiveColors.surface : ReachuColors.textPrimary
                                                     )
                                                     .cornerRadius(ReachuBorderRadius.small)
                                                     .overlay {
@@ -629,21 +632,21 @@ public struct RProductDetailOverlay: View {
                     if showCheckmark {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                     } else if isAddingToCart {
                         ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.surface))
                             .scaleEffect(0.8)
                     } else {
                         Image(systemName: "cart.badge.plus")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                     }
                     
                     // Button text
                     Text(showCheckmark ? RLocalizedString(ReachuTranslationKey.completePurchase.rawValue) : isAddingToCart ? RLocalizedString(ReachuTranslationKey.loading.rawValue) : RLocalizedString(ReachuTranslationKey.addToCart.rawValue))
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(adaptiveColors.surface)
                     
                     Spacer()
                     
@@ -651,7 +654,7 @@ public struct RProductDetailOverlay: View {
                     if !isAddingToCart && !showCheckmark {
                         Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
@@ -674,12 +677,7 @@ public struct RProductDetailOverlay: View {
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                         .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
                 )
-                .shadow(
-                    color: ReachuColors.primary.opacity(0.3),
-                    radius: 8,
-                    x: 0,
-                    y: 4
-                )
+                .reachuCardShadow(for: colorScheme)
             }
             .disabled(!isInStock || isAddingToCart)
             .scaleEffect(buttonScale)
@@ -837,7 +835,7 @@ public struct RProductDetailOverlay: View {
     private var successAnimationOverlay: some View {
         ZStack {
             // Semi-transparent background
-            Color.black.opacity(0.3)
+            adaptiveColors.textPrimary.opacity(0.3)
                 .ignoresSafeArea()
             
             // Success animation
@@ -852,7 +850,7 @@ public struct RProductDetailOverlay: View {
                     
                     Image(systemName: "checkmark")
                         .font(.system(size: 32, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(adaptiveColors.surface)
                         .scaleEffect(showSuccessAnimation ? 1.0 : 0.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.2), value: showSuccessAnimation)
                 }
@@ -861,13 +859,13 @@ public struct RProductDetailOverlay: View {
                 VStack(spacing: ReachuSpacing.xs) {
                     Text(RLocalizedString(ReachuTranslationKey.completePurchase.rawValue))
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(adaptiveColors.surface)
                         .opacity(showSuccessAnimation ? 1.0 : 0.0)
                         .animation(.easeInOut(duration: 0.3).delay(0.4), value: showSuccessAnimation)
                     
                     Text("\(quantity) × \(product.title)")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(adaptiveColors.surface.opacity(0.9))
                         .multilineTextAlignment(.center)
                         .opacity(showSuccessAnimation ? 1.0 : 0.0)
                         .animation(.easeInOut(duration: 0.3).delay(0.5), value: showSuccessAnimation)
@@ -876,7 +874,7 @@ public struct RProductDetailOverlay: View {
             .padding(ReachuSpacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
-                    .fill(Color.black.opacity(0.8))
+                    .fill(adaptiveColors.textPrimary.opacity(0.8))
             )
             .scaleEffect(showSuccessAnimation ? 1.0 : 0.8)
             .animation(.spring(response: 0.5, dampingFraction: 0.7), value: showSuccessAnimation)
@@ -905,7 +903,7 @@ public struct RProductDetailOverlay: View {
             .background(
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                     .fill(ReachuColors.surface)
-                    .shadow(color: Color.black.opacity(0.2), radius: 8, x: 0, y: 4)
+                    .reachuCardShadow(for: colorScheme)
             )
             .padding(.horizontal, ReachuSpacing.lg)
             .padding(.top, ReachuSpacing.lg)
@@ -923,12 +921,12 @@ public struct RProductDetailOverlay: View {
         }) {
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.6))
+                    .fill(adaptiveColors.textPrimary.opacity(0.6))
                     .frame(width: 36, height: 36)
                 
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(adaptiveColors.surface)
             }
         }
         .padding(.top, 16)

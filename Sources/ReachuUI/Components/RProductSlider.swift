@@ -288,7 +288,7 @@ public struct RProductSlider: View {
                         productCardView(product: product)
                     }
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
+                .padding(.horizontal, ReachuSpacing.md)
             }
             .scaleEffect(sliderScale)
             .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
@@ -370,7 +370,7 @@ public struct RProductSlider: View {
                 }
             }
         }
-        .padding(.horizontal, ReachuSpacing.lg)
+        .padding(.horizontal, ReachuSpacing.md)
     }
     
     // MARK: - Animation Functions

@@ -1,6 +1,5 @@
 import Foundation
 import Combine
-import ReachuCore
 
 /// Global Campaign Manager for handling campaign lifecycle
 /// Manages campaign states, WebSocket connections, and component visibility
@@ -144,9 +143,22 @@ public class CampaignManager: ObservableObject {
     }
     
     /// Get active component by type
-    public func getActiveComponent(type: String) -> Component? {
+    /// - Parameters:
+    ///   - type: Component type (e.g., "product_spotlight", "product_carousel")
+    ///   - componentId: Optional component ID to identify a specific component. If nil, returns the first matching component.
+    /// - Returns: Active component matching the type and optional componentId, or nil if not found
+    public func getActiveComponent(type: String, componentId: String? = nil) -> Component? {
         guard isCampaignActive else { return nil }
-        return activeComponents.first { $0.type == type && $0.isActive }
+        
+        if let componentId = componentId {
+            // Buscar por type Y componentId específico
+            return activeComponents.first { 
+                $0.type == type && $0.id == componentId && $0.isActive 
+            }
+        } else {
+            // Comportamiento actual: devolver el primero que encuentra
+            return activeComponents.first { $0.type == type && $0.isActive }
+        }
     }
     
     /// Get all active components by type
@@ -284,8 +296,13 @@ public class CampaignManager: ObservableObject {
             request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
         }
         
+        var responseData: Data?
+        var responseString: String?
+        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
+            responseData = data
+            responseString = String(data: data, encoding: .utf8)
             
             // Validate HTTP response before decoding
             if let httpResponse = response as? HTTPURLResponse {
@@ -307,24 +324,128 @@ public class CampaignManager: ObservableObject {
             }
             
             // Validate that we received JSON, not HTML
-            if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+            if let responseString = responseString, responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
                 print("❌ [CampaignManager] Received HTML instead of JSON from components endpoint")
                 print("   Response preview: \(responseString.prefix(200))")
                 return
             }
             
-            let components = try JSONDecoder().decode([Component].self, from: data)
+            // Log raw JSON response for debugging
+            if let responseString = responseString {
+                print("📋 [CampaignManager] Raw components response:")
+                print("   \(responseString.prefix(1000))")
+            }
+            
+            guard let data = responseData else {
+                print("❌ [CampaignManager] No data received")
+                return
+            }
+            
+            // Decode backend response format
+            // Backend sends: { "components": [...] }
+            // Try wrapped format first, then fallback to direct array
+            let responses: [ComponentResponse]
+            do {
+                let wrapper = try JSONDecoder().decode(ComponentsResponseWrapper.self, from: data)
+                responses = wrapper.components
+            } catch {
+                // Fallback: try direct array format
+                responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
+            }
+            
+            print("📦 [CampaignManager] Decoded \(responses.count) ComponentResponse objects")
+            for (index, response) in responses.enumerated() {
+                print("   [\(index)] Response:")
+                print("      ID: \(response.id)")
+                print("      Campaign ID: \(response.campaignId)")
+                print("      Component ID: \(response.componentId)")
+                print("      Status: \(response.status)")
+                print("      Has customConfig: \(response.customConfig != nil)")
+                print("      Has component: \(response.component != nil)")
+                
+                if let customConfig = response.customConfig {
+                    print("      CustomConfig keys: \(customConfig.keys.joined(separator: ", "))")
+                }
+                
+                if let component = response.component {
+                    print("      Component type: \(component.type)")
+                    print("      Component name: \(component.name)")
+                    print("      Component config keys: \(component.config.keys.joined(separator: ", "))")
+                }
+            }
+            
+            // Convert to Component model
+            let components = try responses.map { response -> Component in
+                print("🔄 [CampaignManager] Converting ComponentResponse to Component:")
+                print("   Component ID: \(response.componentId)")
+                print("   Status: \(response.status)")
+                
+                let component = try Component(from: response)
+                
+                // Log which config was used
+                if let customConfig = response.customConfig, !customConfig.isEmpty {
+                    print("   ✅ Using customConfig (overriding template)")
+                } else if response.component != nil {
+                    print("   📋 Using template config from component")
+                }
+                
+                // Log final component config type
+                switch component.config {
+                case .productCarousel(let config):
+                    print("   📦 Final config: ProductCarousel(productIds: \(config.productIds))")
+                case .productBanner(let config):
+                    print("   📦 Final config: ProductBanner(productId: \(config.productId))")
+                case .productStore(let config):
+                    print("   📦 Final config: ProductStore(mode: \(config.mode), productIds: \(config.productIds ?? []))")
+                default:
+                    print("   📦 Final config: Other type")
+                }
+                
+                return component
+            }
+            
+            print("📦 [CampaignManager] Decoded \(components.count) components from API")
+            for (index, component) in components.enumerated() {
+                print("   [\(index)] Type: \(component.type), ID: \(component.id), Active: \(component.isActive)")
+            }
             
             // Filter to only active components
             self.activeComponents = components.filter { $0.isActive }
             
             print("✅ [CampaignManager] Loaded \(self.activeComponents.count) active components")
+            if !self.activeComponents.isEmpty {
+                print("   Active component types: \(self.activeComponents.map { $0.type }.joined(separator: ", "))")
+            }
             
         } catch let decodingError as DecodingError {
             print("❌ [CampaignManager] Failed to decode components: \(decodingError)")
-            // The response data is already logged above if status code was not 200-299
+            
+            // Log detailed decoding error information
+            switch decodingError {
+            case .typeMismatch(let type, let context):
+                print("   Type mismatch: Expected \(type), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .valueNotFound(let type, let context):
+                print("   Value not found: \(type), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .keyNotFound(let key, let context):
+                print("   Key not found: \(key.stringValue), path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            case .dataCorrupted(let context):
+                print("   Data corrupted: \(context.debugDescription)")
+                print("   Path: \(context.codingPath.map { $0.stringValue }.joined(separator: "."))")
+            @unknown default:
+                print("   Unknown decoding error")
+            }
+            
+            // Log raw response for debugging
+            if let responseString = responseString {
+                print("   Raw response: \(responseString.prefix(1000))")
+            }
         } catch {
             print("⚠️ [CampaignManager] Failed to fetch active components: \(error)")
+            
+            // Log raw response for debugging
+            if let responseString = responseString {
+                print("   Raw response: \(responseString.prefix(1000))")
+            }
         }
     }
     
@@ -516,50 +637,89 @@ public class CampaignManager: ObservableObject {
     }
     
     private func handleComponentStatusChanged(_ event: ComponentStatusChangedEvent) {
-        print("📨 [CampaignManager] Component status changed: \(event.componentId) -> \(event.status)")
+        // Determine status and component ID based on format
+        let status: String
+        let componentId: String
+        
+        if let data = event.data {
+            // New format
+            status = data.status
+            componentId = String(data.campaignComponentId)
+            print("📨 [CampaignManager] Component status changed (new format): \(data.componentId) -> \(status)")
+        } else if let legacyStatus = event.status, let legacyComponent = event.component {
+            // Legacy format
+            status = legacyStatus
+            componentId = legacyComponent.id
+            print("📨 [CampaignManager] Component status changed (legacy format): \(legacyComponent.id) -> \(status)")
+        } else {
+            print("❌ [CampaignManager] Invalid component_status_changed event - missing required fields")
+            return
+        }
         
         // Business rule: Components CANNOT be activated in Upcoming state
         // Even if backend sends activation event, ignore it if campaign hasn't started
-        if event.status == "active" && campaignState == .upcoming {
+        if status == "active" && campaignState == .upcoming {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign is upcoming")
             return
         }
         
         // Business rule: Components CANNOT be activated in Ended state
-        if event.status == "active" && campaignState == .ended {
+        if status == "active" && campaignState == .ended {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign has ended")
             return
         }
         
         // Business rule: Components CANNOT be activated if campaign is paused
-        if event.status == "active" && (currentCampaign?.isPaused == true || !isCampaignActive) {
+        if status == "active" && (currentCampaign?.isPaused == true || !isCampaignActive) {
             print("⚠️ [CampaignManager] Ignoring component activation - campaign is paused")
             return
         }
         
-        if event.status == "active", let component = event.component {
-            // Only one component of each type can be active at a time
-            // Remove any existing component of the same type first
-            activeComponents.removeAll { $0.type == component.type && $0.id != event.componentId }
+        do {
+            let component = try event.toComponent()
             
-            // Add or update component
-            if let index = activeComponents.firstIndex(where: { $0.id == event.componentId }) {
-                activeComponents[index] = component
+            if status == "active" {
+                // Only one component of each type can be active at a time
+                // Remove any existing component of the same type first
+                activeComponents.removeAll { $0.type == component.type && $0.id != componentId }
+                
+                // Add or update component
+                if let index = activeComponents.firstIndex(where: { $0.id == componentId }) {
+                    activeComponents[index] = component
+                } else {
+                    activeComponents.append(component)
+                }
             } else {
-                activeComponents.append(component)
+                // Remove component
+                activeComponents.removeAll { $0.id == componentId }
             }
-        } else {
-            // Remove component
-            activeComponents.removeAll { $0.id == event.componentId }
+        } catch {
+            print("❌ [CampaignManager] Failed to convert component event: \(error)")
         }
     }
     
     private func handleComponentConfigUpdated(_ event: ComponentConfigUpdatedEvent) {
-        print("📨 [CampaignManager] Component config updated: \(event.componentId)")
+        print("📨 [CampaignManager] Component config updated: \(event.data.componentId)")
         
-        // Update existing component's config
-        if let index = activeComponents.firstIndex(where: { $0.id == event.componentId }) {
-            activeComponents[index] = event.component
+        do {
+            let component = try event.toComponent()
+            let componentId = String(event.data.campaignComponentId)
+            
+            // Update existing component's config
+            if let index = activeComponents.firstIndex(where: { $0.id == componentId }) {
+                activeComponents[index] = component
+                print("✅ [CampaignManager] Updated component config: \(componentId)")
+            } else {
+                // If component doesn't exist yet, add it (only if campaign is active)
+                if isCampaignActive && currentCampaign?.isPaused != true {
+                    activeComponents.append(component)
+                    print("✅ [CampaignManager] Added new component from config update: \(componentId)")
+                } else {
+                    print("⚠️ [CampaignManager] Cannot add component - campaign not active or paused")
+                }
+            }
+        } catch {
+            print("❌ [CampaignManager] Failed to convert component event: \(error)")
         }
     }
 }

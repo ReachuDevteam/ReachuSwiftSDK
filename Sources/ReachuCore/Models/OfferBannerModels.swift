@@ -234,11 +234,13 @@ public struct ProductCarouselConfig: Codable {
     public let productIds: [String]
     public let autoPlay: Bool
     public let interval: Int  // milliseconds
+    public let layout: String?  // "compact" or "full" (default: "full")
     
-    public init(productIds: [String], autoPlay: Bool = true, interval: Int = 3000) {
+    public init(productIds: [String], autoPlay: Bool = true, interval: Int = 3000, layout: String? = nil) {
         self.productIds = productIds
         self.autoPlay = autoPlay
         self.interval = interval
+        self.layout = layout
     }
 }
 
@@ -252,6 +254,21 @@ public struct ProductBannerConfig: Codable {
     public let ctaLink: String?
     public let deeplink: String?
     
+    // Optional styling properties
+    public let titleColor: String?
+    public let subtitleColor: String?
+    public let buttonBackgroundColor: String?
+    public let buttonTextColor: String?
+    public let backgroundColor: String?  // Background color overlay (e.g., "rgba(0, 0, 0, 0.5)")
+    public let overlayOpacity: Double?
+    public let bannerHeight: Int?  // Absolute height in points (fallback)
+    public let bannerHeightRatio: Double?  // Ratio of screen width (0.0-1.0, e.g., 0.25 = 25% of width) - preferred for responsive design
+    public let titleFontSize: Int?
+    public let subtitleFontSize: Int?
+    public let buttonFontSize: Int?
+    public let textAlignment: String?  // "left", "center", "right"
+    public let contentVerticalAlignment: String?  // "top", "center", "bottom"
+    
     public init(
         productId: String,
         backgroundImageUrl: String,
@@ -259,7 +276,20 @@ public struct ProductBannerConfig: Codable {
         subtitle: String? = nil,
         ctaText: String,
         ctaLink: String? = nil,
-        deeplink: String? = nil
+        deeplink: String? = nil,
+        titleColor: String? = nil,
+        subtitleColor: String? = nil,
+        buttonBackgroundColor: String? = nil,
+        buttonTextColor: String? = nil,
+        backgroundColor: String? = nil,
+        overlayOpacity: Double? = nil,
+        bannerHeight: Int? = nil,
+        bannerHeightRatio: Double? = nil,
+        titleFontSize: Int? = nil,
+        subtitleFontSize: Int? = nil,
+        buttonFontSize: Int? = nil,
+        textAlignment: String? = nil,
+        contentVerticalAlignment: String? = nil
     ) {
         self.productId = productId
         self.backgroundImageUrl = backgroundImageUrl
@@ -268,6 +298,19 @@ public struct ProductBannerConfig: Codable {
         self.ctaText = ctaText
         self.ctaLink = ctaLink
         self.deeplink = deeplink
+        self.titleColor = titleColor
+        self.subtitleColor = subtitleColor
+        self.buttonBackgroundColor = buttonBackgroundColor
+        self.buttonTextColor = buttonTextColor
+        self.backgroundColor = backgroundColor
+        self.overlayOpacity = overlayOpacity
+        self.bannerHeight = bannerHeight
+        self.bannerHeightRatio = bannerHeightRatio
+        self.titleFontSize = titleFontSize
+        self.subtitleFontSize = subtitleFontSize
+        self.buttonFontSize = buttonFontSize
+        self.textAlignment = textAlignment
+        self.contentVerticalAlignment = contentVerticalAlignment
     }
 }
 

@@ -2,22 +2,224 @@ import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
 
+#if os(iOS)
+import UIKit
+#endif
+
 /// Auto-configured Product Banner component
 /// Automatically loads configuration from active campaign
 /// Usage: Just drag RProductBanner() into your view - no parameters needed!
 public struct RProductBanner: View {
     
+    // MARK: - Cached Styling Values
+    
+    /// Internal structure to cache parsed styling values
+    /// This avoids recalculating colors, sizes, and URLs on every render
+    private struct CachedStyling {
+        let imageURL: URL?
+        let bannerHeight: CGFloat
+        let titleFontSize: CGFloat
+        let subtitleFontSize: CGFloat
+        let buttonFontSize: CGFloat
+        let titleColor: Color
+        let subtitleColor: Color
+        let buttonBackgroundColor: Color
+        let buttonTextColor: Color
+        let backgroundColor: Color?  // Background color overlay (from rgba())
+        let overlayBottomOpacity: Double
+        let overlayTopOpacity: Double
+        let textAlignment: SwiftUI.TextAlignment  // "left", "center", "right"
+        let contentVerticalAlignment: VerticalAlignment  // "top", "center", "bottom"
+        let configId: String // Used to detect config changes
+        
+        init(config: ProductBannerConfig, adaptiveColors: AdaptiveColors) {
+            // Build full URL (cache this)
+            let fullImageURL = Self.buildFullURL(from: config.backgroundImageUrl)
+            self.imageURL = URL(string: fullImageURL)
+            
+            // Cache clamped sizes
+            self.bannerHeight = CGFloat(Self.getClampedSize(config.bannerHeight, min: 150, max: 400, default: 200))
+            self.titleFontSize = CGFloat(Self.getClampedSize(config.titleFontSize, min: 16, max: 32, default: 24))
+            self.subtitleFontSize = CGFloat(Self.getClampedSize(config.subtitleFontSize, min: 12, max: 20, default: 16))
+            self.buttonFontSize = CGFloat(Self.getClampedSize(config.buttonFontSize, min: 12, max: 18, default: 14))
+            
+            // Cache parsed colors - use adaptive colors as defaults
+            let defaultTextColor = adaptiveColors.textPrimary
+            let defaultTextColorSecondary = adaptiveColors.textSecondary
+            self.titleColor = Self.getColor(from: config.titleColor, defaultColor: defaultTextColor)
+            self.subtitleColor = Self.getColor(from: config.subtitleColor, defaultColor: defaultTextColorSecondary)
+            self.buttonBackgroundColor = Self.getColor(from: config.buttonBackgroundColor, defaultColor: adaptiveColors.primary)
+            self.buttonTextColor = Self.getColor(from: config.buttonTextColor, defaultColor: defaultTextColor)
+            
+            // Parse backgroundColor (can be rgba() or hex)
+            if let bgColorString = config.backgroundColor {
+                self.backgroundColor = Self.parseRGBA(from: bgColorString) ?? Self.parseColor(from: bgColorString)
+            } else {
+                self.backgroundColor = nil
+            }
+            
+            // Cache overlay opacity (use backgroundColor opacity if available, otherwise use overlayOpacity)
+            let overlayOpacity: Double
+            if let bgColor = self.backgroundColor,
+               let components = bgColor.cgColor?.components,
+               components.count >= 4 {
+                overlayOpacity = Double(components[3]) // Alpha channel
+            } else {
+                overlayOpacity = config.overlayOpacity ?? 0.5
+            }
+            self.overlayBottomOpacity = overlayOpacity
+            self.overlayTopOpacity = overlayOpacity * 0.6 // Top is 60% of bottom
+            
+            // Parse text alignment
+            switch config.textAlignment?.lowercased() {
+            case "center":
+                self.textAlignment = SwiftUI.TextAlignment.center
+            case "right":
+                self.textAlignment = SwiftUI.TextAlignment.trailing
+            default:
+                self.textAlignment = SwiftUI.TextAlignment.leading
+            }
+            
+            // Parse vertical alignment
+            switch config.contentVerticalAlignment?.lowercased() {
+            case "top":
+                self.contentVerticalAlignment = .top
+            case "center":
+                self.contentVerticalAlignment = .center
+            default:
+                self.contentVerticalAlignment = .bottom
+            }
+            
+            // Create unique identifier for this config (detects changes)
+            self.configId = "\(config.productId)-\(config.backgroundImageUrl)-\(config.title)"
+        }
+        
+        /// Build full URL from relative path (static helper)
+        private static func buildFullURL(from path: String) -> String {
+            if path.hasPrefix("http://") || path.hasPrefix("https://") {
+                return path
+            }
+            let baseURL = ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
+            return baseURL + path
+        }
+        
+        /// Get clamped size value (static helper)
+        private static func getClampedSize(_ value: Int?, min: Int, max: Int, default: Int) -> Int {
+            guard let value = value else { return `default` }
+            return Swift.max(min, Swift.min(max, value))
+        }
+        
+        /// Get color with fallback (static helper)
+        private static func getColor(from hexString: String?, defaultColor: Color) -> Color {
+            if let color = parseColor(from: hexString) {
+                return color
+            }
+            return defaultColor
+        }
+        
+        /// Parse rgba() color string (e.g., "rgba(0, 0, 0, 0.5)" or "rgba(128, 128, 128, 0.8)")
+        /// Handles both formats: RGB 0-255 or RGB 0-1, alpha always 0-1
+        private static func parseRGBA(from rgbaString: String?) -> Color? {
+            guard let rgbaString = rgbaString else { return nil }
+            
+            let cleaned = rgbaString.trimmingCharacters(in: .whitespacesAndNewlines)
+                .replacingOccurrences(of: "rgba(", with: "")
+                .replacingOccurrences(of: "rgb(", with: "")
+                .replacingOccurrences(of: ")", with: "")
+            
+            let components = cleaned.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            
+            guard components.count >= 3 else { return nil }
+            
+            guard let r = Double(components[0]),
+                  let g = Double(components[1]),
+                  let b = Double(components[2]) else {
+                return nil
+            }
+            
+            // Determine if RGB values are in 0-255 range or 0-1 range
+            let isRGB255 = r > 1.0 || g > 1.0 || b > 1.0
+            
+            let rNormalized: Double
+            let gNormalized: Double
+            let bNormalized: Double
+            
+            if isRGB255 {
+                // RGB values are in 0-255 range
+                rNormalized = r / 255.0
+                gNormalized = g / 255.0
+                bNormalized = b / 255.0
+            } else {
+                // RGB values are already in 0-1 range
+                rNormalized = r
+                gNormalized = g
+                bNormalized = b
+            }
+            
+            let a: Double
+            if components.count >= 4, let alpha = Double(components[3]) {
+                a = alpha // Alpha is always 0-1
+            } else {
+                a = 1.0
+            }
+            
+            return Color(red: rNormalized, green: gNormalized, blue: bNormalized, opacity: a)
+        }
+        
+        /// Parse hex color string to SwiftUI Color (static helper)
+        private static func parseColor(from hexString: String?) -> Color? {
+            guard let hexString = hexString, !hexString.isEmpty else { return nil }
+            
+            var hex = hexString.trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            if hex.hasPrefix("#") {
+                hex.removeFirst()
+            }
+            
+            guard hex.count == 6 || hex.count == 8 else { return nil }
+            
+            var rgb: UInt64 = 0
+            guard Scanner(string: hex).scanHexInt64(&rgb) else { return nil }
+            
+            let r: Double
+            let g: Double
+            let b: Double
+            let a: Double
+            
+            if hex.count == 8 {
+                r = Double((rgb >> 24) & 0xFF) / 255.0
+                g = Double((rgb >> 16) & 0xFF) / 255.0
+                b = Double((rgb >> 8) & 0xFF) / 255.0
+                a = Double(rgb & 0xFF) / 255.0
+            } else {
+                r = Double((rgb >> 16) & 0xFF) / 255.0
+                g = Double((rgb >> 8) & 0xFF) / 255.0
+                b = Double(rgb & 0xFF) / 255.0
+                a = 1.0
+            }
+            
+            return Color(red: r, green: g, blue: b, opacity: a)
+        }
+    }
+    
     // MARK: - Properties
     
+    /// Optional component ID to identify a specific component
+    /// If nil, uses the first matching component from the campaign
+    private let componentId: String?
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
-    @StateObject private var viewModel = RProductBannerViewModel()
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
+    // Cache parsed styling values - only recalculated when config changes
+    @State private var cachedStyling: CachedStyling?
+    @State private var currentConfigId: String?
+    
     // MARK: - Initializer
     
-    public init() {
-        // No parameters needed - component auto-configures from campaign
+    public init(componentId: String? = nil) {
+        self.componentId = componentId
     }
     
     // MARK: - Computed Properties
@@ -26,26 +228,60 @@ public struct RProductBanner: View {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    private var resolvedCurrency: String {
-        ReachuConfiguration.shared.marketConfiguration.currencyCode
-    }
-    
-    private var resolvedCountry: String {
-        ReachuConfiguration.shared.marketConfiguration.countryCode
-    }
-    
     /// Get active product banner component from campaign
     private var activeComponent: Component? {
-        campaignManager.getActiveComponent(type: "product_banner")
+        campaignManager.getActiveComponent(type: "product_banner", componentId: componentId)
     }
     
     /// Extract ProductBannerConfig from component
     private var config: ProductBannerConfig? {
-        guard let component = activeComponent,
-              case .productBanner(let config) = component.config else {
+        guard let component = activeComponent else {
             return nil
         }
+        
+        guard case .productBanner(let config) = component.config else {
+            return nil
+        }
+        
         return config
+    }
+    
+    /// Update cached styling when config changes
+    private func updateCachedStylingIfNeeded() {
+        guard let config = config else {
+            if cachedStyling != nil {
+                cachedStyling = nil
+                currentConfigId = nil
+            }
+            return
+        }
+        
+        let newConfigId = "\(config.productId)-\(config.backgroundImageUrl)-\(config.title)"
+        
+        // Only recalculate if config actually changed
+        if currentConfigId != newConfigId {
+            print("🔄 [RProductBanner] Config changed - updating cached styling")
+            print("   Old ID: \(currentConfigId ?? "nil")")
+            print("   New ID: \(newConfigId)")
+            
+            cachedStyling = CachedStyling(config: config, adaptiveColors: adaptiveColors)
+            currentConfigId = newConfigId
+            
+            // Log config details (only when changed)
+            print("📋 [RProductBanner] Config loaded:")
+            print("   - productId: \(config.productId)")
+            print("   - backgroundImageUrl: \(config.backgroundImageUrl)")
+            print("   - title: '\(config.title)'")
+            if let bannerHeight = config.bannerHeight {
+                let clampedHeight = CGFloat(Swift.max(150, Swift.min(400, bannerHeight)))
+                print("   📏 bannerHeight from backend: \(bannerHeight) -> clamped to: \(clampedHeight)")
+            } else {
+                print("   📏 bannerHeight: using default (200)")
+            }
+            if config.titleColor != nil || config.bannerHeight != nil {
+                print("   🎨 Styling: Custom colors/sizes provided")
+            }
+        }
     }
     
     /// Should show component
@@ -72,303 +308,365 @@ public struct RProductBanner: View {
         return activeComponent?.isActive == true && config != nil
     }
     
-    /// Product to display
-    private var product: Product? {
-        viewModel.product
-    }
-    
-    /// Should show loading state
-    private var shouldShowLoading: Bool {
-        viewModel.isLoading && viewModel.product == nil
-    }
-    
-    /// Should show error state
-    private var shouldShowError: Bool {
-        viewModel.errorMessage != nil && viewModel.product == nil && !viewModel.isMarketUnavailable
-    }
-    
-    /// Should hide component (market unavailable)
-    private var shouldHide: Bool {
-        viewModel.isMarketUnavailable
-    }
-    
     // MARK: - Body
+    
+    /// Get styling, calculating if needed
+    private var effectiveStyling: CachedStyling? {
+        guard let config = config else { return nil }
+        
+        // If we have cached styling and config hasn't changed, use it
+        if let cached = cachedStyling,
+           let configId = currentConfigId,
+           configId == "\(config.productId)-\(config.backgroundImageUrl)-\(config.title)" {
+            return cached
+        }
+        
+        // Calculate styling immediately if config is available
+        return CachedStyling(config: config, adaptiveColors: adaptiveColors)
+    }
     
     public var body: some View {
         Group {
             if !shouldShow {
                 EmptyView()
-            } else if shouldHide {
-                EmptyView()
-            } else if shouldShowLoading {
-                loadingView
-            } else if shouldShowError {
-                errorView
-            } else if let config = config, let product = product {
-                bannerContent(config: config, product: product)
+            } else if let config = config, let styling = effectiveStyling {
+                // Show banner using styling (cached or freshly calculated)
+                bannerContent(config: config, styling: styling)
+                    .id("banner-\(currentConfigId ?? "unknown")") // Force update when config changes
+                    .onAppear {
+                        // Ensure styling is cached after render
+                        updateCachedStylingIfNeeded()
+                    }
             } else {
-                Color.clear.frame(height: 1)
+                // Show skeleton loader while loading
+                skeletonView
             }
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
-            handleCampaignStateChange()
+            updateCachedStylingIfNeeded()
         }
         .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
-            handleCampaignStateChange()
+            updateCachedStylingIfNeeded()
+        }
+        .onChange(of: campaignManager.activeComponents.count) { _ in
+            // React immediately when components are loaded/updated
+            updateCachedStylingIfNeeded()
         }
         .onChange(of: activeComponent?.id) { _ in
-            handleComponentChange()
+            updateCachedStylingIfNeeded()
+        }
+        .onChange(of: colorScheme) { _ in
+            // Recalculate styling when color scheme changes (for adaptive colors)
+            updateCachedStylingIfNeeded()
         }
         .onAppear {
-            handleComponentChange()
+            // Try to update immediately on appear (in case data is already available)
+            updateCachedStylingIfNeeded()
+        }
+        .task {
+            // Also try to update after a small delay to catch async updates
+            // This ensures we catch components that load right after the view appears
+            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
+            updateCachedStylingIfNeeded()
+        }
+    }
+    
+    // MARK: - Skeleton View
+    
+    /// Skeleton loader shown while banner is loading
+    private var skeletonView: some View {
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let availableWidth = screenWidth - (ReachuSpacing.md * 2)
+            let defaultHeight = Swift.max(150, Swift.min(400, availableWidth * 0.25))
+            
+            ZStack {
+                // Background skeleton
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    .fill(adaptiveColors.surfaceSecondary)
+                    .frame(height: defaultHeight)
+                
+                // Content skeleton
+                VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                    // Title skeleton
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                        .frame(width: 200, height: 24)
+                        .shimmerEffect()
+                    
+                    // Subtitle skeleton
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                        .frame(width: 150, height: 16)
+                        .shimmerEffect()
+                    
+                    Spacer()
+                    
+                    // Button skeleton
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                        .frame(width: 120, height: 44)
+                        .shimmerEffect()
+                }
+                .padding(ReachuSpacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.horizontal, ReachuSpacing.md)
+            .frame(height: defaultHeight)
         }
     }
     
     // MARK: - Content Views
     
-    private func bannerContent(config: ProductBannerConfig, product: Product) -> some View {
-        ZStack {
-            // Background image
-            AsyncImage(url: URL(string: config.backgroundImageUrl)) { phase in
+    /// Banner content using cached styling values (optimized for performance)
+    /// All colors, sizes, and URLs are pre-calculated and cached
+    /// Uses GeometryReader for responsive sizing based on screen width
+    private func bannerContent(config: ProductBannerConfig, styling: CachedStyling) -> some View {
+        GeometryReader { geometry in
+            let screenWidth = geometry.size.width
+            let availableWidth = screenWidth - (ReachuSpacing.md * 2) // Subtract horizontal padding
+            let bannerHeight: CGFloat = {
+                // Use ratio-based height if available (better for responsive design)
+                // Ratio is based on screen width (e.g., 0.25 = 25% of width)
+                if let heightRatio = config.bannerHeightRatio {
+                    // Clamp ratio between 0.15 (15%) and 0.6 (60%)
+                    let clampedRatio = Swift.max(0.15, Swift.min(0.6, heightRatio))
+                    return availableWidth * clampedRatio
+                } else if let absoluteHeight = config.bannerHeight {
+                    // Fallback to absolute height (in points, already clamped)
+                    return CGFloat(Swift.max(150, Swift.min(400, absoluteHeight)))
+                } else {
+                    // Default: 25% of screen width with min/max constraints
+                    let defaultRatio: CGFloat = 0.25
+                    let calculatedHeight = availableWidth * defaultRatio
+                    return Swift.max(150, Swift.min(400, calculatedHeight))
+                }
+            }()
+            
+            ZStack {
+                // Background image from config - using cached URL
+            AsyncImage(url: styling.imageURL ?? URL(string: "about:blank")) { phase in
                 switch phase {
                 case .empty:
+                    // Loading state - show placeholder
                     Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: bannerHeight)
+                        .overlay {
+                            ProgressView()
+                                .tint(adaptiveColors.textPrimary)
+                        }
+                        .onAppear {
+                            if let url = styling.imageURL?.absoluteString {
+                                print("⏳ [RProductBanner] Loading background image: \(url)")
+                            }
+                        }
                 case .success(let image):
+                    // Success - show image
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                case .failure:
+                        .frame(maxWidth: .infinity)
+                        .frame(height: bannerHeight)
+                        .clipped()
+                case .failure(let error):
+                    // Error - show placeholder with error
                     Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: bannerHeight)
+                        .overlay {
+                            VStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .foregroundColor(adaptiveColors.textPrimary)
+                                    .font(.system(size: 24))
+                                Text("Failed to load image")
+                                    .font(.caption)
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                            }
+                        }
+                        .onAppear {
+                            print("❌ [RProductBanner] Failed to load background image: \(error.localizedDescription)")
+                        }
                 @unknown default:
                     Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: bannerHeight)
                 }
             }
-            .frame(height: 200)
+            .frame(maxWidth: .infinity)
+            .frame(height: bannerHeight)
             .clipped()
             
-            // Overlay gradient
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.6),
-                    Color.black.opacity(0.3)
-                ],
-                startPoint: .bottom,
-                endPoint: .top
-            )
+            // Background color overlay (if provided)
+            if let backgroundColor = styling.backgroundColor {
+                backgroundColor
+                    .frame(maxWidth: .infinity)
+                    .frame(height: bannerHeight)
+            }
             
-            // Content
-            VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                // Title
+            // Overlay gradient for text readability (using cached opacity values)
+            // Only show if backgroundColor is not provided (fallback to gradient)
+            if styling.backgroundColor == nil {
+                LinearGradient(
+                    colors: [
+                        adaptiveColors.textPrimary.opacity(styling.overlayBottomOpacity),
+                        adaptiveColors.textPrimary.opacity(styling.overlayTopOpacity)
+                    ],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .frame(maxWidth: .infinity)
+                .frame(height: bannerHeight)
+            }
+            
+            // Content overlay: text from config with cached styling values
+            // Determine VStack alignment based on text alignment
+            let vStackAlignment: HorizontalAlignment = {
+                switch styling.textAlignment {
+                case .center:
+                    return .center
+                case .trailing:
+                    return .trailing
+                default:
+                    return .leading
+                }
+            }()
+            
+            VStack(alignment: vStackAlignment, spacing: ReachuSpacing.md) {
+                // Title from config - using cached size and color
                 Text(config.title)
-                    .font(ReachuTypography.headline)
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.leading)
+                    .font(.system(size: styling.titleFontSize, weight: .bold))
+                    .foregroundColor(styling.titleColor)
+                    .multilineTextAlignment(styling.textAlignment)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .reachuTextShadow(for: colorScheme)
                 
-                // Subtitle
-                if let subtitle = config.subtitle {
-                    Text(subtitle)
-                        .font(ReachuTypography.body)
-                        .foregroundColor(.white.opacity(0.9))
-                        .multilineTextAlignment(.leading)
+                // Subtitle from config - using cached size and color
+                    if let subtitle = config.subtitle {
+                        Text(subtitle)
+                            .font(.system(size: styling.subtitleFontSize))
+                            .foregroundColor(styling.subtitleColor)
+                            .multilineTextAlignment(styling.textAlignment)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .reachuTextShadow(for: colorScheme)
+                    }
+                
+                if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .bottom {
+                    Spacer()
                 }
                 
-                Spacer()
-                
-                // CTA Button
+                // CTA Button with cached styling values
                 Button {
-                    handleCTATap(config: config)
+                    navigateToProduct(config: config)
                 } label: {
                     Text(config.ctaText)
-                        .font(ReachuTypography.bodyBold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.vertical, ReachuSpacing.md)
-                        .background(adaptiveColors.primary)
+                        .font(.system(size: styling.buttonFontSize, weight: .semibold))
+                        .foregroundColor(styling.buttonTextColor)
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(styling.buttonBackgroundColor)
                         .cornerRadius(ReachuBorderRadius.medium)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                
+                if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .top {
+                    Spacer()
                 }
             }
-            .padding(ReachuSpacing.lg)
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .frame(height: 200)
-        .cornerRadius(ReachuBorderRadius.large)
-        .padding(.horizontal, ReachuSpacing.lg)
-    }
-    
-    private var loadingView: some View {
-        VStack(spacing: ReachuSpacing.md) {
-            ProgressView()
-                .tint(adaptiveColors.primary)
-            Text("Loading banner...")
-                .font(ReachuTypography.caption1)
-                .foregroundColor(adaptiveColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .padding(.vertical, ReachuSpacing.xl)
-    }
-    
-    private var errorView: some View {
-        VStack(spacing: ReachuSpacing.sm) {
-            Image(systemName: "exclamationmark.triangle")
-                .font(.system(size: 32))
-                .foregroundColor(adaptiveColors.error)
-            
-            Text("Error loading banner")
-                .font(ReachuTypography.bodyBold)
-                .foregroundColor(adaptiveColors.textPrimary)
-            
-            if let error = viewModel.errorMessage {
-                Text(error)
-                    .font(ReachuTypography.caption1)
-                    .foregroundColor(adaptiveColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, ReachuSpacing.lg)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Alignment(horizontal: vStackAlignment, vertical: styling.contentVerticalAlignment))
+            .padding(ReachuSpacing.md)
             }
-            
-            Button {
-                loadProduct()
-            } label: {
-                Text("Retry")
-                    .font(ReachuTypography.caption1.weight(.semibold))
-                    .foregroundColor(adaptiveColors.primary)
-                    .padding(.horizontal, ReachuSpacing.md)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(adaptiveColors.primary.opacity(0.1))
-                    .cornerRadius(ReachuBorderRadius.medium)
+            .frame(height: bannerHeight)
+            .frame(maxWidth: .infinity)
+            .clipped()
+            .cornerRadius(ReachuBorderRadius.large)
+            .padding(.horizontal, ReachuSpacing.md)
+            .onTapGesture {
+                // Tap anywhere on banner to navigate to product
+                navigateToProduct(config: config)
             }
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: 200)
-        .padding(.vertical, ReachuSpacing.xl)
+        .frame(height: {
+            // Calculate banner height for proper layout
+            // Use a reasonable default - actual height will be calculated by GeometryReader
+            let defaultRatio: CGFloat = 0.25
+            return 200 // Default height, will be adjusted by GeometryReader
+        }())
     }
     
     // MARK: - Helper Methods
     
-    private func handleCampaignStateChange() {
-        if shouldShow {
-            loadProduct()
-        } else {
-            viewModel.product = nil
-        }
-    }
-    
-    private func handleComponentChange() {
-        if shouldShow {
-            loadProduct()
-        } else {
-            viewModel.product = nil
-        }
-    }
-    
-    private func loadProduct() {
-        guard let config = config else {
-            viewModel.product = nil
-            return
-        }
-        
-        Task {
-            await viewModel.loadProduct(
-                productId: config.productId,
-                currency: resolvedCurrency,
-                country: resolvedCountry
-            )
-        }
-    }
-    
-    private func handleCTATap(config: ProductBannerConfig) {
+    private func navigateToProduct(config: ProductBannerConfig) {
         // Handle deeplink first
         if let deeplink = config.deeplink {
             print("🔗 [RProductBanner] Opening deeplink: \(deeplink)")
-            // TODO: Implement deeplink handling
             if let url = URL(string: deeplink) {
+                #if os(iOS)
                 UIApplication.shared.open(url)
+                #endif
             }
+            return
         }
+        
         // Fallback to ctaLink
-        else if let ctaLink = config.ctaLink {
+        if let ctaLink = config.ctaLink {
             print("🔗 [RProductBanner] Opening link: \(ctaLink)")
             if let url = URL(string: ctaLink) {
+                #if os(iOS)
                 UIApplication.shared.open(url)
+                #endif
             }
+            return
         }
+        
+        // Fallback: Use productId to navigate to product detail
+        print("🔗 [RProductBanner] Navigating to product detail for ID: \(config.productId)")
+        // TODO: Implement product detail navigation in your app
     }
 }
 
-// MARK: - ViewModel
+// MARK: - Shimmer Effect Extension
 
-@MainActor
-class RProductBannerViewModel: ObservableObject {
-    
-    @Published var product: Product?
-    @Published var isLoading: Bool = false
-    @Published var errorMessage: String?
-    @Published var isMarketUnavailable: Bool = false
-    
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
+private extension View {
+    func shimmerEffect() -> some View {
+        modifier(ShimmerEffectModifier())
     }
+}
+
+private struct ShimmerEffectModifier: ViewModifier {
+    @State private var phase: CGFloat = 0
     
-    func loadProduct(productId: String, currency: String, country: String) async {
-        guard ReachuConfiguration.shared.shouldUseSDK else {
-            isMarketUnavailable = true
-            isLoading = false
-            return
-        }
-        
-        guard !isLoading else { return }
-        
-        isLoading = true
-        errorMessage = nil
-        isMarketUnavailable = false
-        
-        print("🛍️ [RProductBanner] Loading product with ID: \(productId)")
-        
-        guard let intProductId = Int(productId) else {
-            errorMessage = "Invalid product ID"
-            isLoading = false
-            return
-        }
-        
-        do {
-            let dtoProducts = try await sdk.channel.product.get(
-                currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
-                productIds: [intProductId],
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geometry in
+                    // Get adaptive colors for shimmer effect
+                    let shimmerColor = ReachuColors.adaptive(for: .light).textPrimary.opacity(0.5)
+                    LinearGradient(
+                        colors: [
+                            Color.clear,
+                            shimmerColor,
+                            Color.clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .frame(width: geometry.size.width * 0.6)
+                    .offset(x: (phase - 0.5) * geometry.size.width * 1.5)
+                    .blendMode(.overlay)
+                }
             )
-            
-            product = dtoProducts.first?.toDomainProduct()
-            print("✅ [RProductBanner] Loaded product: \(product?.title ?? "unknown")")
-            
-        } catch let error as NotFoundException {
-            isMarketUnavailable = true
-            errorMessage = nil
-            print("⚠️ [RProductBanner] Market not available")
-        } catch let error as SdkException {
-            if error.code == "NOT_FOUND" || error.status == 404 {
-                isMarketUnavailable = true
-                errorMessage = nil
-            } else {
-                errorMessage = error.description
-                print("❌ [RProductBanner] Failed to load product: \(error.description)")
+            .onAppear {
+                phase = 0
+                withAnimation(
+                    Animation.linear(duration: 1.5)
+                        .repeatForever(autoreverses: false)
+                ) {
+                    phase = 1.0
+                }
             }
-        } catch {
-            errorMessage = error.localizedDescription
-            print("❌ [RProductBanner] Failed to load product: \(error.localizedDescription)")
-        }
-        
-        isLoading = false
     }
 }
-
