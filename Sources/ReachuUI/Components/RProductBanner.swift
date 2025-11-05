@@ -118,14 +118,11 @@ public struct RProductBanner: View {
     
     private func bannerContent(config: ProductBannerConfig) -> some View {
         // Validate URL before using it
-        guard let imageURL = URL(string: config.backgroundImageUrl), !config.backgroundImageUrl.isEmpty else {
-            print("❌ [RProductBanner] Invalid backgroundImageUrl: '\(config.backgroundImageUrl)'")
-            return errorBannerView(config: config)
-        }
+        let imageURL = URL(string: config.backgroundImageUrl)
         
         return ZStack {
             // Background image from config - THIS IS THE MAIN IMAGE TO SHOW
-            AsyncImage(url: imageURL) { phase in
+            AsyncImage(url: imageURL ?? URL(string: "about:blank")) { phase in
                 switch phase {
                 case .empty:
                     // Loading state - show placeholder
@@ -136,7 +133,11 @@ public struct RProductBanner: View {
                                 .tint(.white)
                         }
                         .onAppear {
-                            print("⏳ [RProductBanner] Loading background image: \(config.backgroundImageUrl)")
+                            if let url = imageURL {
+                                print("⏳ [RProductBanner] Loading background image: \(url.absoluteString)")
+                            } else {
+                                print("❌ [RProductBanner] Invalid backgroundImageUrl: '\(config.backgroundImageUrl)'")
+                            }
                         }
                 case .success(let image):
                     // Success - show image
@@ -233,44 +234,6 @@ public struct RProductBanner: View {
             // Tap anywhere on banner to navigate to product
             navigateToProduct(config: config)
         }
-    }
-    
-    private func errorBannerView(config: ProductBannerConfig) -> some View {
-        ZStack {
-            Rectangle()
-                .fill(adaptiveColors.surfaceSecondary)
-            
-            VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-                Text(config.title)
-                    .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(adaptiveColors.textPrimary)
-                
-                if let subtitle = config.subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 18))
-                        .foregroundColor(adaptiveColors.textSecondary)
-                }
-                
-                Spacer()
-                
-                Button {
-                    navigateToProduct(config: config)
-                } label: {
-                    Text(config.ctaText)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, ReachuSpacing.xl)
-                        .padding(.vertical, ReachuSpacing.md)
-                        .background(adaptiveColors.primary)
-                        .cornerRadius(ReachuBorderRadius.large)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(ReachuSpacing.xl)
-        }
-        .frame(height: 280)
-        .cornerRadius(ReachuBorderRadius.large)
-        .padding(.horizontal, ReachuSpacing.lg)
     }
     
     // MARK: - Helper Methods
