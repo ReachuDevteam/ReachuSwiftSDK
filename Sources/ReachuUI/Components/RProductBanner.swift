@@ -117,8 +117,9 @@ public struct RProductBanner: View {
     // MARK: - Content Views
     
     private func bannerContent(config: ProductBannerConfig) -> some View {
-        // Validate URL before using it
-        let imageURL = URL(string: config.backgroundImageUrl)
+        // Build full URL from config (handles both relative and absolute URLs)
+        let fullImageURL = buildFullURL(from: config.backgroundImageUrl)
+        let imageURL = URL(string: fullImageURL)
         
         return ZStack {
             // Background image from config - THIS IS THE MAIN IMAGE TO SHOW
@@ -133,11 +134,9 @@ public struct RProductBanner: View {
                                 .tint(.white)
                         }
                         .onAppear {
-                            if let url = imageURL {
-                                print("⏳ [RProductBanner] Loading background image: \(url.absoluteString)")
-                            } else {
-                                print("❌ [RProductBanner] Invalid backgroundImageUrl: '\(config.backgroundImageUrl)'")
-                            }
+                            print("⏳ [RProductBanner] Loading background image: \(fullImageURL)")
+                            print("   Original path: \(config.backgroundImageUrl)")
+                            print("   Full URL: \(fullImageURL)")
                         }
                 case .success(let image):
                     // Success - show image
@@ -146,7 +145,7 @@ public struct RProductBanner: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .onAppear {
-                            print("✅ [RProductBanner] Background image loaded successfully from: \(config.backgroundImageUrl)")
+                            print("✅ [RProductBanner] Background image loaded successfully from: \(fullImageURL)")
                         }
                 case .failure(let error):
                     // Error - show placeholder with error
@@ -164,7 +163,8 @@ public struct RProductBanner: View {
                         }
                         .onAppear {
                             print("❌ [RProductBanner] Failed to load background image: \(error.localizedDescription)")
-                            print("   URL: \(config.backgroundImageUrl)")
+                            print("   Original path: \(config.backgroundImageUrl)")
+                            print("   Full URL: \(fullImageURL)")
                             if let urlError = error as? URLError {
                                 print("   URL Error Code: \(urlError.code.rawValue)")
                                 print("   URL Error Description: \(urlError.localizedDescription)")
@@ -237,6 +237,18 @@ public struct RProductBanner: View {
     }
     
     // MARK: - Helper Methods
+    
+    /// Build full URL from relative path
+    private func buildFullURL(from path: String) -> String {
+        // If it's already a full URL, return as is
+        if path.hasPrefix("http://") || path.hasPrefix("https://") {
+            return path
+        }
+        
+        // If it's a relative path, prepend the base URL from campaign configuration
+        let baseURL = ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
+        return baseURL + path
+    }
     
     private func loadProductIfNeeded() {
         // No need to load product - we only use backgroundImageUrl from config
