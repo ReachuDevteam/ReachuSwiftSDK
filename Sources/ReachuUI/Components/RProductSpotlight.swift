@@ -574,13 +574,6 @@ private class RProductSpotlightViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isMarketUnavailable: Bool = false
     
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
-    }
-    
     func loadProduct(productId: Int, currency: String, country: String) async {
         guard ReachuConfiguration.shared.shouldUseSDK else {
             isMarketUnavailable = true
@@ -594,44 +587,32 @@ private class RProductSpotlightViewModel: ObservableObject {
         errorMessage = nil
         isMarketUnavailable = false
         
-        print("🛍️ [RProductSpotlight] Loading product with ID: \(productId)")
-        print("   Currency: \(currency), Country: \(country)")
-        
         do {
-            let dtoProducts = try await sdk.channel.product.get(
+            // Use ProductService to load product
+            product = try await ProductService.shared.loadProduct(
+                productId: productId,
                 currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
-                productIds: [productId],
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
+                country: country
             )
             
-            if let dtoProduct = dtoProducts.first {
-                product = dtoProduct.toDomainProduct()
-                print("✅ [RProductSpotlight] Loaded product: \(product?.title ?? "Unknown")")
+        } catch ProductServiceError.productNotFound(let id) {
+            errorMessage = "Product not found"
+            ReachuLogger.warning("Product not found for ID: \(id) - Currency: \(currency), Country: \(country)", component: "RProductSpotlight")
+        } catch ProductServiceError.invalidConfiguration(let message) {
+            errorMessage = "Invalid configuration"
+            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductSpotlight")
+        } catch ProductServiceError.sdkError(let error) {
+            if error.code == "NOT_FOUND" || error.status == 404 {
+                isMarketUnavailable = true
+                errorMessage = nil
+                ReachuLogger.warning("Market not available", component: "RProductSpotlight")
             } else {
-                errorMessage = "Product not found"
-                print("⚠️ [RProductSpotlight] Product not found for ID: \(productId)")
-                print("   Currency: \(currency), Country: \(country)")
-                print("   💡 This could mean:")
-                print("      - Product doesn't exist in this market")
-                print("      - Product is not available for this currency/country")
-                print("      - Product is not published/active")
+                errorMessage = error.message ?? "Failed to load product"
+                ReachuLogger.error("Error loading product: \(error.message ?? "Unknown error")", component: "RProductSpotlight")
             }
-            
-        } catch let error as NotFoundException {
-            isMarketUnavailable = true
-            errorMessage = nil
-            print("⚠️ [RProductSpotlight] Market not available")
-        } catch let error as SdkException {
-            errorMessage = error.message ?? "Failed to load product"
-            print("❌ [RProductSpotlight] Error loading product: \(error.message ?? "Unknown error")")
         } catch {
             errorMessage = "Failed to load product"
-            print("❌ [RProductSpotlight] Unexpected error: \(error.localizedDescription)")
+            ReachuLogger.error("Unexpected error: \(error.localizedDescription)", component: "RProductSpotlight")
         }
         
         isLoading = false
