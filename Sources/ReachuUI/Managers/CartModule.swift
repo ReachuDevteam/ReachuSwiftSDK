@@ -24,21 +24,19 @@ extension CartManager {
     public func createCart(currency: String = "USD", country: String = "US") async {
         // Check if SDK should be used before attempting operations
         guard ReachuConfiguration.shared.shouldUseSDK else {
-            print("⚠️ [Cart] Skipping cart creation - SDK disabled (market not available)")
+            ReachuLogger.warning("Skipping cart creation - SDK disabled (market not available)", component: "CartModule")
             return
         }
         
         if currentCartId != nil {
-            print("🛒 [Cart] createCart skipped — existing cartId=\(currentCartId ?? "nil")")
+            ReachuLogger.debug("createCart skipped — existing cartId=\(currentCartId ?? "nil")", component: "CartModule")
             return
         }
         isLoading = true
         errorMessage = nil
 
         let session = "ios-\(UUID().uuidString)"
-        print(
-            "🛒 [Cart] createCart START  session=\(session) currency=\(currency) country=\(country)"
-        )
+        ReachuLogger.debug("createCart START session=\(session) currency=\(currency) country=\(country)", component: "CartModule")
         logRequest(
             "sdk.cart.create",
             payload: [
@@ -54,26 +52,15 @@ extension CartManager {
                 currency: currency,
                 shippingCountry: country
             )
-            print(
-                "✅ [Cart] createCart OK     cartId=\(dto.cartId) items=\(dto.lineItems.count) currency=\(dto.currency)"
-            )
-            logResponse(
-                "sdk.cart.create",
-                payload: [
-                    "cartId": dto.cartId,
-                    "items": dto.lineItems.count,
-                    "currency": dto.currency
-                ]
-            )
             sync(from: dto)
         } catch let e as SdkException {
             errorMessage = e.description
             logError("sdk.cart.create", error: e)
-            print("❌ [Cart] createCart FAIL  \(e.description)")
+            ReachuLogger.error("createCart FAIL \(e.description)", component: "CartModule")
         } catch {
             errorMessage = error.localizedDescription
             logError("sdk.cart.create", error: error)
-            print("❌ [Cart] createCart FAIL  \(error.localizedDescription)")
+            ReachuLogger.error("createCart FAIL \(error.localizedDescription)", component: "CartModule")
         }
 
         isLoading = false
@@ -238,7 +225,7 @@ extension CartManager {
         defer { isLoading = false }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Cart] refreshShippingOptions: missing cartId")
+            ReachuLogger.info("refreshShippingOptions: missing cartId", component: "CartModule")
             return false
         }
 
@@ -293,7 +280,7 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.cart.getLineItemsBySupplier", error: error)
-            print("❌ [Cart] refreshShippingOptions FAIL \(msg)")
+            ReachuLogger.error("refreshShippingOptions FAIL \(msg)", component: "CartModule")
             return false
         }
     }
@@ -337,13 +324,13 @@ extension CartManager {
         defer { isLoading = false }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Cart] applyCheapestShippingPerSupplier: missing cartId")
+            ReachuLogger.info("applyCheapestShippingPerSupplier: missing cartId", component: "CartModule")
             return 0
         }
 
         let selections = pendingShippingSelections
         guard !selections.isEmpty else {
-            print("ℹ️ [Cart] applyCheapestShippingPerSupplier: no pending selections")
+            ReachuLogger.info("applyCheapestShippingPerSupplier: no pending selections", component: "CartModule")
             return 0
         }
 
@@ -381,11 +368,11 @@ extension CartManager {
             } catch let error as SdkException {
                 errorMessage = error.description
                 logError("sdk.cart.updateItem", error: error)
-                print("⚠️ [Cart] updateItem(shipping) failed for \(itemId): \(error.description)")
+                ReachuLogger.warning("updateItem(shipping) failed for \(itemId): \(error.description)", component: "CartModule")
             } catch {
                 errorMessage = error.localizedDescription
                 logError("sdk.cart.updateItem", error: error)
-                print("⚠️ [Cart] updateItem(shipping) failed for \(itemId): \(error.localizedDescription)")
+                ReachuLogger.warning("updateItem(shipping) failed for \(itemId): \(error.localizedDescription)", component: "CartModule")
             }
         }
 
@@ -400,7 +387,7 @@ extension CartManager {
             recalcShippingTotalsFromItems()
         }
 
-        print("✅ [Cart] Shipping updated for \(updatedCount) item(s).")
+        ReachuLogger.success("Shipping updated for \(updatedCount) item(s)", component: "CartModule")
         return updatedCount
     }
 
@@ -551,13 +538,13 @@ extension CartManager {
         } catch let error as SdkException {
             errorMessage = error.description
             logError("sdk.cart.update/addItem", error: error)
-            print("❌ [Cart] addProduct FAIL \(error.description)")
+            ReachuLogger.error("addProduct FAIL \(error.description)", component: "CartModule")
             addProductLocally(product, variant: selectedVariant, quantity: quantity)
             ToastManager.shared.showWarning("Using local cart for \(product.title) (sync error)")
         } catch {
             errorMessage = error.localizedDescription
             logError("sdk.cart.update/addItem", error: error)
-            print("❌ [Cart] addProduct FAIL \(error.localizedDescription)")
+            ReachuLogger.error("addProduct FAIL \(error.localizedDescription)", component: "CartModule")
             addProductLocally(product, variant: selectedVariant, quantity: quantity)
             ToastManager.shared.showWarning("Added \(product.title) locally due to error")
         }
@@ -593,14 +580,14 @@ extension CartManager {
             } catch let error as SdkException {
                 errorMessage = error.description
                 logError("sdk.cart.deleteItem", error: error)
-                print("⚠️ [Cart] SDK.deleteItem failed: \(error.description)")
+                ReachuLogger.warning("SDK.deleteItem failed: \(error.description)", component: "CartModule")
             } catch {
                 errorMessage = error.localizedDescription
                 logError("sdk.cart.deleteItem", error: error)
-                print("⚠️ [Cart] SDK.deleteItem failed: \(error.localizedDescription)")
+                ReachuLogger.warning("SDK.deleteItem failed: \(error.localizedDescription)", component: "CartModule")
             }
         } else {
-            print("ℹ️ [Cart] removeItem: skipped SDK call (missing cartId)")
+            ReachuLogger.info("removeItem: skipped SDK call (missing cartId)", component: "CartModule")
         }
 
         if !didSyncFromServer {
@@ -659,14 +646,14 @@ extension CartManager {
             } catch let error as SdkException {
                 errorMessage = error.description
                 logError("sdk.cart.updateItem", error: error)
-                print("⚠️ [Cart] SDK.updateItem failed: \(error.description)")
+                ReachuLogger.warning("SDK.updateItem failed: \(error.description)", component: "CartModule")
             } catch {
                 errorMessage = error.localizedDescription
                 logError("sdk.cart.updateItem", error: error)
-                print("⚠️ [Cart] SDK.updateItem failed: \(error.localizedDescription)")
+                ReachuLogger.warning("SDK.updateItem failed: \(error.localizedDescription)", component: "CartModule")
             }
         } else {
-            print("ℹ️ [Cart] updateQuantity: skipped SDK call (missing cartId)")
+            ReachuLogger.info("updateQuantity: skipped SDK call (missing cartId)", component: "CartModule")
         }
 
         if !didSyncFromServer {

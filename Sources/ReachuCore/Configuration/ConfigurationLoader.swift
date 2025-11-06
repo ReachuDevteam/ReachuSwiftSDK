@@ -41,14 +41,14 @@ public class ConfigurationLoader {
         do {
             // 1. If specific fileName provided, use it directly
             if let fileName = fileName {
-                print("🔧 [Config] Loading specific config: \(fileName).json")
+                ReachuLogger.debug("Loading specific config: \(fileName).json", component: "Config")
                 try loadFromJSON(fileName: fileName, bundle: bundle, userCountryCode: userCountryCode)
                 return
             }
             
             // 2. Check environment variable
             if let configType = ProcessInfo.processInfo.environment["REACHU_CONFIG_TYPE"] {
-                print("🔧 [Config] Using environment config type: \(configType)")
+                ReachuLogger.debug("Using environment config type: \(configType)", component: "Config")
                 let envFileName = "reachu-config-\(configType)"
                 try loadFromJSON(fileName: envFileName, bundle: bundle, userCountryCode: userCountryCode)
                 return
@@ -64,19 +64,19 @@ public class ConfigurationLoader {
             
             for configFile in configFiles {
                 if bundle.path(forResource: configFile, ofType: "json") != nil {
-                    print("🔧 [Config] Found config file: \(configFile).json")
+                    ReachuLogger.debug("Found config file: \(configFile).json", component: "Config")
                     try loadFromJSON(fileName: configFile, bundle: bundle, userCountryCode: userCountryCode)
                     return
                 }
             }
             
             // 4. No config file found - use defaults
-            print("⚠️ [Config] No config file found in bundle, using SDK defaults")
+            ReachuLogger.warning("No config file found in bundle, using SDK defaults", component: "Config")
             applyDefaultConfiguration(userCountryCode: userCountryCode)
             
         } catch {
-            print("❌ [Config] Error loading configuration: \(error)")
-            print("🔧 [Config] Falling back to SDK defaults")
+            ReachuLogger.error("Error loading configuration: \(error)", component: "Config")
+            ReachuLogger.debug("Falling back to SDK defaults", component: "Config")
             applyDefaultConfiguration(userCountryCode: userCountryCode)
         }
     }
@@ -95,7 +95,7 @@ public class ConfigurationLoader {
             ),
             marketConfig: .default
         )
-        print("✅ [Config] Applied default SDK configuration")
+        ReachuLogger.success("Applied default SDK configuration", component: "Config")
         
         // Check market availability if user country provided
         if let countryCode = userCountryCode {
@@ -114,20 +114,20 @@ public class ConfigurationLoader {
             throw ConfigurationError.fileNotFound(fileName: "\(fileName).json")
         }
         
-        print("📄 [Config] Loading configuration from: \(fileName).json")
+        ReachuLogger.debug("Loading configuration from: \(fileName).json", component: "Config")
         let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
         
         // Use provided userCountryCode or check environment variable
         let userCountry = userCountryCode ?? ProcessInfo.processInfo.environment["REACHU_USER_COUNTRY"]
         
         applyConfiguration(config, bundle: bundle, userCountryCode: userCountry)
-        print("✅ [Config] Configuration loaded successfully: \(config.theme?.name ?? "Default")")
-        print("🎨 [Config] Theme mode: \(config.theme?.mode ?? "unknown")")
+        ReachuLogger.success("Configuration loaded successfully: \(config.theme?.name ?? "Default")", component: "Config")
+        ReachuLogger.debug("Theme mode: \(config.theme?.mode ?? "unknown")", component: "Config")
         if let lightColors = config.theme?.lightColors {
-            print("💡 [Config] Light primary: \(lightColors.primary ?? "default")")
+            ReachuLogger.debug("Light primary: \(lightColors.primary ?? "default")", component: "Config")
         }
         if let darkColors = config.theme?.darkColors {
-            print("🌙 [Config] Dark primary: \(darkColors.primary ?? "default")")
+            ReachuLogger.debug("Dark primary: \(darkColors.primary ?? "default")", component: "Config")
         }
     }
     
@@ -220,15 +220,13 @@ public class ConfigurationLoader {
             let languageCode = languageCodeForCountry(countryCode)
             let hasTranslations = localizationConfig.translations[languageCode] != nil
             
-            print("🌍 [Config] Country: \(countryCode) → Language: \(languageCode)")
-            print("🌍 [Config] Translations available for '\(languageCode)': \(hasTranslations)")
-            print("🌍 [Config] Available languages in config: \(localizationConfig.translations.keys.joined(separator: ", "))")
+            ReachuLogger.debug("Country: \(countryCode) → Language: \(languageCode), Translations available: \(hasTranslations), Available languages: \(localizationConfig.translations.keys.joined(separator: ", "))", component: "Config")
             
             if hasTranslations {
                 ReachuLocalization.shared.setLanguage(languageCode)
-                print("✅ [Config] Language set to '\(languageCode)' based on user country '\(countryCode)'")
+                ReachuLogger.success("Language set to '\(languageCode)' based on user country '\(countryCode)'", component: "Config")
             } else {
-                print("⚠️ [Config] Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'")
+                ReachuLogger.warning("Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'", component: "Config")
                 ReachuLocalization.shared.setLanguage(localizationConfig.defaultLanguage)
             }
             
@@ -242,15 +240,13 @@ public class ConfigurationLoader {
             let languageCode = languageCodeForCountry(fallbackCountry)
             let hasTranslations = localizationConfig.translations[languageCode] != nil
             
-            print("🌍 [Config] Market fallback country: \(fallbackCountry) → Language: \(languageCode)")
-            print("🌍 [Config] Translations available for '\(languageCode)': \(hasTranslations)")
-            print("🌍 [Config] Available languages in config: \(localizationConfig.translations.keys.joined(separator: ", "))")
+            ReachuLogger.debug("Market fallback country: \(fallbackCountry) → Language: \(languageCode), Translations available: \(hasTranslations), Available languages: \(localizationConfig.translations.keys.joined(separator: ", "))", component: "Config")
             
             if hasTranslations {
                 ReachuLocalization.shared.setLanguage(languageCode)
-                print("✅ [Config] Language set to '\(languageCode)' based on market fallback country '\(fallbackCountry)'")
+                ReachuLogger.success("Language set to '\(languageCode)' based on market fallback country '\(fallbackCountry)'", component: "Config")
             } else {
-                print("⚠️ [Config] Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'")
+                ReachuLogger.warning("Language '\(languageCode)' not available in translations, using default '\(localizationConfig.defaultLanguage)'", component: "Config")
                 ReachuLocalization.shared.setLanguage(localizationConfig.defaultLanguage)
             }
             
@@ -272,7 +268,7 @@ public class ConfigurationLoader {
         
         // Skip check if API key is empty (demo mode)
         guard !config.apiKey.isEmpty else {
-            print("⚠️ [Config] Skipping market check - API key not configured")
+            ReachuLogger.warning("Skipping market check - API key not configured", component: "Config")
             ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
             return
         }
@@ -281,16 +277,13 @@ public class ConfigurationLoader {
             let baseURL = URL(string: config.environment.graphQLURL)!
             let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
             
-            print("🔍 [Config] Checking market availability for country: \(countryCode)")
-            print("   Using Channel.GetAvailableMarkets (channel-specific markets)...")
-            print("   URL: \(sdk.baseUrl.absoluteString)")
-            print("   API Key: \(sdk.apiKey.prefix(8))...")
+            ReachuLogger.debug("Checking market availability for country: \(countryCode) - Using Channel.GetAvailableMarkets - URL: \(sdk.baseUrl.absoluteString), API Key: \(sdk.apiKey.prefix(8))...", component: "Config")
             
             // Use Channel.GetAvailableMarkets - this returns only markets enabled for this specific channel
             let channelMarkets = try await sdk.channel.market.getAvailable()
             let marketCodes = channelMarkets.compactMap { $0.code?.uppercased() }
             
-            print("   ✅ Channel markets loaded: \(marketCodes.joined(separator: ", "))")
+            ReachuLogger.debug("Channel markets loaded: \(marketCodes.joined(separator: ", "))", component: "Config")
             
             let isAvailable = marketCodes.contains(countryCode.uppercased())
             
@@ -300,59 +293,34 @@ public class ConfigurationLoader {
             }
             
             if isAvailable {
-                print("✅ [Config] Market available for \(countryCode) - SDK enabled")
-                print("   Loaded \(channelMarkets.count) available markets: \(marketCodes.joined(separator: ", "))")
+                ReachuLogger.success("Market available for \(countryCode) - SDK enabled - Loaded \(channelMarkets.count) available markets: \(marketCodes.joined(separator: ", "))", component: "Config")
             } else {
-                print("⚠️ [Config] Market not available for \(countryCode) - SDK disabled")
-                print("   Available markets (\(channelMarkets.count)): \(marketCodes.joined(separator: ", "))")
+                ReachuLogger.warning("Market not available for \(countryCode) - SDK disabled - Available markets (\(channelMarkets.count)): \(marketCodes.joined(separator: ", "))", component: "Config")
             }
         } catch let error as NotFoundException {
             await MainActor.run {
                 ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
             }
-            print("❌ [Config] Channel market query failed (404) - SDK disabled for \(countryCode)")
-            print("   Error type: NotFoundException")
-            print("   URL attempted: \(config.environment.graphQLURL)")
-            print("   API Key: \(config.apiKey.prefix(8))...")
-            print("   Query: Channel.GetAvailableMarkets")
-            print("   Possible causes:")
-            print("   1. Endpoint not available in \(config.environment.rawValue) environment")
-            print("   2. API key doesn't have permissions for this endpoint")
-            print("   3. Endpoint not configured in backend")
-            print("   4. Authentication header format issue")
+            ReachuLogger.error("Channel market query failed (404) - SDK disabled for \(countryCode) - Error type: NotFoundException, URL: \(config.environment.graphQLURL), API Key: \(config.apiKey.prefix(8))..., Query: Channel.GetAvailableMarkets", component: "Config")
         } catch let error as SdkException {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 await MainActor.run {
                     ReachuConfiguration.setMarketAvailable(false, userCountryCode: countryCode, availableMarkets: [])
                 }
-                print("❌ [Config] Channel market query failed (404) - SDK disabled for \(countryCode)")
-                print("   Error code: \(error.code)")
-                print("   Error status: \(error.status ?? 0)")
-                print("   Error message: \(error.description)")
-                print("   URL attempted: \(config.environment.graphQLURL)")
-                print("   API Key: \(config.apiKey.prefix(8))...")
-                print("   Query: Channel.GetAvailableMarkets")
-                print("   Possible causes:")
-                print("   1. Endpoint not available in \(config.environment.rawValue) environment")
-                print("   2. API key doesn't have permissions for this endpoint")
-                print("   3. Endpoint not configured in backend")
-                print("   4. Authentication header format issue")
+                ReachuLogger.error("Channel market query failed (404) - SDK disabled for \(countryCode) - Error code: \(error.code), Status: \(error.status ?? 0), Message: \(error.description), URL: \(config.environment.graphQLURL), API Key: \(config.apiKey.prefix(8))..., Query: Channel.GetAvailableMarkets", component: "Config")
             } else {
                 // Other errors - assume available to not block SDK usage
                 await MainActor.run {
                     ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
                 }
-                print("⚠️ [Config] Market check failed but assuming available: \(error.description)")
-                print("   Error code: \(error.code), Status: \(error.status ?? 0)")
+                ReachuLogger.warning("Market check failed but assuming available: \(error.description) - Error code: \(error.code), Status: \(error.status ?? 0)", component: "Config")
             }
         } catch {
             // Network or other errors - assume available to not block SDK usage
             await MainActor.run {
                 ReachuConfiguration.setMarketAvailable(true, userCountryCode: countryCode, availableMarkets: [])
             }
-            print("⚠️ [Config] Market check failed (network error) but assuming available")
-            print("   Error: \(error.localizedDescription)")
-            print("   Type: \(type(of: error))")
+            ReachuLogger.warning("Market check failed (network error) but assuming available - Error: \(error.localizedDescription), Type: \(type(of: error))", component: "Config")
         }
     }
     
@@ -611,7 +579,7 @@ public class ConfigurationLoader {
         
         // Si hay un archivo externo de traducciones, cargarlo
         if let translationsFile = config.translationsFile {
-            print("📚 [Config] Loading translations from file: \(translationsFile).json")
+            ReachuLogger.debug("Loading translations from file: \(translationsFile).json", component: "Config")
             if let externalTranslations = loadTranslationsFromFile(translationsFile, bundle: bundle) {
                 // Merge: las traducciones del archivo externo tienen prioridad
                 for (language, langTranslations) in externalTranslations {
@@ -619,11 +587,10 @@ public class ConfigurationLoader {
                         translations[language] = [:]
                     }
                     translations[language]?.merge(langTranslations) { (_, new) in new }
-                    print("   ✅ Loaded \(langTranslations.count) translations for language '\(language)'")
                 }
-                print("📚 [Config] Total languages loaded: \(externalTranslations.keys.joined(separator: ", "))")
+                ReachuLogger.debug("Total languages loaded: \(externalTranslations.keys.joined(separator: ", "))", component: "Config")
             } else {
-                print("⚠️ [Config] Failed to load translations file: \(translationsFile).json")
+                ReachuLogger.warning("Failed to load translations file: \(translationsFile).json", component: "Config")
             }
         }
         
@@ -640,7 +607,7 @@ public class ConfigurationLoader {
         // Don't add them if they're not in the file, they're already in defaultEnglish
         if translations["en"] == nil {
             // English is always available from ReachuTranslationKey.defaultEnglish, no need to add it here
-            print("ℹ️ [Config] English translations not in file, will use default built-in translations")
+            ReachuLogger.debug("English translations not in file, will use default built-in translations", component: "Config")
         }
         
         return LocalizationConfiguration(
@@ -672,9 +639,7 @@ public class ConfigurationLoader {
         // Try to find the file in the bundle
         guard let path = bundle.path(forResource: fileName, ofType: "json"),
               let data = FileManager.default.contents(atPath: path) else {
-            print("⚠️ [Config] Translations file not found: \(fileName).json")
-            print("   Searched in bundle: \(bundle.bundlePath)")
-            print("   Make sure the file is included in 'Copy Bundle Resources' in Xcode")
+            ReachuLogger.warning("Translations file not found: \(fileName).json - Searched in bundle: \(bundle.bundlePath) - Make sure the file is included in 'Copy Bundle Resources' in Xcode", component: "Config")
             return nil
         }
         
@@ -684,7 +649,7 @@ public class ConfigurationLoader {
             
             // Format 1: { "translations": { "en": {...}, "es": {...} } }
             if let wrapper = try? decoder.decode(TranslationsFileWrapper.self, from: data) {
-                print("✅ [Config] Loaded translations from \(fileName).json")
+                ReachuLogger.debug("Loaded translations from \(fileName).json", component: "Config")
                 return wrapper.translations
             }
             
@@ -692,17 +657,14 @@ public class ConfigurationLoader {
             if let directTranslations = try? decoder.decode([String: [String: String]].self, from: data) {
                 let languages = directTranslations.keys.joined(separator: ", ")
                 let totalKeys = directTranslations.values.reduce(0) { $0 + $1.count }
-                print("✅ [Config] Loaded translations from \(fileName).json")
-                print("   Languages: \(languages)")
-                print("   Total translation keys: \(totalKeys)")
+                ReachuLogger.debug("Loaded translations from \(fileName).json - Languages: \(languages), Total translation keys: \(totalKeys)", component: "Config")
                 return directTranslations
             }
             
-            print("❌ [Config] Invalid format in translations file: \(fileName).json")
-            print("   Expected format: { \"en\": {...}, \"de\": {...} }")
+            ReachuLogger.error("Invalid format in translations file: \(fileName).json - Expected format: { \"en\": {...}, \"de\": {...} }", component: "Config")
             return nil
         } catch {
-            print("❌ [Config] Error loading translations file: \(error)")
+            ReachuLogger.error("Error loading translations file: \(error)", component: "Config")
             return nil
         }
     }
@@ -717,14 +679,14 @@ public class ConfigurationLoader {
     /// Initialize Stripe automatically by fetching publishable key from Reachu API
     private static func initializeStripeIfAvailable() {
         #if canImport(StripeCore) && os(iOS)
-        print("🔧 [Config] Initializing Stripe payment...")
+        ReachuLogger.debug("Initializing Stripe payment...", component: "Config")
         
         let defaultPublishableKey = "pk_test_51MvQONBjfRnXLEB43vxVNP53LmkC13ZruLbNqDYIER8GmRgLX97vWKw9gPuhYLuOSwXaXpDFYAKsZhYtBpcAWvcy00zQ9ZES0L"
         
         // Get configuration
         let config = ReachuConfiguration.shared
         guard let baseURL = URL(string: config.environment.graphQLURL) else {
-            print("❌ [Config] Invalid GraphQL URL, using default Stripe key")
+            ReachuLogger.error("Invalid GraphQL URL, using default Stripe key", component: "Config")
             StripeAPI.defaultPublishableKey = defaultPublishableKey
             return
         }
@@ -742,31 +704,29 @@ public class ConfigurationLoader {
                    let publishableKey = stripeMethod.publishableKey {
                     await MainActor.run {
                         StripeAPI.defaultPublishableKey = publishableKey
-                        print("💳 [Config] Stripe configured with API key: \(publishableKey.prefix(20))...")
+                        ReachuLogger.debug("Stripe configured with API key: \(publishableKey.prefix(20))...", component: "Config")
                     }
                 } else {
                     // Stripe method not found in API, use default
                     await MainActor.run {
                         StripeAPI.defaultPublishableKey = defaultPublishableKey
-                        print("⚠️ [Config] Stripe method not found in API, using default key")
+                        ReachuLogger.warning("Stripe method not found in API, using default key", component: "Config")
                     }
                 }
             } catch {
                 // API call failed, use default key
                 await MainActor.run {
                     StripeAPI.defaultPublishableKey = defaultPublishableKey
-                    print("💳 [Config] Using default Stripe key")
                     if let sdkError = error as? SdkException {
-                        print("   Payment methods fetch failed: \(sdkError.description)")
-                        print("   Error code: \(sdkError.code), Status: \(sdkError.status ?? 0)")
+                        ReachuLogger.warning("Using default Stripe key - Payment methods fetch failed: \(sdkError.description) - Error code: \(sdkError.code), Status: \(sdkError.status ?? 0)", component: "Config")
                     } else {
-                        print("   Payment methods fetch failed: \(error.localizedDescription)")
+                        ReachuLogger.warning("Using default Stripe key - Payment methods fetch failed: \(error.localizedDescription)", component: "Config")
                     }
                 }
             }
         }
         #else
-        print("ℹ️ [Config] Stripe not available on this platform")
+        ReachuLogger.debug("Stripe not available on this platform", component: "Config")
         #endif
     }
 }

@@ -30,9 +30,6 @@ public struct ReachuUI {
             // Already configured, just ensure it's set
             ReachuLocalization.shared.configure(currentConfig)
         }
-        
-        print("🎨 Reachu UI components initialized")
-        print("🌍 Localization: \(ReachuLocalization.shared.language)")
     }
 }
 

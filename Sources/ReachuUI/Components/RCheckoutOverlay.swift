@@ -166,22 +166,21 @@ public struct RCheckoutOverlay: View {
         NavigationView {
             VStack(spacing: 0) {
                 // Content based on step
-                let _ = print("🟣 [RCheckoutOverlay] Current checkoutStep: \(checkoutStep)")
                 switch checkoutStep {
                 case .address:
-                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: addressStepView")
                     addressStepView
                 case .orderSummary:
-                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: orderSummaryStepView")
                     orderSummaryStepView
                 case .review:
                     reviewStepView
                 case .success:
                     successStepView
                 case .error:
-                    let _ = print("🟣 [RCheckoutOverlay] Mostrando: errorStepView - errorMessage: \(errorMessage ?? "nil")")
                     errorStepView
                 }
+            }
+            .onChange(of: checkoutStep) { newStep in
+                let _ = ReachuLogger.debug("Current checkoutStep: \(newStep)", component: "RCheckoutOverlay")
             }
             .navigationTitle(RLocalizedString(ReachuTranslationKey.checkout.rawValue))
             #if os(iOS) || os(tvOS) || os(watchOS)
@@ -190,16 +189,17 @@ public struct RCheckoutOverlay: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     if checkoutStep != .success {
-                        Button("", systemImage: cartManager.items.isEmpty ? "xmark" : "arrow.left") {
+                        Button(action: {
                             if cartManager.items.isEmpty || checkoutStep == .address {
                                 cartManager.hideCheckout()
                             } else {
                                 goToPreviousStep()
                             }
+                        }) {
+                            Image(systemName: cartManager.items.isEmpty ? "xmark" : "arrow.left")
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .frame(width: 44, height: 44)
                         }
-                        .foregroundColor(ReachuColors.textPrimary)
-                    } else {
-                        EmptyView()
                     }
                 }
             }
@@ -212,13 +212,9 @@ public struct RCheckoutOverlay: View {
         if !ReachuConfiguration.shared.shouldUseSDK || !CampaignManager.shared.isCampaignActive {
             EmptyView()
         } else {
-        let timestamp = Date().timeIntervalSince1970
-        let _ = print("🟣🟣🟣 [RCheckoutOverlay] body rendered - VERSION: ada7fdd - TIME: \(timestamp)")
-        let _ = print("🟣 checkoutStep: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
-        
             mainContent
             .onAppear {
-                print("🟣 [RCheckoutOverlay] onAppear triggered")
+                ReachuLogger.debug("onAppear triggered", component: "RCheckoutOverlay")
                 syncSelectedMarket()
                 Task {
                     await loadAvailablePaymentMethods()
@@ -332,11 +328,10 @@ public struct RCheckoutOverlay: View {
                     returnURL: returnURL,
                     onAuthorized: { authToken, finalizeRequired in
                         Task { @MainActor in
-                            print("🔵 [Klarna Flow] Step 5: Usuario autorizó el pago en Klarna")
-                            print("   - AuthToken (primeros 20): \(authToken.prefix(20))...")
-                            print("   - AuthToken (completo): \(authToken)")
-                            print("   - FinalizeRequired: \(finalizeRequired)")
-                            print("🔵 [Klarna Flow] Step 6: Llamando a backend para confirmar pago")
+                            ReachuLogger.debug("Step 5: Usuario autorizó el pago en Klarna", component: "RCheckoutOverlay")
+                            ReachuLogger.debug("AuthToken (primeros 20): \(authToken.prefix(20))...", component: "RCheckoutOverlay")
+                            ReachuLogger.debug("FinalizeRequired: \(finalizeRequired)", component: "RCheckoutOverlay")
+                            ReachuLogger.debug("Step 6: Llamando a backend para confirmar pago", component: "RCheckoutOverlay")
                             
                             isLoading = true
                             klarnaAutoAuthorize = false
@@ -362,8 +357,7 @@ public struct RCheckoutOverlay: View {
                             
                             let billingAddress = shippingAddress
                             
-                            print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
-                            print("   - Email: \(email)")
+                            ReachuLogger.debug("CheckoutId: \(cartManager.checkoutId ?? "nil"), Email: \(email)", component: "RCheckoutOverlay")
                             
                             // Call backend to confirm payment
                             guard let result = await cartManager.confirmKlarnaNative(
@@ -373,22 +367,16 @@ public struct RCheckoutOverlay: View {
                                 billingAddress: billingAddress,
                                 shippingAddress: shippingAddress
                             ) else {
-                                print("❌ [Klarna Flow] ERROR: Backend no pudo confirmar el pago")
-                                print("❌ [Klarna Flow] Verificar:")
-                                print("   1. AuthToken es válido?")
-                                print("   2. Backend de Reachu respondió?")
-                                print("   3. Klarna API respondió correctamente?")
-                                print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Klarna confirm failed)")
+                                ReachuLogger.error("Backend no pudo confirmar el pago", component: "RCheckoutOverlay")
+                                ReachuLogger.error("Verificar: AuthToken válido, Backend respondió, Klarna API respondió", component: "RCheckoutOverlay")
+                                ReachuLogger.error("Setting checkoutStep to .error (Klarna confirm failed)", component: "RCheckoutOverlay")
                                 errorMessage = "Failed to confirm Klarna payment"
                                 checkoutStep = .error
                                 isLoading = false
                                 return
                             }
                             
-                            print("✅ [Klarna Flow] Step 7: ¡PAGO EXITOSO!")
-                            print("   - OrderId: \(result.orderId)")
-                            print("   - FraudStatus: \(result.fraudStatus)")
-                            print("🔵 [Klarna Flow] ========== FIN ==========")
+                            ReachuLogger.success("Step 7: PAGO EXITOSO - OrderId: \(result.orderId), FraudStatus: \(result.fraudStatus)", component: "RCheckoutOverlay")
                             
                             klarnaNativeInitData = nil
                             checkoutStep = .success
@@ -397,14 +385,8 @@ public struct RCheckoutOverlay: View {
                     },
                     onFailed: { message in
                         Task { @MainActor in
-                            print("❌ [Klarna Flow] ERROR: Pago falló o fue cancelado")
-                            print("   - Mensaje: \(message)")
-                            print("❌ [Klarna Flow] Razones posibles:")
-                            print("   1. Usuario canceló el pago")
-                            print("   2. Klarna rechazó la transacción")
-                            print("   3. Error de red con Klarna")
-                            print("   4. Token de sesión expiró")
-                            print("🔵 [Klarna Flow] ========== FIN (Error) ==========")
+                            ReachuLogger.error("Pago falló o fue cancelado - Mensaje: \(message)", component: "RCheckoutOverlay")
+                            ReachuLogger.error("Razones posibles: Usuario canceló, Klarna rechazó, Error de red, Token expiró", component: "RCheckoutOverlay")
                             
                             klarnaAutoAuthorize = false
                             klarnaNativeInitData = nil
@@ -469,7 +451,7 @@ public struct RCheckoutOverlay: View {
                                     checkoutStep = .success
                                     klarnaNativeInitData = nil
                                 } else {
-                                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (proceedToNext failed)")
+                                    ReachuLogger.error("Setting checkoutStep to .error (proceedToNext failed)", component: "RCheckoutOverlay")
                                     checkoutStep = .error
                                 }
 
@@ -490,7 +472,7 @@ public struct RCheckoutOverlay: View {
                     Text("No Klarna payment methods available.")
                     .padding()
                     .onAppear {
-                        print("❌ [ERROR SOURCE] Setting checkoutStep to .error (KlarnaNativePaymentSheet onAppear)")
+                        ReachuLogger.error("Setting checkoutStep to .error (KlarnaNativePaymentSheet onAppear)", component: "RCheckoutOverlay")
                         showKlarnaNativeSheet = false
                         checkoutStep = .error
                     }
@@ -786,7 +768,6 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
                 
-                let _ = print("🔵🔵🔵 [OrderSummary] Renderizando botón 'Initiate Payment' - isDisabled: \(!canProceedToNext)")
                 RButton(
                     title: RLocalizedString(ReachuTranslationKey.initiatePayment.rawValue),
                     style: .primary,
@@ -794,10 +775,10 @@ public struct RCheckoutOverlay: View {
                     isDisabled: !canProceedToNext
                 ) {
                     Task { @MainActor in
-                        print("🟢 [Checkout] ========== Botón 'Initiate Payment' presionado ==========")
-                        print("🟢 [Checkout] selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
+                        ReachuLogger.debug("Botón 'Initiate Payment' presionado - selectedPaymentMethod: \(selectedPaymentMethod.rawValue)", component: "RCheckoutOverlay")
+                        
                         #if os(iOS)
-                            print("🟢 [Checkout] Platform: iOS detected")
+                            ReachuLogger.debug("Platform: iOS detected", component: "RCheckoutOverlay")
                             if selectedPaymentMethod == .stripe {
                                 isLoading = true
                                 let ok = await prepareStripePaymentSheet()
@@ -807,29 +788,27 @@ public struct RCheckoutOverlay: View {
                                     presentStripePaymentSheet()
                                     return
                                 } else {
-                                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Stripe prepareStripePaymentSheet failed)")
+                                    ReachuLogger.error("Setting checkoutStep to .error (Stripe prepareStripePaymentSheet failed)", component: "RCheckoutOverlay")
                                     checkoutStep = .error
                                     return
                                 }
                             }
                             if selectedPaymentMethod == .klarna {
-                                print("🟢 [Checkout] Botón 'Initiate Payment' presionado con Klarna seleccionado")
-                                print("🟢 [Checkout] Llamando a initiateKlarnaDirectFlow()...")
+                                ReachuLogger.debug("Botón 'Initiate Payment' presionado con Klarna seleccionado - Llamando a initiateKlarnaDirectFlow()", component: "RCheckoutOverlay")
                                 // Usar flujo directo de Klarna sin UI intermedia
                                 await initiateKlarnaDirectFlow()
                                 return
                             }
                             if selectedPaymentMethod == .vipps {
-                                print("🟢 [Checkout] Botón 'Initiate Payment' presionado con Vipps seleccionado")
-                                print("🟢 [Checkout] Llamando a initiateVippsFlow()...")
+                                ReachuLogger.debug("Botón 'Initiate Payment' presionado con Vipps seleccionado - Llamando a initiateVippsFlow()", component: "RCheckoutOverlay")
                                 // Usar flujo directo de Vipps
                                 await initiateVippsFlow()
                                 return
                             }
                         #else
-                            print("⚠️⚠️⚠️ [Checkout] Platform: NO ES iOS - saltando lógica de pago")
+                            ReachuLogger.warning("Platform: NO ES iOS - saltando lógica de pago", component: "RCheckoutOverlay")
                         #endif
-                        print("🟢 [Checkout] Llamando a proceedToNext()...")
+                        ReachuLogger.debug("Llamando a proceedToNext()", component: "RCheckoutOverlay")
                         proceedToNext()
                     }
                 }
@@ -1442,8 +1421,7 @@ public struct RCheckoutOverlay: View {
     }
 
     private func proceedToNext() {
-        print("🔶🔶🔶 [proceedToNext] FUNCIÓN LLAMADA - checkoutStep actual: \(checkoutStep)")
-        print("🔶 selectedPaymentMethod: \(selectedPaymentMethod.rawValue)")
+        ReachuLogger.debug("proceedToNext FUNCIÓN LLAMADA - checkoutStep actual: \(checkoutStep), selectedPaymentMethod: \(selectedPaymentMethod.rawValue)", component: "RCheckoutOverlay")
         withAnimation(.easeInOut(duration: 0.3)) {
             switch checkoutStep {
             case .address:
@@ -1452,8 +1430,7 @@ public struct RCheckoutOverlay: View {
                 // Handle Klarna direct flow
                 if selectedPaymentMethod == .klarna {
                     #if os(iOS) && canImport(KlarnaMobileSDK)
-                        print("🔶🔶🔶 [proceedToNext] Klarna detectado en orderSummary")
-                        print("🔶 Llamando a initiateKlarnaDirectFlow()...")
+                        ReachuLogger.debug("Klarna detectado en orderSummary - Llamando a initiateKlarnaDirectFlow()", component: "RCheckoutOverlay")
                         Task {
                             await initiateKlarnaDirectFlow()
                         }
@@ -1601,8 +1578,7 @@ public struct RCheckoutOverlay: View {
         }
 
         private func initiateKlarnaDirectFlow() async {
-            print("🔵 [Klarna Flow] ========== INICIO ==========")
-            print("🔵 [Klarna Flow] Step 1: Preparando datos del checkout")
+            ReachuLogger.debug("Klarna Flow INICIO - Step 1: Preparando datos del checkout", component: "RCheckoutOverlay")
             
             await MainActor.run {
                 isLoading = true
@@ -1633,12 +1609,7 @@ public struct RCheckoutOverlay: View {
             let countryCode = getCountryCode(from: country)
             let locale = getLocale(for: countryCode)
             
-            print("🔵 [Klarna Flow] Datos preparados:")
-            print("   - Email: \(email)")
-            print("   - País: \(country) → \(countryCode)")
-            print("   - Moneda: \(cartManager.currency)")
-            print("   - Locale: \(locale)")
-            print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
+            ReachuLogger.debug("Datos preparados: Email=\(email), País=\(country)→\(countryCode), Moneda=\(cartManager.currency), Locale=\(locale), CheckoutId=\(cartManager.checkoutId ?? "nil")", component: "RCheckoutOverlay")
             
             let input = KlarnaNativeInitInputDto(
                 countryCode: countryCode,
@@ -1652,20 +1623,13 @@ public struct RCheckoutOverlay: View {
                 shippingAddress: shippingAddress
             )
 
-            print("🔵 [Klarna Flow] Step 2: Llamando a backend Reachu (initKlarnaNative)")
-            print("🔵 [Klarna Flow] cartManager type: \(type(of: cartManager))")
-            print("🔵 [Klarna Flow] About to call: cartManager.initKlarnaNative(input:)")
+            ReachuLogger.debug("Step 2: Llamando a backend Reachu (initKlarnaNative)", component: "RCheckoutOverlay")
             
             // Call backend to initialize Klarna session
             guard let dto = await cartManager.initKlarnaNative(input: input) else {
-                print("🔵 [Klarna Flow] initKlarnaNative returned: NIL")
-                print("❌ [Klarna Flow] ERROR: Backend retornó nil")
-                print("❌ [Klarna Flow] Verificar:")
-                print("   1. CheckoutId existe?")
-                print("   2. Backend de Reachu respondió?")
-                print("   3. Credenciales de Klarna configuradas?")
+                ReachuLogger.error("initKlarnaNative returned: NIL - Backend retornó nil. Verificar: CheckoutId existe, Backend respondió, Credenciales configuradas", component: "RCheckoutOverlay")
                 await MainActor.run {
-                    print("❌ [Klarna Flow] Setting checkoutStep to .error (initKlarnaNative returned nil)")
+                    ReachuLogger.error("Setting checkoutStep to .error (initKlarnaNative returned nil)", component: "RCheckoutOverlay")
                     self.isLoading = false
                     self.errorMessage = "Failed to initialize Klarna payment"
                     self.checkoutStep = .error
@@ -1673,41 +1637,33 @@ public struct RCheckoutOverlay: View {
                 return
             }
             
-            print("🔵 [Klarna Flow] initKlarnaNative returned: DTO")
-            print("✅ [Klarna Flow] Step 3: Backend respondió correctamente")
-            print("   - SessionId: \(dto.sessionId)")
-            print("   - ClientToken: \(dto.clientToken.prefix(20))...")
-            print("   - Categorías: \(dto.paymentMethodCategories?.count ?? 0)")
+            ReachuLogger.success("Step 3: Backend respondió correctamente - SessionId: \(dto.sessionId), ClientToken: \(dto.clientToken.prefix(20))..., Categorías: \(dto.paymentMethodCategories?.count ?? 0)", component: "RCheckoutOverlay")
 
             await MainActor.run {
                 // Backend already returns the correct DTO structure
                 let categories = dto.paymentMethodCategories ?? []
                 guard !categories.isEmpty else {
-                    print("❌ [Klarna Flow] ERROR: No hay métodos de pago disponibles")
-                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (No Klarna payment methods)")
+                    ReachuLogger.error("ERROR: No hay métodos de pago disponibles - Setting checkoutStep to .error", component: "RCheckoutOverlay")
                     self.isLoading = false
                     self.errorMessage = "No Klarna payment methods available for this checkout."
                     self.checkoutStep = .error
                     return
                 }
                 
-                print("🔵 [Klarna Flow] Métodos de pago disponibles:")
-                for category in categories {
-                    print("   - \(category.identifier): \(category.name ?? "sin nombre")")
-                }
+                ReachuLogger.debug("Métodos de pago disponibles: \(categories.map { "\($0.identifier): \($0.name ?? "sin nombre")" }.joined(separator: ", "))", component: "RCheckoutOverlay")
                 
                 // Store categories and select first one
                 self.klarnaAvailableCategories = categories
                 if let firstCategory = categories.first {
                     self.klarnaSelectedCategoryIdentifier = firstCategory.identifier
-                    print("🔵 [Klarna Flow] Categoría seleccionada: \(firstCategory.identifier)")
+                    ReachuLogger.debug("Categoría seleccionada: \(firstCategory.identifier)", component: "RCheckoutOverlay")
                 }
                 
                 // Store init data (ya viene del backend correctamente)
                 self.klarnaNativeInitData = dto
                 self.isLoading = false
                 
-                print("🔵 [Klarna Flow] Step 4: Activando auto-authorize (modal Klarna)")
+                ReachuLogger.debug("Step 4: Activando auto-authorize (modal Klarna)", component: "RCheckoutOverlay")
                 // Activar auto-authorize flow
                 self.klarnaAutoAuthorize = true
             }
@@ -1715,41 +1671,30 @@ public struct RCheckoutOverlay: View {
     #endif
 
     private func initiateVippsFlow() async {
-        print("🟠 [Vipps Flow] ========== INICIO ==========")
-        print("🟠 [Vipps Flow] Step 1: Preparando datos del checkout")
+        ReachuLogger.debug("Vipps Flow INICIO - Step 1: Preparando datos del checkout", component: "RCheckoutOverlay")
         
         await MainActor.run {
             isLoading = true
             errorMessage = nil
         }
 
-        print("🟠 [Vipps Flow] Datos preparados:")
-        print("   - Email: \(email)")
-        print("   - CheckoutId: \(cartManager.checkoutId ?? "nil")")
-        
         // Create custom return URLs with checkout tracking
         let checkoutId = cartManager.checkoutId ?? "unknown"
         let successUrlWithTracking = "\(checkoutDraft.successUrl)?checkout_id=\(checkoutId)&payment_method=vipps&status=success"
         let cancelUrlWithTracking = "\(checkoutDraft.cancelUrl)?checkout_id=\(checkoutId)&payment_method=vipps&status=cancelled"
         
-        print("   - Success URL: \(successUrlWithTracking)")
-        print("   - Cancel URL: \(cancelUrlWithTracking)")
+        ReachuLogger.debug("Datos preparados: Email=\(email), CheckoutId=\(checkoutId), Success URL=\(successUrlWithTracking), Cancel URL=\(cancelUrlWithTracking)", component: "RCheckoutOverlay")
         
-        print("🟠 [Vipps Flow] Step 2: Llamando a backend Reachu (vippsInit)")
+        ReachuLogger.debug("Step 2: Llamando a backend Reachu (vippsInit)", component: "RCheckoutOverlay")
         
         // Call backend to initialize Vipps payment
         guard let dto = await cartManager.vippsInit(
             email: email,
             returnUrl: successUrlWithTracking
         ) else {
-            print("🟠 [Vipps Flow] vippsInit returned: NIL")
-            print("❌ [Vipps Flow] ERROR: Backend retornó nil")
-            print("❌ [Vipps Flow] Verificar:")
-            print("   1. CheckoutId existe?")
-            print("   2. Backend de Reachu respondió?")
-            print("   3. Credenciales de Vipps configuradas?")
-            await MainActor.run {
-                print("❌ [Vipps Flow] Setting checkoutStep to .error (vippsInit returned nil)")
+                ReachuLogger.error("vippsInit returned: NIL - Backend retornó nil. Verificar: CheckoutId existe, Backend respondió, Credenciales configuradas", component: "RCheckoutOverlay")
+                await MainActor.run {
+                    ReachuLogger.error("Setting checkoutStep to .error (vippsInit returned nil)", component: "RCheckoutOverlay")
                 self.isLoading = false
                 self.errorMessage = "Failed to initialize Vipps payment"
                 self.checkoutStep = .error
@@ -1757,14 +1702,12 @@ public struct RCheckoutOverlay: View {
             return
         }
         
-        print("🟠 [Vipps Flow] vippsInit returned: DTO")
-        print("✅ [Vipps Flow] Step 3: Backend respondió correctamente")
-        print("   - Payment URL: \(dto.paymentUrl)")
+        ReachuLogger.success("Step 3: Backend respondió correctamente - Payment URL: \(dto.paymentUrl)", component: "RCheckoutOverlay")
         
         await MainActor.run {
             self.isLoading = false
             
-            print("🟠 [Vipps Flow] Step 4: Abriendo Vipps en navegador")
+            ReachuLogger.debug("Step 4: Abriendo Vipps en navegador", component: "RCheckoutOverlay")
             // Open Vipps payment URL in browser
             if let url = URL(string: dto.paymentUrl) {
                 #if os(iOS)
@@ -1782,11 +1725,9 @@ public struct RCheckoutOverlay: View {
                 // Start retry timer for webhook delay
                 self.startVippsRetryTimer()
                 
-                print("✅ [Vipps Flow] Vipps abierto en navegador")
-                print("🟠 [Vipps Flow] Payment marked as in progress")
-                print("🟠 [Vipps Flow] ========== FIN ==========")
+                ReachuLogger.success("Vipps abierto en navegador - Payment marked as in progress", component: "RCheckoutOverlay")
             } else {
-                print("❌ [Vipps Flow] ERROR: URL inválida")
+                ReachuLogger.error("ERROR: URL inválida", component: "RCheckoutOverlay")
                 self.errorMessage = "Invalid Vipps payment URL"
                 self.checkoutStep = .error
             }
@@ -1795,7 +1736,7 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Vipps Retry System
     private func startVippsRetryTimer() {
-        print("🔄 [Vipps Retry] Starting retry timer - Max retries: \(vippsMaxRetries)")
+        ReachuLogger.debug("Starting retry timer - Max retries: \(vippsMaxRetries)", component: "RCheckoutOverlay")
         
         // Cancel any existing timer
         vippsRetryTimer?.invalidate()
@@ -1809,7 +1750,7 @@ public struct RCheckoutOverlay: View {
     }
     
     private func stopVippsRetryTimer() {
-        print("🔄 [Vipps Retry] Stopping retry timer")
+        ReachuLogger.debug("Stopping retry timer", component: "RCheckoutOverlay")
         vippsRetryTimer?.invalidate()
         vippsRetryTimer = nil
     }
@@ -1821,14 +1762,14 @@ public struct RCheckoutOverlay: View {
         }
         
         vippsRetryCount += 1
-        print("🔍 [Vipps Retry] Attempt \(vippsRetryCount)/\(vippsMaxRetries) - Checking status for checkout: \(checkoutId)")
+        ReachuLogger.debug("Attempt \(vippsRetryCount)/\(vippsMaxRetries) - Checking status for checkout: \(checkoutId)", component: "RCheckoutOverlay")
         
         // Check checkout status from backend
         if let checkout = await cartManager.getCheckoutById(checkoutId: checkoutId) {
-            print("🔍 [Vipps Retry] Checkout status: \(checkout.status ?? "unknown")")
+            ReachuLogger.debug("Checkout status: \(checkout.status ?? "unknown")", component: "RCheckoutOverlay")
             
             if checkout.status.uppercased() == "SUCCESS" {
-                print("✅ [Vipps Retry] Payment successful!")
+                ReachuLogger.success("Payment successful!", component: "RCheckoutOverlay")
                 await MainActor.run {
                     self.stopVippsRetryTimer()
                     self.vippsPaymentInProgress = false
@@ -1841,7 +1782,7 @@ public struct RCheckoutOverlay: View {
             
             // If not SUCCESS and we've reached max retries, show error
             if vippsRetryCount >= vippsMaxRetries {
-                print("❌ [Vipps Retry] Max retries reached. Payment not successful.")
+                ReachuLogger.warning("Max retries reached. Payment not successful.", component: "RCheckoutOverlay")
                 await MainActor.run {
                     self.stopVippsRetryTimer()
                     self.vippsPaymentInProgress = false
@@ -1854,10 +1795,10 @@ public struct RCheckoutOverlay: View {
             }
             
             // If not SUCCESS but still have retries, continue waiting
-            print("⏳ [Vipps Retry] Status not SUCCESS yet. Waiting for webhook... (\(vippsRetryCount)/\(vippsMaxRetries))")
+            ReachuLogger.debug("Status not SUCCESS yet. Waiting for webhook... (\(vippsRetryCount)/\(vippsMaxRetries))", component: "RCheckoutOverlay")
             
         } else {
-            print("❌ [Vipps Retry] Could not retrieve checkout status")
+            ReachuLogger.error("Could not retrieve checkout status", component: "RCheckoutOverlay")
             
             // If we can't retrieve status and reached max retries, show error
             if vippsRetryCount >= vippsMaxRetries {
@@ -1875,11 +1816,11 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Vipps Payment Status Handler
     private func handleVippsPaymentStatusChange(_ status: VippsPaymentHandler.PaymentStatus) {
-        print("🟠 [Vipps Status] Status changed to: \(status)")
+        ReachuLogger.debug("Status changed to: \(status)", component: "RCheckoutOverlay")
         
         switch status {
         case .success:
-            print("✅ [Vipps Status] Payment successful!")
+            ReachuLogger.success("Payment successful!", component: "RCheckoutOverlay")
             stopVippsRetryTimer()
             checkoutStep = .success
             vippsPaymentInProgress = false
@@ -1887,7 +1828,7 @@ public struct RCheckoutOverlay: View {
             vippsRetryCount = 0
             
         case .failed, .cancelled:
-            print("❌ [Vipps Status] Payment failed or cancelled")
+            ReachuLogger.error("Payment failed or cancelled", component: "RCheckoutOverlay")
             stopVippsRetryTimer()
             errorMessage = status == .failed ? "Payment failed" : "Payment was cancelled"
             checkoutStep = .error
@@ -1896,11 +1837,11 @@ public struct RCheckoutOverlay: View {
             vippsRetryCount = 0
             
         case .inProgress:
-            print("🟠 [Vipps Status] Payment in progress")
+            ReachuLogger.debug("Payment in progress", component: "RCheckoutOverlay")
             // Keep current state and retry timer running
             
         case .unknown:
-            print("⚠️ [Vipps Status] Unknown status")
+            ReachuLogger.warning("Unknown status", component: "RCheckoutOverlay")
             // Don't change state, let retry timer continue
         }
     }
@@ -1984,7 +1925,7 @@ public struct RCheckoutOverlay: View {
                 case .canceled:
                     withAnimation { checkoutStep = .orderSummary }  // ↩️ back to summary
                 case .failed(let error):
-                    print("❌ [ERROR SOURCE] Setting checkoutStep to .error (Stripe payment failed: \(error.localizedDescription))")
+                    ReachuLogger.error("Setting checkoutStep to .error (Stripe payment failed: \(error.localizedDescription))", component: "RCheckoutOverlay")
                     self.errorMessage = error.localizedDescription
                     withAnimation { checkoutStep = .error }  // ❌ error
                 }
@@ -3392,16 +3333,16 @@ extension RCheckoutOverlay {
     }
     
     private func loadAvailablePaymentMethods() async {
-        print("💳 [Checkout] Loading available payment methods...")
+        ReachuLogger.debug("Loading available payment methods...", component: "RCheckoutOverlay")
         
         // 1. Get supported methods from config
         let configMethods = ReachuConfiguration.shared.cartConfiguration.supportedPaymentMethods
-        print("💳 [Checkout] Config supported methods: \(configMethods)")
+        ReachuLogger.debug("Config supported methods: \(configMethods)", component: "RCheckoutOverlay")
         
         // 2. Create SDK client to fetch available methods from Reachu API
         let config = ReachuConfiguration.shared
         guard let baseURL = URL(string: config.environment.graphQLURL) else {
-            print("❌ [Checkout] Invalid GraphQL URL")
+            ReachuLogger.error("Invalid GraphQL URL", component: "RCheckoutOverlay")
             await setFallbackPaymentMethods(configMethods)
             return
         }
@@ -3411,21 +3352,21 @@ extension RCheckoutOverlay {
         // 3. Fetch available methods from Reachu API (API is the source of truth)
         do {
             let apiMethods = try await sdk.payment.getAvailableMethods()
-            print("💳 [Checkout] API returned \(apiMethods.count) payment methods")
+            ReachuLogger.info("API returned \(apiMethods.count) payment methods", component: "RCheckoutOverlay")
             
             // Use whatever the API returns (API is the authority)
             var available: [PaymentMethod] = []
             
             for apiMethod in apiMethods {
                 let methodName = apiMethod.name.lowercased()
-                print("🔍 [Checkout] API method: \(apiMethod.name) (normalized: \(methodName))")
+                ReachuLogger.debug("API method: \(apiMethod.name) (normalized: \(methodName))", component: "RCheckoutOverlay")
                 
                 // Try to map API method to PaymentMethod enum
                 if let paymentMethod = PaymentMethod(rawValue: methodName) {
                     available.append(paymentMethod)
-                    print("   ✅ Added: \(methodName)")
+                    ReachuLogger.debug("Added: \(methodName)", component: "RCheckoutOverlay")
                 } else {
-                    print("   ⚠️ Unknown payment method (no enum case): \(methodName)")
+                    ReachuLogger.warning("Unknown payment method (no enum case): \(methodName)", component: "RCheckoutOverlay")
                 }
             }
             
@@ -3435,14 +3376,14 @@ extension RCheckoutOverlay {
                 // Auto-select first available method
                 if let first = available.first {
                     self.selectedPaymentMethod = first
-                    print("💳 [Checkout] Auto-selected: \(first.rawValue)")
+                    ReachuLogger.debug("Auto-selected: \(first.rawValue)", component: "RCheckoutOverlay")
                 }
                 
-                print("💳 [Checkout] Final available methods: \(available.map { $0.rawValue })")
+                ReachuLogger.debug("Final available methods: \(available.map { $0.rawValue })", component: "RCheckoutOverlay")
             }
             
         } catch {
-            print("❌ [Checkout] Failed to fetch payment methods: \(error)")
+            ReachuLogger.error("Failed to fetch payment methods: \(error)", component: "RCheckoutOverlay")
             await setFallbackPaymentMethods(configMethods)
         }
     }
@@ -3456,7 +3397,7 @@ extension RCheckoutOverlay {
                 self.selectedPaymentMethod = first
             }
             
-            print("💳 [Checkout] Using config fallback: \(fallbackMethods.map { $0.rawValue })")
+            ReachuLogger.debug("Using config fallback: \(fallbackMethods.map { $0.rawValue })", component: "RCheckoutOverlay")
         }
     }
 
@@ -4219,15 +4160,15 @@ struct CountryPicker: View {
             }
             
             func klarnaInitialized(paymentView: KlarnaPaymentView) {
-                print("🔵 [Klarna Auto] Initialized")
+                ReachuLogger.debug("Initialized", component: "RCheckoutOverlay")
             }
             
             func klarnaLoaded(paymentView: KlarnaPaymentView) {
-                print("🔵 [Klarna Auto] Loaded")
+                ReachuLogger.debug("Loaded", component: "RCheckoutOverlay")
             }
             
             func klarnaLoadedPaymentReview(paymentView: KlarnaPaymentView) {
-                print("🔵 [Klarna Auto] Loaded payment review")
+                ReachuLogger.debug("Loaded payment review", component: "RCheckoutOverlay")
             }
             
             func klarnaAuthorized(
@@ -4236,7 +4177,7 @@ struct CountryPicker: View {
                 authToken: String?,
                 finalizeRequired: Bool
             ) {
-                print("🔵 [Klarna Auto] Authorized - approved: \(approved), token: \(authToken != nil)")
+                ReachuLogger.debug("Authorized - approved: \(approved), token: \(authToken != nil)", component: "RCheckoutOverlay")
                 guard approved, let token = authToken, !token.isEmpty else {
                     DispatchQueue.main.async {
                         self.parent.onFailed("Authorization not approved")
@@ -4253,7 +4194,7 @@ struct CountryPicker: View {
                 approved: Bool,
                 authToken: String?
             ) {
-                print("🔵 [Klarna Auto] Reauthorized")
+                ReachuLogger.debug("Reauthorized", component: "RCheckoutOverlay")
             }
             
             func klarnaFinalized(
@@ -4261,7 +4202,7 @@ struct CountryPicker: View {
                 approved: Bool,
                 authToken: String?
             ) {
-                print("🔵 [Klarna Auto] Finalized")
+                ReachuLogger.debug("Finalized", component: "RCheckoutOverlay")
             }
             
             func klarnaResized(paymentView: KlarnaPaymentView, to newHeight: CGFloat) {
@@ -4272,7 +4213,7 @@ struct CountryPicker: View {
                 inPaymentView paymentView: KlarnaPaymentView,
                 withError error: KlarnaPaymentError
             ) {
-                print("🔴 [Klarna Auto] Failed: \(error.localizedDescription)")
+                ReachuLogger.error("Failed: \(error.localizedDescription)", component: "RCheckoutOverlay")
                 DispatchQueue.main.async {
                     self.parent.onFailed(error.localizedDescription)
                 }

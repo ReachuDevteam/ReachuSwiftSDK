@@ -49,7 +49,7 @@ public struct ROfferBanner: View {
                         .frame(height: 16)
                     }
                     .onAppear {
-                        print("🏷️ [ROfferBanner] Loading logo: \(buildFullURL(from: config.logoUrl))")
+                        // Logo loading started
                     }
                     
                     // Title
@@ -235,7 +235,7 @@ public struct ROfferBanner: View {
                         )
                 }
                 .onAppear {
-                    print("🖼️ [ROfferBanner] Loading background image: \(buildFullURL(from: config.backgroundImageUrl))")
+                    // Background image loading started
                 }
                 
                 // Dark overlay for readability (same gradient as hardcoded)
@@ -283,7 +283,7 @@ public struct ROfferBanner: View {
     private func startCountdown() {
         let formatter = ISO8601DateFormatter()
         guard let endDate = formatter.date(from: config.countdownEndDate) else { 
-            print("❌ [ROfferBanner] Invalid countdown date: \(config.countdownEndDate)")
+            ReachuLogger.warning("Invalid countdown date: \(config.countdownEndDate)", component: "ROfferBanner")
             return 
         }
         
@@ -310,13 +310,13 @@ public struct ROfferBanner: View {
         } else if let ctaLink = config.ctaLink, !ctaLink.isEmpty {
             handleExternalLink(url: ctaLink)
         } else {
-            print("⚠️ [ROfferBanner] No CTA link or deeplink configured")
+            ReachuLogger.warning("No CTA link or deeplink configured", component: "ROfferBanner")
         }
     }
     
     /// Handle deeplink navigation
     private func handleDeeplink(url: String, action: String?) {
-        print("🔗 [ROfferBanner] Handling deeplink: \(url)")
+        ReachuLogger.debug("Handling deeplink: \(url)", component: "ROfferBanner")
         
         #if os(iOS)
         if let deeplinkURL = URL(string: url) {
@@ -325,14 +325,12 @@ public struct ROfferBanner: View {
                 // Custom deeplink - open with app
                 if UIApplication.shared.canOpenURL(deeplinkURL) {
                     UIApplication.shared.open(deeplinkURL) { success in
-                        if success {
-                            print("✅ [ROfferBanner] Deeplink opened successfully")
-                        } else {
-                            print("❌ [ROfferBanner] Failed to open deeplink")
+                        if !success {
+                            ReachuLogger.error("Failed to open deeplink", component: "ROfferBanner")
                         }
                     }
                 } else {
-                    print("❌ [ROfferBanner] Cannot handle deeplink: \(url)")
+                    ReachuLogger.error("Cannot handle deeplink: \(url)", component: "ROfferBanner")
                     // Fallback to external link if available
                     if let fallbackLink = config.ctaLink {
                         handleExternalLink(url: fallbackLink)
@@ -348,7 +346,7 @@ public struct ROfferBanner: View {
     
     /// Handle external link (HTTP/HTTPS)
     private func handleExternalLink(url: String) {
-        print("🌐 [ROfferBanner] Opening external link: \(url)")
+        ReachuLogger.debug("Opening external link: \(url)", component: "ROfferBanner")
         
         #if os(iOS)
         if let externalURL = URL(string: url) {

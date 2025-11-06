@@ -164,14 +164,6 @@ public struct RProductCarousel: View {
         if currentConfigId != newConfigId {
             cachedConfig = CachedConfig(config: config)
             currentConfigId = newConfigId
-            
-            // Log config details (only when changed)
-            print("📋 [RProductCarousel] Config loaded:")
-            print("   - productIds (String): \(config.productIds)")
-            print("   - productIds converted to Int: \(CachedConfig(config: config).productIds)")
-            print("   - autoPlay: \(config.autoPlay)")
-            print("   - interval: \(config.interval)ms")
-            print("   - converted interval: \(CachedConfig(config: config).autoPlayInterval)s")
         }
     }
     
@@ -233,7 +225,7 @@ public struct RProductCarousel: View {
                 EmptyView()
             } else if shouldHide {
                 EmptyView()
-            } else if let config = effectiveConfig {
+            } else if effectiveConfig != nil {
                 if shouldShowLoading || products.isEmpty {
                     skeletonView
                 } else {
@@ -1044,13 +1036,6 @@ class RProductCarouselViewModel: ObservableObject {
     @Published var isMarketUnavailable: Bool = false
     @Published var currentIndex: Int = 0 // Move currentIndex to ViewModel for safe Timer access
     
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
-    }
-    
     func loadProducts(productIds: [Int], currency: String, country: String) async {
         guard ReachuConfiguration.shared.shouldUseSDK else {
             isMarketUnavailable = true
@@ -1065,65 +1050,38 @@ class RProductCarouselViewModel: ObservableObject {
         isMarketUnavailable = false
         
         // Determine if we should load all products or filtered
-        let hasValidIds = !productIds.isEmpty
-        let idsToUse: [Int]?
-        
-        if hasValidIds {
-            print("🛍️ [RProductCarousel] Loading products with IDs: \(productIds)")
-            idsToUse = productIds
-        } else {
-            print("⚠️ [RProductCarousel] No product IDs provided")
-            print("   Falling back to loading all products from channel")
-            idsToUse = nil
-        }
+        let idsToUse: [Int]? = productIds.isEmpty ? nil : productIds
         
         do {
-            let dtoProducts = try await sdk.channel.product.get(
-                currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
+            // Use ProductService to load products
+            products = try await ProductService.shared.loadProducts(
                 productIds: idsToUse,
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
+                currency: currency,
+                country: country
             )
             
-            print("📦 [RProductCarousel] API returned \(dtoProducts.count) products")
-            if dtoProducts.isEmpty {
-                print("⚠️ [RProductCarousel] No products found")
-                print("   Currency: \(currency), Country: \(country)")
-                print("   💡 This could mean:")
-                print("      - Products don't exist in this market")
-                print("      - Products are not available for this currency/country")
-                print("      - Products are not published/active")
-            } else if hasValidIds && dtoProducts.count < productIds.count {
-                print("⚠️ [RProductCarousel] Only found \(dtoProducts.count) out of \(productIds.count) products")
-                let foundIds = Set(dtoProducts.map { $0.id })
-                let requestedIds = Set(productIds)
-                let missingIds = requestedIds.subtracting(foundIds)
-                print("   Found IDs: \(foundIds.sorted())")
-                print("   Missing IDs: \(missingIds.sorted())")
+            if products.isEmpty {
+                ReachuLogger.warning("No products found - Currency: \(currency), Country: \(country)", component: "RProductCarousel")
             }
             
-            products = dtoProducts.map { $0.toDomainProduct() }
-            print("✅ [RProductCarousel] Loaded \(products.count) products")
-            
-        } catch let error as NotFoundException {
-            isMarketUnavailable = true
-            errorMessage = nil
-            print("⚠️ [RProductCarousel] Market not available")
-        } catch let error as SdkException {
+        } catch ProductServiceError.invalidConfiguration(let message) {
+            errorMessage = message
+            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductCarousel")
+        } catch ProductServiceError.sdkError(let error) {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 isMarketUnavailable = true
                 errorMessage = nil
+                ReachuLogger.warning("Market not available", component: "RProductCarousel")
             } else {
-                errorMessage = error.description
-                print("❌ [RProductCarousel] Failed to load products: \(error.description)")
+                errorMessage = error.message
+                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductCarousel")
             }
+        } catch ProductServiceError.networkError(let error) {
+            errorMessage = error.localizedDescription
+            ReachuLogger.error("Network error: \(error.localizedDescription)", component: "RProductCarousel")
         } catch {
             errorMessage = error.localizedDescription
-            print("❌ [RProductCarousel] Failed to load products: \(error.localizedDescription)")
+            ReachuLogger.error("Failed to load products: \(error.localizedDescription)", component: "RProductCarousel")
         }
         
         isLoading = false

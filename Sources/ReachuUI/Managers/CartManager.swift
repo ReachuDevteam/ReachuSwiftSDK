@@ -60,9 +60,7 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             let baseURL = URL(string: configuration.environment.graphQLURL)!
             let apiKey = configuration.apiKey.isEmpty ? "DEMO_KEY" : configuration.apiKey
 
-            print("🔧 [CartManager] Initializing SDK Client")
-            print("   Base URL: \(baseURL)")
-            print("   API Key: \(apiKey.prefix(8))...")
+            ReachuLogger.debug("Initializing SDK Client - Base URL: \(baseURL), API Key: \(apiKey.prefix(8))...", component: "CartManager")
 
             self.sdk = SdkClient(baseUrl: baseURL, apiKey: apiKey)
         }
@@ -91,13 +89,11 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             Task { [currency, country] in
                 // Check if SDK should be used before attempting operations
                 guard ReachuConfiguration.shared.shouldUseSDK else {
-                    print("⚠️ [Cart] Skipping cart creation - SDK disabled (market not available)")
+                    ReachuLogger.warning("Skipping cart creation - SDK disabled (market not available)", component: "CartManager")
                     return
                 }
                 
-                print(
-                    "🛒 [Cart] init → scheduling createCart(currency:\(currency), country:\(country))"
-                )
+                ReachuLogger.debug("init → scheduling createCart(currency:\(currency), country:\(country))", component: "CartManager")
                 await createCart(currency: currency, country: country)
                 await loadMarketsIfNeeded()
             }
@@ -117,40 +113,38 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
     }
 
     internal func logRequest(_ action: String, payload: Any? = nil) {
-        print("➡️➡️➡️ [CartManager] REQUEST: \(action)")
         if let payload = payload {
-            print("➡️ Payload: \(payload)")
+            ReachuLogger.debug("REQUEST: \(action) - Payload: \(String(describing: payload))", component: "CartManager")
+        } else {
+            ReachuLogger.debug("REQUEST: \(action)", component: "CartManager")
         }
     }
 
     internal func logResponse(_ action: String, payload: Any? = nil) {
         if let payload = payload {
-            print("⬅️ [CartManager] \(action) response: \(payload)")
+            ReachuLogger.debug("\(action) response: \(String(describing: payload))", component: "CartManager")
         } else {
-            print("⬅️ [CartManager] \(action) response")
+            ReachuLogger.debug("\(action) response", component: "CartManager")
         }
     }
 
     internal func logError(_ action: String, error: Error) {
-        print("❌❌❌ [CartManager] ERROR: \(action)")
-        print("❌ Error type: \(type(of: error))")
-        print("❌ Error message: \(error.localizedDescription)")
-        print("❌ Full error: \(error)")
+        ReachuLogger.error("ERROR: \(action) - Type: \(type(of: error)), Message: \(error.localizedDescription)", component: "CartManager")
     }
 
     public func getCheckoutStatus(_ checkoutId: String) async -> Bool {
-        print("Entre a getCheckoutStatus() with checkoutId: \(checkoutId)")
+        ReachuLogger.debug("getCheckoutStatus() with checkoutId: \(checkoutId)", component: "CartManager")
 
         do {
             let result: GetCheckoutDto = try await sdk.checkout.getById(checkout_id: checkoutId);
-            print("getCheckoutStatus() result: \(result)")
+            ReachuLogger.debug("getCheckoutStatus() result: \(result)", component: "CartManager")
 
             // ✅ Aquí validas si Vipps ya pagó
             if result.status == "SUCCESS" {
-                print("✅ Pago confirmado en backend")
+                ReachuLogger.success("Pago confirmado en backend", component: "CartManager")
                 return true
             } else {
-                print("⏳ Aún sin pagar: \(result.status)")
+                ReachuLogger.debug("Aún sin pagar: \(result.status)", component: "CartManager")
                 return false
             }
 

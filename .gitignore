@@ -5,10 +5,16 @@ xcuserdata/
 DerivedData/
 .swiftpm/configuration/registries.json
 .swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
-.swiftpm/
-.clangModuleCache/
 .netrc
-Package.resolved
+# Demo app build artifacts
+Demo/*/.build/
+Demo/*/Package.resolved
+Demo/*/.swiftpm/
 **/ins.instructions.md
-
-.vscode/
+# Development workspace (local)
+ReachuWorkspace.xcworkspace/
+# Backup files
+*.backup
+*.pre-manual
+# Package resolved (should be generated)
+Package.resolved

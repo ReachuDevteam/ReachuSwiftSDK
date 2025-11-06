@@ -21,7 +21,7 @@ extension CartManager {
     private func loadMarkets() async {
         // Check if SDK should be used before attempting operations
         guard ReachuConfiguration.shared.shouldUseSDK else {
-            print("⚠️ [Markets] Skipping market load - SDK disabled (market not available)")
+            ReachuLogger.warning("Skipping market load - SDK disabled (market not available)", component: "MarketManager")
             return
         }
         
@@ -58,23 +58,23 @@ extension CartManager {
             await applyMarket(target, refreshData: shouldRefresh)
         } catch let error as NotFoundException {
             // Market not available - use fallback silently
-            print("⚠️ [Markets] Market not available, using fallback: \(fallbackMarket.code)")
+            ReachuLogger.warning("Market not available, using fallback: \(fallbackMarket.code)", component: "MarketManager")
             markets = [fallbackMarket]
             didLoadMarkets = false
             await applyMarket(fallbackMarket, refreshData: false)
         } catch let error as SdkException {
             // Only log if it's not a NOT_FOUND error
             if error.code == "NOT_FOUND" || error.status == 404 {
-                print("⚠️ [Markets] Market not available, using fallback: \(fallbackMarket.code)")
+                ReachuLogger.warning("Market not available, using fallback: \(fallbackMarket.code)", component: "MarketManager")
             } else {
-                print("❌ [Markets] Failed to load markets: \(error.description)")
+                ReachuLogger.error("Failed to load markets: \(error.description)", component: "MarketManager")
                 logError("sdk.market.getAvailable", error: error)
             }
             markets = [fallbackMarket]
             didLoadMarkets = false
             await applyMarket(fallbackMarket, refreshData: false)
         } catch {
-            print("❌ [Markets] Failed to load markets: \(error.localizedDescription)")
+            ReachuLogger.error("Failed to load markets: \(error.localizedDescription)", component: "MarketManager")
             logError("sdk.market.getAvailable", error: error)
             markets = [fallbackMarket]
             didLoadMarkets = false
