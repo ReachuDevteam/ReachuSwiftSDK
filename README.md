@@ -238,7 +238,6 @@ xcodebuild -scheme ReachuDemoApp build
 
 Development is happening on `feature/ui-components` branch. See `PROJECT_STATUS.md` for detailed context and next steps.
 
-## 🤝 Contributing
 
 This SDK follows a modular, documentation-first approach:
 
