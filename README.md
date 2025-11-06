@@ -28,7 +28,7 @@ Add the Reachu Swift SDK to your project using Swift Package Manager:
    ```
    https://github.com/ReachuDevteam/ReachuSwiftSDK.git
    ```
-4. **Select the version**: `1.0.0-beta.1` (or latest beta)
+4. **Select the version**: `1.0.0` (or latest version)
 5. **Choose your modules** based on your needs
 
 #### Using Package.swift
@@ -37,7 +37,7 @@ Add this to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "1.0.0-beta.1")
+    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "1.0.0")
 ]
 ```
 
@@ -64,7 +64,7 @@ target 'YourApp' do
   use_frameworks!
   
   # Reachu Swift SDK
-  pod 'ReachuSwiftSDK', :git => 'https://github.com/ReachuDevteam/ReachuSwiftSDK.git', :tag => 'v1.0.0-beta.1'
+  pod 'ReachuSwiftSDK', :git => 'https://github.com/ReachuDevteam/ReachuSwiftSDK.git', :tag => '1.0.0'
 end
 ```
 
@@ -74,8 +74,8 @@ Then run:
 pod install
 ```
 
-:::info Beta Release
-This is a beta release (`v1.0.0-beta.1`). The API may change before the stable release. We recommend testing thoroughly before production use.
+:::tip Stable Release
+This is the stable release (`1.0.0`) of Reachu Swift SDK. For beta versions, you can specify `1.0.0-beta.1` explicitly.
 :::
 
 ### 🎨 Configuration Setup
