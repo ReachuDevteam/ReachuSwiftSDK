@@ -607,8 +607,8 @@ private class RProductSpotlightViewModel: ObservableObject {
                 errorMessage = nil
                 ReachuLogger.warning("Market not available", component: "RProductSpotlight")
             } else {
-                errorMessage = error.message ?? "Failed to load product"
-                ReachuLogger.error("Error loading product: \(error.message ?? "Unknown error")", component: "RProductSpotlight")
+                errorMessage = error.message
+                ReachuLogger.error("Error loading product: \(error.message)", component: "RProductSpotlight")
             }
         } catch {
             errorMessage = "Failed to load product"

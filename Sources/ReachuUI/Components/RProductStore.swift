@@ -409,7 +409,7 @@ class RProductStoreViewModel: ObservableObject {
                 ReachuLogger.warning("Market not available", component: "RProductStore")
             } else {
                 errorMessage = error.message
-                ReachuLogger.error("Failed to load products: \(error.message ?? "Unknown error")", component: "RProductStore")
+                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductStore")
             }
         } catch ProductServiceError.networkError(let error) {
             errorMessage = error.localizedDescription

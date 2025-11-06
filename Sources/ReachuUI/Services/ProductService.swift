@@ -1,4 +1,5 @@
 import Foundation
+import ReachuCore
 
 /// Shared service for loading products across all components
 /// Eliminates code duplication and provides consistent error handling
@@ -85,10 +86,10 @@ public class ProductService {
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
             imageSize: "large",
-            barcodeList: nil,
-            categoryIds: nil,
+            barcodeList: nil as [String]?,
+            categoryIds: nil as [Int]?,
             productIds: [productId],
-            skuList: nil,
+            skuList: nil as [String]?,
             useCache: true,
             shippingCountryCode: country
         )
@@ -131,10 +132,10 @@ public class ProductService {
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
             imageSize: "large",
-            barcodeList: nil,
-            categoryIds: nil,
+            barcodeList: nil as [String]?,
+            categoryIds: nil as [Int]?,
             productIds: idsToUse,
-            skuList: nil,
+            skuList: nil as [String]?,
             useCache: true,
             shippingCountryCode: country
         )

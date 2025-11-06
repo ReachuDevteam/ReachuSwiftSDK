@@ -1082,7 +1082,7 @@ class RProductCarouselViewModel: ObservableObject {
                 ReachuLogger.warning("Market not available", component: "RProductCarousel")
             } else {
                 errorMessage = error.message
-                ReachuLogger.error("Failed to load products: \(error.message ?? "Unknown error")", component: "RProductCarousel")
+                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductCarousel")
             }
         } catch ProductServiceError.networkError(let error) {
             errorMessage = error.localizedDescription
