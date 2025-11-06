@@ -2,6 +2,26 @@
 
 All notable changes to this project are documented in this file. This project follows Semantic Versioning.
 
+## [4.0.0]
+
+Breaking changes
+- Campaign models and configuration expanded; component decoding updated (ComponentResponse, AnyCodable encode) which may affect consumers relying on previous internal types
+- Product UI components refined with design‑system tokens (colors, shadows, border radius) and layout updates; some initializers and default sizes changed
+
+Features
+- New campaign components: `RProductSpotlight` with componentId support
+- Auto‑configured `RProductBanner`, `RProductCarousel`, `RProductStore` improvements (styling, layout, empty states, productId handling, full URL resolution)
+- Page indicators in `RProductCarousel` and improved full‑card sizing
+- Rich logging for campaign component decoding and product loading
+
+Fixes
+- Improved WebSocket message handling and `RProductSlider` reactivity to campaign state
+- Fix `RProductBanner` buildFullURL for relative image paths, opacity/size tuning
+- Handle `mode=all` with empty productIds and show components with empty state
+
+Notes
+- Major bump due to model/decoding changes and UI API surface adjustments; review UI initializers and campaign config if you extend SDK types.
+
 ## [3.2.0]
 
 Features
