@@ -32,7 +32,7 @@ class RProductSliderViewModel: ObservableObject {
     ) async {
         // Check if SDK should be used before attempting operations
         guard ReachuConfiguration.shared.shouldUseSDK else {
-            print("⚠️ [RProductSlider] Skipping product load - SDK disabled (market not available)")
+            ReachuLogger.warning("Skipping product load - SDK disabled (market not available)", component: "RProductSlider")
             isMarketUnavailable = true
             isLoading = false
             return
@@ -53,47 +53,56 @@ class RProductSliderViewModel: ObservableObject {
         errorMessage = nil
         isMarketUnavailable = false
         
-        print("🛍️ [RProductSlider] Loading products from API...")
-        print("   Currency: \(currency), Country: \(country)")
         if let catId = categoryId {
-            print("   Category: \(catId)")
+            ReachuLogger.debug("Loading products for category: \(catId)", component: "RProductSlider")
+        } else {
+            ReachuLogger.debug("Loading all products from channel", component: "RProductSlider")
         }
+        ReachuLogger.debug("Currency: \(currency), Country: \(country)", component: "RProductSlider")
         
         do {
-            let dtoProducts = try await sdk.channel.product.get(
-                currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: categoryId != nil ? [categoryId!] : nil,
-                productIds: nil,
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
-            )
+            let loadedProducts: [Product]
             
-            products = dtoProducts.map { $0.toDomainProduct() }
+            if let catId = categoryId {
+                // Load products by category
+                loadedProducts = try await ProductService.shared.loadProductsByCategory(
+                    categoryId: catId,
+                    currency: currency,
+                    country: country
+                )
+            } else {
+                // Load all products from channel
+                loadedProducts = try await ProductService.shared.loadProducts(
+                    productIds: nil,
+                    currency: currency,
+                    country: country
+                )
+            }
+            
+            products = loadedProducts
             hasLoaded = true
             
-            print("✅ [RProductSlider] Loaded \(products.count) products")
+            ReachuLogger.success("Loaded \(products.count) products", component: "RProductSlider")
             
-        } catch let error as NotFoundException {
-            // Market not available - hide component silently
-            isMarketUnavailable = true
-            errorMessage = nil  // Don't show error message
-            print("⚠️ [RProductSlider] Market not available for \(currency)/\(country) - hiding component")
-        } catch let error as SdkException {
+        } catch ProductServiceError.sdkError(let error) {
             // Only show error if it's not a NOT_FOUND error
             if error.code == "NOT_FOUND" || error.status == 404 {
                 isMarketUnavailable = true
                 errorMessage = nil
-                print("⚠️ [RProductSlider] Market not available for \(currency)/\(country) - hiding component")
+                ReachuLogger.warning("Market not available for \(currency)/\(country) - hiding component", component: "RProductSlider")
             } else {
-                errorMessage = error.description
-                print("❌ [RProductSlider] Failed to load products: \(error.description)")
+                errorMessage = error.message
+                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductSlider")
             }
+        } catch ProductServiceError.invalidConfiguration(let message) {
+            errorMessage = message
+            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductSlider")
+        } catch ProductServiceError.networkError(let error) {
+            errorMessage = error.localizedDescription
+            ReachuLogger.error("Network error: \(error.localizedDescription)", component: "RProductSlider")
         } catch {
             errorMessage = error.localizedDescription
-            print("❌ [RProductSlider] Failed to load products: \(error.localizedDescription)")
+            ReachuLogger.error("Failed to load products: \(error.localizedDescription)", component: "RProductSlider")
         }
         
         isLoading = false

@@ -157,6 +157,42 @@ public class ProductService {
         
         return products
     }
+    
+    /// Load products by category ID
+    /// - Parameters:
+    ///   - categoryId: Category ID to filter products
+    ///   - currency: Currency code (e.g., "USD", "EUR")
+    ///   - country: Country code (e.g., "US", "DE")
+    /// - Returns: Array of products found in the category
+    /// - Throws: ProductServiceError for various error conditions
+    public func loadProductsByCategory(
+        categoryId: Int,
+        currency: String,
+        country: String
+    ) async throws -> [Product] {
+        ReachuLogger.debug("Loading products for category ID: \(categoryId)", component: "ProductService")
+        ReachuLogger.debug("Currency: \(currency), Country: \(country)", component: "ProductService")
+        
+        let sdk = try getSdkClient()
+        
+        let dtoProducts = try await sdk.channel.product.get(
+            currency: currency,
+            imageSize: "large",
+            barcodeList: nil as [String]?,
+            categoryIds: [categoryId],
+            productIds: nil as [Int]?,
+            skuList: nil as [String]?,
+            useCache: true,
+            shippingCountryCode: country
+        )
+        
+        ReachuLogger.info("API returned \(dtoProducts.count) products for category \(categoryId)", component: "ProductService")
+        
+        let products = dtoProducts.map { $0.toDomainProduct() }
+        ReachuLogger.success("Loaded \(products.count) products for category", component: "ProductService")
+        
+        return products
+    }
 }
 
 // MARK: - ProductServiceError
