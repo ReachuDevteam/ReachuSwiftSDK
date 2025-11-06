@@ -246,6 +246,4 @@ This SDK follows a modular, documentation-first approach:
 3. **Document** in the docs site
 4. **Commit** with semantic messages
 
-## 📄 License
 
-This project is licensed under the MIT License.
