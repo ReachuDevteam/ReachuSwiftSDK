@@ -648,11 +648,12 @@ public struct RProductBanner: View {
         let country = cartManager.country
         
         do {
-            // Use ProductService to load product
+            // Use ProductService to load product with large images for detail view
             let product = try await ProductService.shared.loadProduct(
                 productId: productId,
                 currency: currency,
-                country: country
+                country: country,
+                imageSize: "large"
             )
             
             showingProductDetail = product

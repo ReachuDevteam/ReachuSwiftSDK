@@ -71,21 +71,23 @@ public class ProductService {
     ///   - productId: Product ID (as Int)
     ///   - currency: Currency code (e.g., "USD", "EUR")
     ///   - country: Country code (e.g., "US", "DE")
+    ///   - imageSize: Image size ("small", "medium", "large", "thumbnail"). Defaults to "medium" for better performance
     /// - Returns: Product if found
     /// - Throws: ProductServiceError for various error conditions
     public func loadProduct(
         productId: Int,
         currency: String,
-        country: String
+        country: String,
+        imageSize: String = "medium"
     ) async throws -> Product {
         ReachuLogger.debug("Loading product with ID: \(productId)", component: "ProductService")
-        ReachuLogger.debug("Currency: \(currency), Country: \(country)", component: "ProductService")
+        ReachuLogger.debug("Currency: \(currency), Country: \(country), ImageSize: \(imageSize)", component: "ProductService")
         
         let sdk = try getSdkClient()
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "large",
+            imageSize: imageSize,
             barcodeList: nil as [String]?,
             categoryIds: nil as [Int]?,
             productIds: [productId],
@@ -131,7 +133,7 @@ public class ProductService {
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "large",
+            imageSize: "medium",
             barcodeList: nil as [String]?,
             categoryIds: nil as [Int]?,
             productIds: idsToUse,
@@ -177,7 +179,7 @@ public class ProductService {
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "large",
+            imageSize: "medium",
             barcodeList: nil as [String]?,
             categoryIds: [categoryId],
             productIds: nil as [Int]?,
