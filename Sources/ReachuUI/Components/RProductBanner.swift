@@ -649,8 +649,14 @@ public struct RProductBanner: View {
         
         do {
             // Use ProductService to load product with large images for detail view
+            guard let productIdInt = Int(productId) else {
+                ReachuLogger.warning("Invalid productId format: \(productId)", component: "RProductBanner")
+                isLoadingProduct = false
+                return
+            }
+            
             let product = try await ProductService.shared.loadProduct(
-                productId: productId,
+                productId: productIdInt,
                 currency: currency,
                 country: country,
                 imageSize: "large"
