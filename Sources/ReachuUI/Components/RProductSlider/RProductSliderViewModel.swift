@@ -16,13 +16,6 @@ class RProductSliderViewModel: ObservableObject {
     // MARK: - Private Properties
     private var hasLoaded: Bool = false
     
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
-    }
-    
     // MARK: - Public Methods
     
     /// Load products from the API
