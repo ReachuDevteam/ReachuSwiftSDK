@@ -14,3 +14,9 @@ public typealias ReachuNetworkConfiguration = NetworkConfiguration
 public typealias ReachuUIConfiguration = UIConfiguration
 public typealias ReachuLiveShowConfiguration = LiveShowConfiguration
 public typealias ReachuConfigurationLoader = ConfigurationLoader
+
+// Export Logger
+public typealias ReachuSDKLogger = ReachuLogger
+
+// Export Cache Manager
+public typealias ReachuSDKCacheManager = CacheManager

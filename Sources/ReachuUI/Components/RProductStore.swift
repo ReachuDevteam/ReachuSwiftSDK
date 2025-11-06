@@ -336,13 +336,6 @@ class RProductStoreViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var isMarketUnavailable: Bool = false
     
-    private var sdk: SdkClient {
-        let config = ReachuConfiguration.shared
-        let baseURL = URL(string: config.environment.graphQLURL)!
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
-        return SdkClient(baseUrl: baseURL, apiKey: apiKey)
-    }
-    
     func loadProducts(mode: String, productIds: [Int]?, currency: String, country: String) async {
         guard ReachuConfiguration.shared.shouldUseSDK else {
             isMarketUnavailable = true
@@ -356,7 +349,7 @@ class RProductStoreViewModel: ObservableObject {
         errorMessage = nil
         isMarketUnavailable = false
         
-        print("🛍️ [RProductStore] Loading products - Mode: \(mode)")
+        ReachuLogger.debug("Loading products - Mode: \(mode)", component: "RProductStore")
         
         do {
             // Product IDs are already converted to Int (cached)
@@ -366,59 +359,37 @@ class RProductStoreViewModel: ObservableObject {
             // Determine which IDs to use (if any)
             let idsToUse: [Int]?
             if shouldUseFiltered {
-                print("   Filtered mode - Product IDs: \(productIds ?? [])")
+                ReachuLogger.debug("Filtered mode - Product IDs: \(productIds ?? [])", component: "RProductStore")
                 idsToUse = productIds
             } else if mode == "filtered" && !hasValidIds {
                 // Filtered mode but no IDs - fallback to all products
-                print("⚠️ [RProductStore] Filtered mode requires product IDs but none provided")
-                print("   Falling back to loading all products from channel")
+                ReachuLogger.warning("Filtered mode requires product IDs but none provided - falling back to all products", component: "RProductStore")
                 idsToUse = nil
             } else {
                 // All mode - load all products
-                print("   All mode - Loading all products from channel")
+                ReachuLogger.debug("All mode - Loading all products from channel", component: "RProductStore")
                 idsToUse = nil
             }
             
             // Load products with determined IDs
-            var dtoProducts = try await sdk.channel.product.get(
-                currency: currency,
-                imageSize: "large",
-                barcodeList: nil,
-                categoryIds: nil,
+            products = try await ProductService.shared.loadProducts(
                 productIds: idsToUse,
-                skuList: nil,
-                useCache: true,
-                shippingCountryCode: country
+                currency: currency,
+                country: country
             )
             
-            print("📦 [RProductStore] API returned \(dtoProducts.count) products")
-            
             // Fallback: If filtered mode returned 0 products, try loading all products instead
-            if dtoProducts.isEmpty && mode == "filtered" && hasValidIds {
-                print("⚠️ [RProductStore] No products found for filtered IDs: \(productIds ?? [])")
-                print("   Falling back to loading all products from channel")
-                print("   Currency: \(currency), Country: \(country)")
+            if products.isEmpty && mode == "filtered" && hasValidIds {
+                ReachuLogger.warning("No products found for filtered IDs: \(productIds ?? []) - falling back to all products", component: "RProductStore")
                 
                 // Retry with all products (no productIds filter)
-                dtoProducts = try await sdk.channel.product.get(
+                let allProducts: [Int]? = nil
+                products = try await ProductService.shared.loadProducts(
+                    productIds: allProducts,
                     currency: currency,
-                    imageSize: "large",
-                    barcodeList: nil,
-                    categoryIds: nil,
-                    productIds: nil,  // Load all products
-                    skuList: nil,
-                    useCache: true,
-                    shippingCountryCode: country
+                    country: country
                 )
-                
-                print("📦 [RProductStore] Fallback returned \(dtoProducts.count) products")
-            } else if dtoProducts.isEmpty && hasValidIds {
-                print("⚠️ [RProductStore] No products found for IDs: \(productIds ?? [])")
-                print("   Currency: \(currency), Country: \(country)")
             }
-            
-            products = dtoProducts.map { $0.toDomainProduct() }
-            print("✅ [RProductStore] Loaded \(products.count) products")
             
             // Clear any previous error if we successfully loaded products
             if !products.isEmpty {
@@ -428,21 +399,24 @@ class RProductStoreViewModel: ObservableObject {
                 errorMessage = "No valid product IDs"
             }
             
-        } catch let error as NotFoundException {
-            isMarketUnavailable = true
-            errorMessage = nil
-            print("⚠️ [RProductStore] Market not available: \(error)")
-        } catch let error as SdkException {
+        } catch ProductServiceError.invalidConfiguration(let message) {
+            errorMessage = message
+            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductStore")
+        } catch ProductServiceError.sdkError(let error) {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 isMarketUnavailable = true
                 errorMessage = nil
+                ReachuLogger.warning("Market not available", component: "RProductStore")
             } else {
-                errorMessage = error.description
-                print("❌ [RProductStore] Failed to load products: \(error.description)")
+                errorMessage = error.message
+                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductStore")
             }
+        } catch ProductServiceError.networkError(let error) {
+            errorMessage = error.localizedDescription
+            ReachuLogger.error("Network error: \(error.localizedDescription)", component: "RProductStore")
         } catch {
             errorMessage = error.localizedDescription
-            print("❌ [RProductStore] Failed to load products: \(error.localizedDescription)")
+            ReachuLogger.error("Failed to load products: \(error.localizedDescription)", component: "RProductStore")
         }
         
         isLoading = false

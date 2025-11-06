@@ -117,15 +117,6 @@ public struct RFloatingCartIndicator: View {
         self.size = size ?? Size.from(cartConfig.floatingCartSize)
         self.customPadding = customPadding
         self.onTapAction = onTap
-        
-        // Debug logging
-        print("🛒 [RFloatingCartIndicator] Initialized:")
-        print("   Position: \(self.position)")
-        print("   DisplayMode: \(self.displayMode)")
-        print("   Size: \(self.size)")
-        print("   Config position: \(cartConfig.floatingCartPosition)")
-        print("   Config displayMode: \(cartConfig.floatingCartDisplayMode)")
-        print("   Config size: \(cartConfig.floatingCartSize)")
     }
     
     public var body: some View {

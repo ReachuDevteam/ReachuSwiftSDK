@@ -54,7 +54,7 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.discount.add", error: error)
-            print("❌ [Discount] create FAIL \(msg)")
+            ReachuLogger.error("create FAIL \(msg)", component: "DiscountManager")
             await MainActor.run {
                 ToastManager.shared.showError("Create discount failed")
             }
@@ -70,12 +70,12 @@ extension CartManager {
 
         let normalized = code.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
         guard !normalized.isEmpty else {
-            print("ℹ️ [Discount] apply: missing code")
+            ReachuLogger.info("apply: missing code", component: "DiscountManager")
             return false
         }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Discount] apply: missing cartId")
+            ReachuLogger.info("apply: missing cartId", component: "DiscountManager")
             return false
         }
 
@@ -105,7 +105,7 @@ extension CartManager {
                 return true
             } else {
                 errorMessage = dto.message
-                print("⚠️ [Discount] apply NOT EXECUTED (\(normalized)) -> \(dto.message)")
+                ReachuLogger.warning("apply NOT EXECUTED (\(normalized)) -> \(dto.message)", component: "DiscountManager")
                 await MainActor.run {
                     ToastManager.shared.showInfo(
                         dto.message.isEmpty
@@ -120,7 +120,7 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.discount.apply", error: error)
-            print("❌ [Discount] apply FAIL \(msg)")
+            ReachuLogger.error("apply FAIL \(msg)", component: "DiscountManager")
             await MainActor.run {
                 ToastManager.shared.showError("Apply discount failed")
             }
@@ -135,7 +135,7 @@ extension CartManager {
         defer { isLoading = false }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Discount] deleteApplied: missing cartId")
+            ReachuLogger.info("deleteApplied: missing cartId", component: "DiscountManager")
             return false
         }
 
@@ -144,7 +144,7 @@ extension CartManager {
             .uppercased()
             ?? ""
         guard !useCode.isEmpty else {
-            print("ℹ️ [Discount] deleteApplied: missing code")
+            ReachuLogger.info("deleteApplied: missing code", component: "DiscountManager")
             return false
         }
 
@@ -163,7 +163,7 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.discount.deleteApplied", error: error)
-            print("❌ [Discount] deleteApplied FAIL \(msg)")
+            ReachuLogger.error("deleteApplied FAIL \(msg)", component: "DiscountManager")
             await MainActor.run {
                 ToastManager.shared.showError("Remove discount failed")
             }
@@ -189,7 +189,7 @@ extension CartManager {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.discount.delete", error: error)
-            print("❌ [Discount] delete FAIL \(msg)")
+            ReachuLogger.error("delete FAIL \(msg)", component: "DiscountManager")
             await MainActor.run {
                 ToastManager.shared.showError("Delete discount failed")
             }
@@ -229,7 +229,7 @@ extension CartManager {
             }
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
-            print("⚠️ [Discount] get by code '\(code)' FAIL \(msg)")
+            ReachuLogger.warning("get by code '\(code)' FAIL \(msg)", component: "DiscountManager")
             logError("sdk.discount.get", error: error)
             errorMessage = msg
         }

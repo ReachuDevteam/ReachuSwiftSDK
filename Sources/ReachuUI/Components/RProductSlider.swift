@@ -187,20 +187,11 @@ public struct RProductSlider: View {
         
         // Campaign must be active
         guard campaignManager.isCampaignActive else {
-            let state = campaignManager.campaignState
-            let isPaused = campaignManager.currentCampaign?.isPaused ?? false
-            print("🚫 [RProductSlider] Component hidden - Campaign not active")
-            print("   Campaign ID: \(campaignId)")
-            print("   Campaign State: \(state)")
-            print("   Is Paused: \(isPaused)")
-            print("   Is Campaign Active: \(campaignManager.isCampaignActive)")
             return false
         }
         
         // Campaign must not be paused
         if campaignManager.currentCampaign?.isPaused == true {
-            print("🚫 [RProductSlider] Component hidden - Campaign is paused")
-            print("   Campaign ID: \(campaignId)")
             return false
         }
         
@@ -213,17 +204,15 @@ public struct RProductSlider: View {
                           campaignManager.shouldShowComponent(type: "products")
             
             if !isActive {
-                print("🚫 [RProductSlider] Component hidden - Not in active components list")
-                print("   Active components: \(campaignManager.activeComponents.map { $0.type })")
+                // Component hidden - not in active components list
             } else {
-                print("✅ [RProductSlider] Component visible - Found in active components")
+                // Component visible - found in active components
             }
             
             return isActive
         }
         
         // If no components configured, show if campaign is active and not paused (default behavior)
-        print("✅ [RProductSlider] Component visible - Campaign active (\(campaignManager.campaignState)), no specific components configured")
         return true
     }
     
@@ -253,16 +242,12 @@ public struct RProductSlider: View {
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
             // Force view update when campaign active state changes
-            print("🔄 [RProductSlider] Campaign active state changed: \(campaignManager.isCampaignActive)")
         }
         .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
             // Force view update when campaign paused state changes
-            print("🔄 [RProductSlider] Campaign paused state changed: \(campaignManager.currentCampaign?.isPaused ?? false)")
         }
         .task(id: autoLoadTaskKey) {
             guard manualProducts == nil else { return }
-            let key = autoLoadTaskKey
-            print("🎯 [RProductSlider] auto-loading products for key: \(key)")
             await viewModel.loadProducts(
                 categoryId: categoryId,
                 currency: resolvedCurrency,

@@ -1,5 +1,6 @@
 import SwiftUI
 import ReachuCore
+import ReachuUI
 import ReachuDesignSystem
 
 #if os(iOS)
@@ -211,10 +212,15 @@ public struct RProductBanner: View {
     @ObservedObject private var campaignManager = CampaignManager.shared
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
+    @EnvironmentObject private var cartManager: CartManager
     
     // Cache parsed styling values - only recalculated when config changes
     @State private var cachedStyling: CachedStyling?
     @State private var currentConfigId: String?
+    
+    // Product detail overlay state
+    @State private var showingProductDetail: Product?
+    @State private var isLoadingProduct = false
     
     // MARK: - Initializer
     
@@ -260,26 +266,20 @@ public struct RProductBanner: View {
         
         // Only recalculate if config actually changed
         if currentConfigId != newConfigId {
-            print("🔄 [RProductBanner] Config changed - updating cached styling")
-            print("   Old ID: \(currentConfigId ?? "nil")")
-            print("   New ID: \(newConfigId)")
+            ReachuLogger.debug("Config changed - updating cached styling", component: "RProductBanner")
+            ReachuLogger.debug("Old ID: \(currentConfigId ?? "nil"), New ID: \(newConfigId)", component: "RProductBanner")
             
             cachedStyling = CachedStyling(config: config, adaptiveColors: adaptiveColors)
             currentConfigId = newConfigId
             
             // Log config details (only when changed)
-            print("📋 [RProductBanner] Config loaded:")
-            print("   - productId: \(config.productId)")
-            print("   - backgroundImageUrl: \(config.backgroundImageUrl)")
-            print("   - title: '\(config.title)'")
+            ReachuLogger.debug("Config loaded - productId: \(config.productId), title: '\(config.title)'", component: "RProductBanner")
             if let bannerHeight = config.bannerHeight {
                 let clampedHeight = CGFloat(Swift.max(150, Swift.min(400, bannerHeight)))
-                print("   📏 bannerHeight from backend: \(bannerHeight) -> clamped to: \(clampedHeight)")
-            } else {
-                print("   📏 bannerHeight: using default (200)")
+                ReachuLogger.debug("bannerHeight from backend: \(bannerHeight) -> clamped to: \(clampedHeight)", component: "RProductBanner")
             }
             if config.titleColor != nil || config.bannerHeight != nil {
-                print("   🎨 Styling: Custom colors/sizes provided")
+                ReachuLogger.debug("Styling: Custom colors/sizes provided", component: "RProductBanner")
             }
         }
     }
@@ -368,6 +368,14 @@ public struct RProductBanner: View {
             // This ensures we catch components that load right after the view appears
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
             updateCachedStylingIfNeeded()
+        }
+        .sheet(item: $showingProductDetail) { product in
+            RProductDetailOverlay(
+                product: product,
+                onDismiss: {
+                    showingProductDetail = nil
+                }
+            )
         }
     }
     
@@ -459,7 +467,7 @@ public struct RProductBanner: View {
                         }
                         .onAppear {
                             if let url = styling.imageURL?.absoluteString {
-                                print("⏳ [RProductBanner] Loading background image: \(url)")
+                                ReachuLogger.debug("Loading background image: \(url)", component: "RProductBanner")
                             }
                         }
                 case .success(let image):
@@ -487,7 +495,7 @@ public struct RProductBanner: View {
                             }
                         }
                         .onAppear {
-                            print("❌ [RProductBanner] Failed to load background image: \(error.localizedDescription)")
+                            ReachuLogger.error("Failed to load background image: \(error.localizedDescription)", component: "RProductBanner")
                         }
                 @unknown default:
                     Rectangle()
@@ -560,7 +568,7 @@ public struct RProductBanner: View {
                 
                 // CTA Button with cached styling values
                 Button {
-                    navigateToProduct(config: config)
+                    loadAndShowProduct(config: config)
                 } label: {
                     Text(config.ctaText)
                         .font(.system(size: styling.buttonFontSize, weight: .semibold))
@@ -585,8 +593,8 @@ public struct RProductBanner: View {
             .cornerRadius(ReachuBorderRadius.large)
             .padding(.horizontal, ReachuSpacing.md)
             .onTapGesture {
-                // Tap anywhere on banner to navigate to product
-                navigateToProduct(config: config)
+                // Tap anywhere on banner to show product detail
+                loadAndShowProduct(config: config)
             }
         }
         .frame(height: {
@@ -599,10 +607,10 @@ public struct RProductBanner: View {
     
     // MARK: - Helper Methods
     
-    private func navigateToProduct(config: ProductBannerConfig) {
+    private func loadAndShowProduct(config: ProductBannerConfig) {
         // Handle deeplink first
         if let deeplink = config.deeplink {
-            print("🔗 [RProductBanner] Opening deeplink: \(deeplink)")
+            ReachuLogger.debug("Opening deeplink: \(deeplink)", component: "RProductBanner")
             if let url = URL(string: deeplink) {
                 #if os(iOS)
                 UIApplication.shared.open(url)
@@ -613,7 +621,7 @@ public struct RProductBanner: View {
         
         // Fallback to ctaLink
         if let ctaLink = config.ctaLink {
-            print("🔗 [RProductBanner] Opening link: \(ctaLink)")
+            ReachuLogger.debug("Opening link: \(ctaLink)", component: "RProductBanner")
             if let url = URL(string: ctaLink) {
                 #if os(iOS)
                 UIApplication.shared.open(url)
@@ -622,9 +630,50 @@ public struct RProductBanner: View {
             return
         }
         
-        // Fallback: Use productId to navigate to product detail
-        print("🔗 [RProductBanner] Navigating to product detail for ID: \(config.productId)")
-        // TODO: Implement product detail navigation in your app
+        // Load product by ID and show detail overlay
+        Task {
+            await loadProduct(productId: config.productId)
+        }
+    }
+    
+    /// Load product by ID and show in detail overlay
+    @MainActor
+    private func loadProduct(productId: String) async {
+        guard !isLoadingProduct else { return }
+        
+        isLoadingProduct = true
+        
+        // Get currency and country from CartManager
+        let currency = cartManager.currency
+        let country = cartManager.country
+        
+        do {
+            // Use ProductService to load product with large images for detail view
+            guard let productIdInt = Int(productId) else {
+                ReachuLogger.warning("Invalid productId format: \(productId)", component: "RProductBanner")
+                isLoadingProduct = false
+                return
+            }
+            
+            let product = try await ProductService.shared.loadProduct(
+                productId: productIdInt,
+                currency: currency,
+                country: country
+            )
+            
+            showingProductDetail = product
+            
+        } catch ProductServiceError.invalidProductId(let id) {
+            ReachuLogger.warning("Invalid productId: \(id)", component: "RProductBanner")
+        } catch ProductServiceError.productNotFound(let id) {
+            ReachuLogger.warning("Product not found for ID: \(id)", component: "RProductBanner")
+        } catch ProductServiceError.invalidConfiguration(let message) {
+            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductBanner")
+        } catch {
+            ReachuLogger.error("Error loading product: \(error.localizedDescription)", component: "RProductBanner")
+        }
+        
+        isLoadingProduct = false
     }
 }
 

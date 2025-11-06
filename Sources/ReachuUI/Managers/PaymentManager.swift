@@ -20,11 +20,11 @@ extension CartManager {
         }
 
         guard let checkout = id else {
-            print("ℹ️ [Payment] KlarnaInit: missing checkoutId")
+            ReachuLogger.info("KlarnaInit: missing checkoutId", component: "PaymentManager")
             return nil
         }
 
-        print("💳 [Payment] KlarnaInit START checkoutId=\(checkout)")
+        ReachuLogger.debug("KlarnaInit START checkoutId=\(checkout)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.klarnaInit",
@@ -42,13 +42,13 @@ extension CartManager {
                 email: email
             )
             logResponse("sdk.payment.klarnaInit")
-            print("✅ [Payment] KlarnaInit OK")
+            ReachuLogger.success("KlarnaInit OK", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.klarnaInit", error: error)
-            print("❌ [Payment] KlarnaInit FAIL \(msg)")
+            ReachuLogger.error("KlarnaInit FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
@@ -57,8 +57,7 @@ extension CartManager {
     public func initKlarnaNative(
         input: KlarnaNativeInitInputDto
     ) async -> InitPaymentKlarnaNativeDto? {
-        print("🚀🚀🚀 [PaymentManager.initKlarnaNative] MÉTODO LLAMADO")
-        print("🚀 Thread: \(Thread.current)")
+        ReachuLogger.debug("initKlarnaNative MÉTODO LLAMADO - Thread: \(Thread.current)", component: "PaymentManager")
         isLoading = true
         errorMessage = nil
         defer { isLoading = false }
@@ -71,19 +70,11 @@ extension CartManager {
         }
 
         guard let checkout = id, !checkout.isEmpty else {
-            print("❌❌❌ [Payment] KlarnaNativeInit: missing checkoutId")
-            print("❌❌❌ [Payment] checkoutId actual: \(String(describing: checkoutId))")
-            print("❌❌❌ [Payment] id después de createCheckout: \(String(describing: id))")
+            ReachuLogger.error("KlarnaNativeInit: missing checkoutId - checkoutId actual: \(String(describing: checkoutId)), id después de createCheckout: \(String(describing: id))", component: "PaymentManager")
             return nil
         }
 
-        print("💳💳💳 [Payment] KlarnaNativeInit START")
-        print("💳 checkoutId: \(checkout)")
-        print("💳 input.countryCode: \(input.countryCode)")
-        print("💳 input.currency: \(input.currency)")
-        print("💳 input.locale: \(input.locale)")
-        print("💳 input.customer.email: \(input.customer?.email ?? "nil")")
-        print("💳 input.customer.phone: \(input.customer?.phone ?? "nil")")
+        ReachuLogger.debug("KlarnaNativeInit START - checkoutId: \(checkout), countryCode: \(input.countryCode), currency: \(input.currency), locale: \(input.locale), customer.email: \(input.customer?.email ?? "nil"), customer.phone: \(input.customer?.phone ?? "nil")", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.klarnaNativeInit",
@@ -101,18 +92,16 @@ extension CartManager {
                 "sdk.payment.klarnaNativeInit",
                 payload: ["sessionId": dto.sessionId, "checkoutId": dto.checkoutId]
             )
-            print("✅ [Payment] KlarnaNativeInit OK sessionId=\(dto.sessionId)")
+            ReachuLogger.success("KlarnaNativeInit OK sessionId=\(dto.sessionId)", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.klarnaNativeInit", error: error)
-            print("❌❌❌ [Payment] KlarnaNativeInit FAIL")
-            print("❌ Error type: \(type(of: error))")
-            print("❌ Error message: \(msg)")
-            print("❌ Full error: \(error)")
             if let sdkError = error as? SdkException {
-                print("❌ SdkException description: \(sdkError.description)")
+                ReachuLogger.error("KlarnaNativeInit FAIL - Type: \(type(of: error)), Message: \(msg), SdkException: \(sdkError.description)", component: "PaymentManager")
+            } else {
+                ReachuLogger.error("KlarnaNativeInit FAIL - Type: \(type(of: error)), Message: \(msg)", component: "PaymentManager")
             }
             return nil
         }
@@ -138,7 +127,7 @@ extension CartManager {
         }
 
         guard let checkout = id, !checkout.isEmpty else {
-            print("ℹ️ [Payment] KlarnaNativeConfirm: missing checkoutId")
+            ReachuLogger.info("KlarnaNativeConfirm: missing checkoutId", component: "PaymentManager")
             return nil
         }
 
@@ -150,7 +139,7 @@ extension CartManager {
             shippingAddress: shippingAddress
         )
 
-        print("💳 [Payment] KlarnaNativeConfirm START checkoutId=\(checkout)")
+        ReachuLogger.debug("KlarnaNativeConfirm START checkoutId=\(checkout)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.klarnaNativeConfirm",
@@ -167,13 +156,13 @@ extension CartManager {
                 "sdk.payment.klarnaNativeConfirm",
                 payload: ["orderId": dto.orderId as Any]
             )
-            print("✅ [Payment] KlarnaNativeConfirm OK orderId=\(dto.orderId)")
+            ReachuLogger.success("KlarnaNativeConfirm OK orderId=\(dto.orderId)", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.klarnaNativeConfirm", error: error)
-            print("❌ [Payment] KlarnaNativeConfirm FAIL \(msg)")
+            ReachuLogger.error("KlarnaNativeConfirm FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
@@ -186,7 +175,7 @@ extension CartManager {
         errorMessage = nil
         defer { isLoading = false }
 
-        print("🔍 [Payment] KlarnaNativeOrder START orderId=\(orderId)")
+        ReachuLogger.debug("KlarnaNativeOrder START orderId=\(orderId)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.klarnaNativeOrder",
@@ -200,13 +189,13 @@ extension CartManager {
                 "sdk.payment.klarnaNativeOrder",
                 payload: ["status": dto.status as Any]
             )
-            print("✅ [Payment] KlarnaNativeOrder OK status=\(dto.status ?? "-")")
+            ReachuLogger.success("KlarnaNativeOrder OK status=\(dto.status ?? "-")", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.klarnaNativeOrder", error: error)
-            print("❌ [Payment] KlarnaNativeOrder FAIL \(msg)")
+            ReachuLogger.error("KlarnaNativeOrder FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
@@ -225,11 +214,11 @@ extension CartManager {
         }
 
         guard let checkout = id else {
-            print("ℹ️ [Payment] StripeIntent: missing checkoutId")
+            ReachuLogger.info("StripeIntent: missing checkoutId", component: "PaymentManager")
             return nil
         }
 
-        print("💳 [Payment] StripeIntent START checkoutId=\(checkout)")
+        ReachuLogger.debug("StripeIntent START checkoutId=\(checkout)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.stripeIntent",
@@ -246,13 +235,13 @@ extension CartManager {
                 "sdk.payment.stripeIntent",
                 payload: ["clientSecret": dto.clientSecret as Any]
             )
-            print("✅ [Payment] StripeIntent OK")
+            ReachuLogger.success("StripeIntent OK", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.stripeIntent", error: error)
-            print("❌ [Payment] StripeIntent FAIL \(msg)")
+            ReachuLogger.error("StripeIntent FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
@@ -275,11 +264,11 @@ extension CartManager {
         }
 
         guard let checkout = id else {
-            print("ℹ️ [Payment] StripeLink: missing checkoutId")
+            ReachuLogger.info("StripeLink: missing checkoutId", component: "PaymentManager")
             return nil
         }
 
-        print("💳 [Payment] StripeLink START checkoutId=\(checkout)")
+        ReachuLogger.debug("StripeLink START checkoutId=\(checkout)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.stripeLink",
@@ -297,13 +286,13 @@ extension CartManager {
                 email: email
             )
             logResponse("sdk.payment.stripeLink")
-            print("✅ [Payment] StripeLink OK")
+            ReachuLogger.success("StripeLink OK", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.stripeLink", error: error)
-            print("❌ [Payment] StripeLink FAIL \(msg)")
+            ReachuLogger.error("StripeLink FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
@@ -325,11 +314,11 @@ extension CartManager {
         }
 
         guard let checkout = id else {
-            print("ℹ️ [Payment] VippsInit: missing checkoutId")
+            ReachuLogger.info("VippsInit: missing checkoutId", component: "PaymentManager")
             return nil
         }
 
-        print("💳 [Payment] VippsInit START checkoutId=\(checkout)")
+        ReachuLogger.debug("VippsInit START checkoutId=\(checkout)", component: "PaymentManager")
         do {
             logRequest(
                 "sdk.payment.vippsInit",
@@ -345,13 +334,13 @@ extension CartManager {
                 returnUrl: returnUrl
             )
             logResponse("sdk.payment.vippsInit")
-            print("✅ [Payment] VippsInit OK")
+            ReachuLogger.success("VippsInit OK", component: "PaymentManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.payment.vippsInit", error: error)
-            print("❌ [Payment] VippsInit FAIL \(msg)")
+            ReachuLogger.error("VippsInit FAIL \(msg)", component: "PaymentManager")
             return nil
         }
     }
