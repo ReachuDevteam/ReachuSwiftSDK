@@ -17,3 +17,6 @@ public typealias ReachuConfigurationLoader = ConfigurationLoader
 
 // Export Logger
 public typealias ReachuSDKLogger = ReachuLogger
+
+// Export Cache Manager
+public typealias ReachuSDKCacheManager = CacheManager

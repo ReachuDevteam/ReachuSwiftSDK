@@ -42,15 +42,11 @@ public class CampaignWebSocketManager: ObservableObject {
         let urlString = "\(wsURLString)/ws/\(campaignId)"
         
         guard let url = URL(string: urlString) else {
-            print("❌ [CampaignWebSocket] Invalid WebSocket URL: \(urlString)")
-            print("   Base URL: \(baseURL)")
-            print("   Campaign ID: \(campaignId)")
+            ReachuLogger.error("Invalid WebSocket URL: \(urlString) - Base URL: \(baseURL), Campaign ID: \(campaignId)", component: "CampaignWebSocket")
             return
         }
         
-        print("🔌 [CampaignWebSocket] Connecting to: \(urlString)")
-        print("   Base URL: \(baseURL)")
-        print("   Campaign ID: \(campaignId)")
+        ReachuLogger.debug("Connecting to: \(urlString) - Base URL: \(baseURL), Campaign ID: \(campaignId)", component: "CampaignWebSocket")
         
         // Create URLRequest with potential authentication headers
         var request = URLRequest(url: url)
@@ -60,7 +56,7 @@ public class CampaignWebSocketManager: ObservableObject {
         let config = ReachuConfiguration.shared
         if !config.apiKey.isEmpty {
             request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
-            print("   Using API Key: \(config.apiKey.prefix(8))...")
+            ReachuLogger.debug("Using API Key: \(config.apiKey.prefix(8))...", component: "CampaignWebSocket")
         }
         
         webSocketTask = urlSession.webSocketTask(with: request)
@@ -73,8 +69,6 @@ public class CampaignWebSocketManager: ObservableObject {
         reconnectAttempts = 0 // Reset reconnect attempts on successful connection
         onConnectionStatusChanged?(true)
         
-        print("✅ [CampaignWebSocket] WebSocket connected successfully")
-        
         // Start listening for messages in a separate task so it doesn't block
         // URLSessionWebSocketTask handles keep-alive automatically
         Task {
@@ -84,7 +78,7 @@ public class CampaignWebSocketManager: ObservableObject {
     
     /// Disconnect from WebSocket
     public func disconnect() {
-        print("🔌 [CampaignWebSocket] Disconnecting from campaign \(campaignId)")
+        ReachuLogger.debug("Disconnecting from campaign \(campaignId)", component: "CampaignWebSocket")
         
         isConnected = false
         stopReconnectTimer()
@@ -96,7 +90,7 @@ public class CampaignWebSocketManager: ObservableObject {
     // MARK: - Message Handling
     
     private func listenForMessages() async {
-        print("👂 [CampaignWebSocket] Started listening for messages...")
+        ReachuLogger.debug("Started listening for messages...", component: "CampaignWebSocket")
         
         while let webSocketTask = webSocketTask, isConnected {
             do {
@@ -104,38 +98,37 @@ public class CampaignWebSocketManager: ObservableObject {
                 
                 switch message {
                 case .string(let text):
-                    print("📩 [CampaignWebSocket] Received string message: \(text.prefix(100))")
+                    ReachuLogger.debug("Received string message: \(text.prefix(100))", component: "CampaignWebSocket")
                     await handleMessage(text)
                 case .data(let data):
                     if let text = String(data: data, encoding: .utf8) {
-                        print("📩 [CampaignWebSocket] Received data message: \(text.prefix(100))")
+                        ReachuLogger.debug("Received data message: \(text.prefix(100))", component: "CampaignWebSocket")
                         await handleMessage(text)
                     } else {
-                        print("⚠️ [CampaignWebSocket] Received binary data (unable to decode)")
+                        ReachuLogger.warning("Received binary data (unable to decode)", component: "CampaignWebSocket")
                     }
                 @unknown default:
-                    print("⚠️ [CampaignWebSocket] Unknown message type")
+                    ReachuLogger.warning("Unknown message type", component: "CampaignWebSocket")
                 }
                 
                 // Continue listening - the while loop will automatically continue
                 
             } catch {
-                print("❌ [CampaignWebSocket] WebSocket error: \(error)")
+                ReachuLogger.error("WebSocket error: \(error)", component: "CampaignWebSocket")
                 
                 // Check if we're still supposed to be connected
                 guard isConnected else {
-                    print("🛑 [CampaignWebSocket] Connection closed intentionally")
+                    ReachuLogger.debug("Connection closed intentionally", component: "CampaignWebSocket")
                     break
                 }
                 
                 // Check if it's a connection error that we should retry
                 if let urlError = error as? URLError {
-                    print("   Error code: \(urlError.code.rawValue)")
-                    print("   Error description: \(urlError.localizedDescription)")
+                    ReachuLogger.debug("Error code: \(urlError.code.rawValue), Error description: \(urlError.localizedDescription)", component: "CampaignWebSocket")
                     
                     // Don't retry for certain errors (like authentication failures)
                     if urlError.code == .userAuthenticationRequired || urlError.code == .userCancelledAuthentication {
-                        print("⚠️ [CampaignWebSocket] Authentication error - stopping reconnection attempts")
+                        ReachuLogger.warning("Authentication error - stopping reconnection attempts", component: "CampaignWebSocket")
                         isConnected = false
                         onConnectionStatusChanged?(false)
                         return
@@ -150,66 +143,64 @@ public class CampaignWebSocketManager: ObservableObject {
             }
         }
         
-        print("🛑 [CampaignWebSocket] Stopped listening for messages")
+        ReachuLogger.debug("Stopped listening for messages", component: "CampaignWebSocket")
     }
     
     private func handleMessage(_ text: String) async {
-        print("📥 [CampaignWebSocket] Raw message received: \(text.prefix(200))")
+        ReachuLogger.debug("Raw message received: \(text.prefix(200))", component: "CampaignWebSocket")
         
         guard let data = text.data(using: .utf8) else {
-            print("❌ [CampaignWebSocket] Invalid message data")
+            ReachuLogger.error("Invalid message data", component: "CampaignWebSocket")
             return
         }
         
         // Parse event type first
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let eventType = json["type"] as? String else {
-            print("❌ [CampaignWebSocket] Failed to parse event type")
-            print("   Raw JSON: \(text)")
+            ReachuLogger.error("Failed to parse event type - Raw JSON: \(text)", component: "CampaignWebSocket")
             return
         }
         
-        print("📨 [CampaignWebSocket] Received event: \(eventType)")
+        ReachuLogger.debug("Received event: \(eventType)", component: "CampaignWebSocket")
         
         // Handle based on event type
         do {
             switch eventType {
             case "campaign_started":
                 let event = try JSONDecoder().decode(CampaignStartedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded campaign_started event")
+                ReachuLogger.success("Decoded campaign_started event", component: "CampaignWebSocket")
                 onCampaignStarted?(event)
                 
             case "campaign_ended":
                 let event = try JSONDecoder().decode(CampaignEndedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded campaign_ended event")
+                ReachuLogger.success("Decoded campaign_ended event", component: "CampaignWebSocket")
                 onCampaignEnded?(event)
                 
             case "campaign_paused":
                 let event = try JSONDecoder().decode(CampaignPausedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded campaign_paused event")
+                ReachuLogger.success("Decoded campaign_paused event", component: "CampaignWebSocket")
                 onCampaignPaused?(event)
                 
             case "campaign_resumed":
                 let event = try JSONDecoder().decode(CampaignResumedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded campaign_resumed event")
+                ReachuLogger.success("Decoded campaign_resumed event", component: "CampaignWebSocket")
                 onCampaignResumed?(event)
                 
             case "component_status_changed":
                 let event = try JSONDecoder().decode(ComponentStatusChangedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded component_status_changed event")
+                ReachuLogger.success("Decoded component_status_changed event", component: "CampaignWebSocket")
                 onComponentStatusChanged?(event)
                 
             case "component_config_updated":
                 let event = try JSONDecoder().decode(ComponentConfigUpdatedEvent.self, from: data)
-                print("✅ [CampaignWebSocket] Decoded component_config_updated event")
+                ReachuLogger.success("Decoded component_config_updated event", component: "CampaignWebSocket")
                 onComponentConfigUpdated?(event)
                 
             default:
-                print("⚠️ [CampaignWebSocket] Unknown event type: \(eventType)")
+                ReachuLogger.warning("Unknown event type: \(eventType)", component: "CampaignWebSocket")
             }
         } catch {
-            print("❌ [CampaignWebSocket] Failed to decode \(eventType): \(error)")
-            print("   Raw message: \(text)")
+            ReachuLogger.error("Failed to decode \(eventType): \(error) - Raw message: \(text)", component: "CampaignWebSocket")
         }
     }
     
@@ -217,7 +208,7 @@ public class CampaignWebSocketManager: ObservableObject {
     
     private func attemptReconnect() async {
         guard reconnectAttempts < maxReconnectAttempts else {
-            print("❌ [CampaignWebSocket] Max reconnection attempts reached")
+            ReachuLogger.error("Max reconnection attempts reached", component: "CampaignWebSocket")
             onConnectionStatusChanged?(false)
             return
         }
@@ -225,7 +216,7 @@ public class CampaignWebSocketManager: ObservableObject {
         reconnectAttempts += 1
         let delay = min(30.0, pow(2.0, Double(reconnectAttempts))) // Exponential backoff, max 30s
         
-        print("🔄 [CampaignWebSocket] Reconnecting in \(delay) seconds (attempt \(reconnectAttempts)/\(maxReconnectAttempts))")
+        ReachuLogger.debug("Reconnecting in \(delay) seconds (attempt \(reconnectAttempts)/\(maxReconnectAttempts))", component: "CampaignWebSocket")
         
         try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
         

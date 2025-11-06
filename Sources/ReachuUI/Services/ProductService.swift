@@ -100,8 +100,6 @@ public class ProductService {
         }
         
         let product = dtoProduct.toDomainProduct()
-        ReachuLogger.success("Loaded product: \(product.title)", component: "ProductService")
-        
         return product
     }
     
@@ -140,8 +138,6 @@ public class ProductService {
             shippingCountryCode: country
         )
         
-        ReachuLogger.info("API returned \(dtoProducts.count) products", component: "ProductService")
-        
         if let ids = idsToUse, !ids.isEmpty, dtoProducts.count < ids.count {
             let foundIds = Set(dtoProducts.map { $0.id })
             let requestedIds = Set(ids)
@@ -153,8 +149,6 @@ public class ProductService {
         }
         
         let products = dtoProducts.map { $0.toDomainProduct() }
-        ReachuLogger.success("Loaded \(products.count) products", component: "ProductService")
-        
         return products
     }
     
@@ -186,11 +180,7 @@ public class ProductService {
             shippingCountryCode: country
         )
         
-        ReachuLogger.info("API returned \(dtoProducts.count) products for category \(categoryId)", component: "ProductService")
-        
         let products = dtoProducts.map { $0.toDomainProduct() }
-        ReachuLogger.success("Loaded \(products.count) products for category", component: "ProductService")
-        
         return products
     }
 }

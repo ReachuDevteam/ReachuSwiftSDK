@@ -15,7 +15,7 @@ public struct ReachuLiveUI {
     
     /// Configure LiveUI with ReachuLiveShow
     public static func configure() {
-        print("🎬 Reachu LiveUI initialized")
+        // LiveUI initialized
     }
 }
 

@@ -164,14 +164,6 @@ public struct RProductCarousel: View {
         if currentConfigId != newConfigId {
             cachedConfig = CachedConfig(config: config)
             currentConfigId = newConfigId
-            
-            // Log config details (only when changed)
-            print("📋 [RProductCarousel] Config loaded:")
-            print("   - productIds (String): \(config.productIds)")
-            print("   - productIds converted to Int: \(CachedConfig(config: config).productIds)")
-            print("   - autoPlay: \(config.autoPlay)")
-            print("   - interval: \(config.interval)ms")
-            print("   - converted interval: \(CachedConfig(config: config).autoPlayInterval)s")
         }
     }
     
@@ -233,7 +225,7 @@ public struct RProductCarousel: View {
                 EmptyView()
             } else if shouldHide {
                 EmptyView()
-            } else if let config = effectiveConfig {
+            } else if effectiveConfig != nil {
                 if shouldShowLoading || products.isEmpty {
                     skeletonView
                 } else {

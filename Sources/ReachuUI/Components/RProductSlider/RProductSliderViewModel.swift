@@ -82,8 +82,6 @@ class RProductSliderViewModel: ObservableObject {
             products = loadedProducts
             hasLoaded = true
             
-            ReachuLogger.success("Loaded \(products.count) products", component: "RProductSlider")
-            
         } catch ProductServiceError.sdkError(let error) {
             // Only show error if it's not a NOT_FOUND error
             if error.code == "NOT_FOUND" || error.status == 404 {

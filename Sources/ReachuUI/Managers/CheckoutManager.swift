@@ -11,11 +11,11 @@ extension CartManager {
         defer { isLoading = false }
 
         guard let cid = await ensureCartIDForCheckout() else {
-            print("ℹ️ [Checkout] Create: missing cartId")
+            ReachuLogger.info("Create: missing cartId", component: "CheckoutManager")
             return nil
         }
 
-        print("🧾 [Checkout] Create START cartId=\(cid)")
+        ReachuLogger.debug("Create START cartId=\(cid)", component: "CheckoutManager")
         do {
             logRequest("sdk.checkout.create", payload: ["cart_id": cid])
             let dto = try await sdk.checkout.create(cart_id: cid)
@@ -25,13 +25,13 @@ extension CartManager {
                 "sdk.checkout.create",
                 payload: ["checkoutId": chkId as Any]
             )
-            print("✅ [Checkout] Create OK checkoutId=\(chkId ?? "nil")")
+            ReachuLogger.success("Create OK checkoutId=\(chkId ?? "nil")", component: "CheckoutManager")
             return chkId
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.checkout.create", error: error)
-            print("❌ [Checkout] Create FAIL \(msg)")
+            ReachuLogger.error("Create FAIL \(msg)", component: "CheckoutManager")
             return nil
         }
     }
@@ -60,11 +60,11 @@ extension CartManager {
         }
 
         guard let id = chkId, !id.isEmpty else {
-            print("ℹ️ [Checkout] Update: missing checkoutId")
+            ReachuLogger.info("Update: missing checkoutId", component: "CheckoutManager")
             return nil
         }
 
-        print("🧾 [Checkout] Update START checkoutId=\(id)")
+        ReachuLogger.debug("Update START checkoutId=\(id)", component: "CheckoutManager")
         do {
             logRequest(
                 "sdk.checkout.update",
@@ -89,13 +89,13 @@ extension CartManager {
                 buyer_accepts_purchase_conditions: acceptsPurchaseConditions
             )
             logResponse("sdk.checkout.update", payload: ["checkoutId": id])
-            print("✅ [Checkout] Update OK")
+            ReachuLogger.success("Update OK", component: "CheckoutManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             errorMessage = msg
             logError("sdk.checkout.update", error: error)
-            print("❌ [Checkout] Update FAIL \(msg)")
+            ReachuLogger.error("Update FAIL \(msg)", component: "CheckoutManager")
             return nil
         }
     }
@@ -103,21 +103,21 @@ extension CartManager {
     @discardableResult
     public func getCheckoutById(checkoutId: String) async -> GetCheckoutDto? {
         guard !checkoutId.isEmpty else {
-            print("ℹ️ [Checkout] GetById: empty checkoutId")
+            ReachuLogger.info("GetById: empty checkoutId", component: "CheckoutManager")
             return nil
         }
 
-        print("🧾 [Checkout] GetById START checkoutId=\(checkoutId)")
+        ReachuLogger.debug("GetById START checkoutId=\(checkoutId)", component: "CheckoutManager")
         do {
             logRequest("sdk.checkout.getById", payload: ["checkout_id": checkoutId])
             let dto = try await sdk.checkout.getById(checkout_id: checkoutId)
             logResponse("sdk.checkout.getById", payload: ["status": dto.status as Any])
-            print("✅ [Checkout] GetById OK status=\(dto.status ?? "unknown")")
+            ReachuLogger.success("GetById OK status=\(dto.status ?? "unknown")", component: "CheckoutManager")
             return dto
         } catch {
             let msg = (error as? SdkException)?.description ?? error.localizedDescription
             logError("sdk.checkout.getById", error: error)
-            print("❌ [Checkout] GetById FAIL \(msg)")
+            ReachuLogger.error("GetById FAIL \(msg)", component: "CheckoutManager")
             return nil
         }
     }

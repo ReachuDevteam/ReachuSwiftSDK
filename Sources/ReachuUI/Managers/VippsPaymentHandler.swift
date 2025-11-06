@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import ReachuCore
 
 /// Handles Vipps payment return URLs and status checking
 @MainActor
@@ -23,11 +24,11 @@ public class VippsPaymentHandler: ObservableObject {
     
     /// Handle URL scheme return from Vipps
     public func handleReturnURL(_ url: URL) {
-        print("🔗 [Vipps Handler] Received URL: \(url)")
+        ReachuLogger.debug("Received URL: \(url)", component: "VippsPaymentHandler")
         
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
               let queryItems = components.queryItems else {
-            print("❌ [Vipps Handler] Invalid URL format")
+            ReachuLogger.error("Invalid URL format", component: "VippsPaymentHandler")
             return
         }
         
@@ -49,14 +50,11 @@ public class VippsPaymentHandler: ObservableObject {
             }
         }
         
-        print("🔗 [Vipps Handler] Extracted parameters:")
-        print("   - Checkout ID: \(checkoutId ?? "nil")")
-        print("   - Status: \(status ?? "nil")")
-        print("   - Payment Method: \(paymentMethod ?? "nil")")
+        ReachuLogger.debug("Extracted parameters: Checkout ID=\(checkoutId ?? "nil"), Status=\(status ?? "nil"), Payment Method=\(paymentMethod ?? "nil")", component: "VippsPaymentHandler")
         
         // Only handle Vipps payments
         guard paymentMethod == "vipps" else {
-            print("ℹ️ [Vipps Handler] Not a Vipps payment, ignoring")
+            ReachuLogger.info("Not a Vipps payment, ignoring", component: "VippsPaymentHandler")
             return
         }
         
@@ -65,16 +63,16 @@ public class VippsPaymentHandler: ObservableObject {
             switch status.lowercased() {
             case "success":
                 self.paymentStatus = .success
-                print("✅ [Vipps Handler] Payment successful!")
+                ReachuLogger.success("Payment successful!", component: "VippsPaymentHandler")
             case "cancelled", "cancel":
                 self.paymentStatus = .cancelled
-                print("❌ [Vipps Handler] Payment cancelled")
+                ReachuLogger.warning("Payment cancelled", component: "VippsPaymentHandler")
             case "failed", "error":
                 self.paymentStatus = .failed
-                print("❌ [Vipps Handler] Payment failed")
+                ReachuLogger.error("Payment failed", component: "VippsPaymentHandler")
             default:
                 self.paymentStatus = .unknown
-                print("⚠️ [Vipps Handler] Unknown status: \(status)")
+                ReachuLogger.warning("Unknown status: \(status)", component: "VippsPaymentHandler")
             }
         }
         
@@ -87,7 +85,7 @@ public class VippsPaymentHandler: ObservableObject {
     
     /// Start tracking a Vipps payment
     public func startPaymentTracking(checkoutId: String) {
-        print("🟠 [Vipps Handler] Starting payment tracking for: \(checkoutId)")
+        ReachuLogger.debug("Starting payment tracking for: \(checkoutId)", component: "VippsPaymentHandler")
         self.isPaymentInProgress = true
         self.currentCheckoutId = checkoutId
         self.paymentStatus = .inProgress
@@ -95,7 +93,7 @@ public class VippsPaymentHandler: ObservableObject {
     
     /// Stop tracking and reset state
     public func stopPaymentTracking() {
-        print("🟠 [Vipps Handler] Stopping payment tracking")
+        ReachuLogger.debug("Stopping payment tracking", component: "VippsPaymentHandler")
         self.isPaymentInProgress = false
         self.currentCheckoutId = nil
         self.paymentStatus = .unknown
