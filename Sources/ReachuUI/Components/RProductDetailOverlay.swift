@@ -71,6 +71,16 @@ public struct RProductDetailOverlay: View {
         selectedVariant?.price ?? product.price
     }
     
+    /// Current price with taxes if available (what customer actually pays)
+    private var currentPriceWithTaxes: Float {
+        currentPrice.amount_incl_taxes ?? currentPrice.amount
+    }
+    
+    /// Compare at price with taxes if available
+    private var compareAtWithTaxes: Float? {
+        currentPrice.compare_at_incl_taxes ?? currentPrice.compare_at
+    }
+    
     private var displayCurrencySymbol: String {
         let symbol = cartManager.currencySymbol
         if !symbol.isEmpty {
@@ -374,13 +384,13 @@ public struct RProductDetailOverlay: View {
             // Price and Stock
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-                    // Current price
-                    Text(formatted(amount: Double(currentPrice.amount)))
+                    // Current price - use price with taxes if available (what customer actually pays)
+                    Text(formatted(amount: Double(currentPriceWithTaxes)))
                         .font(ReachuTypography.title3)
                         .foregroundColor(ReachuColors.textPrimary)
                     
-                    // Compare at price (if available)
-                    if let compareAt = currentPrice.compare_at, compareAt > currentPrice.amount {
+                    // Compare at price (if available) - use compare at with taxes if available
+                    if let compareAt = compareAtWithTaxes, compareAt > currentPriceWithTaxes {
                         Text(formatted(amount: Double(compareAt)))
                             .font(ReachuTypography.body)
                             .foregroundColor(ReachuColors.textSecondary)
@@ -648,9 +658,9 @@ public struct RProductDetailOverlay: View {
                     
                     Spacer()
                     
-                    // Price
+                    // Price - use price with taxes if available (what customer actually pays)
                     if !isAddingToCart && !showCheckmark {
-                        Text(formatted(amount: Double(currentPrice.amount) * Double(quantity)))
+                        Text(formatted(amount: Double(currentPriceWithTaxes) * Double(quantity)))
                             .font(.system(size: 16, weight: .bold))
                             .foregroundColor(adaptiveColors.surface)
                     }
