@@ -16,13 +16,67 @@ This SDK is designed with a modular architecture that allows you to import only 
 
 ## 📦 Installation
 
+### Swift Package Manager (Recommended)
+
 Add the Reachu Swift SDK to your project using Swift Package Manager:
+
+#### Using Xcode
+
+1. **Open your Xcode project**
+2. **Go to File → Add Package Dependencies...**
+3. **Enter the repository URL:**
+   ```
+   https://github.com/ReachuDevteam/ReachuSwiftSDK.git
+   ```
+4. **Select the version**: `1.0.0-beta.1` (or latest beta)
+5. **Choose your modules** based on your needs
+
+#### Using Package.swift
+
+Add this to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "4.0.0")
+    .package(url: "https://github.com/ReachuDevteam/ReachuSwiftSDK.git", from: "1.0.0-beta.1")
 ]
 ```
+
+Then add the products you need to your target:
+
+```swift
+.target(
+    name: "YourApp",
+    dependencies: [
+        .product(name: "ReachuUI", package: "ReachuSwiftSDK"),
+        // or other modules: ReachuCore, ReachuLiveShow, ReachuLiveUI
+    ]
+)
+```
+
+### CocoaPods
+
+Add this to your `Podfile`:
+
+```ruby
+platform :ios, '15.0'
+
+target 'YourApp' do
+  use_frameworks!
+  
+  # Reachu Swift SDK
+  pod 'ReachuSwiftSDK', :git => 'https://github.com/ReachuDevteam/ReachuSwiftSDK.git', :tag => 'v1.0.0-beta.1'
+end
+```
+
+Then run:
+
+```bash
+pod install
+```
+
+:::info Beta Release
+This is a beta release (`v1.0.0-beta.1`). The API may change before the stable release. We recommend testing thoroughly before production use.
+:::
 
 ### 🎨 Configuration Setup
 
@@ -38,15 +92,56 @@ dependencies: [
    - `reachu-config-starter.json` - **Minimal configuration**
 
 3. **Load configuration** in your app:
-   ```swift
-   import ReachuCore
-   
-   // Auto-detect config file (reads from environment variables)
-   try ConfigurationLoader.loadConfiguration()
-   
-   // Or specify a file directly
-   try ConfigurationLoader.loadFromJSON(fileName: "reachu-config")
-   ```
+
+```swift title="App.swift"
+import SwiftUI
+import ReachuCore
+import ReachuUI
+import ReachuDesignSystem
+
+@main
+struct YourApp: App {
+    // MARK: - Global State Managers
+    @StateObject private var cartManager = CartManager()
+    @StateObject private var checkoutDraft = CheckoutDraft()
+    
+    init() {
+        // Load configuration from reachu-config.json
+        // This reads the config file with API key, theme colors, and settings
+        ConfigurationLoader.loadConfiguration()
+        
+        // Or force a specific country (for testing)
+        // ConfigurationLoader.loadConfiguration(userCountryCode: "DE")
+    }
+    
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                // Inject managers as environment objects
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
+                // Show checkout overlay when user taps checkout button
+                .sheet(isPresented: $cartManager.isCheckoutPresented) {
+                    RCheckoutOverlay()
+                        .environmentObject(cartManager)
+                        .environmentObject(checkoutDraft)
+                }
+                // Global floating cart indicator (optional)
+                .overlay {
+                    RFloatingCartIndicator()
+                        .environmentObject(cartManager)
+                }
+        }
+    }
+}
+```
+
+**What this does:**
+- ✅ Loads theme, colors, and settings from `reachu-config.json`
+- ✅ Initializes Stripe payments automatically
+- ✅ Sets up CartManager for global cart state
+- ✅ Configures CheckoutDraft for address normalization
+- ✅ Makes managers available to all views via `@EnvironmentObject`
 
 4. **Optional: Set environment variables** in your app for quick theme switching:
    - **In Xcode**: Edit Scheme → Run → Environment Variables
