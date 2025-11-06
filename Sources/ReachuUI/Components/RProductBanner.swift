@@ -658,8 +658,7 @@ public struct RProductBanner: View {
             let product = try await ProductService.shared.loadProduct(
                 productId: productIdInt,
                 currency: currency,
-                country: country,
-                imageSize: "large"
+                country: country
             )
             
             showingProductDetail = product
