@@ -1,0 +1,122 @@
+{
+    "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
+    "campaignId": 17,
+    "environment": "sandbox",
+    "theme": {
+      "name": "My App Theme",
+      "mode": "automatic",
+      "lightColors": {
+        "primary": "#FF6B35",
+        "secondary": "#F7931E",
+        "success": "#34C759",
+        "warning": "#FF9500",
+        "error": "#FF3B30",
+        "info": "#007AFF",
+        "background": "#F2F2F7",
+        "surface": "#FFFFFF",
+        "surfaceSecondary": "#F9F9F9",
+        "textPrimary": "#000000",
+        "textSecondary": "#8E8E93",
+        "textTertiary": "#C7C7CC",
+        "border": "#E5E5EA",
+        "borderSecondary": "#D1D1D6"
+      },
+      "darkColors": {
+        "primary": "#FF6B35",
+        "secondary": "#F7931E",
+        "success": "#32D74B",
+        "warning": "#FF9F0A",
+        "error": "#FF453A",
+        "info": "#0A84FF",
+        "background": "#000000",
+        "surface": "#1C1C1E",
+        "surfaceSecondary": "#2C2C2E",
+        "textPrimary": "#FFFFFF",
+        "textSecondary": "#8E8E93",
+        "textTertiary": "#48484A",
+        "border": "#38383A",
+        "borderSecondary": "#48484A"
+      },
+      "borderRadius": {
+        "none": 0,
+        "small": 4,
+        "medium": 8,
+        "large": 12,
+        "xl": 16,
+        "circle": 999
+      },
+      "spacing": {
+        "xs": 4,
+        "sm": 8,
+        "md": 16,
+        "lg": 24,
+        "xl": 32,
+        "xxl": 48,
+        "xxxl": 64
+      }
+    },
+    "cart": {
+      "floatingCartPosition": "bottomRight",
+      "floatingCartDisplayMode": "iconOnly",
+      "floatingCartSize": "small",
+      "autoSaveCart": true,
+      "showCartNotifications": true,
+      "enableGuestCheckout": true,
+      "requirePhoneNumber": false,
+      "defaultShippingCountry": "NO",
+      "supportedPaymentMethods": ["stripe", "klarna"]
+    },
+    "network": {
+      "timeout": 30.0,
+      "retryAttempts": 3,
+      "enableCaching": true,
+      "enableLogging": true
+    },
+    "ui": {
+      "enableAnimations": true,
+      "showProductBrands": true,
+      "showProductDescriptions": true,
+      "enableHapticFeedback": true,
+      "shadowConfig": {
+        "cardShadowEnabled": true,
+        "cardShadowRadius": 8,
+        "cardShadowOffset": {
+          "width": 0,
+          "height": 2
+        },
+        "cardShadowOpacity": 0.1,
+        "buttonShadowEnabled": true,
+        "buttonShadowRadius": 4,
+        "buttonShadowOffset": {
+          "width": 0,
+          "height": 1
+        },
+        "buttonShadowOpacity": 0.15,
+        "textShadowEnabled": true,
+        "textShadowRadius": 2,
+        "textShadowOffset": {
+          "width": 0,
+          "height": 1
+        },
+        "textShadowOpacity": 0.5
+      }
+    },
+    "marketFallback": {
+      "countryCode": "NO",
+      "countryName": "Norway",
+      "currencyCode": "NOK",
+      "currencySymbol": "kr",
+      "phoneCode": "+47",
+      "flag": "https://flagcdn.com/w320/no.png"
+    },    
+    "localization": {
+      "defaultLanguage": "en",
+      "fallbackLanguage": "en",
+      "translationsFile": "reachu-translations"
+    },
+    "campaigns": {
+      "webSocketBaseURL": "https://dev-campaing.reachu.io",
+      "restAPIBaseURL": "https://dev-campaing.reachu.io"
+    }
+    
+  }
