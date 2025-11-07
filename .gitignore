@@ -18,3 +18,6 @@ ReachuWorkspace.xcworkspace/
 *.pre-manual
 # Package resolved (should be generated)
 Package.resolved
+
+# Kotlin implementation guide (moved to trello-mcp-server)
+KOTLIN_IMPLEMENTATION_GUIDE.md

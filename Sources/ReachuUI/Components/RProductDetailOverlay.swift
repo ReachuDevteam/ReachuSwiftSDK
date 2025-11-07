@@ -232,36 +232,25 @@ public struct RProductDetailOverlay: View {
                     }
             } else if displayImages.count == 1 {
                 // Single image - full width, edge to edge
-                AsyncImage(url: URL(string: displayImages[0].url)) { phase in
-                    switch phase {
-                    case .success(let image):
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: productDetailConfig.imageHeight ?? 400)
-                            .clipped()
-                            .onAppear {
-                                imageLoaded = true
-                            }
-                    case .failure(_):
-                        RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
-                            .fill(ReachuColors.background)
-                            .overlay {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .foregroundColor(ReachuColors.error)
-                            }
-                    case .empty:
-                        RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
-                            .fill(ReachuColors.background)
-                            .overlay {
-                                ProgressView()
-                            }
-                    @unknown default:
-                        EmptyView()
-                    }
+                LoadedImage(
+                    url: URL(string: displayImages[0].url),
+                    placeholder: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
+                        .fill(ReachuColors.background)
+                        .overlay { ProgressView() }),
+                    errorView: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
+                        .fill(ReachuColors.background)
+                        .overlay {
+                            Image(systemName: "exclamationmark.triangle")
+                                .foregroundColor(ReachuColors.error)
+                        })
+                )
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity)
+                .frame(height: productDetailConfig.imageHeight ?? 400)
+                .clipped()
+                .onAppear {
+                    imageLoaded = true
                 }
-                .frame(height: productDetailConfig.imageHeight ?? 240)
                 .background(Color.clear)
             } else {
                 // Multiple images with gallery
@@ -269,35 +258,25 @@ public struct RProductDetailOverlay: View {
                     // Main image display
                     TabView(selection: $selectedImageIndex) {
                         ForEach(Array(displayImages.enumerated()), id: \.element.id) { index, image in
-                            AsyncImage(url: URL(string: image.url)) { phase in
-                                switch phase {
-                                case .success(let image):
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(maxWidth: .infinity)
-                                        .clipped()
-                                        .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
-                                        .onAppear {
-                                            if index == 0 {
-                                                imageLoaded = true
-                                            }
-                                        }
-                                case .failure(_):
-                                    RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
-                                        .fill(ReachuColors.background)
-                                        .overlay {
-                                            Image(systemName: "exclamationmark.triangle")
-                                                .foregroundColor(ReachuColors.error)
-                                        }
-                                case .empty:
-                                    RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
-                                        .fill(ReachuColors.background)
-                                        .overlay {
-                                            ProgressView()
-                                        }
-                                @unknown default:
-                                    EmptyView()
+                            LoadedImage(
+                                url: URL(string: image.url),
+                                placeholder: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
+                                    .fill(ReachuColors.background)
+                                    .overlay { ProgressView() }),
+                                errorView: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
+                                    .fill(ReachuColors.background)
+                                    .overlay {
+                                        Image(systemName: "exclamationmark.triangle")
+                                            .foregroundColor(ReachuColors.error)
+                                    })
+                            )
+                            .aspectRatio(contentMode: .fill)
+                            .frame(maxWidth: .infinity)
+                            .clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius))
+                            .onAppear {
+                                if index == 0 {
+                                    imageLoaded = true
                                 }
                             }
                             .tag(index)
@@ -313,31 +292,23 @@ public struct RProductDetailOverlay: View {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: ReachuSpacing.sm) {
                                 ForEach(Array(displayImages.enumerated()), id: \.element.id) { index, image in
-                                    AsyncImage(url: URL(string: image.url)) { phase in
-                                        switch phase {
-                                        case .success(let image):
-                                            image
-                                                .resizable()
-                                                .aspectRatio(contentMode: .fill)
-                                        case .failure(_):
-                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                                .fill(ReachuColors.background)
-                                                .overlay {
-                                                    Image(systemName: "exclamationmark.triangle")
-                                                        .font(.caption)
-                                                        .foregroundColor(ReachuColors.error)
-                                                }
-                                        case .empty:
-                                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                                .fill(ReachuColors.background)
-                                                .overlay {
-                                                    ProgressView()
-                                                        .scaleEffect(0.5)
-                                                }
-                                        @unknown default:
-                                            EmptyView()
-                                        }
-                                    }
+                                    LoadedImage(
+                                        url: URL(string: image.url),
+                                        placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                            .fill(ReachuColors.background)
+                                            .overlay {
+                                                ProgressView()
+                                                    .scaleEffect(0.5)
+                                            }),
+                                        errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                                            .fill(ReachuColors.background)
+                                            .overlay {
+                                                Image(systemName: "exclamationmark.triangle")
+                                                    .font(.caption)
+                                                    .foregroundColor(ReachuColors.error)
+                                            })
+                                    )
+                                    .aspectRatio(contentMode: .fill)
                                     .frame(width: 60, height: 60)
                                     .clipShape(RoundedRectangle(cornerRadius: ReachuBorderRadius.small))
                                     .overlay {
@@ -562,7 +533,7 @@ public struct RProductDetailOverlay: View {
         cleaned = cleaned.replacingOccurrences(of: "&gt;", with: ">")
         cleaned = cleaned.replacingOccurrences(of: "&quot;", with: "\"")
         cleaned = cleaned.replacingOccurrences(of: "&#39;", with: "'")
-        // Limpiar espacios múltiples y saltos de línea
+        // Clean multiple spaces and line breaks
         cleaned = cleaned.replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
         return cleaned.trimmingCharacters(in: .whitespacesAndNewlines)
     }

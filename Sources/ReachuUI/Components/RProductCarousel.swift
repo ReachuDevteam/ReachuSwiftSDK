@@ -512,28 +512,19 @@ public struct RProductCarousel: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Product Image
                 if let imageUrl = primaryImageUrl, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            Rectangle()
-                                .fill(adaptiveColors.surfaceSecondary)
-                                .overlay { ProgressView().tint(adaptiveColors.primary) }
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit) // Use fit instead of fill to avoid cropping
-                        case .failure:
-                            Rectangle()
-                                .fill(adaptiveColors.surfaceSecondary)
-                                .overlay {
-                                    Image(systemName: "photo")
-                                        .foregroundColor(adaptiveColors.textSecondary)
-                                }
-                        @unknown default:
-                            Rectangle()
-                                .fill(adaptiveColors.surfaceSecondary)
-                        }
-                    }
+                    LoadedImage(
+                        url: url,
+                        placeholder: AnyView(Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .overlay { ProgressView().tint(adaptiveColors.primary) }),
+                        errorView: AnyView(Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                            })
+                    )
+                    .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity) // Use full width, let height adjust naturally
                 } else {
                     Rectangle()
@@ -620,34 +611,24 @@ public struct RProductCarousel: View {
             HStack(spacing: ReachuSpacing.sm) { // Reduced spacing
                 // Image on the left (smaller)
                 if let imageUrl = product.images.first?.url, let url = URL(string: imageUrl) {
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .empty:
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                .fill(adaptiveColors.surfaceSecondary)
-                                .frame(width: 90, height: 90) // Reduced image size
-                                .overlay { ProgressView().tint(adaptiveColors.primary) }
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 90, height: 90) // Reduced image size
-                                .clipped()
-                                .cornerRadius(ReachuBorderRadius.medium)
-                        case .failure:
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                .fill(adaptiveColors.surfaceSecondary)
-                                .frame(width: 90, height: 90) // Reduced image size
-                                .overlay {
-                                    Image(systemName: "photo")
-                                        .foregroundColor(adaptiveColors.textSecondary)
-                                }
-                        @unknown default:
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                                .fill(adaptiveColors.surfaceSecondary)
-                                .frame(width: 90, height: 90) // Reduced image size
-                        }
-                    }
+                    LoadedImage(
+                        url: url,
+                        placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .frame(width: 90, height: 90)
+                            .overlay { ProgressView().tint(adaptiveColors.primary) }),
+                        errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .frame(width: 90, height: 90)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .foregroundColor(adaptiveColors.textSecondary)
+                            })
+                    )
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 90, height: 90)
+                    .clipped()
+                    .cornerRadius(ReachuBorderRadius.medium)
                 } else {
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                         .fill(adaptiveColors.surfaceSecondary)

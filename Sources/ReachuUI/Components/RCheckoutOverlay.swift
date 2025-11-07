@@ -75,7 +75,7 @@ public struct RCheckoutOverlay: View {
         @State private var klarnaSelectedCategoryIdentifier: String = ""
         private let klarnaSuccessURLString =
             "https://tuapp.com/checkout/klarna-return"
-        @State private var klarnaAutoAuthorize = false // Para disparar autorización automáticamente
+        @State private var klarnaAutoAuthorize = false // To trigger authorization automatically
         @State private var showKlarnaErrorToast = false
         @State private var klarnaErrorMessage = ""
     #endif
@@ -316,7 +316,7 @@ public struct RCheckoutOverlay: View {
             }
             #endif
             
-            // Overlay invisible para auto-autorización de Klarna
+            // Invisible overlay for Klarna auto-authorization
             #if os(iOS) && canImport(KlarnaMobileSDK)
             if klarnaAutoAuthorize,
                let initData = klarnaNativeInitData,
@@ -390,11 +390,11 @@ public struct RCheckoutOverlay: View {
                             
                             klarnaAutoAuthorize = false
                             klarnaNativeInitData = nil
-                            // Volver a orderSummary y mostrar toast
+                            // Return to orderSummary and show toast
                             checkoutStep = .orderSummary
                             klarnaErrorMessage = message.isEmpty ? "Payment was cancelled or failed. Please try again." : message
                             showKlarnaErrorToast = true
-                            // Auto-hide toast después de 4 segundos
+                            // Auto-hide toast after 4 seconds
                             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
                                 showKlarnaErrorToast = false
                             }
@@ -869,16 +869,12 @@ public struct RCheckoutOverlay: View {
                                 // Product header with image and details
                                 HStack(spacing: ReachuSpacing.md) {
                                     // Product image
-                                    AsyncImage(
-                                        url: URL(string: item.imageUrl ?? "")
-                                    ) { image in
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                    } placeholder: {
-                                        Rectangle()
-                                            .fill(Color.yellow)  // Placeholder like in image
-                                    }
+                                    LoadedImage(
+                                        url: URL(string: item.imageUrl ?? ""),
+                                        placeholder: AnyView(Rectangle().fill(Color.yellow)),
+                                        errorView: AnyView(Rectangle().fill(ReachuColors.surfaceSecondary))
+                                    )
+                                    .aspectRatio(contentMode: .fill)
                                     .frame(width: 60, height: 60)
                                     .cornerRadius(8)
 
@@ -2440,20 +2436,12 @@ extension RCheckoutOverlay {
                     // Product header with image and details
                     HStack(spacing: ReachuSpacing.md) {
                         // Product image
-                        AsyncImage(url: URL(string: item.imageUrl ?? "")) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fill)
-                            case .empty:
-                                ProgressView()
-                            case .failure:
-                                Rectangle().fill(ReachuColors.surfaceSecondary)
-                            @unknown default:
-                                EmptyView()
-                            }
-                        }
+                        LoadedImage(
+                            url: URL(string: item.imageUrl ?? ""),
+                            placeholder: AnyView(ProgressView()),
+                            errorView: AnyView(Rectangle().fill(ReachuColors.surfaceSecondary))
+                        )
+                        .aspectRatio(contentMode: .fill)
                         .frame(width: 60, height: 60)
                         .cornerRadius(8)
 
@@ -2588,14 +2576,9 @@ extension RCheckoutOverlay {
             HStack(spacing: ReachuSpacing.md) {
                 // Sexy Product Image with Gradient Overlay
                 ZStack {
-                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 90, height: 90)
-                            .clipped()
-                    } placeholder: {
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    LoadedImage(
+                        url: URL(string: item.imageUrl ?? ""),
+                        placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
                             .fill(
                                 LinearGradient(
                                     colors: [
@@ -2612,8 +2595,18 @@ extension RCheckoutOverlay {
                                     .foregroundColor(
                                         ReachuColors.textSecondary.opacity(0.6)
                                     )
-                            }
-                    }
+                            }),
+                        errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                            .fill(ReachuColors.surfaceSecondary)
+                            .overlay {
+                                Image(systemName: "photo")
+                                    .font(.title2)
+                                    .foregroundColor(ReachuColors.textSecondary.opacity(0.6))
+                            })
+                    )
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 90, height: 90)
+                    .clipped()
 
                     // Subtle gradient overlay for depth
                     LinearGradient(
@@ -3160,14 +3153,12 @@ extension RCheckoutOverlay {
             ForEach(cartManager.items) { item in
                 HStack(spacing: ReachuSpacing.sm) {
                     // Small product image
-                    AsyncImage(url: URL(string: item.imageUrl ?? "")) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Rectangle()
-                            .fill(Color.yellow)
-                    }
+                    LoadedImage(
+                        url: URL(string: item.imageUrl ?? ""),
+                        placeholder: AnyView(Rectangle().fill(Color.yellow)),
+                        errorView: AnyView(Rectangle().fill(ReachuColors.surfaceSecondary))
+                    )
+                    .aspectRatio(contentMode: .fill)
                     .frame(width: 40, height: 40)
                     .cornerRadius(6)
 
@@ -3883,11 +3874,11 @@ struct CountryPicker: View {
                     }
                 }
                 
-                // Disparar autorización automáticamente si está activado
+                // Trigger authorization automatically if enabled
                 if autoAuthorize && !hasTriggeredAutoAuthorize {
                     hasTriggeredAutoAuthorize = true
-                    // Dar un delay MUY corto para que el KlarnaPaymentView se inicialice
-                    // pero disparar authorize() antes de que se renderice su UI
+                    // Give a VERY short delay for KlarnaPaymentView to initialize
+                    // but trigger authorize() before its UI renders
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                         triggerAuthorize = true
                     }
@@ -4107,7 +4098,7 @@ struct CountryPicker: View {
     }
 
     // MARK: - Hidden Klarna Auto-Authorize
-    /// Componente invisible que crea un KlarnaPaymentView y llama a authorize() automáticamente
+    /// Invisible component that creates a KlarnaPaymentView and calls authorize() automatically
     struct HiddenKlarnaAutoAuthorize: UIViewRepresentable {
         let initData: InitPaymentKlarnaNativeDto
         let categoryIdentifier: String
@@ -4137,10 +4128,10 @@ struct CountryPicker: View {
             context.coordinator.paymentView = paymentView
             containerView.addSubview(paymentView)
             
-            // Inicializar y autorizar inmediatamente
+            // Initialize and authorize immediately
             paymentView.initialize(clientToken: initData.clientToken, returnUrl: returnURL)
             
-            // Esperar un momento mínimo y autorizar
+            // Wait a minimum moment and authorize
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 paymentView.authorize(autoFinalize: true, jsonData: nil)
             }

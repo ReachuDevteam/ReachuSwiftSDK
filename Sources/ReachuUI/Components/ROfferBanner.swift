@@ -34,19 +34,19 @@ public struct ROfferBanner: View {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 4) {
                     // Logo
-                    AsyncImage(url: URL(string: buildFullURL(from: config.logoUrl))) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 16)
-                            .onAppear {
-                                isLogoLoaded = true
-                            }
-                    } placeholder: {
-                    // Simple skeleton for logo
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
-                        .frame(height: 16)
+                    LoadedImage(
+                        url: URL(string: buildFullURL(from: config.logoUrl)),
+                        placeholder: AnyView(Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
+                            .frame(height: 16)),
+                        errorView: AnyView(Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.3))
+                            .frame(height: 16))
+                    )
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 16)
+                    .onAppear {
+                        isLogoLoaded = true
                     }
                     .onAppear {
                         // Logo loading started
@@ -189,8 +189,8 @@ public struct ROfferBanner: View {
             return path
         }
         
-        // If it's a relative path, prepend the base URL
-        let baseURL = "https://event-streamer-angelo100.replit.app"
+        // If it's a relative path, prepend the base URL from configuration
+        let baseURL = ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
         return baseURL + path
     }
     
@@ -201,41 +201,40 @@ public struct ROfferBanner: View {
             // Background with image and overlays
             ZStack {
                 // Background image
-                AsyncImage(url: URL(string: buildFullURL(from: config.backgroundImageUrl))) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .onAppear {
-                            isImageLoaded = true
-                        }
-                } placeholder: {
-                    // Simple skeleton for background image
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary.opacity(0.2))
-                        .overlay(
-                            // Subtle shimmer effect
-                            Rectangle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [
-                                            Color.clear,
-                                            adaptiveColors.textPrimary.opacity(0.1),
-                                            Color.clear
-                                        ],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
+                LoadedImage(
+                    url: URL(string: buildFullURL(from: config.backgroundImageUrl)),
+                    placeholder: AnyView(
+                        // Simple skeleton for background image
+                        Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.2))
+                            .overlay(
+                                // Subtle shimmer effect
+                                Rectangle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.clear,
+                                                adaptiveColors.textPrimary.opacity(0.1),
+                                                Color.clear
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
                                     )
-                                )
-                                .offset(x: isImageLoaded ? 200 : -200)
-                                .animation(
-                                    .easeInOut(duration: 2.0)
-                                    .repeatForever(autoreverses: false),
-                                    value: isImageLoaded
-                                )
-                        )
-                }
+                                    .offset(x: isImageLoaded ? 200 : -200)
+                                    .animation(
+                                        .easeInOut(duration: 2.0)
+                                        .repeatForever(autoreverses: false),
+                                        value: isImageLoaded
+                                    )
+                            )
+                    ),
+                    errorView: AnyView(Rectangle()
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.2)))
+                )
+                .aspectRatio(contentMode: .fill)
                 .onAppear {
-                    // Background image loading started
+                    isImageLoaded = true
                 }
                 
                 // Dark overlay for readability (same gradient as hardcoded)
@@ -261,20 +260,20 @@ public struct ROfferBanner: View {
         let seconds = timeRemaining.second ?? 0
         
         return HStack(spacing: 4) {
-            // Días
+            // Days
             if days > 0 {
                 CountdownUnit(value: days, label: days == 1 ? "dag" : "dager")
             }
             
-            // Horas
+            // Hours
             if days > 0 || hours > 0 {
                 CountdownUnit(value: hours, label: hours == 1 ? "time" : "timer")
             }
             
-            // Minutos
+            // Minutes
             CountdownUnit(value: minutes, label: "min")
             
-            // Segundos
+            // Seconds
             CountdownUnit(value: seconds, label: "sek")
         }
         .padding(.vertical, 3)
@@ -436,7 +435,7 @@ struct CountdownUnit: View {
     
     var body: some View {
         VStack(spacing: 1) {
-            // Dígitos
+            // Digits
             Text(String(format: "%02d", value))
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(adaptiveColors.surface)

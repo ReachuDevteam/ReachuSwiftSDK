@@ -265,7 +265,7 @@ public enum ReachuEnvironment: String, CaseIterable {
         case .sandbox:
             return "https://graph-ql-dev.reachu.io"  // Sandbox uses same endpoint as development
         case .production:
-            return "https://api.reachu.io"
+            return "https://graph-ql-dev.reachu.io"  // Same as development for now
         }
     }
     

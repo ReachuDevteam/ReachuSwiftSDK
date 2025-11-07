@@ -301,23 +301,12 @@ public struct RProductCard: View {
         let urlString = imageUrl ?? primaryImageUrl
         let imageURL = URL(string: urlString ?? "")
         
-        return AsyncImage(url: imageURL) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .failure(_):
-                // Imagen rota - mostrar placeholder con ícono de error
-                placeholderView(systemImage: "exclamationmark.triangle", color: adaptiveColors.error)
-            case .empty:
-                // Cargando - mostrar placeholder con ícono de carga
-                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
-            @unknown default:
-                // Fallback - mostrar placeholder genérico
-                placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)
-            }
-        }
+        return LoadedImage(
+            url: imageURL,
+            placeholder: AnyView(placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)),
+            errorView: AnyView(placeholderView(systemImage: "exclamationmark.triangle", color: adaptiveColors.error))
+        )
+        .aspectRatio(contentMode: .fill)
         .frame(width: width, height: height)
         .clipped()
         .cornerRadius(ReachuBorderRadius.medium)
@@ -485,16 +474,16 @@ public struct RProductCard: View {
         }
     }
     
-    /// Imágenes ordenadas por el campo 'order', priorizando 0 y 1
+    /// Images sorted by 'order' field, prioritizing 0 and 1
     private var sortedImages: [ProductImage] {
         let images = product.images
         
-        // Si no hay imágenes, retornar array vacío
+        // If no images, return empty array
         guard !images.isEmpty else { return [] }
         
-        // Ordenar por el campo 'order', con 0 y 1 al inicio
+        // Sort by 'order' field, with 0 and 1 at the beginning
         return images.sorted { first, second in
-            // Priorizar order 0 y 1
+            // Prioritize order 0 and 1
             let firstPriority = (first.order == 0 || first.order == 1) ? first.order : Int.max
             let secondPriority = (second.order == 0 || second.order == 1) ? second.order : Int.max
             
@@ -502,12 +491,12 @@ public struct RProductCard: View {
                 return firstPriority < secondPriority
             }
             
-            // Si ambos tienen la misma prioridad, ordenar por order normal
+            // If both have the same priority, sort by normal order
             return first.order < second.order
         }
     }
     
-    /// URL de la imagen principal (primera en el orden)
+    /// URL of the primary image (first in order)
     private var primaryImageUrl: String? {
         sortedImages.first?.url
     }

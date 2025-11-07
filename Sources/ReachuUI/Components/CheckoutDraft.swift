@@ -17,11 +17,11 @@ extension String {
     fileprivate func trimmed() -> String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }
 
-// MARK: - Catálogo geográfico NO aislado (mappers y tablas)
+// MARK: - Non-isolated Geographic Catalog (mappers and tables)
 
 private enum GeoMaps {
 
-    // ISO-2 -> Nombre de país canónico (para rellenar si falta el nombre)
+    // ISO-2 -> Canonical country name (to fill in if name is missing)
     static let countryNameByISO2: [String: String] = [
         "US": "United States", "CA": "Canada", "GB": "United Kingdom", "IE": "Ireland",
         "NO": "Norway", "SE": "Sweden", "DK": "Denmark", "FI": "Finland",
@@ -38,7 +38,7 @@ private enum GeoMaps {
         "IN": "India",
     ]
 
-    // Sinónimos -> ISO-2 (con variantes EN/ES)
+    // Synonyms -> ISO-2 (with EN/ES variants)
     static let countryISO2ByName: [String: String] = {
         var m: [String: String] = [:]
         func add(_ names: [String], _ iso2: String) {
@@ -100,7 +100,7 @@ private enum GeoMaps {
         return m
     }()
 
-    // ISO-2 -> Código telefónico internacional (sin '+')
+    // ISO-2 -> International phone code (without '+')
     static let phoneCodeByISO2: [String: String] = [
         "US": "1", "CA": "1", "GB": "44", "IE": "353",
         "NO": "47", "SE": "46", "DK": "45", "FI": "358",
@@ -116,7 +116,7 @@ private enum GeoMaps {
         "AU": "61", "NZ": "64", "JP": "81", "KR": "82", "CN": "86", "IN": "91",
     ]
 
-    // ISO-2 -> (nombre provincia normalizado -> código)
+    // ISO-2 -> (normalized province name -> code)
     static let provinceCodeByCountry: [String: [String: String]] = {
         var map: [String: [String: String]] = [:]
 
@@ -208,13 +208,13 @@ private enum GeoMaps {
 @MainActor
 public final class CheckoutDraft: ObservableObject {
 
-    // Contacto
+    // Contact
     @Published public var email: String = ""
     @Published public var phone: String = ""
-    /// Puede venir con +; se normaliza al usar
+    /// May come with +; normalized when used
     @Published public var phoneCountryCode: String = ""
 
-    // Dirección
+    // Address
     @Published public var firstName: String = ""
     @Published public var lastName: String = ""
     @Published public var address1: String = ""
@@ -222,18 +222,18 @@ public final class CheckoutDraft: ObservableObject {
     @Published public var city: String = ""
     @Published public var province: String = ""
     @Published public var countryName: String = "United States"
-    @Published public var countryCode: String = ""  // ISO-2 si ya lo tienes
+    @Published public var countryCode: String = ""  // ISO-2 if already available
     @Published public var zip: String = ""
     @Published public var company: String = ""
 
-    // Selecciones y flags
+    // Selections and flags
     @Published public var shippingOptionRaw: String = "standard"  // "standard"|"express"
     @Published public var paymentMethodRaw: String = "stripe"  // "stripe"|"klarna"
     @Published public var acceptsTerms: Bool = false
     @Published public var acceptsPurchaseConditions: Bool = false
     @Published public var appliedDiscount: Double = 0.0
 
-    // URLs (puedes sobreescribirlas desde el contexto)
+    // URLs (can be overridden from context)
     @Published public var successUrl: String = "reachu-demo://checkout/success"
     @Published public var cancelUrl: String = "reachu-demo://checkout/cancel"
 
@@ -272,22 +272,22 @@ public final class CheckoutDraft: ObservableObject {
         addressPayload(fallbackCountryISO2: fallbackCountryISO2)
     }
 
-    // MARK: Resolución y normalización
+    // MARK: Resolution and Normalization
 
-    /// ISO-2 efectivo (prioriza `countryCode`, sino resuelve por `countryName`, sino fallback)
+    /// Effective ISO-2 (prioritizes `countryCode`, otherwise resolves by `countryName`, otherwise fallback)
     public func resolveISO2(fallback: String) -> String {
         if let code = countryCode.nonEmpty?.uppercased(), code.count == 2 { return code }
         if let fromName = GeoMaps.countryISO2ByName[normalizeKey(countryName)] { return fromName }
         return fallback.uppercased()
     }
 
-    /// Nombre de país consistente (si falta, rellena por ISO-2)
+    /// Consistent country name (if missing, fills in by ISO-2)
     private func resolveCountryName(defaultName: String, iso2: String) -> String {
         if let name = defaultName.nonEmpty { return name }
         return GeoMaps.countryNameByISO2[iso2] ?? defaultName
     }
 
-    /// Código telefónico internacional (sin '+')
+    /// International phone code (without '+')
     public func resolvePhoneCode(effectiveISO2 iso2: String) -> String {
         if let raw = phoneCountryCode.nonEmpty {
             return raw.replacingOccurrences(of: "+", with: "").trimmed()

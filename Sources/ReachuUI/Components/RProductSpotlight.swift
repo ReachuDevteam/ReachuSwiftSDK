@@ -373,43 +373,29 @@ public struct RProductSpotlight: View {
     private func productImageView(imageUrl: String?, height: CGFloat) -> some View {
         let imageURL = URL(string: imageUrl ?? "")
         
-        return AsyncImage(url: imageURL) { phase in
-            switch phase {
-            case .success(let image):
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            case .failure(_):
-                Rectangle()
-                    .fill(adaptiveColors.background)
-                    .overlay(
-                        VStack(spacing: ReachuSpacing.xs) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.title2)
-                                .foregroundColor(adaptiveColors.error)
-                            Text(RLocalizedString(ReachuTranslationKey.noImageAvailable.rawValue))
-                                .font(ReachuTypography.caption1)
-                                .foregroundColor(adaptiveColors.error)
-                        }
-                    )
-            case .empty:
-                Rectangle()
-                    .fill(adaptiveColors.background)
-                    .overlay(
-                        Image(systemName: "photo")
+        return LoadedImage(
+            url: imageURL,
+            placeholder: AnyView(Rectangle()
+                .fill(adaptiveColors.background)
+                .overlay(
+                    Image(systemName: "photo")
+                        .font(.title2)
+                        .foregroundColor(adaptiveColors.textSecondary)
+                )),
+            errorView: AnyView(Rectangle()
+                .fill(adaptiveColors.background)
+                .overlay(
+                    VStack(spacing: ReachuSpacing.xs) {
+                        Image(systemName: "exclamationmark.triangle")
                             .font(.title2)
-                            .foregroundColor(adaptiveColors.textSecondary)
-                    )
-            @unknown default:
-                Rectangle()
-                    .fill(adaptiveColors.background)
-                    .overlay(
-                        Image(systemName: "photo")
-                            .font(.title2)
-                            .foregroundColor(adaptiveColors.textSecondary)
-                    )
-            }
-        }
+                            .foregroundColor(adaptiveColors.error)
+                        Text(RLocalizedString(ReachuTranslationKey.noImageAvailable.rawValue))
+                            .font(ReachuTypography.caption1)
+                            .foregroundColor(adaptiveColors.error)
+                    }
+                ))
+        )
+        .aspectRatio(contentMode: .fill)
         .frame(height: height)
         .clipped()
         .cornerRadius(ReachuBorderRadius.medium)

@@ -139,12 +139,12 @@ public class CartManager: ObservableObject, LiveShowCartManaging {
             let result: GetCheckoutDto = try await sdk.checkout.getById(checkout_id: checkoutId);
             ReachuLogger.debug("getCheckoutStatus() result: \(result)", component: "CartManager")
 
-            // ✅ Aquí validas si Vipps ya pagó
+            // ✅ Here you validate if Vipps already paid
             if result.status == "SUCCESS" {
-                ReachuLogger.success("Pago confirmado en backend", component: "CartManager")
+                ReachuLogger.success("Payment confirmed in backend", component: "CartManager")
                 return true
             } else {
-                ReachuLogger.debug("Aún sin pagar: \(result.status)", component: "CartManager")
+                ReachuLogger.debug("Still unpaid: \(result.status)", component: "CartManager")
                 return false
             }
 
