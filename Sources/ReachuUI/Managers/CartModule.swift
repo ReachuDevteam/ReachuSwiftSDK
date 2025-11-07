@@ -170,7 +170,14 @@ extension CartManager {
             let availableShippings = (line.availableShippings ?? []).compactMap {
                 option -> CartItem.ShippingOption? in
                 guard let id = option.id, !id.isEmpty else { return nil }
-                let amount = option.price.amount ?? 0.0
+                // Use price with taxes if available (what customer actually pays)
+                // Always prioritize amount_incl_taxes if it exists (even if 0.0)
+                let amount: Double = {
+                    if let inclTaxes = option.price.amountInclTaxes {
+                        return inclTaxes
+                    }
+                    return option.price.amount ?? 0.0
+                }()
                 let currency = option.price.currencyCode ?? cart.currency
                 return CartItem.ShippingOption(
                     id: id,
@@ -181,6 +188,17 @@ extension CartManager {
                 )
             }
 
+            // Use price with taxes if available (what customer actually pays)
+            let productPrice = line.price.amountInclTaxes ?? line.price.amount
+            // Use shipping price with taxes if available (what customer actually pays)
+            // Always prioritize amount_incl_taxes if it exists (even if 0.0)
+            let shippingPrice: Double? = {
+                if let inclTaxes = shipping?.price.amountInclTaxes {
+                    return inclTaxes
+                }
+                return shipping?.price.amount
+            }()
+
             return CartItem(
                 id: line.id,
                 productId: line.productId,
@@ -189,7 +207,7 @@ extension CartManager {
                 title: line.title ?? "",
                 brand: line.brand,
                 imageUrl: imageUrl,
-                price: line.price.amount,
+                price: productPrice,
                 currency: line.price.currencyCode,
                 quantity: line.quantity,
                 sku: line.sku,
@@ -197,14 +215,21 @@ extension CartManager {
                 shippingId: shipping?.id,
                 shippingName: shipping?.name,
                 shippingDescription: shipping?.description,
-                shippingAmount: shipping?.price.amount,
+                shippingAmount: shippingPrice,
                 shippingCurrency: shippingCurrency,
                 availableShippings: availableShippings
             )
         }
 
-        cartTotal = cart.subtotal
-        shippingTotal = cart.shipping
+        // Recalculate cartTotal using prices with taxes from items (what customer actually pays)
+        cartTotal = items.reduce(0) { total, item in
+            total + (item.price * Double(item.quantity))
+        }
+        
+        // Recalculate shippingTotal using shipping prices with taxes from items (what customer actually pays)
+        shippingTotal = items.reduce(0) { total, item in
+            total + (item.shippingAmount ?? 0.0)
+        }
         shippingCurrency =
             items.first(where: { $0.shippingCurrency != nil })?.shippingCurrency
             ?? cart.currency
@@ -242,7 +267,14 @@ extension CartManager {
                 let options: [CartItem.ShippingOption] = (group.availableShippings ?? [])
                     .compactMap { option in
                         guard let id = option.id, !id.isEmpty else { return nil }
-                        let amount = option.price.amount ?? 0.0
+                        // Use price with taxes if available (what customer actually pays)
+                        // Always prioritize amount_incl_taxes if it exists (even if 0.0)
+                        let amount: Double = {
+                            if let inclTaxes = option.price.amountInclTaxes {
+                                return inclTaxes
+                            }
+                            return option.price.amount ?? 0.0
+                        }()
                         let currency = option.price.currencyCode ?? currency
                         return CartItem.ShippingOption(
                             id: id,
@@ -258,12 +290,20 @@ extension CartManager {
 
                     let shipping = li.shipping
                     let shippingCurrency = shipping?.price.currencyCode ?? currency
+                    // Use shipping price with taxes if available (what customer actually pays)
+                    // Always prioritize amount_incl_taxes if it exists (even if 0.0)
+                    let shippingPrice: Double? = {
+                        if let inclTaxes = shipping?.price.amountInclTaxes {
+                            return inclTaxes
+                        }
+                        return shipping?.price.amount
+                    }()
 
                     shippingData[li.id] = ShippingSyncData(
                         shippingId: shipping?.id,
                         shippingName: shipping?.name,
                         shippingDescription: shipping?.description,
-                        shippingAmount: shipping?.price.amount,
+                        shippingAmount: shippingPrice,
                         shippingCurrency: shippingCurrency,
                         options: options
                     )
