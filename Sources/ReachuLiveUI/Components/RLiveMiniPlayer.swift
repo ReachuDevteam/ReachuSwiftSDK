@@ -198,7 +198,7 @@ public struct RLiveMiniPlayer: View {
                     .foregroundColor(adaptiveColors.textPrimary)
                     .lineLimit(1)
                 
-                Text("$\(product.price.amount, specifier: "%.2f")")
+                Text(product.price.formattedPrice)
                     .font(.system(size: 8, weight: .bold))
                     .foregroundColor(adaptiveColors.primary)
             }

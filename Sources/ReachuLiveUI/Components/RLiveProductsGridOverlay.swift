@@ -117,8 +117,10 @@ public struct RLiveProductsGridOverlay: View {
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(adaptiveColors.primary)
                     
-                    if let originalPrice = liveProduct.originalPrice {
-                        Text(originalPrice.formattedPrice)
+                    // Use compare_at_incl_taxes if available for original price
+                    if let originalPrice = liveProduct.originalPrice,
+                       let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                        Text(compareAtPrice)
                             .font(.system(size: 12))
                             .foregroundColor(adaptiveColors.textTertiary)
                             .strikethrough()
