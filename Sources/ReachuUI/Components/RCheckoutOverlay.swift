@@ -916,7 +916,7 @@ public struct RCheckoutOverlay: View {
                                         "\(item.currency) \(String(format: "%.2f", item.price))"
                                     )
                                     .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(ReachuColors.textPrimary)
+                                    .foregroundColor(adaptiveColors.priceColor)
                                 }
 
                                 // Product details
@@ -1011,7 +1011,7 @@ public struct RCheckoutOverlay: View {
                                         "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                                     )
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(ReachuColors.primary)
+                                    .foregroundColor(adaptiveColors.priceColor)
                                 }
                             }
                         }
@@ -2531,7 +2531,7 @@ extension RCheckoutOverlay {
                             "\(item.currency) \(String(format: "%.2f", item.price))"
                         )
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.priceColor)
                     }
 
                     // Product details
@@ -2573,7 +2573,7 @@ extension RCheckoutOverlay {
                             "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                         )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(ReachuColors.primary)
+                        .foregroundColor(adaptiveColors.priceColor)
                     }
                 }
             }
@@ -2696,7 +2696,7 @@ extension RCheckoutOverlay {
                         "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                     )
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.priceColor)
 
                     // Quantity with subtle background
                     HStack(spacing: ReachuSpacing.xs) {
@@ -3189,7 +3189,7 @@ extension RCheckoutOverlay {
                         "\(item.currency) \(String(format: "%.2f", item.price * Double(item.quantity)))"
                     )
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ReachuColors.textPrimary)
+                    .foregroundColor(adaptiveColors.priceColor)
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
             }

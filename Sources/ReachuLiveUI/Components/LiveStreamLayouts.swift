@@ -312,16 +312,17 @@ public struct RLiveStreamFullScreenOverlay: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                 
-                // Price
+                // Price - uses amount_incl_taxes if available
                 HStack(spacing: 4) {
-                    if let originalPrice = product.originalPrice {
-                        Text("$\(originalPrice.amount, specifier: "%.2f")")
+                    if let originalPrice = product.originalPrice,
+                       let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                        Text(compareAtPrice)
                             .font(.system(size: 12))
                             .foregroundColor(.white.opacity(0.6))
                             .strikethrough()
                     }
                     
-                    Text("$\(product.price.amount, specifier: "%.2f")")
+                    Text(product.price.formattedPrice)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundColor(.white)
                 }
@@ -580,7 +581,7 @@ public struct RLiveStreamBottomSheet: View {
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
             
-            Text("$\(product.price.amount, specifier: "%.2f")")
+            Text(product.price.formattedPrice)
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(adaptiveColors.primary)
         }
@@ -830,14 +831,16 @@ public struct RLiveStreamModal: View {
                 .lineLimit(2)
             
             HStack {
-                if let originalPrice = product.originalPrice {
-                    Text("$\(originalPrice.amount, specifier: "%.2f")")
+                // Use compare_at_incl_taxes if available for original price
+                if let originalPrice = product.originalPrice,
+                   let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                    Text(compareAtPrice)
                         .font(.system(size: 12))
                         .foregroundColor(adaptiveColors.textSecondary)
                         .strikethrough()
                 }
                 
-                Text("$\(product.price.amount, specifier: "%.2f")")
+                Text(product.price.formattedPrice)
                     .font(.system(size: 14, weight: .bold))
                     .foregroundColor(adaptiveColors.primary)
             }

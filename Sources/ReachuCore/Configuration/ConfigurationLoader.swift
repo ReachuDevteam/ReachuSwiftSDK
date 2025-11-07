@@ -342,8 +342,9 @@ public class ConfigurationLoader {
         let mode = ThemeMode(rawValue: config.mode ?? "automatic") ?? .automatic
         
         // Parse light colors (with smart defaults from existing schemes)
+        let lightPrimary = hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF")
         let lightColors = ColorScheme(
-            primary: hexToColor(config.lightColors?.primary ?? config.colors?.primary ?? "#007AFF"),
+            primary: lightPrimary,
             secondary: hexToColor(config.lightColors?.secondary ?? config.colors?.secondary ?? "#5856D6"),
             success: hexToColor(config.lightColors?.success ?? "#34C759"),
             warning: hexToColor(config.lightColors?.warning ?? "#FF9500"),
@@ -356,14 +357,16 @@ public class ConfigurationLoader {
             textSecondary: hexToColor(config.lightColors?.textSecondary ?? "#8E8E93"),
             textTertiary: hexToColor(config.lightColors?.textTertiary ?? "#C7C7CC"),
             border: hexToColor(config.lightColors?.border ?? "#E5E5EA"),
-            borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6")
+            borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6"),
+            priceColor: config.lightColors?.priceColor != nil ? hexToColor(config.lightColors!.priceColor!) : nil  // Use primary if not specified
         )
         
         // Parse dark colors (with smart defaults, fallback to auto-generated if not specified)
         let darkColors: ReachuCore.ColorScheme
         if let darkColorsConfig = config.darkColors {
+            let darkPrimary = hexToColor(darkColorsConfig.primary ?? "#0A84FF")
             darkColors = ColorScheme(
-                primary: hexToColor(darkColorsConfig.primary ?? "#0A84FF"),
+                primary: darkPrimary,
                 secondary: hexToColor(darkColorsConfig.secondary ?? "#5E5CE6"),
                 success: hexToColor(darkColorsConfig.success ?? "#32D74B"),
                 warning: hexToColor(darkColorsConfig.warning ?? "#FF9F0A"),
@@ -376,7 +379,8 @@ public class ConfigurationLoader {
                 textSecondary: hexToColor(darkColorsConfig.textSecondary ?? "#8E8E93"),
                 textTertiary: hexToColor(darkColorsConfig.textTertiary ?? "#48484A"),
                 border: hexToColor(darkColorsConfig.border ?? "#38383A"),
-                borderSecondary: hexToColor(darkColorsConfig.borderSecondary ?? "#48484A")
+                borderSecondary: hexToColor(darkColorsConfig.borderSecondary ?? "#48484A"),
+                priceColor: darkColorsConfig.priceColor != nil ? hexToColor(darkColorsConfig.priceColor!) : nil  // Use primary if not specified
             )
         } else {
             darkColors = .autoDark(from: lightColors)
@@ -775,6 +779,7 @@ private struct JSONColorConfiguration: Codable {
     let textTertiary: String?
     let border: String?
     let borderSecondary: String?
+    let priceColor: String?  // Customizable product price color
 }
 
 private struct JSONBorderRadiusConfiguration: Codable {

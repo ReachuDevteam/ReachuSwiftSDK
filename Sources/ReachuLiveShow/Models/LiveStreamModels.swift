@@ -308,12 +308,33 @@ public enum MiniPlayerPosition: String, CaseIterable {
 // MARK: - Extensions
 
 extension Price {
-    /// Formatted price string for display
+    /// Formatted price string for display (uses amount_incl_taxes if available)
     public var formattedPrice: String {
+        // Use price with taxes if available (what customer actually pays)
+        let priceToShow = amount_incl_taxes ?? amount
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.currencyCode = currency_code
-        return formatter.string(from: NSNumber(value: amount)) ?? "\(currency_code) \(amount)"
+        return formatter.string(from: NSNumber(value: priceToShow)) ?? "\(currency_code) \(priceToShow)"
+    }
+    
+    /// Formatted compare at price string for display (uses compare_at_incl_taxes if available)
+    public var formattedCompareAtPrice: String? {
+        // Use compare at price with taxes if available, otherwise base compare at
+        let compareAtPrice: Float?
+        if let compareAtWithTaxes = compare_at_incl_taxes {
+            compareAtPrice = compareAtWithTaxes
+        } else if let compareAt = compare_at {
+            compareAtPrice = compareAt
+        } else {
+            return nil
+        }
+        
+        guard let price = compareAtPrice else { return nil }
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = currency_code
+        return formatter.string(from: NSNumber(value: price)) ?? "\(currency_code) \(price)"
     }
 }
 

@@ -503,14 +503,15 @@ public struct RLiveShowFullScreenOverlay: View {
                     .foregroundColor(.gray)
                     .lineLimit(1)
                 
-                // Price row (red price + strikethrough)
+                // Price row (red price + strikethrough) - uses amount_incl_taxes and compare_at_incl_taxes if available
                 HStack(spacing: ReachuSpacing.xs) {
                     Text(product.price.formattedPrice)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.red)
                     
-                    if let originalPrice = product.originalPrice {
-                        Text(originalPrice.formattedPrice)
+                    if let originalPrice = product.originalPrice,
+                       let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                        Text(compareAtPrice)
                             .font(.system(size: 12))
                             .foregroundColor(.gray)
                             .strikethrough()

@@ -120,14 +120,15 @@ public struct RLiveProductCard: View {
     @ViewBuilder
     private var priceSection: some View {
         HStack(spacing: ReachuSpacing.xs) {
-            // Current price (smaller)
+            // Current price (smaller) - uses amount_incl_taxes if available
             Text(product.price.formattedPrice)
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.red)
             
-            // Original price (strikethrough, smaller)
-            if let originalPrice = product.originalPrice {
-                Text(originalPrice.formattedPrice)
+            // Original price (strikethrough, smaller) - uses compare_at_incl_taxes if available
+            if let originalPrice = product.originalPrice,
+               let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                Text(compareAtPrice)
                     .font(.system(size: 12))
                     .foregroundColor(adaptiveColors.textTertiary)
                     .strikethrough()

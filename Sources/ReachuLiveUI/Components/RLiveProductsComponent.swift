@@ -90,8 +90,10 @@ public struct RLiveProductsComponent: View {
                         .font(.caption.weight(.semibold))
                         .foregroundColor(adaptiveColors.primary)
                     
-                    if let originalPrice = product.originalPrice {
-                        Text(originalPrice.formattedPrice)
+                    // Use compare_at_incl_taxes if available for original price
+                    if let originalPrice = product.originalPrice,
+                       let compareAtPrice = originalPrice.formattedCompareAtPrice {
+                        Text(compareAtPrice)
                             .font(.caption2)
                             .foregroundColor(.gray)
                             .strikethrough()

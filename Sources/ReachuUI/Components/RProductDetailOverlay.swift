@@ -389,16 +389,22 @@ public struct RProductDetailOverlay: View {
                     // Current price - use price with taxes if available (what customer actually pays)
                     Text(formatted(amount: Double(currentPriceWithTaxes)))
                         .font(ReachuTypography.title3)
-                        .foregroundColor(ReachuColors.textPrimary)
+                        .foregroundColor(adaptiveColors.priceColor)
                     
                     // Compare at price (if available) - use compare at with taxes if available
                     if let compareAt = compareAtWithTaxes, compareAt > currentPriceWithTaxes {
                         Text(formatted(amount: Double(compareAt)))
                             .font(ReachuTypography.body)
-                            .foregroundColor(ReachuColors.textSecondary)
+                            .foregroundColor(adaptiveColors.textSecondary)
                             .strikethrough()
+                    } else {
+                        // Spacer to maintain consistent height
+                        Text("")
+                            .font(ReachuTypography.body)
+                            .opacity(0)
                     }
                 }
+                .frame(minHeight: 50)  // Fixed minimum height for consistent layout
                 
                 Spacer()
                 

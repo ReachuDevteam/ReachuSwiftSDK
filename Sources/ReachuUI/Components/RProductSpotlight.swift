@@ -282,15 +282,21 @@ public struct RProductSpotlight: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(product.price.displayAmount)
                                 .font(.system(size: 18, weight: .semibold)) // Smaller than ReachuTypography.title3
-                                .foregroundColor(adaptiveColors.primary)
+                                .foregroundColor(adaptiveColors.priceColor)
                             
                             if let compareAtAmount = product.price.displayCompareAtAmount {
                                 Text(compareAtAmount)
                                     .font(.system(size: 14, weight: .regular)) // Smaller than ReachuTypography.caption1
                                     .foregroundColor(adaptiveColors.textSecondary)
                                     .strikethrough()
+                            } else {
+                                // Spacer to maintain consistent height
+                                Text("")
+                                    .font(.system(size: 14, weight: .regular))
+                                    .opacity(0)
                             }
                         }
+                        .frame(minHeight: 40)  // Fixed minimum height for consistent card sizes
                         
                         Spacer()
                         
