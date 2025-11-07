@@ -11,8 +11,6 @@ Demo/*/.build/
 Demo/*/Package.resolved
 Demo/*/.swiftpm/
 **/ins.instructions.md
-# Development workspace (local)
-ReachuWorkspace.xcworkspace/
 # Backup files
 *.backup
 *.pre-manual
