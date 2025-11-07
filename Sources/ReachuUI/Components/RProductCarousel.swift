@@ -564,15 +564,21 @@ public struct RProductCarousel: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(product.price.displayAmount)
                                 .font(.system(size: 16, weight: .bold)) // Adjusted price size
-                                .foregroundColor(adaptiveColors.primary)
+                                .foregroundColor(adaptiveColors.priceColor)
                             
                             if let compareAtAmount = product.price.displayCompareAtAmount {
                                 Text(compareAtAmount)
                                     .font(.system(size: 12, weight: .regular)) // Smaller compare price
                                     .foregroundColor(adaptiveColors.textSecondary)
                                     .strikethrough()
+                            } else {
+                                // Spacer to maintain consistent height
+                                Text("")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .opacity(0)
                             }
                         }
+                        .frame(minHeight: 32)  // Fixed minimum height for consistent card sizes
                         
                         if showAddToCartButton {
                             Spacer()
@@ -666,15 +672,21 @@ public struct RProductCarousel: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(product.price.displayAmount)
                             .font(.system(size: 14, weight: .bold)) // Smaller price
-                            .foregroundColor(adaptiveColors.primary)
+                            .foregroundColor(adaptiveColors.priceColor)
                         
                         if let compareAtAmount = product.price.displayCompareAtAmount {
                             Text(compareAtAmount)
                                 .font(.system(size: 11, weight: .regular)) // Smaller compare price
                                 .foregroundColor(adaptiveColors.textSecondary)
                                 .strikethrough()
+                        } else {
+                            // Spacer to maintain consistent height
+                            Text("")
+                                .font(.system(size: 11, weight: .regular))
+                                .opacity(0)
                         }
                     }
+                    .frame(minHeight: 28)  // Fixed minimum height for consistent card sizes
                     
                     Spacer() // Push everything to top
                 }

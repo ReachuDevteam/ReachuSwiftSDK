@@ -176,6 +176,9 @@ public struct ColorScheme {
     public let border: Color
     public let borderSecondary: Color
     
+    // Product Price Color (customizable)
+    public let priceColor: Color
+    
     public init(
         primary: Color,
         secondary: Color,
@@ -190,7 +193,8 @@ public struct ColorScheme {
         textSecondary: Color = Color(.sRGB, red: 0.557, green: 0.557, blue: 0.576, opacity: 1.0), // #8E8E93
         textTertiary: Color = Color(.sRGB, red: 0.780, green: 0.780, blue: 0.800, opacity: 1.0), // #C7C7CC
         border: Color = Color(.sRGB, red: 0.898, green: 0.898, blue: 0.918, opacity: 1.0), // #E5E5EA
-        borderSecondary: Color = Color(.sRGB, red: 0.820, green: 0.820, blue: 0.839, opacity: 1.0) // #D1D1D6
+        borderSecondary: Color = Color(.sRGB, red: 0.820, green: 0.820, blue: 0.839, opacity: 1.0), // #D1D1D6
+        priceColor: Color? = nil  // If nil, defaults to primary
     ) {
         self.primary = primary
         self.secondary = secondary
@@ -206,6 +210,7 @@ public struct ColorScheme {
         self.textTertiary = textTertiary
         self.border = border
         self.borderSecondary = borderSecondary
+        self.priceColor = priceColor ?? primary  // Default to primary if not specified
     }
 }
 
@@ -298,7 +303,8 @@ extension ColorScheme {
             textSecondary: Color(.sRGB, red: 0.557, green: 0.557, blue: 0.576, opacity: 1.0), // #8E8E93
             textTertiary: Color(.sRGB, red: 0.282, green: 0.282, blue: 0.290, opacity: 1.0), // #48484A
             border: Color(.sRGB, red: 0.220, green: 0.220, blue: 0.227, opacity: 1.0), // #38383A
-            borderSecondary: Color(.sRGB, red: 0.282, green: 0.282, blue: 0.290, opacity: 1.0) // #48484A
+            borderSecondary: Color(.sRGB, red: 0.282, green: 0.282, blue: 0.290, opacity: 1.0), // #48484A
+            priceColor: lightScheme.priceColor != lightScheme.primary ? adjustForDarkMode(lightScheme.priceColor) : nil  // Preserve custom priceColor if different from primary
         )
     }
     

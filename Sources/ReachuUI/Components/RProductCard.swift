@@ -384,7 +384,7 @@ public struct RProductCard: View {
                     ReachuTypography.body
                 )
                 .fontWeight(.semibold)
-                .foregroundColor(adaptiveColors.primary)
+                .foregroundColor(adaptiveColors.priceColor)
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)
@@ -396,8 +396,19 @@ public struct RProductCard: View {
                     )
                     .foregroundColor(adaptiveColors.textSecondary)
                     .strikethrough()
+            } else {
+                // Spacer to maintain consistent height when compare_at is not present
+                Text("")
+                    .font(
+                        variant == .minimal ? .system(size: 10, weight: .regular) :
+                        variant == .list ? .system(size: 11, weight: .regular) :
+                        variant == .grid ? .system(size: 12, weight: .regular) :
+                        ReachuTypography.caption1
+                    )
+                    .opacity(0)
             }
         }
+        .frame(minHeight: variant == .minimal ? 20 : variant == .list ? 24 : variant == .grid ? 28 : 32)  // Fixed minimum height for consistent card sizes
     }
     
     private var addToCartButton: some View {

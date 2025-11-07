@@ -181,6 +181,9 @@ public struct AdaptiveColors {
     // MARK: - Border Colors
     public var border: Color { themeColors.border }
     public var borderSecondary: Color { themeColors.borderSecondary }
+    
+    // MARK: - Product Price Color
+    public var priceColor: Color { themeColors.priceColor }
 }
 
 // MARK: - Color Extensions
