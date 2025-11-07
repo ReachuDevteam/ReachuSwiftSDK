@@ -19,5 +19,8 @@ ReachuWorkspace.xcworkspace/
 # Package resolved (should be generated)
 Package.resolved
 
+# Demo applications (only in main branch, ignored in sdk branch)
+Demo/
+
 # Kotlin implementation guide (moved to trello-mcp-server)
 KOTLIN_IMPLEMENTATION_GUIDE.md
