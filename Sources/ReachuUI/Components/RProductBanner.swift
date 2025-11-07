@@ -453,34 +453,17 @@ public struct RProductBanner: View {
             
             ZStack {
                 // Background image from config - using cached URL
-            AsyncImage(url: styling.imageURL ?? URL(string: "about:blank")) { phase in
-                switch phase {
-                case .empty:
-                    // Loading state - show placeholder
-                    Rectangle()
+                LoadedImage(
+                    url: styling.imageURL ?? URL(string: "about:blank"),
+                    placeholder: AnyView(Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(height: bannerHeight)
                         .overlay {
                             ProgressView()
                                 .tint(adaptiveColors.textPrimary)
-                        }
-                        .onAppear {
-                            if let url = styling.imageURL?.absoluteString {
-                                ReachuLogger.debug("Loading background image: \(url)", component: "RProductBanner")
-                            }
-                        }
-                case .success(let image):
-                    // Success - show image
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: bannerHeight)
-                        .clipped()
-                case .failure(let error):
-                    // Error - show placeholder with error
-                    Rectangle()
+                        }),
+                    errorView: AnyView(Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
                         .frame(maxWidth: .infinity)
                         .frame(height: bannerHeight)
@@ -493,66 +476,58 @@ public struct RProductBanner: View {
                                     .font(.caption)
                                     .foregroundColor(adaptiveColors.textSecondary)
                             }
-                        }
-                        .onAppear {
-                            ReachuLogger.error("Failed to load background image: \(error.localizedDescription)", component: "RProductBanner")
-                        }
-                @unknown default:
-                    Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
+                        })
+                )
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity)
+                .frame(height: bannerHeight)
+                .clipped()
+                
+                // Background color overlay (if provided)
+                if let backgroundColor = styling.backgroundColor {
+                    backgroundColor
                         .frame(maxWidth: .infinity)
                         .frame(height: bannerHeight)
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: bannerHeight)
-            .clipped()
-            
-            // Background color overlay (if provided)
-            if let backgroundColor = styling.backgroundColor {
-                backgroundColor
+                
+                // Overlay gradient for text readability (using cached opacity values)
+                // Only show if backgroundColor is not provided (fallback to gradient)
+                if styling.backgroundColor == nil {
+                    LinearGradient(
+                        colors: [
+                            adaptiveColors.textPrimary.opacity(styling.overlayBottomOpacity),
+                            adaptiveColors.textPrimary.opacity(styling.overlayTopOpacity)
+                        ],
+                        startPoint: .bottom,
+                        endPoint: .top
+                    )
                     .frame(maxWidth: .infinity)
                     .frame(height: bannerHeight)
-            }
-            
-            // Overlay gradient for text readability (using cached opacity values)
-            // Only show if backgroundColor is not provided (fallback to gradient)
-            if styling.backgroundColor == nil {
-                LinearGradient(
-                    colors: [
-                        adaptiveColors.textPrimary.opacity(styling.overlayBottomOpacity),
-                        adaptiveColors.textPrimary.opacity(styling.overlayTopOpacity)
-                    ],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-                .frame(maxWidth: .infinity)
-                .frame(height: bannerHeight)
-            }
-            
-            // Content overlay: text from config with cached styling values
-            // Determine VStack alignment based on text alignment
-            let vStackAlignment: HorizontalAlignment = {
-                switch styling.textAlignment {
-                case .center:
-                    return .center
-                case .trailing:
-                    return .trailing
-                default:
-                    return .leading
                 }
-            }()
-            
-            VStack(alignment: vStackAlignment, spacing: ReachuSpacing.md) {
-                // Title from config - using cached size and color
-                Text(config.title)
-                    .font(.system(size: styling.titleFontSize, weight: .bold))
-                    .foregroundColor(styling.titleColor)
-                    .multilineTextAlignment(styling.textAlignment)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .reachuTextShadow(for: colorScheme)
                 
-                // Subtitle from config - using cached size and color
+                // Content overlay: text from config with cached styling values
+                // Determine VStack alignment based on text alignment
+                let vStackAlignment: HorizontalAlignment = {
+                    switch styling.textAlignment {
+                    case .center:
+                        return .center
+                    case .trailing:
+                        return .trailing
+                    default:
+                        return .leading
+                    }
+                }()
+                
+                VStack(alignment: vStackAlignment, spacing: ReachuSpacing.md) {
+                    // Title from config - using cached size and color
+                    Text(config.title)
+                        .font(.system(size: styling.titleFontSize, weight: .bold))
+                        .foregroundColor(styling.titleColor)
+                        .multilineTextAlignment(styling.textAlignment)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .reachuTextShadow(for: colorScheme)
+                    
+                    // Subtitle from config - using cached size and color
                     if let subtitle = config.subtitle {
                         Text(subtitle)
                             .font(.system(size: styling.subtitleFontSize))
@@ -561,31 +536,31 @@ public struct RProductBanner: View {
                             .fixedSize(horizontal: false, vertical: true)
                             .reachuTextShadow(for: colorScheme)
                     }
-                
-                if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .bottom {
-                    Spacer()
+                    
+                    if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .bottom {
+                        Spacer()
+                    }
+                    
+                    // CTA Button with cached styling values
+                    Button {
+                        loadAndShowProduct(config: config)
+                    } label: {
+                        Text(config.ctaText)
+                            .font(.system(size: styling.buttonFontSize, weight: .semibold))
+                            .foregroundColor(styling.buttonTextColor)
+                            .padding(.horizontal, ReachuSpacing.md)
+                            .padding(.vertical, ReachuSpacing.sm)
+                            .background(styling.buttonBackgroundColor)
+                            .cornerRadius(ReachuBorderRadius.medium)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    
+                    if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .top {
+                        Spacer()
+                    }
                 }
-                
-                // CTA Button with cached styling values
-                Button {
-                    loadAndShowProduct(config: config)
-                } label: {
-                    Text(config.ctaText)
-                        .font(.system(size: styling.buttonFontSize, weight: .semibold))
-                        .foregroundColor(styling.buttonTextColor)
-                        .padding(.horizontal, ReachuSpacing.md)
-                        .padding(.vertical, ReachuSpacing.sm)
-                        .background(styling.buttonBackgroundColor)
-                        .cornerRadius(ReachuBorderRadius.medium)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .top {
-                    Spacer()
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Alignment(horizontal: vStackAlignment, vertical: styling.contentVerticalAlignment))
-            .padding(ReachuSpacing.md)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Alignment(horizontal: vStackAlignment, vertical: styling.contentVerticalAlignment))
+                .padding(ReachuSpacing.md)
             }
             .frame(height: bannerHeight)
             .frame(maxWidth: .infinity)
@@ -597,12 +572,7 @@ public struct RProductBanner: View {
                 loadAndShowProduct(config: config)
             }
         }
-        .frame(height: {
-            // Calculate banner height for proper layout
-            // Use a reasonable default - actual height will be calculated by GeometryReader
-            let defaultRatio: CGFloat = 0.25
-            return 200 // Default height, will be adjusted by GeometryReader
-        }())
+        .frame(height: 200) // Default height, will be adjusted by GeometryReader
     }
     
     // MARK: - Helper Methods

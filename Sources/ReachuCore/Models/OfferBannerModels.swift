@@ -1,4 +1,5 @@
 import Foundation
+import ReachuCore
 
 /// Configuration for Offer Banner component
 public struct OfferBannerConfig: Codable, Equatable {
@@ -522,15 +523,22 @@ public class WebSocketManager: ObservableObject {
     }
     
     public func connect() async {
-        guard let url = URL(string: "wss://event-streamer-angelo100.replit.app/ws/\(campaignId)") else {
-            print("❌ [WebSocketManager] Invalid WebSocket URL")
+        // Build WebSocket URL from configuration (same pattern as CampaignWebSocketManager)
+        let baseURL = ReachuConfiguration.shared.campaignConfiguration.webSocketBaseURL
+        let wsURLString = baseURL
+            .replacingOccurrences(of: "https://", with: "wss://")
+            .replacingOccurrences(of: "http://", with: "ws://")
+        let urlString = "\(wsURLString)/ws/\(campaignId)"
+        
+        guard let url = URL(string: urlString) else {
+            print("❌ [WebSocketManager] Invalid WebSocket URL: \(urlString)")
             return
         }
         
         webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
         
-        print("🔌 [WebSocketManager] Connected to campaign \(campaignId)")
+        print("🔌 [WebSocketManager] Connected to campaign \(campaignId) at \(urlString)")
         
         // Start listening for messages
         await listenForMessages()

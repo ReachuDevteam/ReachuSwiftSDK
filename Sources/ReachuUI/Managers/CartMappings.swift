@@ -71,7 +71,7 @@ extension VariantDto {
 
 extension ProductImageDto {
     public func toDomainImage() -> ProductImage {
-        ProductImage(
+        return ProductImage(
             id: id,
             url: url,
             width: width,

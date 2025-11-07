@@ -85,7 +85,7 @@ public class ProductService {
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "thumbnail",
+            imageSize: "medium",
             barcodeList: nil as [String]?,
             categoryIds: nil as [Int]?,
             productIds: [productId],
@@ -129,7 +129,7 @@ public class ProductService {
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "thumbnail",
+            imageSize: "medium",
             barcodeList: nil as [String]?,
             categoryIds: nil as [Int]?,
             productIds: idsToUse,
@@ -171,7 +171,7 @@ public class ProductService {
         
         let dtoProducts = try await sdk.channel.product.get(
             currency: currency,
-            imageSize: "thumbnail",
+            imageSize: "medium",
             barcodeList: nil as [String]?,
             categoryIds: [categoryId],
             productIds: nil as [Int]?,
