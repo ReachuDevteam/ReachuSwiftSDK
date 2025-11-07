@@ -714,6 +714,22 @@ extension CartManager {
 
         isLoading = false
     }
+    
+    public func resetCartAndCreateNew() async {        
+        items = []
+        cartTotal = 0.0
+        shippingTotal = 0.0
+        shippingCurrency = currency
+        checkoutId = nil
+        lastDiscountCode = nil
+        lastDiscountId = nil
+        pendingShippingSelections.removeAll()
+        
+        currentCartId = nil
+        cartId = nil
+        
+        await createCart(currency: currency, country: country)
+    }
 
     public var itemCount: Int {
         items.reduce(0) { $0 + $1.quantity }

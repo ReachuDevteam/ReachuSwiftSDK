@@ -55,6 +55,9 @@ public struct RCheckoutOverlay: View {
     @State private var appliedDiscount: Double = 0.0
     @State private var discountMessage = ""
 
+    // Checkout totals
+    @State private var checkoutTotals: GetCheckoutDto?
+
     // Vipps Payment Tracking
     @State private var vippsPaymentInProgress = false
     @State private var vippsCheckoutId: String?
@@ -181,6 +184,24 @@ public struct RCheckoutOverlay: View {
             }
             .onChange(of: checkoutStep) { newStep in
                 let _ = ReachuLogger.debug("Current checkoutStep: \(newStep)", component: "RCheckoutOverlay")
+                if newStep == .orderSummary {
+                    Task {
+                        await loadCheckoutTotals()
+                    }
+                } else if newStep == .success {
+                    // Reset cart and create new one after successful payment
+                    Task {
+                        ReachuLogger.debug("Payment successful - resetting cart and creating new one", component: "RCheckoutOverlay")
+                        await cartManager.resetCartAndCreateNew()
+                    }
+                }
+            }
+            .onChange(of: cartManager.checkoutId) { checkoutId in
+                if let checkoutId = checkoutId, checkoutStep == .orderSummary {
+                    Task {
+                        await loadCheckoutTotals()
+                    }
+                }
             }
             .navigationTitle(RLocalizedString(ReachuTranslationKey.checkout.rawValue))
             #if os(iOS) || os(tvOS) || os(watchOS)
@@ -664,6 +685,9 @@ public struct RCheckoutOverlay: View {
                             acceptsPurchaseConditions: checkoutDraft
                                 .acceptsPurchaseConditions
                         )
+
+                        // Load checkout totals after updating
+                        await loadCheckoutTotals()
 
                         proceedToNext()
 
@@ -1217,7 +1241,8 @@ public struct RCheckoutOverlay: View {
                 ) {
                     cartManager.hideCheckout()
                     Task {
-                        await cartManager.clearCart()
+                        // Reset cart and create new one after successful payment
+                        await cartManager.resetCartAndCreateNew()
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.lg)
@@ -2796,7 +2821,7 @@ extension RCheckoutOverlay {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: ReachuSpacing.sm) {
-                // Subtotal
+                // Subtotal - from checkout
                 HStack {
                     Text("Subtotal")
                         .font(.system(size: 14, weight: .regular))
@@ -2805,13 +2830,13 @@ extension RCheckoutOverlay {
                     Spacer()
 
                     Text(
-                        "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                        "\(cartManager.currency) \(String(format: "%.2f", checkoutSubtotal))"
                     )
                     .font(.system(size: 14, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
                 }
 
-                // Shipping
+                // Shipping - from checkout
                 HStack {
                     Text(RLocalizedString(ReachuTranslationKey.shipping.rawValue))
                         .font(.system(size: 14, weight: .regular))
@@ -2824,8 +2849,8 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textPrimary)
                 }
 
-                // Show discount if applied
-                if appliedDiscount > 0 {
+                // Show discount if applied - from checkout
+                if checkoutDiscount > 0 {
                     HStack {
                         Text(RLocalizedString(ReachuTranslationKey.discount.rawValue))
                             .font(.system(size: 14, weight: .regular))
@@ -2834,14 +2859,14 @@ extension RCheckoutOverlay {
                         Spacer()
 
                         Text(
-                            "-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))"
+                            "-\(cartManager.currency) \(String(format: "%.2f", checkoutDiscount))"
                         )
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(ReachuColors.success)
                     }
                 }
 
-                // Tax
+                // Tax - from checkout
                 HStack {
                     Text("Tax")
                         .font(.system(size: 14, weight: .regular))
@@ -2849,7 +2874,7 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) 0.00")
+                    Text("\(cartManager.currency) \(String(format: "%.2f", taxAmount))")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundColor(ReachuColors.textPrimary)
                 }
@@ -2859,7 +2884,7 @@ extension RCheckoutOverlay {
                     .fill(ReachuColors.border)
                     .frame(height: 1)
 
-                // Total
+                // Total - from checkout
                 HStack {
                     Text("Total")
                         .font(.system(size: 16, weight: .bold))
@@ -2868,7 +2893,7 @@ extension RCheckoutOverlay {
                     Spacer()
 
                     Text(
-                        "\(cartManager.currency) \(String(format: "%.2f", finalTotal))"
+                        "\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))"
                     )
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(ReachuColors.primary)
@@ -3080,6 +3105,7 @@ extension RCheckoutOverlay {
     }
 
     // Order summary for address step (with shipping)
+    // Note: This is shown before checkout is created, so we use cart values
     private var addressOrderSummaryView: some View {
         VStack(spacing: ReachuSpacing.sm) {
             // Subtotal
@@ -3091,7 +3117,7 @@ extension RCheckoutOverlay {
                 Spacer()
 
                 Text(
-                    "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                    "\(cartManager.currency) \(String(format: "%.2f", checkoutSubtotal))"
                 )
                 .font(.system(size: 14, weight: .regular))
                 .foregroundColor(ReachuColors.textPrimary)
@@ -3124,7 +3150,7 @@ extension RCheckoutOverlay {
                 Spacer()
 
                 Text(
-                    "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal + shippingAmount))"
+                    "\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))"
                 )
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(ReachuColors.primary)
@@ -3197,9 +3223,9 @@ extension RCheckoutOverlay {
                 .frame(height: 1)
                 .padding(.horizontal, ReachuSpacing.lg)
 
-            // Order Summary Section
+            // Order Summary Section - All values from checkout
             VStack(spacing: ReachuSpacing.md) {
-                // Subtotal
+                // Subtotal - from checkout
                 HStack {
                     Text("Subtotal")
                         .font(.system(size: 16, weight: .regular))
@@ -3208,13 +3234,13 @@ extension RCheckoutOverlay {
                     Spacer()
 
                     Text(
-                        "\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))"
+                        "\(cartManager.currency) \(String(format: "%.2f", checkoutSubtotal))"
                     )
                     .font(.system(size: 16, weight: .regular))
                     .foregroundColor(ReachuColors.textPrimary)
                 }
 
-                // Shipping
+                // Shipping - from checkout
                 HStack {
                     Text(RLocalizedString(ReachuTranslationKey.shipping.rawValue))
                         .font(.system(size: 16, weight: .regular))
@@ -3227,8 +3253,8 @@ extension RCheckoutOverlay {
                         .foregroundColor(ReachuColors.textPrimary)
                 }
 
-                // Discount (if applied)
-                if appliedDiscount > 0 {
+                // Discount (if applied) - from checkout
+                if checkoutDiscount > 0 {
                     HStack {
                         Text(RLocalizedString(ReachuTranslationKey.discount.rawValue))
                             .font(.system(size: 16, weight: .regular))
@@ -3237,14 +3263,14 @@ extension RCheckoutOverlay {
                         Spacer()
 
                         Text(
-                            "-\(cartManager.currency) \(String(format: "%.2f", appliedDiscount))"
+                            "-\(cartManager.currency) \(String(format: "%.2f", checkoutDiscount))"
                         )
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(ReachuColors.success)
                     }
                 }
 
-                // Tax
+                // Tax - from checkout
                 HStack {
                     Text("Tax")
                         .font(.system(size: 16, weight: .regular))
@@ -3252,7 +3278,7 @@ extension RCheckoutOverlay {
 
                     Spacer()
 
-                    Text("\(cartManager.currency) 0.00")
+                    Text("\(cartManager.currency) \(String(format: "%.2f", taxAmount))")
                         .font(.system(size: 16, weight: .regular))
                         .foregroundColor(ReachuColors.textPrimary)
                 }
@@ -3262,7 +3288,7 @@ extension RCheckoutOverlay {
                     .fill(ReachuColors.border)
                     .frame(height: 1)
 
-                // Total
+                // Total - from checkout
                 HStack {
                     Text("Total")
                         .font(.system(size: 18, weight: .bold))
@@ -3271,7 +3297,7 @@ extension RCheckoutOverlay {
                     Spacer()
 
                     Text(
-                        "\(cartManager.currency) \(String(format: "%.2f", finalTotal))"
+                        "\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))"
                     )
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(ReachuColors.primary)
@@ -3283,8 +3309,41 @@ extension RCheckoutOverlay {
 
     // MARK: - Helper Functions
 
+    // Use checkout totals directly when available, otherwise fall back to cart manager
+    private var checkoutSubtotal: Double {
+        if let subtotal = checkoutTotals?.totals?.subtotal {
+            return subtotal
+        }
+        return cartManager.cartTotal
+    }
+    
     private var shippingAmount: Double {
-        cartManager.shippingTotal
+        if let checkoutShipping = checkoutTotals?.totals?.shipping {
+            return checkoutShipping
+        }
+        return cartManager.shippingTotal
+    }
+    
+    private var taxAmount: Double {
+        if let checkoutTaxes = checkoutTotals?.totals?.taxes {
+            return checkoutTaxes
+        }
+        return 0.0
+    }
+    
+    private var checkoutDiscount: Double {
+        if let discount = checkoutTotals?.totals?.discounts {
+            return discount
+        }
+        return appliedDiscount
+    }
+    
+    private var checkoutTotal: Double {
+        if let total = checkoutTotals?.totals?.total {
+            return total
+        }
+        // Fallback calculation only if checkout totals not available
+        return checkoutSubtotal + shippingAmount + taxAmount - checkoutDiscount
     }
 
     private var shippingCurrencySymbol: String {
@@ -3298,7 +3357,7 @@ extension RCheckoutOverlay {
     }
 
     private var finalTotal: Double {
-        return cartManager.cartTotal + shippingAmount - appliedDiscount
+        return checkoutTotal
     }
 
     private func formattedShipping(amount: Double?, currency: String?) -> String {
@@ -3322,6 +3381,24 @@ extension RCheckoutOverlay {
     private func syncPhoneCode(_ code: String) {
         phoneCountryCode = code
         checkoutDraft.phoneCountryCode = code.replacingOccurrences(of: "+", with: "")
+    }
+    
+    private func loadCheckoutTotals() async {
+        guard let checkoutId = cartManager.checkoutId else {
+            ReachuLogger.debug("No checkoutId available to load totals", component: "RCheckoutOverlay")
+            return
+        }
+        
+        ReachuLogger.debug("Loading checkout totals for checkoutId: \(checkoutId)", component: "RCheckoutOverlay")
+        
+        if let checkout = await cartManager.getCheckoutById(checkoutId: checkoutId) {
+            await MainActor.run {
+                checkoutTotals = checkout
+                ReachuLogger.debug("Checkout totals loaded - shipping: \(checkout.totals?.shipping ?? 0), taxes: \(checkout.totals?.taxes ?? 0)", component: "RCheckoutOverlay")
+            }
+        } else {
+            ReachuLogger.debug("Failed to load checkout totals", component: "RCheckoutOverlay")
+        }
     }
     
     private func loadAvailablePaymentMethods() async {
