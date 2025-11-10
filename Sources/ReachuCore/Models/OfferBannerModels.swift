@@ -6,7 +6,8 @@ public struct OfferBannerConfig: Codable, Equatable {
     public let logoUrl: String
     public let title: String
     public let subtitle: String?
-    public let backgroundImageUrl: String
+    public let backgroundImageUrl: String?  // Opcional: puede usar backgroundColor en su lugar
+    public let backgroundColor: String?      // NUEVO: Color de fondo opcional
     public let countdownEndDate: String // ISO 8601 timestamp
     public let discountBadgeText: String
     public let ctaText: String
@@ -16,11 +17,19 @@ public struct OfferBannerConfig: Codable, Equatable {
     public let deeplinkUrl: String?
     public let deeplinkAction: String?
     
+    enum CodingKeys: String, CodingKey {
+        case logoUrl, title, subtitle, backgroundImageUrl, backgroundColor
+        case countdownEndDate, discountBadgeText, ctaText, ctaLink
+        case overlayOpacity, buttonColor, deeplinkUrl, deeplinkAction
+        case deeplink  // Para soportar el formato del backend
+    }
+    
     public init(
         logoUrl: String,
         title: String,
         subtitle: String? = nil,
-        backgroundImageUrl: String,
+        backgroundImageUrl: String? = nil,
+        backgroundColor: String? = nil,
         countdownEndDate: String,
         discountBadgeText: String,
         ctaText: String,
@@ -34,6 +43,7 @@ public struct OfferBannerConfig: Codable, Equatable {
         self.title = title
         self.subtitle = subtitle
         self.backgroundImageUrl = backgroundImageUrl
+        self.backgroundColor = backgroundColor
         self.countdownEndDate = countdownEndDate
         self.discountBadgeText = discountBadgeText
         self.ctaText = ctaText
@@ -42,6 +52,45 @@ public struct OfferBannerConfig: Codable, Equatable {
         self.buttonColor = buttonColor
         self.deeplinkUrl = deeplinkUrl
         self.deeplinkAction = deeplinkAction
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        logoUrl = try container.decode(String.self, forKey: .logoUrl)
+        title = try container.decode(String.self, forKey: .title)
+        subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle)
+        backgroundImageUrl = try container.decodeIfPresent(String.self, forKey: .backgroundImageUrl)
+        backgroundColor = try container.decodeIfPresent(String.self, forKey: .backgroundColor)
+        countdownEndDate = try container.decode(String.self, forKey: .countdownEndDate)
+        discountBadgeText = try container.decode(String.self, forKey: .discountBadgeText)
+        ctaText = try container.decode(String.self, forKey: .ctaText)
+        ctaLink = try container.decodeIfPresent(String.self, forKey: .ctaLink)
+        overlayOpacity = try container.decodeIfPresent(Double.self, forKey: .overlayOpacity)
+        buttonColor = try container.decodeIfPresent(String.self, forKey: .buttonColor)
+        
+        // Soportar tanto deeplinkUrl como deeplink (formato del backend)
+        deeplinkUrl = try container.decodeIfPresent(String.self, forKey: .deeplinkUrl) 
+            ?? container.decodeIfPresent(String.self, forKey: .deeplink)
+        deeplinkAction = try container.decodeIfPresent(String.self, forKey: .deeplinkAction)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        try container.encode(logoUrl, forKey: .logoUrl)
+        try container.encode(title, forKey: .title)
+        try container.encodeIfPresent(subtitle, forKey: .subtitle)
+        try container.encodeIfPresent(backgroundImageUrl, forKey: .backgroundImageUrl)
+        try container.encodeIfPresent(backgroundColor, forKey: .backgroundColor)
+        try container.encode(countdownEndDate, forKey: .countdownEndDate)
+        try container.encode(discountBadgeText, forKey: .discountBadgeText)
+        try container.encode(ctaText, forKey: .ctaText)
+        try container.encodeIfPresent(ctaLink, forKey: .ctaLink)
+        try container.encodeIfPresent(overlayOpacity, forKey: .overlayOpacity)
+        try container.encodeIfPresent(buttonColor, forKey: .buttonColor)
+        try container.encodeIfPresent(deeplinkUrl, forKey: .deeplinkUrl)
+        try container.encodeIfPresent(deeplinkAction, forKey: .deeplinkAction)
     }
 }
 
@@ -70,22 +119,28 @@ public enum ComponentConfig: Codable {
     
     enum CodingKeys: String, CodingKey {
         case imageUrl, title, subtitle, ctaText, ctaLink, deeplinkUrl, deeplinkAction // banner
-        case logoUrl, backgroundImageUrl, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor // offer_banner
+        case logoUrl, backgroundImageUrl, backgroundColor, countdownEndDate, discountBadgeText, overlayOpacity, buttonColor // offer_banner
         case productId, highlightText // product_spotlight
-        case endDate, style // countdown
+        case endDate, style, deeplink // countdown (agregar title y deeplink)
         case channelId, displayCount // carousel_auto
         case productIds // carousel_manual, product_carousel, product_store
         case text, color // offer_badge
         case autoPlay, interval // product_carousel
         case mode, displayType, columns // product_store
-        case message, deeplink // banner, product_banner
+        case message // banner, product_banner
     }
     
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
-        // Try to decode as OfferBanner first (has most specific fields)
-        if container.contains(.logoUrl) && container.contains(.backgroundImageUrl) {
+        // Try Countdown FIRST (has endDate AND title - formato nuevo del backend)
+        // Esto debe ir antes de OfferBanner porque countdown puede tener logoUrl pero usa endDate, no countdownEndDate
+        if container.contains(.endDate) && container.contains(.title) {
+            let config = try CountdownConfig(from: decoder)
+            self = .countdown(config)
+        }
+        // Try to decode as OfferBanner (has most specific fields: logoUrl AND countdownEndDate)
+        else if container.contains(.logoUrl) && container.contains(.countdownEndDate) {
             let config = try OfferBannerConfig(from: decoder)
             self = .offerBanner(config)
         }
@@ -119,11 +174,6 @@ public enum ComponentConfig: Codable {
         else if container.contains(.productId) {
             let config = try ProductSpotlightConfig(from: decoder)
             self = .productSpotlight(config)
-        }
-        // Try Countdown (has endDate)
-        else if container.contains(.endDate) {
-            let config = try CountdownConfig(from: decoder)
-            self = .countdown(config)
         }
         // Try CarouselAuto (has channelId)
         else if container.contains(.channelId) {
@@ -209,8 +259,41 @@ public struct ProductSpotlightConfig: Codable {
 
 /// Countdown Config
 public struct CountdownConfig: Codable {
+    // Core (requeridos)
     public let endDate: String
+    public let title: String
+    
+    // Visuales (opcionales)
+    public let logoUrl: String?
+    public let subtitle: String?
+    public let backgroundImageUrl: String?
+    public let backgroundColor: String?
+    public let discountBadgeText: String?
+    public let ctaText: String?
+    public let ctaLink: String?
+    public let deeplink: String?
+    public let overlayOpacity: Double?
+    public let buttonColor: String?
     public let style: String?
+    
+    // Método para convertir CountdownConfig a OfferBannerConfig
+    public func toOfferBannerConfig() -> OfferBannerConfig? {
+        return OfferBannerConfig(
+            logoUrl: logoUrl ?? "",
+            title: title,
+            subtitle: subtitle,
+            backgroundImageUrl: backgroundImageUrl,
+            backgroundColor: backgroundColor,
+            countdownEndDate: endDate,
+            discountBadgeText: discountBadgeText ?? "",
+            ctaText: ctaText ?? "Shop Now",
+            ctaLink: ctaLink,
+            overlayOpacity: overlayOpacity,
+            buttonColor: buttonColor,
+            deeplinkUrl: deeplink,  // Mapear deeplink único a deeplinkUrl
+            deeplinkAction: nil
+        )
+    }
 }
 
 /// Carousel Auto Config
@@ -459,9 +542,23 @@ public class ComponentManager: ObservableObject {
                 if case .offerBanner(let config) = offerBanner.config {
                     self.activeBanner = config
                     print("✅ [ComponentManager] Activated offer banner: \(config.title)")
-                    print("🖼️ [ComponentManager] Background URL: \(config.backgroundImageUrl)")
+                    print("🖼️ [ComponentManager] Background URL: \(config.backgroundImageUrl ?? "none")")
+                    print("🎨 [ComponentManager] Background Color: \(config.backgroundColor ?? "none")")
                     print("🏷️ [ComponentManager] Logo URL: \(config.logoUrl)")
                     print("⏰ [ComponentManager] Countdown End: \(config.countdownEndDate)")
+                }
+            }
+            // Extract countdown and convert to OfferBannerConfig if no offer_banner
+            else if let countdown = components.first(where: { $0.type == "countdown" }) {
+                if case .countdown(let config) = countdown.config {
+                    if let bannerConfig = config.toOfferBannerConfig() {
+                        self.activeBanner = bannerConfig
+                        print("✅ [ComponentManager] Activated countdown banner: \(bannerConfig.title)")
+                        print("🖼️ [ComponentManager] Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
+                        print("🎨 [ComponentManager] Background Color: \(bannerConfig.backgroundColor ?? "none")")
+                        print("🏷️ [ComponentManager] Logo URL: \(bannerConfig.logoUrl)")
+                        print("⏰ [ComponentManager] Countdown End: \(bannerConfig.countdownEndDate)")
+                    }
                 }
             } else {
                 self.activeBanner = nil
@@ -486,13 +583,25 @@ public class ComponentManager: ObservableObject {
             print("📨 [ComponentManager] Component status changed: \(decoded.componentId) -> \(decoded.status)")
             
             if decoded.status == "active", let component = decoded.component {
-                // Extract OfferBannerConfig from ComponentConfig enum
+                // Try offer_banner first
                 if case .offerBanner(let bannerConfig) = component.config {
                     activeBanner = bannerConfig
                     print("✅ [ComponentManager] Banner activated: \(decoded.componentId)")
-                    print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl)")
+                    print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
+                    print("🎨 [ComponentManager] New Background Color: \(bannerConfig.backgroundColor ?? "none")")
                     print("🏷️ [ComponentManager] New Logo URL: \(bannerConfig.logoUrl)")
                     print("⏰ [ComponentManager] New Countdown End: \(bannerConfig.countdownEndDate)")
+                }
+                // Then try countdown and convert
+                else if case .countdown(let countdownConfig) = component.config {
+                    if let bannerConfig = countdownConfig.toOfferBannerConfig() {
+                        activeBanner = bannerConfig
+                        print("✅ [ComponentManager] Countdown banner activated: \(decoded.componentId)")
+                        print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
+                        print("🎨 [ComponentManager] New Background Color: \(bannerConfig.backgroundColor ?? "none")")
+                        print("🏷️ [ComponentManager] New Logo URL: \(bannerConfig.logoUrl)")
+                        print("⏰ [ComponentManager] New Countdown End: \(bannerConfig.countdownEndDate)")
+                    }
                 }
             } else {
                 activeBanner = nil

@@ -702,9 +702,10 @@ public class ConfigurationLoader {
             do {
                 // Fetch payment methods from Reachu API
                 let paymentMethods = try await sdkClient.payment.getAvailableMethods()
+                ReachuLogger.debug("Available payment methods from API: \(paymentMethods.map { $0.name })", component: "Config")
                 
-                // Find Stripe method and extract publishable key
-                if let stripeMethod = paymentMethods.first(where: { $0.name == "Stripe" }),
+                // Find Stripe method and extract publishable key (case-insensitive)
+                if let stripeMethod = paymentMethods.first(where: { $0.name.lowercased() == "stripe" }),
                    let publishableKey = stripeMethod.publishableKey {
                     await MainActor.run {
                         StripeAPI.defaultPublishableKey = publishableKey
