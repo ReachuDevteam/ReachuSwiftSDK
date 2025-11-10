@@ -11,23 +11,26 @@
          location = "group:README.md">
       </FileRef>
    </Group>
-     <Group
-     location = "container:"
-     name = "Demo Apps">
-     <FileRef
-        location = "container:Demo/tv2demo/tv2demo.xcodeproj">
-     </FileRef>
-     <FileRef
-        location = "container:Demo/ReachuDemoApp/ReachuDemoApp.xcodeproj">
-     </FileRef>
-     <FileRef
-        location = "container:Demo/Viaplay/Viaplay.xcodeproj">
-     </FileRef>
-     <FileRef
-        location = "container:Demo/Vg/Vg.xcodeproj">
-     </FileRef>
-     <FileRef
-        location = "group:../PregancyDemo/PregancyDemo.xcodeproj">
-     </FileRef>
+   <Group
+      location = "container:"
+      name = "Demo Apps">
+      <FileRef
+         location = "absolute:/Users/angelo/ReachuSwiftSDK/Demo/tv2demo/tv2demo.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "absolute:/Users/angelo/ReachuSwiftSDK/Demo/ReachuDemoApp/ReachuDemoApp.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "absolute:/Users/angelo/ReachuSwiftSDK/Demo/ClientImplementationGuide/ClientImplementationGuide.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "absolute:/Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "absolute:/Users/angelo/ReachuSwiftSDK/Demo/Vg/Vg.xcodeproj">
+      </FileRef>
+      <FileRef
+         location = "absolute:/Users/angelo/PregancyDemo/PregancyDemo.xcodeproj">
+      </FileRef>
    </Group>
 </Workspace>
