@@ -40,9 +40,10 @@ public struct RProductBanner: View {
             
             // Cache clamped sizes
             self.bannerHeight = CGFloat(Self.getClampedSize(config.bannerHeight, min: 150, max: 400, default: 200))
-            self.titleFontSize = CGFloat(Self.getClampedSize(config.titleFontSize, min: 16, max: 32, default: 24))
-            self.subtitleFontSize = CGFloat(Self.getClampedSize(config.subtitleFontSize, min: 12, max: 20, default: 16))
-            self.buttonFontSize = CGFloat(Self.getClampedSize(config.buttonFontSize, min: 12, max: 18, default: 14))
+            // Smaller title and subtitle, slightly larger button
+            self.titleFontSize = CGFloat(Self.getClampedSize(config.titleFontSize, min: 10, max: 18, default: 14))
+            self.subtitleFontSize = CGFloat(Self.getClampedSize(config.subtitleFontSize, min: 8, max: 12, default: 10))
+            self.buttonFontSize = CGFloat(Self.getClampedSize(config.buttonFontSize, min: 12, max: 16, default: 14))
             
             // Cache parsed colors - use adaptive colors as defaults
             let defaultTextColor = adaptiveColors.textPrimary
@@ -266,21 +267,8 @@ public struct RProductBanner: View {
         
         // Only recalculate if config actually changed
         if currentConfigId != newConfigId {
-            ReachuLogger.debug("Config changed - updating cached styling", component: "RProductBanner")
-            ReachuLogger.debug("Old ID: \(currentConfigId ?? "nil"), New ID: \(newConfigId)", component: "RProductBanner")
-            
             cachedStyling = CachedStyling(config: config, adaptiveColors: adaptiveColors)
             currentConfigId = newConfigId
-            
-            // Log config details (only when changed)
-            ReachuLogger.debug("Config loaded - productId: \(config.productId), title: '\(config.title)'", component: "RProductBanner")
-            if let bannerHeight = config.bannerHeight {
-                let clampedHeight = CGFloat(Swift.max(150, Swift.min(400, bannerHeight)))
-                ReachuLogger.debug("bannerHeight from backend: \(bannerHeight) -> clamped to: \(clampedHeight)", component: "RProductBanner")
-            }
-            if config.titleColor != nil || config.bannerHeight != nil {
-                ReachuLogger.debug("Styling: Custom colors/sizes provided", component: "RProductBanner")
-            }
         }
     }
     
@@ -518,49 +506,54 @@ public struct RProductBanner: View {
                     }
                 }()
                 
-                VStack(alignment: vStackAlignment, spacing: ReachuSpacing.md) {
-                    // Title from config - using cached size and color
-                    Text(config.title)
-                        .font(.system(size: styling.titleFontSize, weight: .bold))
-                        .foregroundColor(styling.titleColor)
-                        .multilineTextAlignment(styling.textAlignment)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .reachuTextShadow(for: colorScheme)
-                    
-                    // Subtitle from config - using cached size and color
-                    if let subtitle = config.subtitle {
-                        Text(subtitle)
-                            .font(.system(size: styling.subtitleFontSize))
-                            .foregroundColor(styling.subtitleColor)
-                            .multilineTextAlignment(styling.textAlignment)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .reachuTextShadow(for: colorScheme)
-                    }
-                    
-                    if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .bottom {
-                        Spacer()
-                    }
-                    
-                    // CTA Button with cached styling values
-                    Button {
-                        loadAndShowProduct(config: config)
-                    } label: {
-                        Text(config.ctaText)
-                            .font(.system(size: styling.buttonFontSize, weight: .semibold))
-                            .foregroundColor(styling.buttonTextColor)
-                            .padding(.horizontal, ReachuSpacing.md)
-                            .padding(.vertical, ReachuSpacing.sm)
-                            .background(styling.buttonBackgroundColor)
-                            .cornerRadius(ReachuBorderRadius.medium)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    
-                    if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .top {
-                        Spacer()
-                    }
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Alignment(horizontal: vStackAlignment, vertical: styling.contentVerticalAlignment))
-                .padding(ReachuSpacing.md)
+                 VStack(alignment: vStackAlignment, spacing: 0) {
+                     // Title from config - using cached size and color
+                     Text(config.title)
+                         .font(.system(size: styling.titleFontSize, weight: .bold))
+                         .foregroundColor(styling.titleColor)
+                         .multilineTextAlignment(styling.textAlignment)
+                         .fixedSize(horizontal: false, vertical: true)
+                         .lineSpacing(1)
+                         .padding(.bottom, 6) // Even smaller spacing
+                     
+                     // Subtitle from config - using cached size and color
+                     if let subtitle = config.subtitle {
+                         Text(subtitle)
+                             .font(.system(size: styling.subtitleFontSize, weight: .regular))
+                             .foregroundColor(styling.subtitleColor)
+                             .multilineTextAlignment(styling.textAlignment)
+                             .fixedSize(horizontal: false, vertical: true)
+                             .lineSpacing(0.5)
+                             .padding(.bottom, 8) // Even smaller spacing
+                     }
+                     
+                     if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .bottom {
+                         Spacer()
+                     }
+                     
+                     // CTA Button with cached styling values
+                     Button {
+                         loadAndShowProduct(config: config)
+                     } label: {
+                         Text(config.ctaText)
+                             .font(.system(size: styling.buttonFontSize, weight: .semibold))
+                             .foregroundColor(styling.buttonTextColor)
+                             .padding(.horizontal, 12) // Even smaller padding
+                             .padding(.vertical, 6) // Even smaller padding
+                             .background(styling.buttonBackgroundColor)
+                             .cornerRadius(16) // Smaller radius
+                             .fixedSize(horizontal: false, vertical: true)
+                     }
+                     
+                     if styling.contentVerticalAlignment == .center || styling.contentVerticalAlignment == .top {
+                         Spacer()
+                     }
+                 }
+                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: Alignment(horizontal: vStackAlignment, vertical: styling.contentVerticalAlignment))
+                 .padding(.leading, 12) // Even smaller padding
+                 .padding(.trailing, 12)
+                 .padding(.top, 12)
+                 .padding(.bottom, 12)
             }
             .frame(height: bannerHeight)
             .frame(maxWidth: .infinity)
@@ -578,29 +571,27 @@ public struct RProductBanner: View {
     // MARK: - Helper Methods
     
     private func loadAndShowProduct(config: ProductBannerConfig) {
-        // Handle deeplink first
-        if let deeplink = config.deeplink {
-            ReachuLogger.debug("Opening deeplink: \(deeplink)", component: "RProductBanner")
-            if let url = URL(string: deeplink) {
+        // Handle deeplink first (must be valid URL)
+        if let deeplink = config.deeplink, !deeplink.isEmpty {
+            if let url = URL(string: deeplink), url.scheme != nil {
                 #if os(iOS)
                 UIApplication.shared.open(url)
                 #endif
+                return
             }
-            return
         }
         
-        // Fallback to ctaLink
-        if let ctaLink = config.ctaLink {
-            ReachuLogger.debug("Opening link: \(ctaLink)", component: "RProductBanner")
-            if let url = URL(string: ctaLink) {
+        // Fallback to ctaLink (must be valid URL)
+        if let ctaLink = config.ctaLink, !ctaLink.isEmpty {
+            if let url = URL(string: ctaLink), url.scheme != nil {
                 #if os(iOS)
                 UIApplication.shared.open(url)
                 #endif
+                return
             }
-            return
         }
         
-        // Load product by ID and show detail overlay
+        // Default: Load product by ID and show detail overlay
         Task {
             await loadProduct(productId: config.productId)
         }
@@ -618,9 +609,7 @@ public struct RProductBanner: View {
         let country = cartManager.country
         
         do {
-            // Use ProductService to load product with large images for detail view
             guard let productIdInt = Int(productId) else {
-                ReachuLogger.warning("Invalid productId format: \(productId)", component: "RProductBanner")
                 isLoadingProduct = false
                 return
             }
@@ -633,14 +622,8 @@ public struct RProductBanner: View {
             
             showingProductDetail = product
             
-        } catch ProductServiceError.invalidProductId(let id) {
-            ReachuLogger.warning("Invalid productId: \(id)", component: "RProductBanner")
-        } catch ProductServiceError.productNotFound(let id) {
-            ReachuLogger.warning("Product not found for ID: \(id)", component: "RProductBanner")
-        } catch ProductServiceError.invalidConfiguration(let message) {
-            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductBanner")
         } catch {
-            ReachuLogger.error("Error loading product: \(error.localizedDescription)", component: "RProductBanner")
+            // Silently handle errors
         }
         
         isLoadingProduct = false

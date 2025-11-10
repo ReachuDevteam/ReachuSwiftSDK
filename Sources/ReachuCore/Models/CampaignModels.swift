@@ -389,25 +389,73 @@ public struct ComponentStatusChangedEvent: Codable {
 }
 
 /// Component config updated event
-/// Backend sends: { "type": "component_config_updated", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "config": {...} } }
+/// Backend sends two possible formats:
+/// 1. { "type": "component_config_updated", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "config": {...} } }
+/// 2. { "type": "component_config_updated", "campaignId": 14, "componentId": "product-banner-template", "component": { "id": "...", "type": "...", "name": "...", "config": {...} } }
 public struct ComponentConfigUpdatedEvent: Codable {
     public let type: String
-    public let data: ComponentConfigData
+    public let campaignId: Int?
+    public let componentId: String?  // String format (new format)
+    public let data: ComponentConfigData?  // Old format
+    public let component: Component?  // New format (direct Component object)
     
     public struct ComponentConfigData: Codable {
-        public let componentId: Int  // Template component ID
-        public let campaignComponentId: Int  // Campaign-specific component ID
-        public let componentType: String  // "product_banner", "product_carousel", etc.
-        public let config: [String: AnyCodable]  // New merged config (customConfig + defaults)
+        public let componentId: Int  // Template component ID (old format)
+        public let campaignComponentId: Int  // Campaign-specific component ID (old format)
+        public let componentType: String  // "product_banner", "product_carousel", etc. (old format)
+        public let config: [String: AnyCodable]  // New merged config (old format)
     }
     
-    public init(type: String = "component_config_updated", data: ComponentConfigData) {
-        self.type = type
-        self.data = data
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        type = try container.decode(String.self, forKey: .type)
+        campaignId = try container.decodeIfPresent(Int.self, forKey: .campaignId)
+        componentId = try container.decodeIfPresent(String.self, forKey: .componentId)
+        
+        // Try new format first (with direct component)
+        if container.contains(.component) {
+            component = try container.decode(Component.self, forKey: .component)
+            data = nil
+        }
+        // Fallback to old format (with data wrapper)
+        else if container.contains(.data) {
+            data = try container.decode(ComponentConfigData.self, forKey: .data)
+            component = nil
+        } else {
+            data = nil
+            component = nil
+        }
     }
     
-    /// Helper to convert to Component model
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encodeIfPresent(campaignId, forKey: .campaignId)
+        try container.encodeIfPresent(componentId, forKey: .componentId)
+        try container.encodeIfPresent(data, forKey: .data)
+        try container.encodeIfPresent(component, forKey: .component)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case type, campaignId, componentId, data, component
+    }
+    
+    /// Helper to convert to Component model (handles both formats)
     public func toComponent() throws -> Component {
+        // New format: direct Component object
+        if let component = component {
+            return component
+        }
+        
+        // Old format: convert from ComponentConfigData
+        guard let data = data else {
+            throw DecodingError.keyNotFound(
+                CodingKeys.component,
+                DecodingError.Context(codingPath: [], debugDescription: "Neither component nor data found in ComponentConfigUpdatedEvent")
+            )
+        }
+        
         // Convert config dictionary to ComponentConfig
         let jsonData = try JSONSerialization.data(withJSONObject: data.config.mapValues { $0.value })
         let componentConfig = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
@@ -415,7 +463,7 @@ public struct ComponentConfigUpdatedEvent: Codable {
         return Component(
             id: String(data.campaignComponentId),
             type: data.componentType,
-            name: "",  // Name not provided in WebSocket event
+            name: "",  // Name not provided in old format
             config: componentConfig,
             status: "active"  // Config updates are always for active components
         )

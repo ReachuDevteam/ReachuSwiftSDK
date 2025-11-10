@@ -689,57 +689,33 @@ public struct RProductDetailOverlay: View {
             }
         }
         
-        // Add to cart
-        Task {
-            await cartManager.addProduct(product, quantity: quantity)
-            
-            // Show success animation sequence
-            await MainActor.run {
-                // 1. Show full-screen success animation
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    showSuccessAnimation = true
-                }
-                
-                // 2. Hide success animation and show button checkmark
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation(.easeInOut(duration: 0.3)) {
-                        showSuccessAnimation = false
-                        showCheckmark = true
-                        isAddingToCart = false
-                    }
-                    
-                    // 3. Show toast notification over modal
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            showToastOverModal = true
-                        }
-                        
-                        // 4. Hide toast after 2 seconds
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                            withAnimation(.easeOut(duration: 0.3)) {
-                                showToastOverModal = false
-                            }
-                        }
-                    }
-                    
-                    // 5. Reset button after 3 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            showCheckmark = false
-                        }
-                    }
-                }
-            }
-        }
-        
-        // Call callback
-        onAddToCart?(product)
-        
         // Haptic feedback
         #if os(iOS)
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
         #endif
+        
+        // Add to cart
+        Task {
+            await cartManager.addProduct(product, quantity: quantity)
+            
+            // Show quick success animation then close modal
+            await MainActor.run {
+                // Show success animation briefly
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                    showSuccessAnimation = true
+                }
+                
+                // Close modal after brief animation (0.6 seconds)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                    // Call callback before dismissing
+                    onAddToCart?(product)
+                    
+                    // Close modal
+                    dismiss()
+                }
+            }
+        }
     }
     
     // MARK: - Helper Functions for Variants

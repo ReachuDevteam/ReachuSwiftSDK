@@ -759,13 +759,18 @@ public class CampaignManager: ObservableObject {
     }
     
     private func handleComponentConfigUpdated(_ event: ComponentConfigUpdatedEvent) {
-        ReachuLogger.debug("Component config updated: \(event.data.componentId)", component: "CampaignManager")
+        // Log which format we received
+        if let componentId = event.componentId {
+            ReachuLogger.debug("Component config updated (new format): \(componentId)", component: "CampaignManager")
+        } else if let data = event.data {
+            ReachuLogger.debug("Component config updated (old format): \(data.componentId)", component: "CampaignManager")
+        }
         
         do {
             let component = try event.toComponent()
-            let componentId = String(event.data.campaignComponentId)
+            let componentId = component.id
             
-            // Update existing component's config
+            // Update existing component's config (match by componentId string)
             if let index = activeComponents.firstIndex(where: { $0.id == componentId }) {
                 activeComponents[index] = component
                 ReachuLogger.success("Updated component config: \(componentId)", component: "CampaignManager")
