@@ -104,6 +104,99 @@ public enum ChannelGraphQL {
         }
         """#
 
+    public static let GET_PRODUCTS_QUERY = #"""
+        query GetProducts(
+          $currency: String
+          $shippingCountryCode: String
+          $imageSize: ImageSize
+        ) {
+          Channel {
+            GetProducts(
+              currency: $currency
+              shipping_country_code: $shippingCountryCode
+              image_size: $imageSize
+            ) {
+              id
+              brand
+              title
+              description
+              sku
+              quantity
+              price {
+                amount
+                currency_code
+                compare_at
+                amount_incl_taxes
+                compare_at_incl_taxes
+                tax_amount
+                tax_rate
+              }
+              variants {
+                id
+                barcode
+                quantity
+                sku
+                title
+                price {
+                  amount
+                  currency_code
+                  compare_at
+                  amount_incl_taxes
+                  compare_at_incl_taxes
+                  tax_amount
+                  tax_rate
+                }
+                images { id url width height order }
+              }
+              barcode
+              options { id name order values }
+              categories { id name }
+              images { id url width height order }
+              product_shipping {
+                id
+                name
+                description
+                custom_price_enabled
+                default
+                shipping_country {
+                  id
+                  country
+                  price {
+                    amount
+                    currency_code
+                    amount_incl_taxes
+                    tax_amount
+                    tax_rate
+                  }
+                }
+              }
+              supplier
+              imported_product
+              referral_fee
+              options_enabled
+              digital
+              origin
+              return {
+                return_right
+                return_label
+                return_cost
+                supplier_policy
+                return_address {
+                  same_as_business
+                  same_as_warehouse
+                  country
+                  timezone
+                  address
+                  address_2
+                  post_code
+                  return_city
+                }
+              }
+            }
+          }
+        }
+        """#
+
     public static let GET_PRODUCTS_BY_CATEGORY_CHANNEL_QUERY = #"""
         query GetProductsByCategory(
           $categoryId: Int!
