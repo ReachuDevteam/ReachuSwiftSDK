@@ -162,7 +162,45 @@ public struct RCheckoutOverlay: View {
     }
 
     // MARK: - Initialization
-    public init() {}
+    
+    // Optional user data parameters
+    public let userFirstName: String?
+    public let userLastName: String?
+    public let userEmail: String?
+    public let userPhone: String?
+    public let userPhoneCountryCode: String?
+    public let userAddress1: String?
+    public let userAddress2: String?
+    public let userCity: String?
+    public let userProvince: String?
+    public let userCountry: String?
+    public let userZip: String?
+    
+    public init(
+        userFirstName: String? = nil,
+        userLastName: String? = nil,
+        userEmail: String? = nil,
+        userPhone: String? = nil,
+        userPhoneCountryCode: String? = nil,
+        userAddress1: String? = nil,
+        userAddress2: String? = nil,
+        userCity: String? = nil,
+        userProvince: String? = nil,
+        userCountry: String? = nil,
+        userZip: String? = nil
+    ) {
+        self.userFirstName = userFirstName
+        self.userLastName = userLastName
+        self.userEmail = userEmail
+        self.userPhone = userPhone
+        self.userPhoneCountryCode = userPhoneCountryCode
+        self.userAddress1 = userAddress1
+        self.userAddress2 = userAddress2
+        self.userCity = userCity
+        self.userProvince = userProvince
+        self.userCountry = userCountry
+        self.userZip = userZip
+    }
 
     // MARK: - Main Content
     private var mainContent: some View {
@@ -502,7 +540,7 @@ public struct RCheckoutOverlay: View {
         #endif
 
         .onAppear {
-            fillDemoData()
+            loadInitialData()
             syncDraftFromState()
         }
         .onChange(of: draftSyncKey) { _ in
@@ -1498,22 +1536,79 @@ public struct RCheckoutOverlay: View {
         }
     }
 
-    private func fillDemoData() {
-        firstName = "John"
-        lastName = "Doe"
-        email = "john.doe@example.com"
-        phone = "2125551212"
-        if let market = cartManager.selectedMarket {
+    private func loadInitialData() {
+        let config = ReachuConfiguration.shared
+        let isDevelopment = config.environment == .development || config.environment == .sandbox
+        
+        // Priority: User provided data > Demo data (if development) > Empty
+        if let userFirstName = userFirstName, !userFirstName.isEmpty {
+            firstName = userFirstName
+        } else if isDevelopment {
+            firstName = "John"
+        }
+        
+        if let userLastName = userLastName, !userLastName.isEmpty {
+            lastName = userLastName
+        } else if isDevelopment {
+            lastName = "Doe"
+        }
+        
+        if let userEmail = userEmail, !userEmail.isEmpty {
+            email = userEmail
+        } else if isDevelopment {
+            email = "john.doe@example.com"
+        }
+        
+        if let userPhone = userPhone, !userPhone.isEmpty {
+            phone = userPhone
+        } else if isDevelopment {
+            phone = "2125551212"
+        }
+        
+        if let userPhoneCountryCode = userPhoneCountryCode, !userPhoneCountryCode.isEmpty {
+            phoneCountryCode = userPhoneCountryCode
+        } else if let market = cartManager.selectedMarket {
             phoneCountryCode = market.phoneCode
-            country = market.name
-        } else {
+        } else if isDevelopment {
             phoneCountryCode = "+1"
+        }
+        
+        if let userAddress1 = userAddress1, !userAddress1.isEmpty {
+            address1 = userAddress1
+        } else if isDevelopment {
+            address1 = "82 Melora Street"
+        }
+        
+        if let userAddress2 = userAddress2, !userAddress2.isEmpty {
+            address2 = userAddress2
+        }
+        
+        if let userCity = userCity, !userCity.isEmpty {
+            city = userCity
+        } else if isDevelopment {
+            city = "Westbridge"
+        }
+        
+        if let userProvince = userProvince, !userProvince.isEmpty {
+            province = userProvince
+        } else if isDevelopment {
+            province = "California"
+        }
+        
+        if let userCountry = userCountry, !userCountry.isEmpty {
+            country = userCountry
+        } else if let market = cartManager.selectedMarket {
+            country = market.name
+        } else if isDevelopment {
             country = "United States"
         }
-        address1 = "82 Melora Street"
-        city = "Westbridge"
-        province = "California"
-        zip = "92841"
+        
+        if let userZip = userZip, !userZip.isEmpty {
+            zip = userZip
+        } else if isDevelopment {
+            zip = "92841"
+        }
+        
         syncPhoneCode(phoneCountryCode)
     }
 
@@ -2075,15 +2170,37 @@ struct PaymentMethodRowCompact: View {
 
                 // Payment Method Logo Card
                 if let imageName = method.imageName {
-                    // Prefer SwiftUI Image loading from the package module to avoid UIKit dependency
                     ZStack {
                         RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                             .fill(Color.white)
 
-                        Image(imageName, bundle: .module)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
+                        #if os(iOS)
+                        // Load image from module bundle using UIImage (supports PNG files)
+                        if let uiImage = UIImage(named: imageName, in: .module, compatibleWith: nil) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .padding(3)
+                        } else if let uiImage = UIImage(named: "PaymentIcons/\(imageName)", in: .module, compatibleWith: nil) {
+                            // Try with PaymentIcons/ prefix if direct name fails
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .padding(3)
+                        } else {
+                            // Fallback to SF Symbol if image not found
+                            Image(systemName: method.icon)
+                                .font(.system(size: 18))
+                                .foregroundColor(method.iconColor)
+                                .padding(3)
+                        }
+                        #else
+                        // Fallback to SF Symbol on non-iOS platforms
+                        Image(systemName: method.icon)
+                            .font(.system(size: 18))
+                            .foregroundColor(method.iconColor)
                             .padding(3)
+                        #endif
                     }
                     .frame(width: 50, height: 30)
                     .overlay(
@@ -2357,7 +2474,10 @@ extension RCheckoutOverlay {
                     .foregroundColor(ReachuColors.textSecondary)
 
                 HStack(spacing: ReachuSpacing.sm) {
-                    CountryCodePicker(selectedCode: $phoneCountryCode)
+                    CountryCodePicker(
+                        selectedCode: $phoneCountryCode,
+                        availableMarkets: ReachuConfiguration.shared.availableMarkets
+                    )
                         .frame(width: 100)
 
                     TextField("555 123 4456", text: $phone)
@@ -2427,7 +2547,10 @@ extension RCheckoutOverlay {
                 Text(RLocalizedString(ReachuTranslationKey.country.rawValue))
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
-                CountryPicker(selectedCountry: $country)
+                CountryPicker(
+                    selectedCountry: $country,
+                    availableMarkets: ReachuConfiguration.shared.availableMarkets
+                )
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
@@ -3641,23 +3764,73 @@ extension RCheckoutOverlay {
 
 struct CountryCodePicker: View {
     @Binding var selectedCode: String
-
-    private let countryCodes = [
-        ("+1", "🇺🇸", "US"), ("+44", "🇬🇧", "UK"), ("+49", "🇩🇪", "DE"), ("+33", "🇫🇷", "FR"),
-        ("+39", "🇮🇹", "IT"), ("+34", "🇪🇸", "ES"), ("+31", "🇳🇱", "NL"), ("+46", "🇸🇪", "SE"),
-        ("+47", "🇳🇴", "NO"), ("+45", "🇩🇰", "DK"), ("+41", "🇨🇭", "CH"), ("+43", "🇦🇹", "AT"),
-        ("+32", "🇧🇪", "BE"), ("+351", "🇵🇹", "PT"), ("+52", "🇲🇽", "MX"), ("+54", "🇦🇷", "AR"),
-        ("+55", "🇧🇷", "BR"), ("+86", "🇨🇳", "CN"), ("+81", "🇯🇵", "JP"), ("+82", "🇰🇷", "KR"),
-        ("+91", "🇮🇳", "IN"), ("+61", "🇦🇺", "AU"), ("+64", "🇳🇿", "NZ"),
+    let availableMarkets: [GetAvailableMarketsDto]
+    
+    // Fallback list if no markets available
+    private let fallbackCountryCodes: [(String, String, String, String?)] = [
+        ("+1", "🇺🇸", "US", nil), ("+44", "🇬🇧", "UK", nil), ("+49", "🇩🇪", "DE", nil), ("+33", "🇫🇷", "FR", nil),
+        ("+39", "🇮🇹", "IT", nil), ("+34", "🇪🇸", "ES", nil), ("+31", "🇳🇱", "NL", nil), ("+46", "🇸🇪", "SE", nil),
+        ("+47", "🇳🇴", "NO", nil), ("+45", "🇩🇰", "DK", nil), ("+41", "🇨🇭", "CH", nil), ("+43", "🇦🇹", "AT", nil),
+        ("+32", "🇧🇪", "BE", nil), ("+351", "🇵🇹", "PT", nil), ("+52", "🇲🇽", "MX", nil), ("+54", "🇦🇷", "AR", nil),
+        ("+55", "🇧🇷", "BR", nil), ("+86", "🇨🇳", "CN", nil), ("+81", "🇯🇵", "JP", nil), ("+82", "🇰🇷", "KR", nil),
+        ("+91", "🇮🇳", "IN", nil), ("+61", "🇦🇺", "AU", nil), ("+64", "🇳🇿", "NZ", nil),
     ]
+    
+    private var countryCodes: [(String, String, String, String?)] {
+        if availableMarkets.isEmpty {
+            return fallbackCountryCodes
+        }
+        
+        // Build list from available markets
+        return availableMarkets.compactMap { market in
+            guard let code = market.phoneCode,
+                  let countryCode = market.code else {
+                return nil
+            }
+            let flag = market.flag ?? "🌍"
+            let name = market.name ?? countryCode
+            // Check if flag is a URL
+            let flagURL = flag.hasPrefix("http") ? flag : nil
+            let flagEmoji = flagURL == nil ? flag : "🌍"
+            return (code, flagEmoji, countryCode, flagURL)
+        }.sorted { $0.0 < $1.0 } // Sort by phone code
+    }
+    
+    private var currentSelection: (String, String, String, String?)? {
+        countryCodes.first(where: { $0.0 == selectedCode })
+    }
 
     var body: some View {
         Menu {
-            ForEach(countryCodes, id: \.0) { code, flag, name in
+            ForEach(countryCodes, id: \.0) { code, flagEmoji, name, flagURL in
                 Button(action: { selectedCode = code }) {
                     HStack {
-                        Text(flag)
-                            .font(.system(size: 20))
+                        // Show image from URL or emoji
+                        if let flagURL = flagURL, let url = URL(string: flagURL) {
+                            #if os(iOS)
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 20, height: 14)
+                                case .failure(_), .empty:
+                                    Text(flagEmoji)
+                                        .font(.system(size: 16))
+                                @unknown default:
+                                    Text(flagEmoji)
+                                        .font(.system(size: 16))
+                                }
+                            }
+                            #else
+                            Text(flagEmoji)
+                                .font(.system(size: 16))
+                            #endif
+                        } else {
+                            Text(flagEmoji)
+                                .font(.system(size: 16))
+                        }
                         Text(name)
                             .font(.system(size: 14))
                         Text(code)
@@ -3673,10 +3846,34 @@ struct CountryCodePicker: View {
             }
         } label: {
             HStack(spacing: 6) {
-                Text(countryCodes.first(where: { $0.0 == selectedCode })?.1 ?? "🇺🇸")
-                    .font(.system(size: 24))
+                // Show current selection flag (URL or emoji)
+                if let selection = currentSelection, let flagURL = selection.3, let url = URL(string: flagURL) {
+                    #if os(iOS)
+                    AsyncImage(url: url) { phase in
+                        switch phase {
+                        case .success(let image):
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 16, height: 12)
+                        case .failure(_), .empty:
+                            Text(selection.1)
+                                .font(.system(size: 16))
+                        @unknown default:
+                            Text(selection.1)
+                                .font(.system(size: 16))
+                        }
+                    }
+                    #else
+                    Text(selection.1)
+                        .font(.system(size: 16))
+                    #endif
+                } else {
+                    Text(currentSelection?.1 ?? "🌍")
+                        .font(.system(size: 16))
+                }
                 
-                Text(selectedCode)
+                Text(selectedCode.isEmpty ? "+1" : selectedCode)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(ReachuColors.textPrimary)
                 
@@ -3699,14 +3896,27 @@ struct CountryCodePicker: View {
 
 struct CountryPicker: View {
     @Binding var selectedCountry: String
-
-    private let countries = [
+    let availableMarkets: [GetAvailableMarketsDto]
+    
+    // Fallback list if no markets available
+    private let fallbackCountries = [
         "United States", "Canada", "United Kingdom", "Germany", "France",
         "Italy", "Spain", "Netherlands", "Sweden", "Norway", "Denmark",
         "Switzerland", "Austria", "Belgium", "Portugal", "Mexico",
         "Argentina", "Brazil", "China", "Japan", "South Korea",
         "India", "Australia", "New Zealand",
     ]
+    
+    private var countries: [String] {
+        if availableMarkets.isEmpty {
+            return fallbackCountries
+        }
+        
+        // Build list from available markets
+        return availableMarkets.compactMap { market in
+            market.name
+        }.sorted()
+    }
 
     var body: some View {
         Menu {

@@ -1087,27 +1087,22 @@ class RProductCarouselViewModel: ObservableObject {
             )
             
             if products.isEmpty {
-                ReachuLogger.warning("No products found - Currency: \(currency), Country: \(country)", component: "RProductCarousel")
+                // No products found - will show empty state
             }
             
         } catch ProductServiceError.invalidConfiguration(let message) {
             errorMessage = message
-            ReachuLogger.error("Invalid configuration: \(message)", component: "RProductCarousel")
         } catch ProductServiceError.sdkError(let error) {
             if error.code == "NOT_FOUND" || error.status == 404 {
                 isMarketUnavailable = true
                 errorMessage = nil
-                ReachuLogger.warning("Market not available", component: "RProductCarousel")
             } else {
                 errorMessage = error.message
-                ReachuLogger.error("Failed to load products: \(error.message)", component: "RProductCarousel")
             }
         } catch ProductServiceError.networkError(let error) {
             errorMessage = error.localizedDescription
-            ReachuLogger.error("Network error: \(error.localizedDescription)", component: "RProductCarousel")
         } catch {
             errorMessage = error.localizedDescription
-            ReachuLogger.error("Failed to load products: \(error.localizedDescription)", component: "RProductCarousel")
         }
         
         isLoading = false

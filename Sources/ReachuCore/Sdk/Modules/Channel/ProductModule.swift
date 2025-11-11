@@ -54,38 +54,25 @@ public final class ProductRepositoryGQL: ProductRepository {
         
         if shouldLoadAllProducts {
             // Use GetProducts query when no filters are provided (loads all products)
-            print("🔄 [ProductModule] Loading ALL products from channel (no filters)")
             let vars: [String: Any] = [
                 "currency": currency as Any,
                 "imageSize": imageSize as Any,
                 "shippingCountryCode": shippingCountryCode as Any,
             ].compactMapValues { $0 }
             
-            print("🔄 [ProductModule] Variables: \(vars)")
-            
             let res = try await client.runQuerySafe(
                 query: ChannelGraphQL.GET_PRODUCTS_QUERY,
                 variables: vars
             )
             
-            print("🔄 [ProductModule] Response received, extracting GetProducts...")
             guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "GetProducts"]) else {
-                print("❌ [ProductModule] Failed to extract GetProducts from response")
-                if let data = res.data {
-                    print("🔄 [ProductModule] Response data keys: \(data.keys)")
-                } else {
-                    print("❌ [ProductModule] Response data is nil")
-                }
                 throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
             }
-            print("✅ [ProductModule] Found \(list.count) products")
             let data = try JSONSerialization.data(withJSONObject: list, options: [])
             let products = try JSONDecoder().decode([ProductDto].self, from: data)
             return products
         } else {
             // Use Products query when filters are provided
-            print("🔄 [ProductModule] Loading FILTERED products (has filters)")
-            print("🔄 [ProductModule] Filters - productIds: \(productIds?.description ?? "nil"), barcodeList: \(barcodeList?.description ?? "nil"), skuList: \(skuList?.description ?? "nil"), categoryIds: \(categoryIds?.description ?? "nil")")
             let vars: [String: Any] = [
                 "currency": currency as Any,
                 "imageSize": imageSize as Any,

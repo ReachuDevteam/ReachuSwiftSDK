@@ -169,7 +169,6 @@ public struct ROfferBanner: View {
         }
         .onChange(of: config.countdownEndDate) { newDate in
             // Reiniciar countdown cuando cambia la fecha del backend
-            ReachuLogger.debug("Countdown date changed to: \(newDate), restarting timer", component: "ROfferBanner")
             timer?.invalidate()
             timer = nil
             timeRemaining = nil
@@ -209,8 +208,6 @@ public struct ROfferBanner: View {
     
     private var logoImageView: some View {
         let logoFullURL = buildFullURL(from: config.logoUrl)
-        ReachuLogger.debug("🔵 [ROfferBanner] Logo URL from config: \(config.logoUrl)", component: "ROfferBanner")
-        ReachuLogger.debug("🔵 [ROfferBanner] Logo full URL: \(logoFullURL)", component: "ROfferBanner")
         return LoadedImage(
             url: URL(string: logoFullURL),
             placeholder: AnyView(
@@ -233,7 +230,6 @@ public struct ROfferBanner: View {
         .aspectRatio(contentMode: .fit)
         .frame(height: 16)
         .onAppear {
-            ReachuLogger.debug("🔄 [ROfferBanner] Loading logo from: \(logoFullURL)", component: "ROfferBanner")
             isLogoLoaded = true
         }
     }
@@ -278,8 +274,6 @@ public struct ROfferBanner: View {
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
-                ReachuLogger.debug("🟢 [ROfferBanner] Background URL from config: \(config.backgroundImageUrl ?? "nil")", component: "ROfferBanner")
-                ReachuLogger.debug("🟢 [ROfferBanner] Loading background image from: \(fullURL)", component: "ROfferBanner")
                 // Marcar como cargado después de un pequeño delay para permitir que la imagen empiece a cargar
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     isImageLoaded = true
@@ -360,7 +354,6 @@ public struct ROfferBanner: View {
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
         guard let endDate = formatter.date(from: config.countdownEndDate) else {
-            ReachuLogger.warning("Invalid countdown date: \(config.countdownEndDate)", component: "ROfferBanner")
             timeRemaining = nil
             countdownEndDate = nil
             return
@@ -369,12 +362,9 @@ public struct ROfferBanner: View {
         // Almacenar la fecha parseada
         countdownEndDate = endDate
         
-        ReachuLogger.debug("Countdown started. End date: \(endDate), Current date: \(Date()), Timer ID: \(currentTimerId)", component: "ROfferBanner")
-        
         // Calcular tiempo inicial
         let now = Date()
         if now >= endDate {
-            ReachuLogger.warning("Countdown end date is in the past: \(endDate)", component: "ROfferBanner")
             timeRemaining = nil
             return
         }
@@ -394,7 +384,6 @@ public struct ROfferBanner: View {
             let now = Date()
             if now >= finalEndDate {
                 timer.invalidate()
-                ReachuLogger.debug("Countdown finished", component: "ROfferBanner")
             } else {
                 let remaining = Calendar.current.dateComponents(
                     [.day, .hour, .minute, .second],

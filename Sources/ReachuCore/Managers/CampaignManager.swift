@@ -53,7 +53,6 @@ public class CampaignManager: ObservableObject {
             // No campaign configured - SDK works normally without restrictions
             self.isCampaignActive = true
             self.campaignState = .active
-            ReachuLogger.debug("No campaign configured (campaignId: 0) - SDK works normally", component: "CampaignManager")
         }
     }
     
@@ -86,14 +85,12 @@ public class CampaignManager: ObservableObject {
             self.isCampaignActive = true
             self.campaignState = .active
             self.activeComponents.removeAll()
-            ReachuLogger.debug("No campaign configured (campaignId: 0) - SDK works normally", component: "CampaignManager")
         }
     }
     
     /// Initialize campaign connection (called automatically if campaignId > 0)
     public func initializeCampaign() async {
         guard let campaignId = campaignId, campaignId > 0 else {
-            ReachuLogger.debug("No campaign ID configured - SDK works normally", component: "CampaignManager")
             return
         }
         
@@ -106,7 +103,6 @@ public class CampaignManager: ObservableObject {
         isInitializing = true
         defer { isInitializing = false }
         
-        ReachuLogger.info("Initializing campaign: \(campaignId)", component: "CampaignManager")
         
         // 0. Load from cache first for instant UI update
         loadFromCache()
@@ -185,26 +181,22 @@ public class CampaignManager: ObservableObject {
         if let cachedCampaign = CacheManager.shared.loadCampaign() {
             self.currentCampaign = cachedCampaign
             self.campaignState = cachedCampaign.currentState
-            ReachuLogger.debug("Loaded campaign from cache: ID \(cachedCampaign.id)", component: "CampaignManager")
         }
         
         // Load campaign state
         if let cachedState = CacheManager.shared.loadCampaignState() {
             self.campaignState = cachedState.state
             self.isCampaignActive = cachedState.isActive
-            ReachuLogger.debug("Loaded campaign state from cache: \(cachedState.state.rawValue), active: \(cachedState.isActive)", component: "CampaignManager")
         }
         
         // Load components
         let cachedComponents = CacheManager.shared.loadComponents()
         if !cachedComponents.isEmpty {
             self.activeComponents = cachedComponents
-            ReachuLogger.debug("Loaded \(cachedComponents.count) components from cache", component: "CampaignManager")
         }
         
         if CacheManager.shared.hasCache() {
             let age = CacheManager.shared.getCacheAge() ?? 0
-            ReachuLogger.info("Using cached data (age: \(Int(age))s)", component: "CampaignManager")
         }
     }
     
@@ -216,7 +208,6 @@ public class CampaignManager: ObservableObject {
             return
         }
         
-        ReachuLogger.debug("Fetching campaign info from: \(urlString)", component: "CampaignManager")
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -233,7 +224,6 @@ public class CampaignManager: ObservableObject {
             let (data, response) = try await URLSession.shared.data(for: request)
             
             if let httpResponse = response as? HTTPURLResponse {
-                ReachuLogger.debug("Campaign info response status: \(httpResponse.statusCode)", component: "CampaignManager")
                 
                 if httpResponse.statusCode == 404 {
                     ReachuLogger.warning("Campaign \(campaignId) not found - SDK works normally", component: "CampaignManager")
@@ -246,7 +236,6 @@ public class CampaignManager: ObservableObject {
                 guard (200...299).contains(httpResponse.statusCode) else {
                     let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
                     ReachuLogger.error("Campaign info request failed with status \(httpResponse.statusCode)", component: "CampaignManager")
-                    ReachuLogger.debug("Response: \(responseString.prefix(200))", component: "CampaignManager")
                     // On error, allow normal SDK behavior
                     self.isCampaignActive = true
                     self.campaignState = .active
@@ -257,7 +246,6 @@ public class CampaignManager: ObservableObject {
             // Validate that we received JSON, not HTML
             if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
                 ReachuLogger.error("Received HTML instead of JSON from campaign endpoint", component: "CampaignManager")
-                ReachuLogger.debug("Response preview: \(responseString.prefix(200))", component: "CampaignManager")
                 // On error, allow normal SDK behavior
                 self.isCampaignActive = true
                 self.campaignState = .active
@@ -272,7 +260,6 @@ public class CampaignManager: ObservableObject {
             if campaign.isPaused == true {
                 self.isCampaignActive = false
                 self.activeComponents.removeAll()
-                ReachuLogger.info("Campaign \(campaignId) is paused - hiding all components", component: "CampaignManager")
                 // Save to cache
                 CacheManager.shared.saveCampaign(campaign)
                 CacheManager.shared.saveCampaignState(campaignState, isActive: isCampaignActive)
@@ -284,7 +271,6 @@ public class CampaignManager: ObservableObject {
             switch campaignState {
             case .upcoming:
                 self.isCampaignActive = false
-                ReachuLogger.info("Campaign \(campaignId) is upcoming - waiting for start", component: "CampaignManager")
             case .active:
                 self.isCampaignActive = true
                 // Campaign is active
@@ -302,7 +288,6 @@ public class CampaignManager: ObservableObject {
             ReachuLogger.error("Failed to decode campaign info: \(decodingError)", component: "CampaignManager")
             if let data = try? await URLSession.shared.data(for: request).0,
                let responseString = String(data: data, encoding: .utf8) {
-                ReachuLogger.debug("Response received: \(responseString.prefix(500))", component: "CampaignManager")
             }
             // On error, allow normal SDK behavior
             self.isCampaignActive = true
@@ -323,7 +308,6 @@ public class CampaignManager: ObservableObject {
             return
         }
         
-        ReachuLogger.debug("Fetching components from: \(urlString)", component: "CampaignManager")
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
@@ -346,16 +330,13 @@ public class CampaignManager: ObservableObject {
             
             // Validate HTTP response before decoding
             if let httpResponse = response as? HTTPURLResponse {
-                ReachuLogger.debug("Components response status: \(httpResponse.statusCode)", component: "CampaignManager")
                 
                 guard (200...299).contains(httpResponse.statusCode) else {
                     let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
                     ReachuLogger.error("Components request failed with status \(httpResponse.statusCode)", component: "CampaignManager")
-                    ReachuLogger.debug("Response: \(responseString.prefix(500))", component: "CampaignManager")
                     
                     // If 404, campaign might not have components configured - this is OK
                     if httpResponse.statusCode == 404 {
-                        ReachuLogger.info("No components endpoint found - campaign may not have components configured", component: "CampaignManager")
                         self.activeComponents = []
                         return
                     }
@@ -366,13 +347,11 @@ public class CampaignManager: ObservableObject {
             // Validate that we received JSON, not HTML
             if let responseString = responseString, responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
                 ReachuLogger.error("Received HTML instead of JSON from components endpoint", component: "CampaignManager")
-                ReachuLogger.debug("Response preview: \(responseString.prefix(200))", component: "CampaignManager")
                 return
             }
             
             // Log raw JSON response for debugging
             if let responseString = responseString {
-                ReachuLogger.debug("Raw components response: \(responseString.prefix(1000))", component: "CampaignManager")
             }
             
             guard let data = responseData else {
@@ -392,48 +371,29 @@ public class CampaignManager: ObservableObject {
                 responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
             }
             
-            ReachuLogger.debug("Decoded \(responses.count) ComponentResponse objects", component: "CampaignManager")
             for (index, response) in responses.enumerated() {
-                ReachuLogger.debug("[\(index)] Response: ID=\(response.id), CampaignID=\(response.campaignId), ComponentID=\(response.componentId), Status=\(response.status)", component: "CampaignManager")
                 
                 if let customConfig = response.customConfig {
-                    ReachuLogger.debug("CustomConfig keys: \(customConfig.keys.joined(separator: ", "))", component: "CampaignManager")
                 }
                 
                 if let component = response.component {
-                    ReachuLogger.debug("Component type: \(component.type), name: \(component.name)", component: "CampaignManager")
                 }
             }
             
             // Convert to Component model
             let components = try responses.map { response -> Component in
-                ReachuLogger.debug("Converting ComponentResponse to Component: ID=\(response.componentId), Status=\(response.status)", component: "CampaignManager")
                 
                 let component = try Component(from: response)
                 
                 // Log which config was used
                 if let customConfig = response.customConfig, !customConfig.isEmpty {
-                    ReachuLogger.debug("Using customConfig (overriding template)", component: "CampaignManager")
                 } else if response.component != nil {
-                    ReachuLogger.debug("Using template config from component", component: "CampaignManager")
                 }
                 
-                // Log final component config type
-                switch component.config {
-                case .productCarousel(let config):
-                    ReachuLogger.debug("Final config: ProductCarousel(productIds: \(config.productIds))", component: "CampaignManager")
-                case .productBanner(let config):
-                    ReachuLogger.debug("Final config: ProductBanner(productId: \(config.productId))", component: "CampaignManager")
-                case .productStore(let config):
-                    ReachuLogger.debug("Final config: ProductStore(mode: \(config.mode), productIds: \(config.productIds ?? []))", component: "CampaignManager")
-                default:
-                    ReachuLogger.debug("Final config: Other type", component: "CampaignManager")
-                }
                 
                 return component
             }
             
-            ReachuLogger.debug("Decoded \(components.count) components from API", component: "CampaignManager")
             
             // Filter to only active components
             self.activeComponents = components.filter { $0.isActive }

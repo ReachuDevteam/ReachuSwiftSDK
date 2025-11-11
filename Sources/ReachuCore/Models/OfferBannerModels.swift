@@ -509,8 +509,6 @@ public class ComponentManager: ObservableObject {
     
     /// Connect to backend and fetch active components
     public func connect() async {
-        print("🔌 [ComponentManager] Connecting to campaign \(campaignId)")
-        
         // 1. Fetch initial active components
         await fetchActiveComponents()
         
@@ -524,8 +522,6 @@ public class ComponentManager: ObservableObject {
         
         await webSocketManager?.connect()
         isConnected = true
-        
-        print("✅ [ComponentManager] Connected successfully")
     }
     
     /// Disconnect from backend
@@ -538,27 +534,14 @@ public class ComponentManager: ObservableObject {
     /// Fetch active components from API
     private func fetchActiveComponents() async {
         let urlString = "\(baseURL)/api/campaigns/\(campaignId)/active-components"
-        print("🌐 [ComponentManager] Fetching components from: \(urlString)")
         
         guard let url = URL(string: urlString) else {
-            print("❌ [ComponentManager] Invalid API URL")
             return
         }
         
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 [ComponentManager] HTTP Status: \(httpResponse.statusCode)")
-            }
-            
-            // Log raw response for debugging
-            if let jsonString = String(data: data, encoding: .utf8) {
-                print("📄 [ComponentManager] Raw API response: \(jsonString)")
-            }
-            
+            let (data, _) = try await URLSession.shared.data(from: url)
             let components = try JSONDecoder().decode([ActiveComponentResponse].self, from: data)
-            print("✅ [ComponentManager] Loaded \(components.count) active components")
             
             self.activeComponents = components
             
@@ -566,11 +549,6 @@ public class ComponentManager: ObservableObject {
             if let offerBanner = components.first(where: { $0.type == "offer_banner" }) {
                 if case .offerBanner(let config) = offerBanner.config {
                     self.activeBanner = config
-                    print("✅ [ComponentManager] Activated offer banner: \(config.title)")
-                    print("🖼️ [ComponentManager] Background URL: \(config.backgroundImageUrl ?? "none")")
-                    print("🎨 [ComponentManager] Background Color: \(config.backgroundColor ?? "none")")
-                    print("🏷️ [ComponentManager] Logo URL: \(config.logoUrl)")
-                    print("⏰ [ComponentManager] Countdown End: \(config.countdownEndDate)")
                 }
             }
             // Extract countdown and convert to OfferBannerConfig if no offer_banner
@@ -578,20 +556,14 @@ public class ComponentManager: ObservableObject {
                 if case .countdown(let config) = countdown.config {
                     if let bannerConfig = config.toOfferBannerConfig() {
                         self.activeBanner = bannerConfig
-                        print("✅ [ComponentManager] Activated countdown banner: \(bannerConfig.title)")
-                        print("🖼️ [ComponentManager] Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
-                        print("🎨 [ComponentManager] Background Color: \(bannerConfig.backgroundColor ?? "none")")
-                        print("🏷️ [ComponentManager] Logo URL: \(bannerConfig.logoUrl)")
-                        print("⏰ [ComponentManager] Countdown End: \(bannerConfig.countdownEndDate)")
                     }
                 }
             } else {
                 self.activeBanner = nil
-                print("ℹ️ [ComponentManager] No active banner found")
             }
             
         } catch {
-            print("❌ [ComponentManager] Failed to fetch active components: \(error)")
+            // Silently fail - component will not be shown
         }
     }
     
@@ -599,46 +571,31 @@ public class ComponentManager: ObservableObject {
     private func handleMessage(_ message: String) {
         guard let data = message.data(using: .utf8),
               let decoded = try? JSONDecoder().decode(ComponentStatusMessage.self, from: data) else {
-            print("❌ [ComponentManager] Failed to decode WebSocket message")
             return
         }
         
         switch decoded.type {
         case "component_status_changed":
-            print("📨 [ComponentManager] Component status changed: \(decoded.componentId) -> \(decoded.status)")
-            
             if decoded.status == "active", let component = decoded.component {
                 // Try offer_banner first
                 if case .offerBanner(let bannerConfig) = component.config {
                     activeBanner = bannerConfig
-                    print("✅ [ComponentManager] Banner activated: \(decoded.componentId)")
-                    print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
-                    print("🎨 [ComponentManager] New Background Color: \(bannerConfig.backgroundColor ?? "none")")
-                    print("🏷️ [ComponentManager] New Logo URL: \(bannerConfig.logoUrl)")
-                    print("⏰ [ComponentManager] New Countdown End: \(bannerConfig.countdownEndDate)")
                 }
                 // Then try countdown and convert
                 else if case .countdown(let countdownConfig) = component.config {
                     if let bannerConfig = countdownConfig.toOfferBannerConfig() {
                         activeBanner = bannerConfig
-                        print("✅ [ComponentManager] Countdown banner activated: \(decoded.componentId)")
-                        print("🖼️ [ComponentManager] New Background URL: \(bannerConfig.backgroundImageUrl ?? "none")")
-                        print("🎨 [ComponentManager] New Background Color: \(bannerConfig.backgroundColor ?? "none")")
-                        print("🏷️ [ComponentManager] New Logo URL: \(bannerConfig.logoUrl)")
-                        print("⏰ [ComponentManager] New Countdown End: \(bannerConfig.countdownEndDate)")
                     }
                 }
             } else {
                 activeBanner = nil
-                print("ℹ️ [ComponentManager] Banner deactivated: \(decoded.componentId)")
             }
             
         case "campaign_ended":
             activeBanner = nil
-            print("ℹ️ [ComponentManager] Campaign ended - hiding all components")
             
         default:
-            print("ℹ️ [ComponentManager] Unknown message type: \(decoded.type)")
+            break
         }
     }
 }
@@ -665,14 +622,11 @@ public class WebSocketManager: ObservableObject {
         let urlString = "\(wsURLString)/ws/\(campaignId)"
         
         guard let url = URL(string: urlString) else {
-            print("❌ [WebSocketManager] Invalid WebSocket URL: \(urlString)")
             return
         }
         
         webSocketTask = urlSession.webSocketTask(with: url)
         webSocketTask?.resume()
-        
-        print("🔌 [WebSocketManager] Connected to campaign \(campaignId) at \(urlString)")
         
         // Start listening for messages
         await listenForMessages()
@@ -681,7 +635,6 @@ public class WebSocketManager: ObservableObject {
     public func disconnect() {
         webSocketTask?.cancel(with: .goingAway, reason: nil)
         webSocketTask = nil
-        print("🔌 [WebSocketManager] Disconnected")
     }
     
     private func listenForMessages() async {
@@ -690,19 +643,15 @@ public class WebSocketManager: ObservableObject {
                 let message = try await webSocketTask.receive()
                 switch message {
                 case .string(let text):
-                    print("📨 [WebSocketManager] Received message: \(text)")
                     onMessage?(text)
                 case .data(let data):
                     if let text = String(data: data, encoding: .utf8) {
-                        print("📨 [WebSocketManager] Received data message: \(text)")
                         onMessage?(text)
                     }
                 @unknown default:
                     break
                 }
             } catch {
-                print("❌ [WebSocketManager] WebSocket error: \(error)")
-                
                 // Try to reconnect after a delay
                 DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
                     Task {

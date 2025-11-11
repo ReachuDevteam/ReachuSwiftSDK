@@ -83,11 +83,6 @@ public class ReachuConfiguration: ObservableObject {
         Task { @MainActor in
             CampaignManager.shared.reinitialize()
         }
-        
-        print("🔧 Reachu SDK configured successfully")
-        print("   API Key: \(apiKey.prefix(8))...")
-        print("   Environment: \(environment)")
-        print("   Theme: \(instance.theme.name)")
     }
     
     /// Quick configuration with just API key (uses defaults for everything else)
@@ -155,32 +150,13 @@ public class ReachuConfiguration: ObservableObject {
             // Check if translations exist for this language
             let hasTranslations = localizationConfig.translations[languageCode] != nil
             
-            print("🌍 [ReachuSDK] Country: \(countryCode) → Language: \(languageCode)")
-            print("🌍 [ReachuSDK] Translations available for '\(languageCode)': \(hasTranslations)")
-            print("🌍 [ReachuSDK] Available languages: \(localizationConfig.translations.keys.joined(separator: ", "))")
-            
             if hasTranslations {
                 // Update language if translations are available
                 ReachuLocalization.shared.setLanguage(languageCode)
-                print("✅ [ReachuSDK] Language set to '\(languageCode)' based on country '\(countryCode)'")
             } else {
                 // Use default language if translations not available
                 let defaultLang = localizationConfig.defaultLanguage
                 ReachuLocalization.shared.setLanguage(defaultLang)
-                print("⚠️ [ReachuSDK] Language '\(languageCode)' not available, using default '\(defaultLang)' for country '\(countryCode)'")
-            }
-        }
-        
-        if !available {
-            print("⚠️ [ReachuSDK] Market not available for country: \(userCountryCode ?? "unknown") - SDK disabled")
-            if !availableMarkets.isEmpty {
-                let marketCodes = availableMarkets.compactMap { $0.code?.uppercased() }
-                print("   Available markets: \(marketCodes.joined(separator: ", "))")
-            }
-        } else {
-            print("✅ [ReachuSDK] Market available for country: \(userCountryCode ?? "default") - SDK enabled")
-            if !availableMarkets.isEmpty {
-                print("   Loaded \(availableMarkets.count) available markets")
             }
         }
     }
