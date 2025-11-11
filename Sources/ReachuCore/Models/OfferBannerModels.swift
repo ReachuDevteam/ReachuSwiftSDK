@@ -155,17 +155,19 @@ public enum ComponentConfig: Codable {
             let config = try BannerConfig(from: decoder)
             self = .banner(config)
         }
-        // Try ProductCarousel (has productIds AND autoPlay)
-        else if container.contains(.productIds) && container.contains(.autoPlay) {
-            let config = try ProductCarouselConfig(from: decoder)
-            self = .productCarousel(config)
-        }
         // Try ProductStore (has mode AND displayType)
         else if container.contains(.mode) && container.contains(.displayType) {
             let config = try ProductStoreConfig(from: decoder)
             self = .productStore(config)
         }
-        // Try CarouselManual (has productIds but no autoPlay)
+        // Try ProductCarousel (identified by having autoPlay OR interval keys)
+        // productIds is optional - if missing, defaults to empty array (loads all products)
+        // Must check BEFORE CarouselManual since both can have productIds
+        else if container.contains(.autoPlay) || container.contains(.interval) {
+            let config = try ProductCarouselConfig(from: decoder)
+            self = .productCarousel(config)
+        }
+        // Try CarouselManual (has productIds but no autoPlay/interval)
         else if container.contains(.productIds) {
             let config = try CarouselManualConfig(from: decoder)
             self = .carouselManual(config)
@@ -314,17 +316,40 @@ public struct OfferBadgeConfig: Codable {
 }
 
 /// Product Carousel Config
-public struct ProductCarouselConfig: Codable {
+public struct ProductCarouselConfig: Codable, Equatable {
     public let productIds: [String]
     public let autoPlay: Bool
     public let interval: Int  // milliseconds
-    public let layout: String?  // "compact" or "full" (default: "full")
+    public let layout: String?  // "compact", "full", or "horizontal" (default: "full")
     
-    public init(productIds: [String], autoPlay: Bool = true, interval: Int = 3000, layout: String? = nil) {
+    public init(productIds: [String] = [], autoPlay: Bool = false, interval: Int = 3000, layout: String? = nil) {
         self.productIds = productIds
         self.autoPlay = autoPlay
         self.interval = interval
         self.layout = layout
+    }
+    
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // productIds is optional, defaults to empty array (loads all products)
+        self.productIds = try container.decodeIfPresent([String].self, forKey: .productIds) ?? []
+        
+        // autoPlay is optional, defaults to false if not present
+        self.autoPlay = try container.decodeIfPresent(Bool.self, forKey: .autoPlay) ?? false
+        
+        // interval is optional, defaults to 3000ms if not present
+        self.interval = try container.decodeIfPresent(Int.self, forKey: .interval) ?? 3000
+        
+        // layout is optional
+        self.layout = try container.decodeIfPresent(String.self, forKey: .layout)
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case productIds
+        case autoPlay
+        case interval
+        case layout
     }
 }
 

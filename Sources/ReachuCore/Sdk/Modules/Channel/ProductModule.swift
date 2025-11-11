@@ -43,28 +43,72 @@ public final class ProductRepositoryGQL: ProductRepository {
         useCache: Bool,
         shippingCountryCode: String?
     ) async throws -> [ProductDto] {
-        let vars: [String: Any] = [
-            "currency": currency as Any,
-            "imageSize": imageSize as Any,
-            "barcodeList": barcodeList ?? [],
-            "skuList": skuList ?? [],
-            "categoryIds": categoryIds ?? [],
-            "productIds": productIds ?? [],
-            "useCache": useCache,
-            "shippingCountryCode": shippingCountryCode as Any,
-        ].compactMapValues { $0 }
-
-        let res = try await client.runQuerySafe(
-            query: ChannelGraphQL.GET_PRODUCTS_CHANNEL_QUERY,
-            variables: vars
-        )
+        // Determine if we should use GetProducts (all products) or Products (filtered)
+        // Use GetProducts when no filters are provided (loads all products from channel)
+        let hasProductIds = productIds != nil && !productIds!.isEmpty
+        let hasBarcodeList = barcodeList != nil && !barcodeList!.isEmpty
+        let hasSkuList = skuList != nil && !skuList!.isEmpty
+        let hasCategoryIds = categoryIds != nil && !categoryIds!.isEmpty
         
-        guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "Products"]) else {
-            throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
+        let shouldLoadAllProducts = !hasProductIds && !hasBarcodeList && !hasSkuList && !hasCategoryIds
+        
+        if shouldLoadAllProducts {
+            // Use GetProducts query when no filters are provided (loads all products)
+            print("🔄 [ProductModule] Loading ALL products from channel (no filters)")
+            let vars: [String: Any] = [
+                "currency": currency as Any,
+                "imageSize": imageSize as Any,
+                "shippingCountryCode": shippingCountryCode as Any,
+            ].compactMapValues { $0 }
+            
+            print("🔄 [ProductModule] Variables: \(vars)")
+            
+            let res = try await client.runQuerySafe(
+                query: ChannelGraphQL.GET_PRODUCTS_QUERY,
+                variables: vars
+            )
+            
+            print("🔄 [ProductModule] Response received, extracting GetProducts...")
+            guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "GetProducts"]) else {
+                print("❌ [ProductModule] Failed to extract GetProducts from response")
+                if let data = res.data {
+                    print("🔄 [ProductModule] Response data keys: \(data.keys)")
+                } else {
+                    print("❌ [ProductModule] Response data is nil")
+                }
+                throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
+            }
+            print("✅ [ProductModule] Found \(list.count) products")
+            let data = try JSONSerialization.data(withJSONObject: list, options: [])
+            let products = try JSONDecoder().decode([ProductDto].self, from: data)
+            return products
+        } else {
+            // Use Products query when filters are provided
+            print("🔄 [ProductModule] Loading FILTERED products (has filters)")
+            print("🔄 [ProductModule] Filters - productIds: \(productIds?.description ?? "nil"), barcodeList: \(barcodeList?.description ?? "nil"), skuList: \(skuList?.description ?? "nil"), categoryIds: \(categoryIds?.description ?? "nil")")
+            let vars: [String: Any] = [
+                "currency": currency as Any,
+                "imageSize": imageSize as Any,
+                "barcodeList": barcodeList ?? [],
+                "skuList": skuList ?? [],
+                "categoryIds": categoryIds ?? [],
+                "productIds": productIds ?? [],
+                "useCache": useCache,
+                "shippingCountryCode": shippingCountryCode as Any,
+            ].compactMapValues { $0 }
+            
+            let res = try await client.runQuerySafe(
+                query: ChannelGraphQL.GET_PRODUCTS_CHANNEL_QUERY,
+                variables: vars
+            )
+            
+            guard let list: [Any] = GraphQLPick.pickPath(res.data, path: ["Channel", "Products"]) else {
+                throw SdkException("Empty response in Product.get", code: "EMPTY_RESPONSE")
+            }
+            let data = try JSONSerialization.data(withJSONObject: list, options: [])
+            let products = try JSONDecoder().decode([ProductDto].self, from: data)
+            return products
         }
-        let data = try JSONSerialization.data(withJSONObject: list, options: [])
-        let products = try JSONDecoder().decode([ProductDto].self, from: data)
-        return products
     }
 
     // ---------- Public API (unchanged signatures) ----------

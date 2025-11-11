@@ -41,9 +41,9 @@ import UIKit
 /// ```
 ///
 /// **Configuration Properties:**
-/// - `productIds: [String]` - Array of product IDs. Empty array loads all products from channel.
-/// - `autoPlay: Bool` - Enable/disable auto-scroll (default: `false`)
-/// - `interval: Int` - Auto-scroll interval in milliseconds (default: `3000`)
+/// - `productIds: [String]` - Array of product IDs. **Empty array or missing field loads ALL products from channel.**
+/// - `autoPlay: Bool` - Enable/disable auto-scroll (default: `false` if not provided)
+/// - `interval: Int` - Auto-scroll interval in milliseconds (default: `3000` if not provided)
 /// - `layout: String?` - Layout type: `"full"`, `"compact"`, or `"horizontal"` (default: `"full"`)
 ///
 /// **Layout Details:**
@@ -64,25 +64,29 @@ public struct RProductCarousel: View {
     /// Internal structure to cache parsed config values
     /// This avoids recalculating conversions and values on every render
     private struct CachedConfig {
-        let productIds: [Int]
+        let productIds: [Int]  // Empty array means "load all products from channel"
         let autoPlayInterval: TimeInterval
         let shouldAutoPlay: Bool
-        let layout: String // "compact" or "full"
+        let layout: String // "compact", "full", or "horizontal"
         let configId: String // Used to detect config changes
         
-        init(config: ProductCarouselConfig) {
+        init(config: ProductCarouselConfig, layoutOverride: String? = nil) {
             // Cache converted product IDs (String → Int)
+            // Empty array means "load all products from channel"
             self.productIds = config.productIds.compactMap { Int($0) }
             
             // Cache auto-play interval conversion (milliseconds → seconds)
             self.autoPlayInterval = Double(config.interval) / 1000.0
             self.shouldAutoPlay = config.autoPlay
             
-            // Cache layout (default to "full" if not specified)
-            self.layout = config.layout ?? "full"
+            // Use layout override if provided, otherwise use layout from config (default to "full")
+            self.layout = layoutOverride ?? config.layout ?? "full"
             
             // Create unique identifier for this config (detects changes)
-            self.configId = "\(config.productIds.joined(separator: "-"))-\(config.autoPlay)-\(config.interval)-\(self.layout)"
+            // Use "all" when productIds is empty to make it clearer
+            // Must match the format in updateCachedConfigIfNeeded()
+            let productIdsString = config.productIds.isEmpty ? "all" : config.productIds.joined(separator: "-")
+            self.configId = "\(productIdsString)-\(config.autoPlay)-\(config.interval)-\(self.layout)"
         }
     }
     
@@ -148,6 +152,12 @@ public struct RProductCarousel: View {
         return config
     }
     
+    /// Get a unique identifier based on productIds to detect config changes
+    /// This helps detect when productIds change from backend even if component ID stays the same
+    private var configProductIdsId: String {
+        config?.productIds.joined(separator: "-") ?? ""
+    }
+    
     /// Update cached config when config changes
     private func updateCachedConfigIfNeeded() {
         guard let config = config else {
@@ -158,11 +168,16 @@ public struct RProductCarousel: View {
             return
         }
         
-        let newConfigId = "\(config.productIds.joined(separator: "-"))-\(config.autoPlay)-\(config.interval)"
+        // Use layout override if provided, otherwise use layout from config
+        let effectiveLayout = layout ?? config.layout ?? "full"
+        
+        // Use "all" when productIds is empty to match CachedConfig.init
+        let productIdsString = config.productIds.isEmpty ? "all" : config.productIds.joined(separator: "-")
+        let newConfigId = "\(productIdsString)-\(config.autoPlay)-\(config.interval)-\(effectiveLayout)"
         
         // Only recalculate if config actually changed
         if currentConfigId != newConfigId {
-            cachedConfig = CachedConfig(config: config)
+            cachedConfig = CachedConfig(config: config, layoutOverride: layout)
             currentConfigId = newConfigId
         }
     }
@@ -177,8 +192,8 @@ public struct RProductCarousel: View {
         // Check campaign state
         let campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
         guard campaignId > 0 else {
-            // No campaign configured - show component (legacy behavior)
-            return true
+            // No campaign configured - show component if config exists (legacy behavior)
+            return config != nil
         }
         
         // Campaign must be active and not paused
@@ -188,6 +203,7 @@ public struct RProductCarousel: View {
         }
         
         // Component must exist and be active
+        // Also check if config can be extracted (component might exist but config decoding failed)
         return activeComponent?.isActive == true && config != nil
     }
     
@@ -237,31 +253,29 @@ public struct RProductCarousel: View {
             }
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
-            updateCachedConfigIfNeeded()
             handleCampaignStateChange()
         }
         .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
-            updateCachedConfigIfNeeded()
             handleCampaignStateChange()
         }
         .onChange(of: campaignManager.activeComponents.count) { _ in
             // React immediately when components are loaded/updated
-            updateCachedConfigIfNeeded()
             handleComponentChange()
         }
         .onChange(of: activeComponent?.id) { _ in
-            updateCachedConfigIfNeeded()
+            handleComponentChange()
+        }
+        .onChange(of: configProductIdsId) { _ in
+            // React to productIds changes from backend (even if component ID doesn't change)
             handleComponentChange()
         }
         .onAppear {
-            // Try to update immediately on appear (in case data is already available)
-            updateCachedConfigIfNeeded()
+            // Initialize on appear
             handleComponentChange()
         }
         .task {
             // Also try to update after a small delay to catch async updates
-            try? await Task.sleep(nanoseconds: 50_000_000) // 50ms delay
-            updateCachedConfigIfNeeded()
+            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms delay
             handleComponentChange()
         }
         .onDisappear {
@@ -712,7 +726,7 @@ public struct RProductCarousel: View {
             }
             
             Button {
-                loadProducts()
+                loadProductsIfNeeded()
             } label: {
                 Text("Retry")
                     .font(ReachuTypography.caption1.weight(.semibold))
@@ -916,28 +930,47 @@ public struct RProductCarousel: View {
     // MARK: - Helper Methods
     
     private func handleCampaignStateChange() {
+        // Update cached config first
+        updateCachedConfigIfNeeded()
+        
         if shouldShow {
-            loadProducts()
+            loadProductsIfNeeded()
         } else {
             stopAutoScroll()
+            viewModel.products = []
         }
     }
     
     private func handleComponentChange() {
+        // Update cached config first
+        updateCachedConfigIfNeeded()
+        
         if shouldShow {
-            loadProducts()
+            loadProductsIfNeeded()
         } else {
             stopAutoScroll()
             viewModel.products = []
         }
     }
     
-    private func loadProducts() {
-        guard let cachedConfig = cachedConfig else {
+    /// Load products if config is available, otherwise wait for config
+    private func loadProductsIfNeeded() {
+        // If we have cached config, load products immediately
+        if let cachedConfig = cachedConfig {
+            loadProducts(with: cachedConfig)
+        } else if config != nil {
+            // Config exists but cachedConfig not created yet - update cache and load
+            updateCachedConfigIfNeeded()
+            if let cachedConfig = cachedConfig {
+                loadProducts(with: cachedConfig)
+            }
+        } else {
+            // No config yet - clear products and wait
             viewModel.products = []
-            return
         }
-        
+    }
+    
+    private func loadProducts(with cachedConfig: CachedConfig) {
         Task {
             // Use cached Int product IDs (no conversion needed)
             await viewModel.loadProducts(
