@@ -111,4 +111,13 @@ class RProductSliderViewModel: ObservableObject {
         hasLoaded = false
         await loadProducts(categoryId: categoryId, currency: currency, country: country, forceRefresh: true)
     }
+    
+    /// Clear products (used when campaign becomes inactive)
+    func clearProducts() {
+        products = []
+        hasLoaded = false
+        isLoading = false
+        errorMessage = nil
+        isMarketUnavailable = false
+    }
 }

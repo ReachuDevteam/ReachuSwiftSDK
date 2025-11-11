@@ -505,6 +505,7 @@ struct TimeUnit: View {
 /// It handles loading states, errors, and real-time updates via WebSocket
 public struct ROfferBannerDynamic: View {
     @StateObject private var componentManager = ComponentManager.shared
+    @ObservedObject private var campaignManager = CampaignManager.shared
     @State private var isLoading = true
     @State private var hasError = false
     @State private var errorMessage: String?
@@ -522,9 +523,36 @@ public struct ROfferBannerDynamic: View {
         self.onNavigateToStore = onNavigateToStore
     }
     
+    /// Should show component
+    /// Follows the same pattern as RProductStore, RProductCarousel, etc.
+    private var shouldShow: Bool {
+        // Check SDK availability
+        guard ReachuConfiguration.shared.shouldUseSDK else {
+            return false
+        }
+        
+        // Check campaign state
+        let campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
+        guard campaignId > 0 else {
+            // No campaign configured - show component (legacy behavior)
+            return true
+        }
+        
+        // Campaign must be active and not paused
+        guard campaignManager.isCampaignActive,
+              campaignManager.currentCampaign?.isPaused != true else {
+            return false
+        }
+        
+        // Banner must exist
+        return componentManager.activeBanner != nil
+    }
+    
     public var body: some View {
         Group {
-            if let bannerConfig = componentManager.activeBanner {
+            if !shouldShow {
+                EmptyView()
+            } else if let bannerConfig = componentManager.activeBanner {
                 // Banner is available - show it with smooth transition
                 // Usar .id() para forzar recreación cuando cambia countdownEndDate
                 ROfferBanner(

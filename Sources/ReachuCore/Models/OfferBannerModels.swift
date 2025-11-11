@@ -577,6 +577,21 @@ public class ComponentManager: ObservableObject {
         switch decoded.type {
         case "component_status_changed":
             if decoded.status == "active", let component = decoded.component {
+                // Add or update in activeComponents
+                let componentResponse = ActiveComponentResponse(
+                    componentId: component.id,
+                    type: component.type,
+                    name: component.name,
+                    config: component.config,
+                    status: "active",
+                    activatedAt: nil
+                )
+                
+                // Remove any existing component with same ID
+                activeComponents.removeAll { $0.componentId == component.id }
+                // Add the new active component
+                activeComponents.append(componentResponse)
+                
                 // Try offer_banner first
                 if case .offerBanner(let bannerConfig) = component.config {
                     activeBanner = bannerConfig
@@ -587,12 +602,58 @@ public class ComponentManager: ObservableObject {
                         activeBanner = bannerConfig
                     }
                 }
-            } else {
-                activeBanner = nil
+            } else if decoded.status == "inactive" {
+                // Component was deactivated - check if it's the currently active banner
+                // Only remove if the deactivated component matches the current banner
+                if let component = decoded.component {
+                    // Check if the deactivated component is an offer_banner or countdown
+                    let isBannerType = (component.type == "offer_banner" || component.type == "countdown")
+                    
+                    if isBannerType {
+                        // Check if this is the currently active banner by comparing componentId
+                        if let currentBannerId = activeComponents.first(where: { 
+                            $0.type == "offer_banner" || $0.type == "countdown" 
+                        })?.componentId, currentBannerId == decoded.componentId {
+                            // This is the active banner being deactivated - remove it
+                            activeBanner = nil
+                            // Also remove from activeComponents
+                            activeComponents.removeAll { $0.componentId == decoded.componentId }
+                        }
+                    }
+                } else {
+                    // No component data in message, but we have componentId
+                    // Check if any active component matches this componentId
+                    if activeComponents.contains(where: { $0.componentId == decoded.componentId }) {
+                        // Check if it's a banner type
+                        if let deactivatedComponent = activeComponents.first(where: { $0.componentId == decoded.componentId }),
+                           (deactivatedComponent.type == "offer_banner" || deactivatedComponent.type == "countdown") {
+                            activeBanner = nil
+                        }
+                        // Remove from activeComponents regardless of type
+                        activeComponents.removeAll { $0.componentId == decoded.componentId }
+                    }
+                }
+                
+                // After removing, check if there are other active banner components
+                if activeBanner == nil {
+                    // Look for other active offer_banner or countdown components
+                    if let otherBanner = activeComponents.first(where: { 
+                        $0.type == "offer_banner" || $0.type == "countdown" 
+                    }) {
+                        if case .offerBanner(let bannerConfig) = otherBanner.config {
+                            activeBanner = bannerConfig
+                        } else if case .countdown(let countdownConfig) = otherBanner.config {
+                            if let bannerConfig = countdownConfig.toOfferBannerConfig() {
+                                activeBanner = bannerConfig
+                            }
+                        }
+                    }
+                }
             }
             
         case "campaign_ended":
             activeBanner = nil
+            activeComponents.removeAll()
             
         default:
             break

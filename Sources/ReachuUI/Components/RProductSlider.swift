@@ -147,11 +147,19 @@ public struct RProductSlider: View {
     private var autoLoadTaskKey: String {
         guard manualProducts == nil else { return "manual" }
         let categoryPart = categoryId.map(String.init) ?? "all"
-        return "\(resolvedCurrency)|\(resolvedCountry)|\(categoryPart)"
+        let campaignActive = campaignManager.isCampaignActive ? "active" : "inactive"
+        let campaignPaused = campaignManager.currentCampaign?.isPaused == true ? "paused" : "running"
+        return "\(resolvedCurrency)|\(resolvedCountry)|\(categoryPart)|\(campaignActive)|\(campaignPaused)"
     }
     
     /// Products to display - either manual or from ViewModel
+    /// Returns empty array if component shouldn't show (follows same pattern as other components)
     private var products: [Product] {
+        // If component shouldn't show, return empty array
+        guard shouldShow else {
+            return []
+        }
+        
         if let manual = manualProducts {
             return manual
         }
@@ -173,25 +181,24 @@ public struct RProductSlider: View {
         manualProducts == nil && viewModel.isMarketUnavailable
     }
     
-    /// Should show component based on campaign state
-    /// - If no campaign configured (campaignId == 0): Always show (legacy behavior)
-    /// - If campaign configured: Only show if campaign is active AND not paused
-    private var shouldShowCampaignComponent: Bool {
-        let config = ReachuConfiguration.shared
-        let campaignId = config.liveShowConfiguration.campaignId
-        
-        // If no campaign configured (campaignId == 0), show everything (legacy behavior)
-        guard campaignId > 0 else {
-            return true
-        }
-        
-        // Campaign must be active
-        guard campaignManager.isCampaignActive else {
+    /// Should show component
+    /// Follows the same pattern as RProductStore and RProductCarousel
+    private var shouldShow: Bool {
+        // Check SDK availability
+        guard ReachuConfiguration.shared.shouldUseSDK else {
             return false
         }
         
-        // Campaign must not be paused
-        if campaignManager.currentCampaign?.isPaused == true {
+        // Check campaign state
+        let campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
+        guard campaignId > 0 else {
+            // No campaign configured - show component (legacy behavior)
+            return true
+        }
+        
+        // Campaign must be active and not paused
+        guard campaignManager.isCampaignActive,
+              campaignManager.currentCampaign?.isPaused != true else {
             return false
         }
         
@@ -202,13 +209,6 @@ public struct RProductSlider: View {
             let isActive = campaignManager.shouldShowComponent(type: "product_slider") ||
                           campaignManager.shouldShowComponent(type: "recommended_products") ||
                           campaignManager.shouldShowComponent(type: "products")
-            
-            if !isActive {
-                // Component hidden - not in active components list
-            } else {
-                // Component visible - found in active components
-            }
-            
             return isActive
         }
         
@@ -219,15 +219,9 @@ public struct RProductSlider: View {
     // MARK: - Body
     public var body: some View {
         Group {
-            // Check if SDK should be used (market available)
-            if !ReachuConfiguration.shared.shouldUseSDK {
-                // SDK disabled - hide component completely
+            if !shouldShow {
                 EmptyView()
             } else if shouldHide {
-                // Market not available - hide component silently
-                EmptyView()
-            } else if !shouldShowCampaignComponent {
-                // Campaign not active or paused - hide component
                 EmptyView()
             } else if shouldShowLoading {
                 loadingView
@@ -240,14 +234,33 @@ public struct RProductSlider: View {
                 Color.clear.frame(height: 1)
             }
         }
-        .onChange(of: campaignManager.isCampaignActive) { _ in
-            // Force view update when campaign active state changes
+        .onChange(of: campaignManager.isCampaignActive) { isActive in
+            // When campaign becomes inactive, clear products immediately
+            if !isActive && manualProducts == nil {
+                viewModel.clearProducts()
+            }
         }
-        .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
-            // Force view update when campaign paused state changes
+        .onChange(of: campaignManager.currentCampaign?.isPaused) { isPaused in
+            // When campaign is paused, clear products immediately
+            if isPaused == true && manualProducts == nil {
+                viewModel.clearProducts()
+            }
+        }
+        .onChange(of: shouldShow) { shouldShowValue in
+            // When shouldShow changes to false, clear products immediately
+            if !shouldShowValue && manualProducts == nil {
+                viewModel.clearProducts()
+            }
         }
         .task(id: autoLoadTaskKey) {
             guard manualProducts == nil else { return }
+            
+            // Don't load products if component shouldn't show
+            guard shouldShow else {
+                viewModel.clearProducts()
+                return
+            }
+            
             await viewModel.loadProducts(
                 categoryId: categoryId,
                 currency: resolvedCurrency,
