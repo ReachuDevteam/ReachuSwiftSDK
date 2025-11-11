@@ -64,7 +64,7 @@ public struct DynamicComponent: Identifiable, Decodable, Equatable {
         
         let df = ISO8601DateFormatter()
 
-        // Decodificación de fechas
+        // Date decoding
         if let startString = try? c.decodeIfPresent(String.self, forKey: .startTime) {
             self.startTime = df.date(from: startString)
         } else {
@@ -77,12 +77,12 @@ public struct DynamicComponent: Identifiable, Decodable, Equatable {
             self.endTime = nil
         }
         
-        // Decodificación de enums opcionales
+        // Optional enum decoding
         self.position = try? c.decodeIfPresent(DynamicComponentPosition.self, forKey: .position)
         self.triggerOn = try? c.decodeIfPresent(DynamicComponentTrigger.self, forKey: .triggerOn)
           
-        // La clave: delegar la decodificación de 'data' a DynamicComponentData
-        // pasando el decoder completo, ya que necesita leer 'type' del mismo nivel.
+        // Key: delegate 'data' decoding to DynamicComponentData
+        // passing the complete decoder, as it needs to read 'type' from the same level.
         self.data = try DynamicComponentData(from: decoder)
     }
 }
@@ -106,7 +106,7 @@ public enum DynamicComponentData: Decodable, Equatable {
             self = .banner(try BannerComponentData(from: decoder))
         }
     }
-    // No se necesita CodingKeys aquí.
+    // CodingKeys not needed here.
 }
 
 // MARK: - FeaturedProductComponentData
@@ -139,7 +139,7 @@ public struct FeaturedProductComponentData: Codable, Equatable {
         //// 2. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
         //let inner = try container.decode(Inner.self, forKey: .data) // <-- CORREGIDO
 //        
-        //self.product = inner.product.asProduct() // Conversión de DTO a Product
+        //self.product = inner.product.asProduct() // DTO to Product conversion
         //self.productId = inner.productId
         //self.position = inner.position
 //        
@@ -169,7 +169,7 @@ public struct FeaturedProductComponentData: Codable, Equatable {
         var container = encoder.singleValueContainer() 
         let df = ISO8601DateFormatter()
         
-        // Conversión de Product a DTO para codificar
+        // Product to DTO conversion for encoding
         let inner = Inner(
             product: ProductDtoCompat(from: product),
             productId: productId,
@@ -223,14 +223,14 @@ public struct BannerComponentData: Codable, Equatable {
 //        
         //// 1. Decodificamos el objeto 'Inner' DIRECTAMENTE de la clave .data del padre.
         //// Esto asume que el objeto JSON bajo "data" coincide con la estructura de Inner.
-        //let inner = try container.decode(Inner.self, forKey: .data) // <--- CORRECCIÓN APLICADA
+        //let inner = try container.decode(Inner.self, forKey: .data) // <--- CORRECTION APPLIED
 //        
         //self.title = inner.title
         //self.text = inner.text
         //self.position = inner.position
         //self.animation = inner.animation
 //        
-        //// Conversión de String a TimeInterval
+        //// String to TimeInterval conversion
         //if let d = inner.duration, let seconds = TimeInterval(d) { 
             //self.duration = seconds 
         //} else { 
@@ -260,11 +260,11 @@ public struct BannerComponentData: Codable, Equatable {
         self.endTime = endTime 
     }
     public func encode(to encoder: Encoder) throws {
-        // Para la codificación, usaremos un contenedor para codificar el objeto Inner
-        // directamente, ya que el JSON espera que BannerComponentData sea el objeto
-        // que está dentro de la clave 'data'.
+        // For encoding, we'll use a container to encode the Inner object
+        // directly, as the JSON expects BannerComponentData to be the object
+        // that is inside the 'data' key.
         
-        var container = encoder.singleValueContainer() // Codificamos Inner como un único objeto
+        var container = encoder.singleValueContainer() // Encode Inner as a single object
         let df = ISO8601DateFormatter()
         
         let inner = Inner(
@@ -272,19 +272,19 @@ public struct BannerComponentData: Codable, Equatable {
             text: text,
             position: position,
             animation: animation,
-            duration: duration.map { String($0) }, // Conversión de TimeInterval (Double) a String
+            duration: duration.map { String($0) }, // TimeInterval (Double) to String conversion
             startTime: startTime.map { df.string(from: $0) },
             endTime: endTime.map { df.string(from: $0) }
         )
-        // Codificamos el objeto 'inner' directamente. El DynamicComponent manejará
-        // la codificación del contenedor padre.
+        // Encode the 'inner' object directly. DynamicComponent will handle
+        // the parent container encoding.
         try container.encode(inner)
     }    
 }
 
 // MARK: - Lightweight DTO compatibility for provided JSON
 
-// Nota: Agregué los inicializadores requeridos para la codificación.
+// Note: Added required initializers for encoding.
 
 public struct ProductDtoCompat: Codable, Equatable {
     public let id: Int
@@ -304,10 +304,10 @@ public struct ProductDtoCompat: Codable, Equatable {
     public let digital: Bool
     public let origin: String
     
-    // Inicializador de Decodable (Automático o manual, si no está presente, usa el automático de Codable)
-    // El original estaba bien, pero lo dejo implícito ya que Codable lo proporciona.
+    // Decodable initializer (Automatic or manual, if not present, uses Codable's automatic)
+    // The original was fine, but I leave it implicit as Codable provides it.
     
-    // **AÑADIDO: Inicializador para conversión inversa (Product -> DTO)**
+    // **ADDED: Initializer for reverse conversion (Product -> DTO)**
     public init(from product: Product) {
         self.id = product.id
         self.title = product.title
@@ -361,7 +361,7 @@ public struct PriceCompat: Codable, Equatable {
     public let amount: String
     public let currencyCode: String
     
-    // **AÑADIDO: Inicializador para conversión inversa (Price -> DTO)**
+    // **ADDED: Initializer for reverse conversion (Price -> DTO)**
     public init(from price: Price) {
         self.amount = String(price.amount)
         self.currencyCode = price.currency_code
@@ -393,7 +393,7 @@ public struct VariantCompat: Codable, Equatable {
     public let title: String
     public let images: [ProductImageCompat]
     
-    // **AÑADIDO: Inicializador para conversión inversa (Variant -> DTO)**
+    // **ADDED: Initializer for reverse conversion (Variant -> DTO)**
     public init(from variant: Variant) {
         self.id = variant.id
         self.price = PriceCompat(from: variant.price)
@@ -415,7 +415,7 @@ public struct ProductImageCompat: Codable, Equatable {
     public let width: Int?
     public let height: Int?
     
-    // **AÑADIDO: Inicializador para conversión inversa (ProductImage -> DTO)**
+    // **ADDED: Initializer for reverse conversion (ProductImage -> DTO)**
     public init(from image: ProductImage) {
         self.id = Int(image.id) ?? 0
         self.url = image.url
@@ -435,12 +435,12 @@ public struct OptionCompat: Codable, Equatable {
     public let order: Int
     public let values: [String]?
     
-    // **AÑADIDO: Inicializador para conversión inversa (Option -> DTO)**
+    // **ADDED: Initializer for reverse conversion (Option -> DTO)**
     public init(from option: Option) {
         self.id = option.id
         self.name = option.name
         self.order = option.order
-        // Convierte la cadena separada por comas de Option a un array de Strings
+        // Convert comma-separated string from Option to array of Strings
         self.values = option.values.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
     }
     

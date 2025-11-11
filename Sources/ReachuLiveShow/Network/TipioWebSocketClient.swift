@@ -483,7 +483,7 @@ extension TipioWebSocketClient {
                     print("🔍 [TipioWS] chatMessage is pinned \(chatMessage.pinned) message \(chatMessage.text)")
                      let event = TipioEvent(
                          type: .chatMessage,
-                         streamId: 0, // se puede actualizar según el contexto
+                         streamId: 0, // can be updated based on context
                          timestamp: Date(),
                          data: .chatMessage(chatMessage.toTipioChatMessageData())
                      )

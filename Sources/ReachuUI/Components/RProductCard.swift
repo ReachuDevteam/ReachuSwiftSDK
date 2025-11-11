@@ -461,13 +461,31 @@ public struct RProductCard: View {
             }
         }
         
+        // Track product added to cart
+        AnalyticsManager.shared.trackProductAddedToCart(
+            productId: String(product.id),
+            productName: product.title,
+            quantity: 1,
+            productPrice: Double(product.price.amount),
+            productCurrency: product.price.currency_code,
+            source: "product_card"
+        )
+        
         // Call the actual add to cart function
         onAddToCart?()
     }
     
     /// Handle tap on product card
     private func handleTap() {
+        // Track product viewed (when opening product detail)
         if showProductDetail {
+            AnalyticsManager.shared.trackProductViewed(
+                productId: String(product.id),
+                productName: product.title,
+                productPrice: Double(product.price.amount),
+                productCurrency: product.price.currency_code,
+                source: "product_store"
+            )
             showingProductDetail = true
         } else {
             onTap?()

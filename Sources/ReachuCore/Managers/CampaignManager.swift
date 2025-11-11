@@ -150,12 +150,12 @@ public class CampaignManager: ObservableObject {
         guard isCampaignActive else { return nil }
         
         if let componentId = componentId {
-            // Buscar por type Y componentId específico
+            // Search by type AND specific componentId
             return activeComponents.first { 
                 $0.type == type && $0.id == componentId && $0.isActive 
             }
         } else {
-            // Comportamiento actual: devolver el primero que encuentra
+            // Current behavior: return the first one found
             return activeComponents.first { $0.type == type && $0.isActive }
         }
     }

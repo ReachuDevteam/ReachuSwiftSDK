@@ -196,6 +196,7 @@ public class ConfigurationLoader {
         let productDetailConfig = createProductDetailConfiguration(from: config.productDetail)
         let localizationConfig = createLocalizationConfiguration(from: config.localization, bundle: bundle)
         let campaignConfig = createCampaignConfiguration(from: config.campaigns)
+        let analyticsConfig = createAnalyticsConfiguration(from: config.analytics)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -208,11 +209,17 @@ public class ConfigurationLoader {
             marketConfig: marketFallback,
             productDetailConfig: productDetailConfig,
             localizationConfig: localizationConfig,
-            campaignConfig: campaignConfig
+            campaignConfig: campaignConfig,
+            analyticsConfig: analyticsConfig
         )
         
         // Initialize Stripe automatically if available
         initializeStripeIfAvailable()
+        
+        // Initialize AnalyticsManager
+        Task { @MainActor in
+            AnalyticsManager.shared.configure(analyticsConfig)
+        }
         
         // Check market availability if user country provided
         if let countryCode = userCountryCode {
@@ -538,6 +545,26 @@ public class ConfigurationLoader {
         )
     }
     
+    private static func createAnalyticsConfiguration(from analyticsConfig: JSONAnalyticsConfiguration?) -> AnalyticsConfiguration {
+        guard let config = analyticsConfig else { return .default }
+        
+        // If token exists, enable automatically
+        let enabled = config.enabled ?? (config.mixpanelToken != nil && !config.mixpanelToken!.isEmpty)
+        
+        return AnalyticsConfiguration(
+            enabled: enabled,
+            mixpanelToken: config.mixpanelToken,
+            apiHost: config.apiHost,
+            trackComponentViews: config.trackComponentViews ?? true,
+            trackComponentClicks: config.trackComponentClicks ?? true,
+            trackImpressions: config.trackImpressions ?? true,
+            trackTransactions: config.trackTransactions ?? true,
+            trackProductEvents: config.trackProductEvents ?? true,
+            autocapture: config.autocapture ?? false,
+            recordSessionsPercent: config.recordSessionsPercent ?? 0
+        )
+    }
+    
     private static func createMarketConfiguration(from marketConfig: JSONMarketFallbackConfiguration?) -> MarketConfiguration {
         guard let config = marketConfig else { return .default }
 
@@ -754,6 +781,7 @@ private struct JSONConfiguration: Codable {
     let productDetail: JSONProductDetailConfiguration?
     let localization: JSONLocalizationConfiguration?
     let campaigns: JSONCampaignConfiguration?
+    let analytics: JSONAnalyticsConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -903,6 +931,19 @@ private struct JSONLocalizationConfiguration: Codable {
 private struct JSONCampaignConfiguration: Codable {
     let webSocketBaseURL: String?  // WebSocket endpoint (e.g., "https://dev-campaing.reachu.io")
     let restAPIBaseURL: String?    // REST API endpoint (e.g., "https://campaing.reachu.io")
+}
+
+private struct JSONAnalyticsConfiguration: Codable {
+    let enabled: Bool?
+    let mixpanelToken: String?
+    let apiHost: String?
+    let trackComponentViews: Bool?
+    let trackComponentClicks: Bool?
+    let trackImpressions: Bool?
+    let trackTransactions: Bool?
+    let trackProductEvents: Bool?
+    let autocapture: Bool?
+    let recordSessionsPercent: Int?
 }
 
 private struct JSONTipioConfiguration: Codable {

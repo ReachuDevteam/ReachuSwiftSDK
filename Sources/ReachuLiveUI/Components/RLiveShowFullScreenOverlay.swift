@@ -677,7 +677,7 @@ public struct RLiveShowFullScreenOverlay: View {
         }
     }
 
-    /// Llama al endpoint de refresh y reintenta la reproducción
+    /// Calls the refresh endpoint and retries playback
     private func refreshHLSAndRetry(streamId: String) {
         print("🔄 [LiveShow] Starting HLS refresh for stream ID: \(streamId)")
         isLoading = true

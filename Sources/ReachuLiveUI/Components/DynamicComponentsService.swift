@@ -96,7 +96,7 @@ public enum DynamicComponentsService {
                         )
                     )
                 }
-                // si viene solo productId, podrías hacer un fetch extra aquí si lo necesitas
+                // if only productId comes, you could do an extra fetch here if needed
             }
         }
         return out

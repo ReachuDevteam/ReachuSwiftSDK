@@ -697,6 +697,16 @@ public struct RProductDetailOverlay: View {
         impactFeedback.impactOccurred()
         #endif
         
+        // Track product added to cart
+        AnalyticsManager.shared.trackProductAddedToCart(
+            productId: String(product.id),
+            productName: product.title,
+            quantity: quantity,
+            productPrice: Double(product.price.amount),
+            productCurrency: product.price.currency_code,
+            source: "product_detail"
+        )
+        
         // Add to cart
         Task {
             await cartManager.addProduct(product, quantity: quantity)

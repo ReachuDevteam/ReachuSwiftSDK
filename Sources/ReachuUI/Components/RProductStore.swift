@@ -183,6 +183,22 @@ public struct RProductStore: View {
         .onAppear {
             updateCachedConfigIfNeeded()
             handleComponentChange()
+            
+            // Track component view
+            if let component = activeComponent, let config = cachedConfig {
+                AnalyticsManager.shared.trackComponentView(
+                    componentId: component.id,
+                    componentType: "product_store",
+                    componentName: component.name,
+                    campaignId: campaignManager.currentCampaign?.id,
+                    metadata: [
+                        "display_type": config.displayType,
+                        "columns": config.columns,
+                        "product_count": products.count,
+                        "has_product_ids": config.productIds != nil
+                    ]
+                )
+            }
         }
     }
     

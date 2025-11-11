@@ -6,8 +6,8 @@ public struct OfferBannerConfig: Codable, Equatable {
     public let logoUrl: String
     public let title: String
     public let subtitle: String?
-    public let backgroundImageUrl: String?  // Opcional: puede usar backgroundColor en su lugar
-    public let backgroundColor: String?      // NUEVO: Color de fondo opcional
+    public let backgroundImageUrl: String?  // Optional: can use backgroundColor instead
+    public let backgroundColor: String?      // NEW: Optional background color
     public let countdownEndDate: String // ISO 8601 timestamp
     public let discountBadgeText: String
     public let ctaText: String
@@ -21,7 +21,7 @@ public struct OfferBannerConfig: Codable, Equatable {
         case logoUrl, title, subtitle, backgroundImageUrl, backgroundColor
         case countdownEndDate, discountBadgeText, ctaText, ctaLink
         case overlayOpacity, buttonColor, deeplinkUrl, deeplinkAction
-        case deeplink  // Para soportar el formato del backend
+        case deeplink  // To support backend format
     }
     
     public init(
@@ -69,7 +69,7 @@ public struct OfferBannerConfig: Codable, Equatable {
         overlayOpacity = try container.decodeIfPresent(Double.self, forKey: .overlayOpacity)
         buttonColor = try container.decodeIfPresent(String.self, forKey: .buttonColor)
         
-        // Soportar tanto deeplinkUrl como deeplink (formato del backend)
+        // Support both deeplinkUrl and deeplink (backend format)
         deeplinkUrl = try container.decodeIfPresent(String.self, forKey: .deeplinkUrl) 
             ?? container.decodeIfPresent(String.self, forKey: .deeplink)
         deeplinkAction = try container.decodeIfPresent(String.self, forKey: .deeplinkAction)
@@ -278,7 +278,7 @@ public struct CountdownConfig: Codable {
     public let buttonColor: String?
     public let style: String?
     
-    // Método para convertir CountdownConfig a OfferBannerConfig
+    // Method to convert CountdownConfig to OfferBannerConfig
     public func toOfferBannerConfig() -> OfferBannerConfig? {
         return OfferBannerConfig(
             logoUrl: logoUrl ?? "",
@@ -292,7 +292,7 @@ public struct CountdownConfig: Codable {
             ctaLink: ctaLink,
             overlayOpacity: overlayOpacity,
             buttonColor: buttonColor,
-            deeplinkUrl: deeplink,  // Mapear deeplink único a deeplinkUrl
+            deeplinkUrl: deeplink,  // Map single deeplink to deeplinkUrl
             deeplinkAction: nil
         )
     }

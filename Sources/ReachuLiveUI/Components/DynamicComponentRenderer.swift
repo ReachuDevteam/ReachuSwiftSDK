@@ -40,10 +40,10 @@ public struct DynamicComponentRenderer: View {
 @ViewBuilder
 private func featuredProductPositioned(_ product: Product, position: DynamicComponentPosition?) -> some View {
     GeometryReader { proxy in
-        // posición por defecto si es nil
+        // default position if nil
         let pos = position ?? .bottom
         
-        // calcular fracción vertical
+        // calculate vertical fraction
         let fraction: CGFloat = {
             switch pos {
             case .top: return 0.09
@@ -67,10 +67,10 @@ private func featuredProductPositioned(_ product: Product, position: DynamicComp
 @ViewBuilder
 private func bannerPositioned(_ data: BannerComponentData) -> some View {
     GeometryReader { proxy in
-        // unwrap seguro
+        // safe unwrap
         let position = data.position ?? .top
         
-        // calcular fracción
+        // calculate fraction
         let fraction: CGFloat = {
             switch position {
             case .top: return 0.09

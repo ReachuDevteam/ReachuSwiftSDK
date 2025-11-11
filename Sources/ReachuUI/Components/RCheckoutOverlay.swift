@@ -221,12 +221,36 @@ public struct RCheckoutOverlay: View {
                 }
             }
             .onChange(of: checkoutStep) { newStep in
-                let _ = ReachuLogger.debug("Current checkoutStep: \(newStep)", component: "RCheckoutOverlay")
                 if newStep == .orderSummary {
                     Task {
                         await loadCheckoutTotals()
                     }
                 } else if newStep == .success {
+                    // Track transaction completed
+                    if let checkoutId = cartManager.checkoutId, 
+                       let checkoutDto = checkoutTotals,
+                       let totals = checkoutDto.totals {
+                        let products = cartManager.items.map { item -> [String: Any] in
+                            [
+                                "product_id": String(item.productId),
+                                "product_name": item.title,
+                                "quantity": item.quantity,
+                                "price": item.price
+                            ]
+                        }
+                        
+                        AnalyticsManager.shared.trackTransaction(
+                            checkoutId: checkoutId,
+                            revenue: totals.total,
+                            currency: totals.currencyCode,
+                            paymentMethod: selectedPaymentMethod.rawValue,
+                            products: products,
+                            discount: totals.discounts,
+                            shipping: totals.shipping,
+                            tax: totals.taxes
+                        )
+                    }
+                    
                     // Reset cart and create new one after successful payment
                     Task {
                         ReachuLogger.debug("Payment successful - resetting cart and creating new one", component: "RCheckoutOverlay")
@@ -705,6 +729,19 @@ public struct RCheckoutOverlay: View {
                             proceedToNext()
                             return
                         }
+                        
+                        // Track checkout started with user identification
+                        let cartValue = cartManager.cartTotal
+                        let productCount = cartManager.items.count
+                        AnalyticsManager.shared.trackCheckoutStarted(
+                            checkoutId: chkId,
+                            cartValue: cartValue,
+                            currency: cartManager.currency,
+                            productCount: productCount,
+                            userEmail: email.isEmpty ? nil : email,
+                            userFirstName: firstName.isEmpty ? nil : firstName,
+                            userLastName: lastName.isEmpty ? nil : lastName
+                        )
 
                         let addr = checkoutDraft.addressPayload(
                             fallbackCountryISO2: cartManager.country

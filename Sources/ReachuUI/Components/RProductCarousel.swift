@@ -272,6 +272,22 @@ public struct RProductCarousel: View {
         .onAppear {
             // Initialize on appear
             handleComponentChange()
+            
+            // Track component view
+            if let component = activeComponent, let config = cachedConfig {
+                AnalyticsManager.shared.trackComponentView(
+                    componentId: component.id,
+                    componentType: "product_carousel",
+                    componentName: component.name,
+                    campaignId: campaignManager.currentCampaign?.id,
+                    metadata: [
+                        "layout": config.layout,
+                        "product_count": products.count,
+                        "has_product_ids": !config.productIds.isEmpty,
+                        "auto_play": config.shouldAutoPlay
+                    ]
+                )
+            }
         }
         .task {
             // Also try to update after a small delay to catch async updates
@@ -520,6 +536,19 @@ public struct RProductCarousel: View {
         let primaryImageUrl = sortedImages.first?.url
         
         Button(action: {
+            // Track product click
+            if let component = activeComponent {
+                AnalyticsManager.shared.trackProductViewed(
+                    productId: String(product.id),
+                    productName: product.title,
+                    productPrice: Double(product.price.amount),
+                    productCurrency: product.price.currency_code,
+                    source: "product_carousel",
+                    componentId: component.id,
+                    componentType: "product_carousel"
+                )
+            }
+            
             // Handle tap - show product detail
             showingProductDetail = product
         }) {
@@ -619,6 +648,19 @@ public struct RProductCarousel: View {
     /// Horizontal product card layout (image left, description right)
     private func horizontalProductCardView(product: Product) -> some View {
         Button(action: {
+            // Track product click
+            if let component = activeComponent {
+                AnalyticsManager.shared.trackProductViewed(
+                    productId: String(product.id),
+                    productName: product.title,
+                    productPrice: Double(product.price.amount),
+                    productCurrency: product.price.currency_code,
+                    source: "product_carousel",
+                    componentId: component.id,
+                    componentType: "product_carousel"
+                )
+            }
+            
             // Handle tap - show product detail
             showingProductDetail = product
         }) {

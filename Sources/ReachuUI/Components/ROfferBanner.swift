@@ -17,14 +17,14 @@ public struct ROfferBanner: View {
     let customSubtitleFontSize: CGFloat?
     let customBadgeFontSize: CGFloat?
     let customButtonFontSize: CGFloat?
-    let onNavigateToStore: (() -> Void)? // Callback para navegar a RProductStore
+    let onNavigateToStore: (() -> Void)? // Callback to navigate to RProductStore
     
     @State private var timeRemaining: DateComponents?
     @State private var timer: Timer?
     @State private var isImageLoaded = false
     @State private var isLogoLoaded = false
-    @State private var countdownEndDate: Date? // Almacenar la fecha parseada
-    @State private var timerId: UUID = UUID() // Identificador único para el timer actual
+    @State private var countdownEndDate: Date? // Store parsed date
+    @State private var timerId: UUID = UUID() // Unique identifier for current timer
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
     
@@ -79,7 +79,7 @@ public struct ROfferBanner: View {
                     // Logo
                     logoImageView
                     
-                    // Title - siempre mostrar si hay configuración
+                    // Title - always show if configuration exists
                     Text(config.title)
                         .font(.system(size: customTitleFontSize ?? 24, weight: .bold))
                         .foregroundColor(adaptiveColors.surface)
@@ -146,21 +146,39 @@ public struct ROfferBanner: View {
         .cornerRadius(ReachuBorderRadius.large)
         .reachuCardShadow(for: colorScheme)
         .onAppear {
-            // Inicializar isImageLoaded basado en si hay imagen o color de fondo
+            // Initialize isImageLoaded based on whether there's an image or background color
             if config.backgroundImageUrl != nil && !config.backgroundImageUrl!.isEmpty {
-                // Si hay imagen, esperar a que cargue (se actualizará cuando la imagen cargue)
-                // Por ahora establecerlo después de un pequeño delay para permitir que la imagen empiece a cargar
+                // If there's an image, wait for it to load (will be updated when image loads)
+                // For now set it after a small delay to allow the image to start loading
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                     isImageLoaded = true
                 }
             } else {
-                // Si solo hay color de fondo, mostrar contenido inmediatamente
+                // If only background color, show content immediately
                 isImageLoaded = true
             }
             startCountdown()
+            
+            // Track component view
+            // Get componentId from CampaignManager by finding the active offer_banner or countdown component
+            let componentId = CampaignManager.shared.getActiveComponent(type: "offer_banner")?.id 
+                ?? CampaignManager.shared.getActiveComponent(type: "countdown")?.id 
+                ?? "unknown"
+            AnalyticsManager.shared.trackComponentView(
+                componentId: componentId,
+                componentType: "offer_banner",
+                componentName: config.title,
+                campaignId: CampaignManager.shared.currentCampaign?.id,
+                metadata: [
+                    "has_countdown": config.countdownEndDate != nil,
+                    "has_logo": !config.logoUrl.isEmpty,
+                    "has_background_image": config.backgroundImageUrl != nil && !config.backgroundImageUrl!.isEmpty,
+                    "has_background_color": config.backgroundColor != nil
+                ]
+            )
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("UpdateCountdown"))) { notification in
-            // Solo actualizar si el timer ID coincide con el actual
+            // Only update if timer ID matches current one
             if let notificationTimerId = notification.userInfo?["timerId"] as? String,
                notificationTimerId == timerId.uuidString,
                let remaining = notification.userInfo?["remaining"] as? DateComponents {
@@ -168,7 +186,7 @@ public struct ROfferBanner: View {
             }
         }
         .onChange(of: config.countdownEndDate) { newDate in
-            // Reiniciar countdown cuando cambia la fecha del backend
+            // Restart countdown when backend date changes
             timer?.invalidate()
             timer = nil
             timeRemaining = nil
@@ -239,11 +257,11 @@ public struct ROfferBanner: View {
     private var backgroundLayer: some View {
         Group {
             if let imageUrl = config.backgroundImageUrl, !imageUrl.isEmpty {
-                // Usar imagen de fondo
+                // Use background image
                 let fullURL = buildFullURL(from: imageUrl)
                 backgroundImageLayer(fullURL: fullURL)
             } else {
-                // Usar color de fondo sólido (sin imagen)
+                // Use solid background color (no image)
                 Rectangle()
                     .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -261,12 +279,12 @@ public struct ROfferBanner: View {
             LoadedImage(
                 url: URL(string: fullURL),
                 placeholder: AnyView(
-                    // Placeholder mientras carga - usar backgroundColor si está disponible
+                    // Placeholder while loading - use backgroundColor if available
                     Rectangle()
                         .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
                 ),
                 errorView: AnyView(
-                    // Error view - cuando hay 404 u otro error, mostrar backgroundColor como fallback
+                    // Error view - when there's 404 or other error, show backgroundColor as fallback
                     Rectangle()
                         .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
                 )
@@ -274,14 +292,14 @@ public struct ROfferBanner: View {
             .aspectRatio(contentMode: .fill)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onAppear {
-                // Marcar como cargado después de un pequeño delay para permitir que la imagen empiece a cargar
+                // Mark as loaded after a small delay to allow the image to start loading
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     isImageLoaded = true
                 }
             }
             
-            // Dark overlay para legibilidad (solo si hay imagen cargada exitosamente)
-            // El overlay se mostrará incluso si hay error, para mantener consistencia visual
+            // Dark overlay for readability (only if image loaded successfully)
+            // Overlay will show even if there's an error, to maintain visual consistency
             LinearGradient(
                 colors: [
                     adaptiveColors.textPrimary.opacity(config.overlayOpacity ?? 0.4),
@@ -341,15 +359,15 @@ public struct ROfferBanner: View {
     }
     
     private func startCountdown() {
-        // Invalidar timer anterior si existe
+        // Invalidate previous timer if exists
         timer?.invalidate()
         timer = nil
         
-        // Generar un nuevo ID para este timer
+        // Generate a new ID for this timer
         let currentTimerId = UUID()
         timerId = currentTimerId
         
-        // Parsear la fecha una sola vez y almacenarla
+        // Parse the date once and store it
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         
@@ -359,25 +377,25 @@ public struct ROfferBanner: View {
             return
         }
         
-        // Almacenar la fecha parseada
+        // Store the parsed date
         countdownEndDate = endDate
         
-        // Calcular tiempo inicial
+        // Calculate initial time
         let now = Date()
         if now >= endDate {
             timeRemaining = nil
             return
         }
         
-        // Calcular tiempo restante inicial
+        // Calculate initial remaining time
         timeRemaining = Calendar.current.dateComponents(
             [.day, .hour, .minute, .second],
             from: now,
             to: endDate
         )
         
-        // Crear un timer que use la fecha almacenada
-        // Capturar la fecha y el ID del timer en constantes locales para el closure
+        // Create a timer that uses the stored date
+        // Capture the date and timer ID in local constants for the closure
         let finalEndDate = endDate
         
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -390,8 +408,8 @@ public struct ROfferBanner: View {
                     from: now,
                     to: finalEndDate
                 )
-                // Actualizar timeRemaining solo si este timer sigue siendo el actual
-                // Usamos NotificationCenter para comunicar el cambio de forma segura
+                // Update timeRemaining only if this timer is still the current one
+                // We use NotificationCenter to communicate the change safely
                 NotificationCenter.default.post(
                     name: NSNotification.Name("UpdateCountdown"),
                     object: nil,
@@ -411,15 +429,58 @@ public struct ROfferBanner: View {
     
     /// Handle CTA button action with deeplink support
     private func handleCTAAction() {
+        // Track component click
+        // Get componentId from CampaignManager by finding the active offer_banner or countdown component
+        let componentId = CampaignManager.shared.getActiveComponent(type: "offer_banner")?.id 
+            ?? CampaignManager.shared.getActiveComponent(type: "countdown")?.id 
+            ?? "unknown"
+        var actionType = "cta_button"
+        
         // Priority: onNavigateToStore > customDeeplink > config.deeplinkUrl > ctaLink
         if let onNavigateToStore = onNavigateToStore {
             // Navigate to store view within app
+            actionType = "navigate_to_store"
+            AnalyticsManager.shared.trackComponentClick(
+                componentId: componentId,
+                componentType: "offer_banner",
+                action: actionType,
+                componentName: config.title,
+                campaignId: CampaignManager.shared.currentCampaign?.id,
+                metadata: ["deeplink_type": "in_app"]
+            )
             onNavigateToStore()
         } else if let customDeeplink = customDeeplink, !customDeeplink.isEmpty {
+            actionType = "custom_deeplink"
+            AnalyticsManager.shared.trackComponentClick(
+                componentId: componentId,
+                componentType: "offer_banner",
+                action: actionType,
+                componentName: config.title,
+                campaignId: CampaignManager.shared.currentCampaign?.id,
+                metadata: ["deeplink": customDeeplink]
+            )
             handleDeeplink(url: customDeeplink, action: nil)
         } else if let deeplinkUrl = config.deeplinkUrl, !deeplinkUrl.isEmpty {
+            actionType = "deeplink"
+            AnalyticsManager.shared.trackComponentClick(
+                componentId: componentId,
+                componentType: "offer_banner",
+                action: actionType,
+                componentName: config.title,
+                campaignId: CampaignManager.shared.currentCampaign?.id,
+                metadata: ["deeplink": deeplinkUrl]
+            )
             handleDeeplink(url: deeplinkUrl, action: config.deeplinkAction)
         } else if let ctaLink = config.ctaLink, !ctaLink.isEmpty {
+            actionType = "external_link"
+            AnalyticsManager.shared.trackComponentClick(
+                componentId: componentId,
+                componentType: "offer_banner",
+                action: actionType,
+                componentName: config.title,
+                campaignId: CampaignManager.shared.currentCampaign?.id,
+                metadata: ["link": ctaLink]
+            )
             handleExternalLink(url: ctaLink)
         }
     }
@@ -554,12 +615,12 @@ public struct ROfferBannerDynamic: View {
                 EmptyView()
             } else if let bannerConfig = componentManager.activeBanner {
                 // Banner is available - show it with smooth transition
-                // Usar .id() para forzar recreación cuando cambia countdownEndDate
+                // Use .id() to force recreation when countdownEndDate changes
                 ROfferBanner(
                     config: bannerConfig,
                     onNavigateToStore: onNavigateToStore
                 )
-                    .id(bannerConfig.countdownEndDate) // Forzar recreación cuando cambia la fecha
+                    .id(bannerConfig.countdownEndDate) // Force recreation when date changes
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
                     .animation(.easeInOut(duration: 0.3), value: componentManager.activeBanner?.title)
             } else if isLoading && !hasError {

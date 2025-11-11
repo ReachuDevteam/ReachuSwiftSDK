@@ -350,6 +350,20 @@ public struct RProductBanner: View {
         .onAppear {
             // Try to update immediately on appear (in case data is already available)
             updateCachedStylingIfNeeded()
+            
+            // Track component view
+            if let config = config, let component = activeComponent {
+                AnalyticsManager.shared.trackComponentView(
+                    componentId: component.id,
+                    componentType: "product_banner",
+                    componentName: config.title,
+                    campaignId: campaignManager.currentCampaign?.id,
+                    metadata: [
+                        "product_id": config.productId,
+                        "has_background_image": !config.backgroundImageUrl.isEmpty
+                    ]
+                )
+            }
         }
         .task {
             // Also try to update after a small delay to catch async updates
@@ -571,6 +585,30 @@ public struct RProductBanner: View {
     // MARK: - Helper Methods
     
     private func loadAndShowProduct(config: ProductBannerConfig) {
+        // Track component click
+        if let component = activeComponent {
+            var actionType = "banner_tap"
+            
+            if let deeplink = config.deeplink, !deeplink.isEmpty, URL(string: deeplink)?.scheme != nil {
+                actionType = "deeplink"
+            } else if let ctaLink = config.ctaLink, !ctaLink.isEmpty, URL(string: ctaLink)?.scheme != nil {
+                actionType = "cta_link"
+            } else {
+                actionType = "product_detail"
+            }
+            
+            AnalyticsManager.shared.trackComponentClick(
+                componentId: component.id,
+                componentType: "product_banner",
+                action: actionType,
+                componentName: config.title,
+                campaignId: campaignManager.currentCampaign?.id,
+                metadata: [
+                    "product_id": config.productId
+                ]
+            )
+        }
+        
         // Handle deeplink first (must be valid URL)
         if let deeplink = config.deeplink, !deeplink.isEmpty {
             if let url = URL(string: deeplink), url.scheme != nil {
@@ -619,6 +657,19 @@ public struct RProductBanner: View {
                 currency: currency,
                 country: country
             )
+            
+            // Track product viewed
+            if let component = activeComponent {
+                AnalyticsManager.shared.trackProductViewed(
+                    productId: productId,
+                    productName: product.title,
+                    productPrice: Double(product.price.amount),
+                    productCurrency: product.price.currency_code,
+                    source: "product_banner",
+                    componentId: component.id,
+                    componentType: "product_banner"
+                )
+            }
             
             showingProductDetail = product
             

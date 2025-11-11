@@ -79,6 +79,9 @@ let package = Package(
         ),
         // Socket.IO client for Tipio realtime backend
         .package(url: "https://github.com/socketio/socket.io-client-swift", from: "16.0.0"),
+        
+        // Mixpanel for analytics tracking
+        .package(url: "https://github.com/mixpanel/mixpanel-swift", from: "4.0.0"),
 
     ],
     targets: [
@@ -95,7 +98,8 @@ let package = Package(
         .target(
             name: "ReachuCore",
             dependencies: [
-                "ReachuNetwork"
+                "ReachuNetwork",
+                .product(name: "Mixpanel", package: "mixpanel-swift")
             ],
             path: "Sources/ReachuCore",
             exclude: [

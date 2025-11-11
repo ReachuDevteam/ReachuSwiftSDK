@@ -234,8 +234,8 @@ public class LiveShowManager: ObservableObject {
         return generated
     }
 
-    /// Envía un like (HEART) para el stream actual.
-    /// - parameter isVideoLive: si el video está en vivo (controla `after-show`).
+    /// Sends a like (HEART) for the current stream.
+    /// - parameter isVideoLive: whether the video is live (controls `after-show`).
     public func sendHeartForCurrentStream(isVideoLive: Bool) {
         guard let current = currentStream, let tipioIntId = Int(current.id) else {
             print("❌ [LiveShow] sendHeart: no current stream or invalid id")
