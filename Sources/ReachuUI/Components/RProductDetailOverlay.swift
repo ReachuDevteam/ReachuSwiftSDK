@@ -698,18 +698,19 @@ public struct RProductDetailOverlay: View {
         #endif
         
         // Track product added to cart
+        let priceToTrack = selectedVariant?.price.amount ?? product.price.amount
         AnalyticsManager.shared.trackProductAddedToCart(
             productId: String(product.id),
             productName: product.title,
             quantity: quantity,
-            productPrice: Double(product.price.amount),
+            productPrice: Double(priceToTrack),
             productCurrency: product.price.currency_code,
             source: "product_detail"
         )
         
-        // Add to cart
+        // Add to cart 
         Task {
-            await cartManager.addProduct(product, quantity: quantity)
+            await cartManager.addProduct(product, variant: selectedVariant, quantity: quantity)
             
             // Show quick success animation then close modal
             await MainActor.run {
@@ -730,47 +731,77 @@ public struct RProductDetailOverlay: View {
         }
     }
     
-    // MARK: - Helper Functions for Variants
+    // MARK: - Helper Functions for Variants    
+    private var sortedOptions: [Option] {
+        guard let options = product.options else { return [] }
+        return options.sorted { $0.order < $1.order }
+    }
     
-    /// Group variants by option types (Color, Size, etc.)
+    private func parseVariantTitle(_ title: String) -> [String] {
+        let components = title.components(separatedBy: "-")
+        if components.count == 1 {
+            return title.components(separatedBy: " - ")
+        }
+        return components.map { $0.trimmingCharacters(in: .whitespaces) }
+    }
+    
     private func groupVariantsByOptions() -> [String: [String]] {
-        var options: [String: Set<String>] = [:]
+        let sortedOpts = sortedOptions
+        guard !sortedOpts.isEmpty else { return [:] }
         
-        for variant in product.variants {
-            // Extract option name and value from variant title
-            // Example: "Black - Large" → ["Color": "Black", "Size": "Large"]
-            let components = variant.title.components(separatedBy: " - ")
-            
-            if components.count == 1 {
-                // Single option (e.g., "Black")
-                options["Color", default: Set()].insert(components[0])
-            } else if components.count == 2 {
-                // Two options (e.g., "Black - Large")
-                options["Color", default: Set()].insert(components[0])
-                options["Size", default: Set()].insert(components[1])
-            }
+        var options: [String: Set<String>] = [:]
+        for option in sortedOpts {
+            options[option.name] = Set<String>()
         }
         
-        // Convert Set to Array and sort
-        return options.mapValues { Array($0).sorted() }
+        for variant in product.variants {
+            let components = parseVariantTitle(variant.title)            
+            for (index, value) in components.enumerated() {
+                if index < sortedOpts.count {
+                    let optionName = sortedOpts[index].name
+                    options[optionName, default: Set()].insert(value.trimmingCharacters(in: .whitespaces))
+                }
+            }
+        }
+        let orderedPairs: [(String, [String])] = sortedOpts.map { opt in
+            (opt.name, Array(options[opt.name] ?? []).sorted())
+        }
+        return Dictionary(uniqueKeysWithValues: orderedPairs)
     }
     
     /// Update selected variant based on selected options
     private func updateSelectedVariant() {
+        let sortedOpts = sortedOptions
+        guard !sortedOpts.isEmpty else {
+            selectedVariant = product.variants.first
+            return
+        }
+        
         // Find variant that matches selected options
         for variant in product.variants {
-            let components = variant.title.components(separatedBy: " - ")
+            let components = parseVariantTitle(variant.title)
             
-            var matches = true
-            if components.count == 1 {
-                // Single option
-                if selectedOptions["Color"] != components[0] {
+            var matches = true            
+            for (index, option) in sortedOpts.enumerated() {
+                if index < components.count {
+                    let expectedValue = components[index].trimmingCharacters(in: .whitespaces)
+
+                    if let selectedValue = selectedOptions[option.name], selectedValue != expectedValue {
+                        matches = false
+                        break
+                    }
+                } else {
                     matches = false
+                    break
                 }
-            } else if components.count == 2 {
-                // Two options
-                if selectedOptions["Color"] != components[0] || selectedOptions["Size"] != components[1] {
-                    matches = false
+            }
+            
+            if matches {
+                for option in sortedOpts {
+                    if selectedOptions[option.name] == nil {
+                        matches = false
+                        break
+                    }
                 }
             }
             
@@ -788,15 +819,18 @@ public struct RProductDetailOverlay: View {
             return
         }
         
-        let components = firstVariant.title.components(separatedBy: " - ")
+        let sortedOpts = sortedOptions
+        guard !sortedOpts.isEmpty else {
+            selectedVariant = firstVariant
+            return
+        }
         
-        if components.count == 1 {
-            // Single option
-            selectedOptions["Color"] = components[0]
-        } else if components.count == 2 {
-            // Two options
-            selectedOptions["Color"] = components[0]
-            selectedOptions["Size"] = components[1]
+        let components = parseVariantTitle(firstVariant.title)        
+        for (index, value) in components.enumerated() {
+            if index < sortedOpts.count {
+                let optionName = sortedOpts[index].name
+                selectedOptions[optionName] = value.trimmingCharacters(in: .whitespaces)
+            }
         }
         
         selectedVariant = firstVariant
