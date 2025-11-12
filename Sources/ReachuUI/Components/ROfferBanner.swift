@@ -828,6 +828,8 @@ private struct ShimmerModifier: ViewModifier {
 /// Container view that manages the offer banner lifecycle (legacy name - use ROfferBannerDynamic)
 @available(*, deprecated, renamed: "ROfferBannerDynamic", message: "Use ROfferBannerDynamic instead")
 public struct ROfferBannerContainer: View {
+    public init() {}
+    
     public var body: some View {
         ROfferBannerDynamic()
     }
