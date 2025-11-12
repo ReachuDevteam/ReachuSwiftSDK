@@ -3818,12 +3818,20 @@ struct CountryCodePicker: View {
             return fallbackCountryCodes
         }
         
-        // Build list from available markets
+        // Build list from available markets and remove duplicates by country code
+        var seenCountryCodes = Set<String>()
         return availableMarkets.compactMap { market in
             guard let code = market.phoneCode,
                   let countryCode = market.code else {
                 return nil
             }
+            
+            // Skip if we've already seen this country code
+            guard !seenCountryCodes.contains(countryCode) else {
+                return nil
+            }
+            seenCountryCodes.insert(countryCode)
+            
             let flag = market.flag ?? "🌍"
             let name = market.name ?? countryCode
             // Check if flag is a URL
@@ -3839,7 +3847,7 @@ struct CountryCodePicker: View {
 
     var body: some View {
         Menu {
-            ForEach(countryCodes, id: \.0) { code, flagEmoji, name, flagURL in
+            ForEach(countryCodes, id: \.2) { code, flagEmoji, name, flagURL in
                 Button(action: { selectedCode = code }) {
                     HStack {
                         // Show image from URL or emoji
