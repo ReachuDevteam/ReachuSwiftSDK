@@ -114,6 +114,11 @@
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
     }
   },
+  "localization": {
+    "defaultLanguage": "no",
+    "fallbackLanguage": "en",
+    "translationsFile": "reachu-translations"
+  },
   "analytics": {
     "enabled": true,
     "mixpanelToken": "9195a4c4d8a7bb1ea3df1554a3f0b127",

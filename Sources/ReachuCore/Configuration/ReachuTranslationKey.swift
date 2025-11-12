@@ -208,7 +208,7 @@ public enum ReachuTranslationKey: String, CaseIterable {
         "payment.confirmWithKlarna": "Confirm with Klarna",
         "payment.cancel": "Cancel",
         "payment.klarnaCheckout": "Klarna Checkout",
-        "payment.connectingKlarna": "Conectando con Klarna...",
+        "payment.connectingKlarna": "Connecting with Klarna...",
         
         // Product
         "product.details": "Details",

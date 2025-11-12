@@ -107,6 +107,11 @@
     "phoneCode": "+47",
     "flag": "https://flagcdn.com/w320/no.png"
   },
+  "localization": {
+    "defaultLanguage": "no",
+    "fallbackLanguage": "en",
+    "translationsFile": "reachu-translations"
+  },
   "liveShow": {
     "campaignId": 3,
     "tipio": {
