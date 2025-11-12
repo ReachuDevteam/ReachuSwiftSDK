@@ -18,7 +18,7 @@ Demo/*/.swiftpm/
 Package.resolved
 
 # Demo applications (only in main branch, ignored in sdk branch)
-Demo/
+# Demo/ - Removed to allow tracking in main branch
 
 # Development workspace (only in main branch, ignored in sdk branch)
 ReachuWorkspace.xcworkspace/
