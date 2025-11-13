@@ -573,6 +573,7 @@ extension CartManager {
                     payload: ["cartId": dto.cartId, "itemCount": dto.lineItems.count]
                 )
                 sync(from: dto)
+                products.append(product)
                 ToastManager.shared.showSuccess("Added \(product.title) to cart")
             }
         } catch let error as SdkException {
@@ -634,6 +635,9 @@ extension CartManager {
             removeItemLocally(item)
         }
 
+        if let index = products.firstIndex(where: { $0.id == item.productId }) {
+            products.remove(at: index)
+        }
         updateCartTotal()
         ToastManager.shared.showInfo("Removed \(item.title) from cart")
     }
