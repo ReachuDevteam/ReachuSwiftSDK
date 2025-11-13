@@ -37,6 +37,7 @@ public struct RCheckoutOverlay: View {
     @State private var email = ""
     @State private var phone = ""
     @State private var phoneCountryCode = ""
+    @State private var phoneCountryCodeISO: String? = nil
     @State private var address1 = ""
     @State private var address2 = ""
     @State private var city = ""
@@ -306,8 +307,12 @@ public struct RCheckoutOverlay: View {
             .onChange(of: cartManager.phoneCode) { newValue in
                 syncPhoneCode(newValue)
             }
-            .onChange(of: cartManager.selectedMarket) { _ in
+            .onChange(of: cartManager.selectedMarket) { newMarket in
                 syncSelectedMarket()
+                // When market changes from API, update phone country code ISO
+                if let market = newMarket {
+                    phoneCountryCodeISO = market.code
+                }
             }
             .onChange(of: vippsHandler.paymentStatus) { newStatus in
                 handleVippsPaymentStatusChange(newStatus)
@@ -1604,10 +1609,41 @@ public struct RCheckoutOverlay: View {
         
         if let userPhoneCountryCode = userPhoneCountryCode, !userPhoneCountryCode.isEmpty {
             phoneCountryCode = userPhoneCountryCode
+            // Try to find the country code from available markets (from API)
+            // If multiple countries share the same phone code, prefer the one matching selectedMarket or defaultShippingCountry
+            if let selectedMarket = cartManager.selectedMarket, 
+               let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: { 
+                   $0.phoneCode == userPhoneCountryCode && $0.code == selectedMarket.code 
+               }) {
+                phoneCountryCodeISO = matchingMarket.code
+            } else {
+                let defaultCountry = ReachuConfiguration.shared.marketConfiguration.countryCode
+                if let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: { 
+                    $0.phoneCode == userPhoneCountryCode && $0.code == defaultCountry 
+                }) {
+                    phoneCountryCodeISO = matchingMarket.code
+                } else if let market = ReachuConfiguration.shared.availableMarkets.first(where: { $0.phoneCode == userPhoneCountryCode }) {
+                    phoneCountryCodeISO = market.code
+                }
+            }
         } else if let market = cartManager.selectedMarket {
-            phoneCountryCode = market.phoneCode
-        } else if isDevelopment {
-            phoneCountryCode = "+1"
+            phoneCountryCode = market.phoneCode ?? "+1"
+            phoneCountryCodeISO = market.code
+        } else {
+            // Try to get from availableMarkets (from API) first, then fallback
+            let defaultCountry = ReachuConfiguration.shared.marketConfiguration.countryCode
+            if let apiMarket = ReachuConfiguration.shared.availableMarkets.first(where: { $0.code == defaultCountry }) {
+                phoneCountryCode = apiMarket.phoneCode ?? "+1"
+                phoneCountryCodeISO = apiMarket.code
+            } else if isDevelopment {
+                phoneCountryCode = "+1"
+                // Default to CA if available in API markets, otherwise US, otherwise fallback
+                if let caMarket = ReachuConfiguration.shared.availableMarkets.first(where: { $0.code == "CA" }) {
+                    phoneCountryCodeISO = "CA"
+                } else if let usMarket = ReachuConfiguration.shared.availableMarkets.first(where: { $0.code == "US" }) {
+                    phoneCountryCodeISO = "US"
+                }
+            }
         }
         
         if let userAddress1 = userAddress1, !userAddress1.isEmpty {
@@ -2513,6 +2549,7 @@ extension RCheckoutOverlay {
                 HStack(spacing: ReachuSpacing.sm) {
                     CountryCodePicker(
                         selectedCode: $phoneCountryCode,
+                        selectedCountryCode: $phoneCountryCodeISO,
                         availableMarkets: ReachuConfiguration.shared.availableMarkets
                     )
                         .frame(width: 100)
@@ -3531,7 +3568,8 @@ extension RCheckoutOverlay {
     private func syncSelectedMarket() {
         if let market = cartManager.selectedMarket {
             country = market.name
-            syncPhoneCode(market.phoneCode)
+            syncPhoneCode(market.phoneCode ?? "+1")
+            phoneCountryCodeISO = market.code
             checkoutDraft.countryName = market.name
             checkoutDraft.countryCode = market.code
         }
@@ -3540,6 +3578,27 @@ extension RCheckoutOverlay {
     private func syncPhoneCode(_ code: String) {
         phoneCountryCode = code
         checkoutDraft.phoneCountryCode = code.replacingOccurrences(of: "+", with: "")
+        
+        // If we have a selected country code ISO, keep it
+        // Otherwise, try to find it from available markets (from API)
+        // If multiple countries share the same phone code, prefer the one matching selectedMarket or defaultShippingCountry
+        if phoneCountryCodeISO == nil {
+            if let selectedMarket = cartManager.selectedMarket,
+               let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: { 
+                   $0.phoneCode == code && $0.code == selectedMarket.code 
+               }) {
+                phoneCountryCodeISO = matchingMarket.code
+            } else {
+                let defaultCountry = ReachuConfiguration.shared.marketConfiguration.countryCode
+                if let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: { 
+                    $0.phoneCode == code && $0.code == defaultCountry 
+                }) {
+                    phoneCountryCodeISO = matchingMarket.code
+                } else if let market = ReachuConfiguration.shared.availableMarkets.first(where: { $0.phoneCode == code }) {
+                    phoneCountryCodeISO = market.code
+                }
+            }
+        }
     }
     
     private func loadCheckoutTotals() async {
@@ -3801,11 +3860,12 @@ extension RCheckoutOverlay {
 
 struct CountryCodePicker: View {
     @Binding var selectedCode: String
+    @Binding var selectedCountryCode: String?
     let availableMarkets: [GetAvailableMarketsDto]
     
-    // Fallback list if no markets available
+    // Fallback list if no markets available - includes both CA and US with +1
     private let fallbackCountryCodes: [(String, String, String, String?)] = [
-        ("+1", "🇺🇸", "US", nil), ("+44", "🇬🇧", "UK", nil), ("+49", "🇩🇪", "DE", nil), ("+33", "🇫🇷", "FR", nil),
+        ("+1", "🇨🇦", "CA", nil), ("+1", "🇺🇸", "US", nil), ("+44", "🇬🇧", "GB", nil), ("+49", "🇩🇪", "DE", nil), ("+33", "🇫🇷", "FR", nil),
         ("+39", "🇮🇹", "IT", nil), ("+34", "🇪🇸", "ES", nil), ("+31", "🇳🇱", "NL", nil), ("+46", "🇸🇪", "SE", nil),
         ("+47", "🇳🇴", "NO", nil), ("+45", "🇩🇰", "DK", nil), ("+41", "🇨🇭", "CH", nil), ("+43", "🇦🇹", "AT", nil),
         ("+32", "🇧🇪", "BE", nil), ("+351", "🇵🇹", "PT", nil), ("+52", "🇲🇽", "MX", nil), ("+54", "🇦🇷", "AR", nil),
@@ -3818,19 +3878,12 @@ struct CountryCodePicker: View {
             return fallbackCountryCodes
         }
         
-        // Build list from available markets and remove duplicates by country code
-        var seenCountryCodes = Set<String>()
+        // Build list from available markets - keep all countries even if they share phone code
         return availableMarkets.compactMap { market in
             guard let code = market.phoneCode,
                   let countryCode = market.code else {
                 return nil
             }
-            
-            // Skip if we've already seen this country code
-            guard !seenCountryCodes.contains(countryCode) else {
-                return nil
-            }
-            seenCountryCodes.insert(countryCode)
             
             let flag = market.flag ?? "🌍"
             let name = market.name ?? countryCode
@@ -3838,17 +3891,31 @@ struct CountryCodePicker: View {
             let flagURL = flag.hasPrefix("http") ? flag : nil
             let flagEmoji = flagURL == nil ? flag : "🌍"
             return (code, flagEmoji, countryCode, flagURL)
-        }.sorted { $0.0 < $1.0 } // Sort by phone code
+        }.sorted { first, second in
+            // Sort by phone code first, then by country code
+            if first.0 != second.0 {
+                return first.0 < second.0
+            }
+            return first.2 < second.2
+        }
     }
     
     private var currentSelection: (String, String, String, String?)? {
-        countryCodes.first(where: { $0.0 == selectedCode })
+        // If we have a specific countryCode selected, use that to find the exact match
+        if let countryCode = selectedCountryCode {
+            return countryCodes.first(where: { $0.2 == countryCode && $0.0 == selectedCode })
+        }
+        // Otherwise, find first match by phone code
+        return countryCodes.first(where: { $0.0 == selectedCode })
     }
 
     var body: some View {
         Menu {
-            ForEach(countryCodes, id: \.2) { code, flagEmoji, name, flagURL in
-                Button(action: { selectedCode = code }) {
+            ForEach(countryCodes, id: \.2) { code, flagEmoji, countryCode, flagURL in
+                Button(action: { 
+                    selectedCode = code
+                    selectedCountryCode = countryCode
+                }) {
                     HStack {
                         // Show image from URL or emoji
                         if let flagURL = flagURL, let url = URL(string: flagURL) {
@@ -3876,13 +3943,19 @@ struct CountryCodePicker: View {
                             Text(flagEmoji)
                                 .font(.system(size: 16))
                         }
-                        Text(name)
-                            .font(.system(size: 14))
+                        // Show country name or code
+                        if let market = availableMarkets.first(where: { $0.code == countryCode }) {
+                            Text(market.name ?? countryCode)
+                                .font(.system(size: 14))
+                        } else {
+                            Text(countryCode)
+                                .font(.system(size: 14))
+                        }
                         Text(code)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(ReachuColors.textSecondary)
                         Spacer()
-                        if selectedCode == code {
+                        if selectedCode == code && selectedCountryCode == countryCode {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(ReachuColors.primary)
                         }
