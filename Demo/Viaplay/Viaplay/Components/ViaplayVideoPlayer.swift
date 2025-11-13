@@ -732,8 +732,8 @@ class VideoPlayerViewModel: ObservableObject {
 // MARK: - Orientation Helper
 func setOrientation(_ orientation: UIInterfaceOrientationMask) {
     if #available(iOS 16.0, *) {
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
-            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
+    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+        windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: orientation))
         }
     } else {
         // Fallback for iOS 15.0: Use UIDevice orientation change
