@@ -14,6 +14,8 @@ struct VGHomeView: View {
     @State private var selectedMatchTitle = ""
     @State private var selectedMatchSubtitle = ""
     
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     var body: some View {
         ZStack {
             // Background
@@ -175,13 +177,13 @@ struct VGHomeView: View {
                     .padding(.horizontal, 16)
                     // Auto-loads based on ReachuConfiguration (currency/country)
                     RProductSlider(
-                        title: nil,
-                        products: nil,
-                        categoryId: nil,
+                        title: "",
                         layout: .cards,
-                        showSeeAll: false,
-                        maxItems: 12
+                        maxItems: 6,
+                        currency: cartManager.currency,
+                        country: cartManager.country
                     )
+                    .environmentObject(cartManager)
                     .padding(.bottom, 8)
                 }
             // .frame(maxWidth: geometry.size.width)

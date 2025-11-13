@@ -23,7 +23,7 @@
       "borderSecondary": "#BDBDBD"
     },
     "darkColors": {
-      "primary": "#000000",
+      "primary": "#CCCCCC",
       "secondary": "#FF0000",
       "background": "#0A0A0A",
       "surface": "#1A1A1A",
@@ -113,7 +113,7 @@
     "translationsFile": "reachu-translations"
   },
   "liveShow": {
-    "campaignId": 3,
+    "campaignId": 10,
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
