@@ -1710,6 +1710,63 @@ public struct RCheckoutOverlay: View {
         checkoutDraft.appliedDiscount = appliedDiscount
     }
 
+    // MARK: - Variant Helpers
+
+    private func optionDetails(for item: CartManager.CartItem) -> [(name: String, value: String)] {
+        guard let variantTitle = item.variantTitle, !variantTitle.isEmpty else {
+            return []
+        }
+
+        var sortedOptions: [Option] = []
+        if let product = cartManager.products.first(where: { $0.id == item.productId }),
+           let productOptions = product.options,
+           !productOptions.isEmpty {
+
+            sortedOptions = productOptions.sorted { $0.order < $1.order }
+            let components = parseVariantTitle(variantTitle)
+
+            var details: [(name: String, value: String)] = []
+            for (index, option) in sortedOptions.enumerated() {
+                guard index < components.count else { break }
+                let value = components[index].trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !value.isEmpty else { continue }
+                details.append((name: formattedOptionName(option.name), value: value))
+            }
+
+            if !details.isEmpty {
+                return details
+            }
+        }
+
+        let components = parseVariantTitle(variantTitle).filter { !$0.isEmpty }
+
+        return components.enumerated().map { index, value in
+            let optionName = index < sortedOptions.count ? sortedOptions[index].name : "Option \(index + 1)"
+            return (name: optionName, value: value)
+        }
+    }
+
+    private func parseVariantTitle(_ title: String) -> [String] {
+        let dashSeparated = title.components(separatedBy: "-")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if dashSeparated.count > 1 {
+            return dashSeparated
+        }
+
+        return title
+            .components(separatedBy: " - ")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+    }
+
+    private func formattedOptionName(_ name: String) -> String {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "Option" }
+        return trimmed.prefix(1).uppercased() + trimmed.dropFirst()
+    }
+
     #if os(iOS) && canImport(KlarnaMobileSDK)
         private func klarnaTestCustomer() -> KlarnaNativeCustomerInputDto {
             KlarnaNativeCustomerInputDto(
@@ -2745,29 +2802,22 @@ extension RCheckoutOverlay {
                     }
 
                     // Product details
-                    VStack(spacing: ReachuSpacing.xs) {
-                        HStack {
-                            Text("Order ID:")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(ReachuColors.textSecondary)
+                    let optionDetailsList = optionDetails(for: item)
+                    if !optionDetailsList.isEmpty {
+                        VStack(spacing: ReachuSpacing.xs) {
+                            ForEach(Array(optionDetailsList.enumerated()), id: \.offset) { _, detail in
+                                HStack {
+                                    Text("\(detail.name):")
+                                        .font(.system(size: 14, weight: .regular))
+                                        .foregroundColor(ReachuColors.textSecondary)
 
-                            Spacer()
+                                    Spacer()
 
-                            Text("BD23672983")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(ReachuColors.textSecondary)
-                        }
-
-                        HStack {
-                            Text("Colors:")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(ReachuColors.textSecondary)
-
-                            Spacer()
-
-                            Text("Like Water")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundColor(ReachuColors.textSecondary)
+                                    Text(detail.value)
+                                        .font(.system(size: 14, weight: .regular))
+                                        .foregroundColor(ReachuColors.textSecondary)
+                                }
+                            }
                         }
                     }
 
