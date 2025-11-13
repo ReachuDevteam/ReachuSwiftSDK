@@ -91,14 +91,15 @@ struct HomeView: View {
                                 .padding(.horizontal, TV2Theme.Spacing.md)
                                 
                                 // Products carousel
-                                RProductSlider(
-                                    title: "",
-                                    layout: .cards,
-                                    maxItems: 6,
-                                    currency: cartManager.currency,
-                                    country: cartManager.country
-                                )
-                                .environmentObject(cartManager)
+                                RProductCarousel(componentId: "bad51b3b-c4cf-445f-b15a-f9a630f40db0", layout: "compact")  
+                                //RProductSlider(
+                                    //title: "",
+                                    //layout: .cards,
+                                    //maxItems: 6,
+                                    //currency: cartManager.currency,
+                                    //country: cartManager.country
+                                //)
+                                //.environmentObject(cartManager)
                             }
                             .padding(.top, TV2Theme.Spacing.lg)
                             .padding(.bottom, TV2Theme.Spacing.xl)

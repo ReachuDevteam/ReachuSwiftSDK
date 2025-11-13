@@ -226,10 +226,10 @@ struct MatchDetailView: View {
                             .padding(.vertical, TV2Theme.Spacing.sm)
                         
                         // Products carousel from SDK
-                        RProductSlider(
-                            title: "Produkter",
-                            layout: .cards
-                        )
+                        //RProductSlider(
+                            //title: "Produkter",
+                            //layout: .cards
+                        //)
                         
                         // All football live section
                         VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
@@ -243,8 +243,38 @@ struct MatchDetailView: View {
                                 .font(.system(size: 14, weight: .regular))
                                 .foregroundColor(TV2Theme.Colors.textSecondary)
                                 .padding(.horizontal, TV2Theme.Spacing.md)
-                                .padding(.bottom, 100)
+                                //.padding(.bottom, 100)
                         }
+
+                        VStack(alignment: .leading, spacing: TV2Theme.Spacing.md) {
+                            // Custom header with logo
+                            HStack {
+                                Text("Ukens tilbud")
+                                    .font(TV2Theme.Typography.title)
+                                    .foregroundColor(TV2Theme.Colors.textPrimary)
+                                
+                                Spacer()
+                                
+                                Image("logo")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 20)
+                            }
+                            .padding(.horizontal, TV2Theme.Spacing.md)
+                            
+                            // Products carousel
+                            RProductCarousel(componentId: "bad51b3b-c4cf-445f-b15a-f9a630f40db0", layout: "compact")  
+                            //RProductSlider(
+                                //title: "",
+                                //layout: .cards,
+                                //maxItems: 6,
+                                //currency: cartManager.currency,
+                                //country: cartManager.country
+                            //)
+                            //.environmentObject(cartManager)
+                        }
+                        .padding(.top, TV2Theme.Spacing.lg)
+                        .padding(.bottom, TV2Theme.Spacing.xl)
                     }
                 }
             }
