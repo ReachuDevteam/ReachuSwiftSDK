@@ -138,13 +138,18 @@ public class CheckoutViewModel: ObservableObject {
     }
     
     public func loadCheckoutTotals() async {
-        guard let checkoutId = cartManager.checkoutId else { return }
+        guard let checkoutId = cartManager.checkoutId else {
+            ReachuLogger.debug("No checkoutId available to load totals", component: "CheckoutViewModel")
+            return
+        }
         
-        do {
-            let totals = try await cartManager.sdk.checkout.getById(checkout_id: checkoutId)
-            checkoutTotals = totals
-        } catch {
-            ReachuLogger.error("Failed to load checkout totals: \(error)", component: "CheckoutViewModel")
+        ReachuLogger.debug("Loading checkout totals for checkoutId: \(checkoutId)", component: "CheckoutViewModel")
+        
+        if let checkout = await cartManager.getCheckoutById(checkoutId: checkoutId) {
+            checkoutTotals = checkout
+            ReachuLogger.debug("Checkout totals loaded - shipping: \(checkout.totals?.shipping ?? 0), taxes: \(checkout.totals?.taxes ?? 0)", component: "CheckoutViewModel")
+        } else {
+            ReachuLogger.debug("Failed to load checkout totals", component: "CheckoutViewModel")
         }
     }
     
@@ -771,25 +776,75 @@ public class CheckoutViewModel: ObservableObject {
             return
         }
         
-        // Track checkout started
+        // Track checkout started with user identification
         let cartValue = cartManager.cartTotal
         let productCount = cartManager.items.count
         
         AnalyticsManager.shared.trackCheckoutStarted(
             checkoutId: chkId,
-            revenue: cartValue,
+            cartValue: cartValue,
             currency: cartManager.currency,
-            products: cartManager.items.map { item in
-                [
-                    "product_id": String(item.productId),
-                    "product_name": item.title,
-                    "quantity": item.quantity,
-                    "price": item.price
-                ]
-            }
+            productCount: productCount,
+            userEmail: email.isEmpty ? nil : email,
+            userFirstName: firstName.isEmpty ? nil : firstName,
+            userLastName: lastName.isEmpty ? nil : lastName
         )
         
+        let addr = checkoutDraft.addressPayload(fallbackCountryISO2: cartManager.country)
+        
+        _ = await cartManager.updateCheckout(
+            checkoutId: chkId,
+            email: checkoutDraft.email,
+            successUrl: nil,
+            cancelUrl: nil,
+            paymentMethod: checkoutDraft.paymentMethodRaw.capitalized,
+            shippingAddress: addr,
+            billingAddress: addr,
+            acceptsTerms: checkoutDraft.acceptsTerms,
+            acceptsPurchaseConditions: checkoutDraft.acceptsPurchaseConditions
+        )
+        
+        // Load checkout totals after updating
+        await loadCheckoutTotals()
+        
         proceedToNextStep()
+    }
+    
+    // MARK: - Market Sync
+    
+    public func syncSelectedMarket() {
+        if let market = cartManager.selectedMarket {
+            country = market.name
+            syncPhoneCode(market.phoneCode ?? "+1")
+            phoneCountryCodeISO = market.code
+            checkoutDraft.countryName = market.name
+            checkoutDraft.countryCode = market.code
+        }
+    }
+    
+    public func syncPhoneCode(_ code: String) {
+        phoneCountryCode = code
+        checkoutDraft.phoneCountryCode = code.replacingOccurrences(of: "+", with: "")
+        
+        // If we have a selected country code ISO, keep it
+        // Otherwise, try to find it from available markets (from API)
+        if phoneCountryCodeISO == nil {
+            if let selectedMarket = cartManager.selectedMarket,
+               let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: {
+                   $0.phoneCode == code && $0.code == selectedMarket.code
+               }) {
+                phoneCountryCodeISO = matchingMarket.code
+            } else {
+                let defaultCountry = ReachuConfiguration.shared.marketConfiguration.countryCode
+                if let matchingMarket = ReachuConfiguration.shared.availableMarkets.first(where: {
+                    $0.phoneCode == code && $0.code == defaultCountry
+                }) {
+                    phoneCountryCodeISO = matchingMarket.code
+                } else if let market = ReachuConfiguration.shared.availableMarkets.first(where: { $0.phoneCode == code }) {
+                    phoneCountryCodeISO = market.code
+                }
+            }
+        }
     }
 }
 
