@@ -113,7 +113,7 @@
     "translationsFile": "reachu-translations"
   },
   "liveShow": {
-    "campaignId": 10,
+    "campaignId": 20,
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"

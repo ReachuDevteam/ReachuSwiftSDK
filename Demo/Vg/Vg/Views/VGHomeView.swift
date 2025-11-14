@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuUI
+import ReachuCore
 
 struct VGHomeView: View {
     @State private var selectedTab = 3 // "Direkte" tab
@@ -16,6 +17,7 @@ struct VGHomeView: View {
     
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft
+    @StateObject private var componentManager = ComponentManager.shared
     var body: some View {
         ZStack {
             // Background
@@ -176,15 +178,20 @@ struct VGHomeView: View {
                     .padding(.top, 24)
                     .padding(.horizontal, 16)
                     // Auto-loads based on ReachuConfiguration (currency/country)
-                    RProductSlider(
-                        title: "",
-                        layout: .cards,
-                        maxItems: 6,
-                        currency: cartManager.currency,
-                        country: cartManager.country
-                    )
-                    .environmentObject(cartManager)
-                    .padding(.bottom, 8)
+                    RProductCarousel(componentId: "product-carousel-template", layout: "compact")
+
+                    if let bannerConfig = componentManager.activeBanner {
+                        ROfferBanner(config: bannerConfig)
+                    }
+                    //RProductSlider(
+                        //title: "",
+                        //layout: .cards,
+                        //maxItems: 6,
+                        //currency: cartManager.currency,
+                        //country: cartManager.country
+                    //)
+                    //.environmentObject(cartManager)
+                    //.padding(.bottom, 8)
                 }
             // .frame(maxWidth: geometry.size.width)
                 .padding(.bottom, 100)            

@@ -1,5 +1,6 @@
 import SwiftUI
 import ReachuUI
+import ReachuCore
 
 struct MatchDetailView: View {
     let matchTitle: String
@@ -7,6 +8,10 @@ struct MatchDetailView: View {
     let onBackTapped: () -> Void
     let onShareTapped: () -> Void
     
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
+    @StateObject private var componentManager = ComponentManager.shared
+
     private let contentItems = [
         (image: "card2x1", title: "Tondela - Sporting CP", subtitle: "Sport · 2. oktober", duration: "02:12:09"),
         (image: "card2x2", title: "Jose Mourinho Interview", subtitle: "Sport · 1. oktober", duration: "03:01:55")
@@ -122,15 +127,20 @@ struct MatchDetailView: View {
                         .padding(.top, 24)
                         .padding(.horizontal, 16)
                         // Auto-loads based on ReachuConfiguration (currency/country)
-                        RProductSlider(
-                            title: nil,
-                            products: nil,
-                            categoryId: nil,
-                            layout: .cards,
-                            showSeeAll: false,
-                            maxItems: 12
-                        )
-                        .padding(.bottom, 8)
+                        RProductCarousel(componentId: "product-carousel-template", layout: "compact")
+
+                        if let bannerConfig = componentManager.activeBanner {
+                            ROfferBanner(config: bannerConfig)
+                        }
+                        //RProductSlider(
+                            //title: nil,
+                            //products: nil,
+                            //categoryId: nil,
+                            //layout: .cards,
+                            //showSeeAll: false,
+                            //maxItems: 12
+                        //)
+                        //.padding(.bottom, 8)
                     }
                         
                     // Bottom padding
