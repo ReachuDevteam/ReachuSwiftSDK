@@ -84,12 +84,34 @@ public struct RButton: View {
                     .font(size.font)
             }
             .padding(size.padding)
-            .background(backgroundColor)
             .foregroundColor(foregroundColor)
-            .cornerRadius(ReachuBorderRadius.medium)
-            .overlay(
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                    .stroke(borderColor, lineWidth: borderWidth)
+            .background(
+                Group {
+                    if style == .primary {
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        ReachuColors.primary,
+                                        ReachuColors.primary.opacity(0.8)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                    .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                            )
+                    } else {
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(backgroundColor)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                    .stroke(borderColor, lineWidth: borderWidth)
+                            )
+                    }
+                }
             )
         }
         .disabled(isDisabled || isLoading)

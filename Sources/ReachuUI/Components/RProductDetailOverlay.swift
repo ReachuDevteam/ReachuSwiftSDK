@@ -119,6 +119,24 @@ public struct RProductDetailOverlay: View {
     private var productDetailContent: some View {
         NavigationView {
             ZStack(alignment: .top) {
+                // Loading overlay - muestra mientras carga la primera imagen
+                if !imageLoaded && !displayImages.isEmpty {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
+                            .fill(ReachuColors.background)
+                            .frame(height: productDetailConfig.imageHeight ?? 400)
+                        
+                        VStack(spacing: ReachuSpacing.md) {
+                            RCustomLoader(style: .rotate, size: 48)
+                            Text(RLocalizedString(ReachuTranslationKey.loading.rawValue))
+                                .font(ReachuTypography.body)
+                                .foregroundColor(adaptiveColors.textSecondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .transition(.opacity)
+                }
+                
                 ScrollView {
                     VStack(spacing: 0) {
                     // Image Gallery first (edge to edge)
@@ -242,8 +260,7 @@ public struct RProductDetailOverlay: View {
                     errorView: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                         .fill(ReachuColors.background)
                         .overlay {
-                            Image(systemName: "exclamationmark.triangle")
-                                .foregroundColor(ReachuColors.error)
+                            RCustomLoader(style: .rotate, size: 30)
                         })
                 )
                 .aspectRatio(contentMode: .fill)
@@ -304,9 +321,7 @@ public struct RProductDetailOverlay: View {
                                         errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                             .fill(ReachuColors.background)
                                             .overlay {
-                                                Image(systemName: "exclamationmark.triangle")
-                                                    .font(.caption)
-                                                    .foregroundColor(ReachuColors.error)
+                                                RCustomLoader(style: .rotate, size: 16)
                                             })
                                     )
                                     .aspectRatio(contentMode: .fill)

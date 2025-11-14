@@ -223,8 +223,23 @@ public struct RCheckoutOverlay: View {
             }
             .onChange(of: checkoutStep) { newStep in
                 if newStep == .orderSummary {
-                    Task {
+                    Task { @MainActor in
+                        isLoading = true
                         await loadCheckoutTotals()
+                        
+                        // Refresh shipping options and auto-select if only one option
+                        await cartManager.refreshShippingOptions()
+                        
+                        // Auto-select shipping if only one option available for each item
+                        for item in cartManager.items {
+                            // Only auto-select if item doesn't have shipping selected and has exactly one option
+                            if (item.shippingId == nil || item.shippingId!.isEmpty) && item.availableShippings.count == 1 {
+                                let singleOption = item.availableShippings[0]
+                                cartManager.setShippingOption(for: item.id, optionId: singleOption.id)
+                            }
+                        }
+                        
+                        isLoading = false
                     }
                 } else if newStep == .success {
                     // Track transaction completed
@@ -253,16 +268,20 @@ public struct RCheckoutOverlay: View {
                     }
                     
                     // Reset cart and create new one after successful payment
-                    Task {
+                    Task { @MainActor in
                         ReachuLogger.debug("Payment successful - resetting cart and creating new one", component: "RCheckoutOverlay")
+                        isLoading = true
                         await cartManager.resetCartAndCreateNew()
+                        isLoading = false
                     }
                 }
             }
             .onChange(of: cartManager.checkoutId) { checkoutId in
                 if let checkoutId = checkoutId, checkoutStep == .orderSummary {
-                    Task {
+                    Task { @MainActor in
+                        isLoading = true
                         await loadCheckoutTotals()
+                        isLoading = false
                     }
                 }
             }
@@ -300,8 +319,10 @@ public struct RCheckoutOverlay: View {
             .onAppear {
                 ReachuLogger.debug("onAppear triggered", component: "RCheckoutOverlay")
                 syncSelectedMarket()
-                Task {
+                Task { @MainActor in
+                    isLoading = true
                     await loadAvailablePaymentMethods()
+                    isLoading = false
                 }
             }
             .onChange(of: cartManager.phoneCode) { newValue in
@@ -603,17 +624,47 @@ public struct RCheckoutOverlay: View {
                             Spacer()
 
                             Button(action: {
-                                withAnimation(.easeInOut(duration: 0.3)) {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
                                     isEditingAddress.toggle()
                                 }
                             }) {
-                                Image(
-                                    systemName: isEditingAddress
-                                        ? "checkmark" : "pencil"
+                                Group {
+                                    if isEditingAddress {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.white)
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .transition(.scale.combined(with: .opacity))
+                                    } else {
+                                        Image(systemName: "square.and.pencil")
+                                            .foregroundColor(ReachuColors.primary)
+                                            .font(.system(size: 14))
+                                            .transition(.scale.combined(with: .opacity))
+                                    }
+                                }
+                                .frame(width: 32, height: 32)
+                                .background(
+                                    Group {
+                                        if isEditingAddress {
+                                            LinearGradient(
+                                                colors: [
+                                                    ReachuColors.primary,
+                                                    ReachuColors.primary.opacity(0.8)
+                                                ],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        } else {
+                                            Color.clear
+                                        }
+                                    }
                                 )
-                                .foregroundColor(ReachuColors.primary)
-                                .font(.system(size: 16))
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(ReachuColors.primary, lineWidth: isEditingAddress ? 0 : 1)
+                                )
                             }
+                            .animation(.spring(response: 0.4, dampingFraction: 0.6), value: isEditingAddress)
                         }
                         .padding(.horizontal, ReachuSpacing.lg)
 
@@ -662,7 +713,22 @@ public struct RCheckoutOverlay: View {
                 }
             }
             .task {
+                await MainActor.run {
+                    isLoading = true
+                }
                 await cartManager.refreshShippingOptions()
+                
+                // Auto-select shipping if only one option available for each item
+                await MainActor.run {
+                    for item in cartManager.items {
+                        // Only auto-select if item doesn't have shipping selected and has exactly one option
+                        if (item.shippingId == nil || item.shippingId!.isEmpty) && item.availableShippings.count == 1 {
+                            let singleOption = item.availableShippings[0]
+                            cartManager.setShippingOption(for: item.id, optionId: singleOption.id)
+                        }
+                    }
+                    isLoading = false
+                }
             }
 
             // Bottom Button - Full Width
@@ -693,13 +759,11 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
                 
-                RButton(
-                    title: RLocalizedString(ReachuTranslationKey.proceedToCheckout.rawValue),
-                    style: .primary,
-                    size: .large,
-                    isDisabled: !canProceedToNext
-                ) {
-                    Task {
+                // Custom button with total
+                Button(action: {
+                    Task { @MainActor in
+                        isLoading = true
+                        
                         checkoutDraft.firstName = firstName
                         checkoutDraft.lastName = lastName
                         checkoutDraft.email = email
@@ -729,6 +793,7 @@ public struct RCheckoutOverlay: View {
 
                         guard let chkId = await cartManager.createCheckout()
                         else {
+                            isLoading = false
                             proceedToNext()
                             return
                         }
@@ -767,15 +832,54 @@ public struct RCheckoutOverlay: View {
                         // Load checkout totals after updating
                         await loadCheckoutTotals()
 
+                        isLoading = false
                         proceedToNext()
 
                     }
+                }) {
+                    HStack {
+                        Text(RLocalizedString(ReachuTranslationKey.proceedToCheckout.rawValue))
+                            .font(ReachuTypography.headline)
+                            .foregroundColor(adaptiveColors.surface)
+                        
+                        Spacer()
+                        
+                        Text("\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))")
+                            .font(ReachuTypography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(adaptiveColors.surface)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    .padding(.vertical, ReachuSpacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(
+                                LinearGradient(
+                                    colors: canProceedToNext ? [
+                                        ReachuColors.primary,
+                                        ReachuColors.primary.opacity(0.8)
+                                    ] : [
+                                        ReachuColors.primary.opacity(0.5),
+                                        ReachuColors.primary.opacity(0.4)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                    )
                 }
+                .disabled(!canProceedToNext)
                 .frame(maxWidth: .infinity)  // Full width
                 .padding(.horizontal, ReachuSpacing.lg)
                 .padding(.vertical, ReachuSpacing.md)
             }
             .background(ReachuColors.surface)
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: -2)
         }
     }
 
@@ -842,7 +946,7 @@ public struct RCheckoutOverlay: View {
                 .padding(.top, ReachuSpacing.lg)
             }
 
-            // Bottom Button - Full Width
+            // Bottom Button - Full Width with shadow
             VStack(spacing: ReachuSpacing.sm) {
                 // Validation messages
                 if !canProceedToNext {
@@ -870,12 +974,8 @@ public struct RCheckoutOverlay: View {
                     .padding(.horizontal, ReachuSpacing.lg)
                 }
                 
-                RButton(
-                    title: RLocalizedString(ReachuTranslationKey.initiatePayment.rawValue),
-                    style: .primary,
-                    size: .large,
-                    isDisabled: !canProceedToNext
-                ) {
+                // Custom button with total
+                Button(action: {
                     Task { @MainActor in
                         ReachuLogger.debug("Botón 'Initiate Payment' presionado - selectedPaymentMethod: \(selectedPaymentMethod.rawValue)", component: "RCheckoutOverlay")
                         
@@ -913,15 +1013,54 @@ public struct RCheckoutOverlay: View {
                         ReachuLogger.debug("Llamando a proceedToNext()", component: "RCheckoutOverlay")
                         proceedToNext()
                     }
+                }) {
+                    HStack {
+                        Text(RLocalizedString(ReachuTranslationKey.initiatePayment.rawValue))
+                            .font(ReachuTypography.headline)
+                            .foregroundColor(adaptiveColors.surface)
+                        
+                        Spacer()
+                        
+                        Text("\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))")
+                            .font(ReachuTypography.headline)
+                            .fontWeight(.bold)
+                            .foregroundColor(adaptiveColors.surface)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    .padding(.vertical, ReachuSpacing.md)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(
+                                LinearGradient(
+                                    colors: canProceedToNext ? [
+                                        ReachuColors.primary,
+                                        ReachuColors.primary.opacity(0.8)
+                                    ] : [
+                                        ReachuColors.primary.opacity(0.5),
+                                        ReachuColors.primary.opacity(0.4)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                    )
                 }
+                .disabled(!canProceedToNext)
                 .frame(maxWidth: .infinity)  // Full width
                 .padding(.horizontal, ReachuSpacing.lg)
                 .padding(.vertical, ReachuSpacing.md)
             }
             .background(ReachuColors.surface)
+            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: -2)
         }
         .onChange(of: selectedPaymentMethod) { newMethod in
             Task { @MainActor in
+                isLoading = true
                 _ = await cartManager.updateCheckout(
                     checkoutId: cartManager.checkoutId,
                     email: nil,
@@ -933,6 +1072,7 @@ public struct RCheckoutOverlay: View {
                     acceptsTerms: acceptsTerms,
                     acceptsPurchaseConditions: acceptsPurchaseConditions
                 )
+                isLoading = false
             }
         }
     }
@@ -1204,8 +1344,10 @@ public struct RCheckoutOverlay: View {
                                 style: .primary,
                                 size: .large
                             ) {
-                                Task {
+                                Task { @MainActor in
+                                    isLoading = true
                                     await prepareStripePaymentSheet()
+                                    isLoading = false
                                     shouldPresentStripeSheet = true
                                 }
                             }
@@ -1431,14 +1573,14 @@ public struct RCheckoutOverlay: View {
     // MARK: - Helper Views
 
     private var loadingOverlay: some View {
-        Color.black.opacity(0.3)
+        Color.white.opacity(0.85)
             .overlay {
                 VStack(spacing: ReachuSpacing.md) {
-                    RCustomLoader(style: .rotate, size: 48, color: .white, speed: 1.2)
+                    RCustomLoader(style: .rotate, size: 48, speed: 1.2)
 
                     Text("Processing...")
-                        .font(ReachuTypography.body)
-                        .foregroundColor(.white)
+                        .font(ReachuTypography.caption1)
+                        .foregroundColor(Color.gray.opacity(0.6))
                 }
             }
             .ignoresSafeArea()
@@ -1472,6 +1614,24 @@ public struct RCheckoutOverlay: View {
         // Check cart first
         if cartManager.items.isEmpty {
             return RLocalizedString(ReachuTranslationKey.cartEmptyMessage.rawValue)
+        }
+        
+        // Check shipping options for orderSummary step
+        if checkoutStep == .orderSummary {
+            let itemsWithoutShipping = cartManager.items.filter { item in
+                item.shippingId == nil || item.shippingId!.isEmpty
+            }
+            
+            if !itemsWithoutShipping.isEmpty {
+                // Check if items have multiple shipping options (need user selection)
+                let itemsWithMultipleOptions = itemsWithoutShipping.filter { item in
+                    item.availableShippings.count > 1
+                }
+                
+                if !itemsWithMultipleOptions.isEmpty {
+                    return RLocalizedString(ReachuTranslationKey.shippingRequired.rawValue)
+                }
+            }
         }
         
         switch checkoutStep {
@@ -1527,6 +1687,7 @@ public struct RCheckoutOverlay: View {
                     #if os(iOS) && canImport(KlarnaMobileSDK)
                         ReachuLogger.debug("Klarna detectado en orderSummary - Llamando a initiateKlarnaDirectFlow()", component: "RCheckoutOverlay")
                         Task {
+                            // isLoading ya se establece dentro de initiateKlarnaDirectFlow()
                             await initiateKlarnaDirectFlow()
                         }
                     #endif
@@ -1536,8 +1697,10 @@ public struct RCheckoutOverlay: View {
             case .review:
                 if selectedPaymentMethod == .stripe {
                     #if os(iOS)
-                        Task {
+                        Task { @MainActor in
+                            isLoading = true
                             await prepareStripePaymentSheet()
+                            isLoading = false
                             shouldPresentStripeSheet = true
                         }
                     #endif
@@ -2543,6 +2706,10 @@ extension RCheckoutOverlay {
             }
         }
         .padding(.horizontal, ReachuSpacing.lg)
+        .padding(.vertical, ReachuSpacing.sm)
+        .background(ReachuColors.surfaceSecondary)
+        .cornerRadius(ReachuBorderRadius.medium)
+        .padding(.horizontal, ReachuSpacing.lg)
     }
 
     private var addressEditForm: some View {
@@ -2554,10 +2721,14 @@ extension RCheckoutOverlay {
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("John", text: $firstName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .overlay(
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                .stroke(firstName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(firstName.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                         )
                 }
 
@@ -2566,10 +2737,14 @@ extension RCheckoutOverlay {
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("Doe", text: $lastName)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .overlay(
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                .stroke(lastName.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(lastName.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                         )
                 }
             }
@@ -2580,10 +2755,14 @@ extension RCheckoutOverlay {
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("your@email.com", text: $email)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .padding(ReachuSpacing.md)
+                    .background(ReachuColors.surfaceSecondary)
+                    .cornerRadius(ReachuBorderRadius.medium)
                     .overlay(
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                            .stroke(email.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(email.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                     )
                     #if os(iOS) || os(tvOS) || os(watchOS)
                         .keyboardType(.emailAddress)
@@ -2606,10 +2785,14 @@ extension RCheckoutOverlay {
                         .frame(width: 100)
 
                     TextField("555 123 4456", text: $phone)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .overlay(
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                .stroke(phone.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(phone.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                         )
                 }
             }
@@ -2620,13 +2803,25 @@ extension RCheckoutOverlay {
                     .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textSecondary)
                 TextField("Street address", text: $address1)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .padding(ReachuSpacing.md)
+                    .background(ReachuColors.surfaceSecondary)
+                    .cornerRadius(ReachuBorderRadius.medium)
                     .overlay(
-                        RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                            .stroke(address1.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(address1.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                     )
                 TextField("Apt, suite, etc. (optional)", text: $address2)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .font(ReachuTypography.body)
+                    .foregroundColor(ReachuColors.textPrimary)
+                    .padding(ReachuSpacing.md)
+                    .background(ReachuColors.surfaceSecondary)
+                    .cornerRadius(ReachuBorderRadius.medium)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .stroke(ReachuColors.border, lineWidth: 1)
+                    )
             }
 
             // City, State, ZIP
@@ -2636,10 +2831,14 @@ extension RCheckoutOverlay {
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("City", text: $city)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .overlay(
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                .stroke(city.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(city.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                         )
                 }
 
@@ -2648,7 +2847,15 @@ extension RCheckoutOverlay {
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("State", text: $province)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(ReachuColors.border, lineWidth: 1)
+                        )
                 }
 
                 VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
@@ -2656,10 +2863,14 @@ extension RCheckoutOverlay {
                         .font(ReachuTypography.caption1)
                         .foregroundColor(ReachuColors.textSecondary)
                     TextField("ZIP", text: $zip)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .font(ReachuTypography.body)
+                        .foregroundColor(ReachuColors.textPrimary)
+                        .padding(ReachuSpacing.md)
+                        .background(ReachuColors.surfaceSecondary)
+                        .cornerRadius(ReachuBorderRadius.medium)
                         .overlay(
-                            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                                .stroke(zip.isEmpty ? ReachuColors.primary.opacity(0.4) : Color.clear, lineWidth: 2)
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(zip.isEmpty ? ReachuColors.primary.opacity(0.4) : ReachuColors.border, lineWidth: 1)
                         )
                         #if os(iOS) || os(tvOS) || os(watchOS)
                             .keyboardType(.numberPad)
@@ -3000,7 +3211,7 @@ extension RCheckoutOverlay {
 
             HStack(spacing: ReachuSpacing.md) {
                 TextField("Enter discount code", text: $discountCode)
-                    .font(ReachuTypography.body)
+                    .font(ReachuTypography.caption1)
                     .foregroundColor(ReachuColors.textPrimary)
                     .padding(.horizontal, ReachuSpacing.md)
                     .padding(.vertical, ReachuSpacing.sm)
@@ -3013,12 +3224,31 @@ extension RCheckoutOverlay {
                         .stroke(ReachuColors.border, lineWidth: 1)
                     )
 
-                RButton(
-                    title: "Apply",
-                    style: .primary,
-                    size: .medium
-                ) {
+                Button(action: {
                     applyDiscountCode()
+                }) {
+                    Text("Apply")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(adaptiveColors.surface)
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            ReachuColors.primary,
+                                            ReachuColors.primary.opacity(0.8)
+                                        ],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .stroke(ReachuColors.primary.opacity(0.3), lineWidth: 1)
+                        )
                 }
             }
 
@@ -4008,48 +4238,25 @@ struct CountryCodePicker: View {
             }
         } label: {
             HStack(spacing: 6) {
-                // Show current selection flag (URL or emoji)
-                if let selection = currentSelection, let flagURL = selection.3, let url = URL(string: flagURL) {
-                    #if os(iOS)
-                    AsyncImage(url: url) { phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: 16, height: 12)
-                        case .failure(_), .empty:
-                            Text(selection.1)
-                                .font(.system(size: 16))
-                        @unknown default:
-                            Text(selection.1)
-                                .font(.system(size: 16))
-                        }
-                    }
-                    #else
-                    Text(selection.1)
-                        .font(.system(size: 16))
-                    #endif
-                } else {
-                    Text(currentSelection?.1 ?? "🌍")
-                        .font(.system(size: 16))
-                }
-                
-                Text(selectedCode.isEmpty ? "+1" : selectedCode)
-                    .font(.system(size: 15, weight: .medium))
+                // Only show code, no flag in the label
+                Text(selectedCode.isEmpty ? "-" : selectedCode)
+                    .font(ReachuTypography.body)
+                    .fontWeight(.medium)
                     .foregroundColor(ReachuColors.textPrimary)
                 
-                Image(systemName: "chevron.up.chevron.down")
+                Spacer()
+                
+                Image(systemName: "chevron.down")
                     .font(.system(size: 12))
                     .foregroundColor(ReachuColors.textSecondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, ReachuSpacing.md)
+            .padding(.vertical, ReachuSpacing.md)
             .background(ReachuColors.surfaceSecondary)
-            .cornerRadius(6)
+            .cornerRadius(ReachuBorderRadius.medium)
             .overlay(
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                     .stroke(ReachuColors.border, lineWidth: 1)
             )
         }
