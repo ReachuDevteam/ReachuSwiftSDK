@@ -890,62 +890,6 @@ public enum PaymentMethod: String, CaseIterable {
     
     public var iconColor: Color {
         switch self {
-        case .stripe: return .blue
-        case .klarna: return .orange
-        case .vipps: return .purple
-        }
-    }
-}
-
-public enum CheckoutStep: CaseIterable {
-    case address
-    case orderSummary
-    case review
-    case success
-    case error
-    
-    public var title: String {
-        switch self {
-        case .address: return "Address"
-        case .orderSummary: return "Order Summary"
-        case .review: return "Review"
-        case .success: return "Complete"
-        case .error: return "Error"
-        }
-    }
-}
-
-public enum PaymentMethod: String, CaseIterable {
-    case stripe = "stripe"
-    case klarna = "klarna"
-    case vipps = "vipps"
-    
-    public var displayName: String {
-        switch self {
-        case .stripe: return "Credit Card"
-        case .klarna: return "Pay with Klarna"
-        case .vipps: return "Vipps"
-        }
-    }
-    
-    public var icon: String {
-        switch self {
-        case .stripe: return "creditcard.fill"
-        case .klarna: return "k.square.fill"
-        case .vipps: return "v.square.fill"
-        }
-    }
-    
-    public var imageName: String? {
-        switch self {
-        case .stripe: return "stripe"
-        case .klarna: return "klarna"
-        case .vipps: return "vipps"
-        }
-    }
-    
-    public var iconColor: Color {
-        switch self {
         case .stripe: return .purple
         case .klarna: return Color(hex: "#FFB3C7")
         case .vipps: return Color(hex: "#FF5B24")
