@@ -224,18 +224,25 @@ public class CheckoutViewModel: ObservableObject {
     // MARK: - Validation
     
     public var canProceedToNext: Bool {
-        if cartManager.items.isEmpty {
-            return false
-        }
-        
         switch currentStep {
         case .address:
-            return !firstName.isEmpty && !lastName.isEmpty && !email.isEmpty && 
-                   !phone.isEmpty && !address1.isEmpty && !city.isEmpty && !zip.isEmpty
+            let result = CheckoutValidator.validateAddress(
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: phone,
+                address1: address1,
+                city: city,
+                zip: zip
+            )
+            return result.isValid
         case .orderSummary:
-            return cartManager.items.allSatisfy { item in
-                item.shippingId != nil && !item.shippingId!.isEmpty
-            }
+            let shippingResult = CheckoutValidator.validateShipping(items: cartManager.items)
+            let paymentResult = CheckoutValidator.validatePaymentMethod(
+                selectedMethod: selectedPaymentMethod,
+                availableMethods: availablePaymentMethods
+            )
+            return shippingResult.isValid && paymentResult.isValid
         case .review:
             return true
         case .success, .error:
@@ -245,45 +252,29 @@ public class CheckoutViewModel: ObservableObject {
     
     public var validationMessage: String {
         if cartManager.items.isEmpty {
-            return RLocalizedString(ReachuTranslationKey.cartEmptyMessage.rawValue)
-        }
-        
-        if currentStep == .orderSummary {
-            let itemsWithoutShipping = cartManager.items.filter { item in
-                item.shippingId == nil || item.shippingId!.isEmpty
-            }
-            
-            if !itemsWithoutShipping.isEmpty {
-                let itemsWithMultipleOptions = itemsWithoutShipping.filter { item in
-                    item.availableShippings.count > 1
-                }
-                
-                if !itemsWithMultipleOptions.isEmpty {
-                    return RLocalizedString(ReachuTranslationKey.shippingRequired.rawValue)
-                }
-            }
+            return CheckoutValidator.validateShipping(items: []).errorMessage
         }
         
         switch currentStep {
         case .address:
-            if firstName.isEmpty || lastName.isEmpty {
-                return RLocalizedString(ReachuTranslationKey.required.rawValue)
-            }
-            if email.isEmpty {
-                return RLocalizedString(ReachuTranslationKey.invalidEmail.rawValue)
-            }
-            if phone.isEmpty {
-                return RLocalizedString(ReachuTranslationKey.invalidPhone.rawValue)
-            }
-            if address1.isEmpty {
-                return RLocalizedString(ReachuTranslationKey.invalidAddress.rawValue)
-            }
-            if city.isEmpty || zip.isEmpty {
-                return RLocalizedString(ReachuTranslationKey.required.rawValue)
-            }
-            return RLocalizedString(ReachuTranslationKey.required.rawValue)
+            return CheckoutValidator.validateAddress(
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                phone: phone,
+                address1: address1,
+                city: city,
+                zip: zip
+            ).errorMessage
         case .orderSummary:
-            return RLocalizedString(ReachuTranslationKey.shippingRequired.rawValue)
+            let shippingResult = CheckoutValidator.validateShipping(items: cartManager.items)
+            if !shippingResult.isValid {
+                return shippingResult.errorMessage
+            }
+            return CheckoutValidator.validatePaymentMethod(
+                selectedMethod: selectedPaymentMethod,
+                availableMethods: availablePaymentMethods
+            ).errorMessage
         default:
             return ""
         }
