@@ -390,9 +390,7 @@ public struct RLiveShowOverlay: View {
     @ViewBuilder
     private var loadingIndicator: some View {
         VStack(spacing: ReachuSpacing.lg) {
-            ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: colors.controlsTint))
-                .scaleEffect(1.5)
+            RCustomLoader(style: .rotate, size: 48, color: colors.controlsTint, speed: 1.2)
             
             Text("Loading stream...")
                 .font(.system(size: typography.streamSubtitleSize))

@@ -95,8 +95,7 @@ public struct RLiveProductsGridOverlay: View {
                 Rectangle()
                     .fill(adaptiveColors.surfaceSecondary)
                     .overlay(
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.primary))
+                        RCustomLoader(style: .rotate, size: 30)
                     )
             }
             .frame(height: 100) // More compact height

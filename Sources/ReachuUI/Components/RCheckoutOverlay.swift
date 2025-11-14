@@ -331,9 +331,7 @@ public struct RCheckoutOverlay: View {
                 VStack {
                     Spacer()
                     HStack(spacing: 12) {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .foregroundColor(adaptiveColors.surface)
+                        RCustomLoader(style: .rotate, size: 20, color: adaptiveColors.surface, speed: 1.5)
                         
                         VStack(alignment: .leading, spacing: 2) {
                             Text(RLocalizedString(ReachuTranslationKey.processingPayment.rawValue))
@@ -1436,11 +1434,7 @@ public struct RCheckoutOverlay: View {
         Color.black.opacity(0.3)
             .overlay {
                 VStack(spacing: ReachuSpacing.md) {
-                    ProgressView()
-                        .progressViewStyle(
-                            CircularProgressViewStyle(tint: .white)
-                        )
-                        .scaleEffect(1.5)
+                    RCustomLoader(style: .rotate, size: 48, color: .white, speed: 1.2)
 
                     Text("Processing...")
                         .font(ReachuTypography.body)
@@ -2716,7 +2710,7 @@ extension RCheckoutOverlay {
                         // Product image
                         LoadedImage(
                             url: URL(string: item.imageUrl ?? ""),
-                            placeholder: AnyView(ProgressView()),
+                            placeholder: AnyView(RCustomLoader(style: .rotate, size: 30)),
                             errorView: AnyView(Rectangle().fill(ReachuColors.surfaceSecondary))
                         )
                         .aspectRatio(contentMode: .fill)
@@ -4271,9 +4265,7 @@ struct CountryPicker: View {
                         // Mostrar loading mientras se inicializa en modo auto
                         if autoAuthorize && !triggerAuthorize {
                             VStack(spacing: ReachuSpacing.md) {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: ReachuColors.primary))
-                                    .scaleEffect(1.5)
+                                RCustomLoader(style: .rotate, size: 48, speed: 1.2)
                                 Text("Conectando con Klarna...")
                                     .font(ReachuTypography.body)
                                     .foregroundColor(ReachuColors.textSecondary)

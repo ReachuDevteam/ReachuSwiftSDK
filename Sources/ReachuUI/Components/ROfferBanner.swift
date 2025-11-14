@@ -73,74 +73,74 @@ public struct ROfferBanner: View {
                 .ignoresSafeArea(.all, edges: [])
             
             // Content in two columns (same layout as hardcoded banner)
-            HStack(alignment: .center, spacing: 16) {
-                // Left column: Logo, title, subtitle, countdown
-                VStack(alignment: .leading, spacing: 4) {
-                    // Logo
-                    logoImageView
-                    
-                    // Title - always show if configuration exists
-                    Text(config.title)
-                        .font(.system(size: customTitleFontSize ?? 24, weight: .bold))
-                        .foregroundColor(adaptiveColors.surface)
-                        .opacity(isImageLoaded ? 1.0 : 0.8)
-                    
-                    // Subtitle
-                    if let subtitle = config.subtitle {
-                        Text(subtitle)
-                            .font(.system(size: customSubtitleFontSize ?? 11, weight: .regular))
-                            .foregroundColor(adaptiveColors.surface.opacity(0.9))
-                            .opacity(isImageLoaded ? 1.0 : 0.8)
-                    }
-                    
-                    // Countdown (analog style like hardcoded banner)
-                    if let remaining = timeRemaining {
-                        analogCountdown(timeRemaining: remaining)
-                            .opacity(isImageLoaded ? 1.0 : 0.8)
-                    }
-                }
-                
-                Spacer()
-                
-                // Right column: Discount badge + Button (centered vertically)
-                VStack(spacing: 8) {
-                    // Discount badge
-                    Text(config.discountBadgeText)
-                        .font(.system(size: customBadgeFontSize ?? 18, weight: .bold))
-                        .foregroundColor(adaptiveColors.surface)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(adaptiveColors.textPrimary.opacity(0.8))
-                        )
-                        .opacity(isImageLoaded ? 1.0 : 0.8)
-                    
-                    // Button
-                    Button(action: {
-                        handleCTAAction()
-                    }) {
-                        HStack(spacing: 6) {
-                            Text(config.ctaText)
-                                .font(.system(size: customButtonFontSize ?? 12, weight: .semibold))
-                                .foregroundColor(adaptiveColors.surface)
-                            
-                            Image(systemName: "arrow.right")
-                                .font(.system(size: (customButtonFontSize ?? 12) - 1, weight: .semibold))
-                                .foregroundColor(adaptiveColors.surface)
+            // Solo mostrar contenido cuando la imagen esté cargada
+            if isImageLoaded {
+                HStack(alignment: .center, spacing: 16) {
+                    // Left column: Logo, title, subtitle, countdown
+                    VStack(alignment: .leading, spacing: 4) {
+                        // Logo
+                        logoImageView
+                        
+                        // Title - always show if configuration exists
+                        Text(config.title)
+                            .font(.system(size: customTitleFontSize ?? 24, weight: .bold))
+                            .foregroundColor(adaptiveColors.surface)
+                        
+                        // Subtitle
+                        if let subtitle = config.subtitle {
+                            Text(subtitle)
+                                .font(.system(size: customSubtitleFontSize ?? 11, weight: .regular))
+                                .foregroundColor(adaptiveColors.surface.opacity(0.9))
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(buttonColor)
-                        )
+                        
+                        // Countdown (analog style like hardcoded banner)
+                        if let remaining = timeRemaining {
+                            analogCountdown(timeRemaining: remaining)
+                        }
                     }
-                    .opacity(isImageLoaded ? 1.0 : 0.8)
+                    
+                    Spacer()
+                    
+                    // Right column: Discount badge + Button (centered vertically)
+                    VStack(spacing: 8) {
+                        // Discount badge
+                        Text(config.discountBadgeText)
+                            .font(.system(size: customBadgeFontSize ?? 18, weight: .bold))
+                            .foregroundColor(adaptiveColors.surface)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 8)
+                            .background(
+                                Capsule()
+                                    .fill(adaptiveColors.textPrimary.opacity(0.8))
+                            )
+                        
+                        // Button
+                        Button(action: {
+                            handleCTAAction()
+                        }) {
+                            HStack(spacing: 6) {
+                                Text(config.ctaText)
+                                    .font(.system(size: customButtonFontSize ?? 12, weight: .semibold))
+                                    .foregroundColor(adaptiveColors.surface)
+                                
+                                Image(systemName: "arrow.right")
+                                    .font(.system(size: (customButtonFontSize ?? 12) - 1, weight: .semibold))
+                                    .foregroundColor(adaptiveColors.surface)
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(
+                                Capsule()
+                                    .fill(buttonColor)
+                            )
+                        }
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: isImageLoaded)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
         }
         .frame(height: customHeight ?? 160)
         .cornerRadius(ReachuBorderRadius.large)
@@ -148,11 +148,8 @@ public struct ROfferBanner: View {
         .onAppear {
             // Initialize isImageLoaded based on whether there's an image or background color
             if config.backgroundImageUrl != nil && !config.backgroundImageUrl!.isEmpty {
-                // If there's an image, wait for it to load (will be updated when image loads)
-                // For now set it after a small delay to allow the image to start loading
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                    isImageLoaded = true
-                }
+                // If there's an image, wait for it to load (will be updated via callback)
+                isImageLoaded = false
             } else {
                 // If only background color, show content immediately
                 isImageLoaded = true
@@ -275,39 +272,51 @@ public struct ROfferBanner: View {
     @ViewBuilder
     private func backgroundImageLayer(fullURL: String) -> some View {
         ZStack {
-            // Intentar cargar la imagen
-            LoadedImage(
-                url: URL(string: fullURL),
-                placeholder: AnyView(
-                    // Placeholder while loading - use backgroundColor if available
-                    Rectangle()
-                        .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
-                ),
-                errorView: AnyView(
-                    // Error view - when there's 404 or other error, show backgroundColor as fallback
-                    Rectangle()
-                        .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
+            // Intentar cargar la imagen con callback para detectar cuando realmente carga
+            if let imageURL = URL(string: fullURL) {
+                LoadedImageWithCallback(
+                    url: imageURL,
+                    onImageLoaded: {
+                        isImageLoaded = true
+                    },
+                    placeholder: AnyView(
+                        // Placeholder neutro mientras carga - NO mostrar backgroundColor del config
+                        Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary.opacity(0.2))
+                    ),
+                    errorView: AnyView(
+                        // Error view - cuando hay error, mostrar backgroundColor como fallback
+                        Rectangle()
+                            .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
+                            .onAppear {
+                                // Si hay error, marcar como "loaded" para mostrar el contenido con el color de fondo
+                                isImageLoaded = true
+                            }
+                    )
                 )
-            )
-            .aspectRatio(contentMode: .fill)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onAppear {
-                // Mark as loaded after a small delay to allow the image to start loading
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                    isImageLoaded = true
-                }
+                .aspectRatio(contentMode: .fill)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                // Si la URL no es válida, mostrar color de fondo y marcar como loaded
+                Rectangle()
+                    .fill(backgroundColorFromHex(config.backgroundColor) ?? adaptiveColors.surfaceSecondary.opacity(0.2))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onAppear {
+                        isImageLoaded = true
+                    }
             }
             
-            // Dark overlay for readability (only if image loaded successfully)
-            // Overlay will show even if there's an error, to maintain visual consistency
-            LinearGradient(
-                colors: [
-                    adaptiveColors.textPrimary.opacity(config.overlayOpacity ?? 0.4),
-                    adaptiveColors.textPrimary.opacity((config.overlayOpacity ?? 0.4) * 0.5)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            // Dark overlay for readability (solo cuando imagen está cargada)
+            if isImageLoaded {
+                LinearGradient(
+                    colors: [
+                        adaptiveColors.textPrimary.opacity(config.overlayOpacity ?? 0.4),
+                        adaptiveColors.textPrimary.opacity((config.overlayOpacity ?? 0.4) * 0.5)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipped()
@@ -570,6 +579,7 @@ public struct ROfferBannerDynamic: View {
     @State private var isLoading = true
     @State private var hasError = false
     @State private var errorMessage: String?
+    @State private var hasShownInitialSkeleton = false
     
     // Optional callback for navigation to store
     let onNavigateToStore: (() -> Void)?
@@ -605,35 +615,53 @@ public struct ROfferBannerDynamic: View {
             return false
         }
         
-        // Banner must exist
-        return componentManager.activeBanner != nil
+        // Show component if banner exists OR if we're loading (to show skeleton)
+        return componentManager.activeBanner != nil || isLoading
     }
     
     public var body: some View {
         Group {
-            if !shouldShow {
+            if !shouldShow && !isLoading {
                 EmptyView()
-            } else if let bannerConfig = componentManager.activeBanner {
-                // Banner is available - show it with smooth transition
-                // Use .id() to force recreation when countdownEndDate changes
-                ROfferBanner(
-                    config: bannerConfig,
-                    onNavigateToStore: onNavigateToStore
-                )
-                    .id(bannerConfig.countdownEndDate) // Force recreation when date changes
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                    .animation(.easeInOut(duration: 0.3), value: componentManager.activeBanner?.title)
-            } else if isLoading && !hasError {
-                // Loading state - show skeleton
-                loadingSkeleton
-            } else if hasError {
-                // Error state - show error message (optional, can be hidden)
-                errorView
+            } else {
+                ZStack {
+                    // Skeleton - show when loading OR when no banner exists OR on initial load
+                    let showSkeleton = isLoading || componentManager.activeBanner == nil || !hasShownInitialSkeleton
+                    
+                    loadingSkeleton
+                        .opacity(showSkeleton ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3), value: showSkeleton)
+                    
+                    // Error view
+                    if hasError && !isLoading {
+                        errorView
+                            .opacity(1.0)
+                            .animation(.easeInOut(duration: 0.3), value: hasError)
+                    }
+                    
+                    // Content - fades in when ready
+                    if let bannerConfig = componentManager.activeBanner, !showSkeleton {
+                        ROfferBanner(
+                            config: bannerConfig,
+                            onNavigateToStore: onNavigateToStore
+                        )
+                            .id(bannerConfig.countdownEndDate) // Force recreation when date changes
+                            .opacity(1.0)
+                            .animation(.easeInOut(duration: 0.3), value: showSkeleton)
+                    }
+                }
             }
             // If no banner and not loading, show nothing (banner is hidden)
         }
         .onAppear {
+            // Show skeleton initially, even if banner is cached
+            hasShownInitialSkeleton = false
+            
             Task {
+                // Small delay to ensure skeleton is visible
+                try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+                hasShownInitialSkeleton = true
+                
                 await connectToBackend()
             }
         }
@@ -868,6 +896,63 @@ struct CountdownUnit: View {
             Text(label)
                 .font(.system(size: 7, weight: .medium))
                 .foregroundColor(adaptiveColors.surface.opacity(0.85))
+        }
+    }
+}
+
+// MARK: - LoadedImageWithCallback
+
+/// LoadedImage wrapper that calls a callback when image is loaded
+private struct LoadedImageWithCallback: View {
+    let url: URL
+    let onImageLoaded: () -> Void
+    let placeholder: AnyView
+    let errorView: AnyView
+    
+    @StateObject private var loader = ImageLoader()
+    @State private var hasCalledCallback = false
+    
+    var body: some View {
+        Group {
+            if let image = loader.image {
+                image
+                    .resizable()
+                    .onAppear {
+                        if !hasCalledCallback {
+                            hasCalledCallback = true
+                            onImageLoaded()
+                        }
+                    }
+            } else if loader.isLoading {
+                placeholder
+            } else if loader.error != nil {
+                errorView
+                    .onAppear {
+                        // Even on error, mark as "loaded" so content can show with fallback color
+                        if !hasCalledCallback {
+                            hasCalledCallback = true
+                            onImageLoaded()
+                        }
+                    }
+            } else {
+                placeholder
+            }
+        }
+        .onAppear {
+            loader.load(url: url)
+        }
+        .onChange(of: url) { newURL in
+            hasCalledCallback = false
+            loader.load(url: newURL)
+        }
+        .onChange(of: loader.image) { image in
+            if image != nil && !hasCalledCallback {
+                hasCalledCallback = true
+                onImageLoaded()
+            }
+        }
+        .onDisappear {
+            loader.cancel()
         }
     }
 }

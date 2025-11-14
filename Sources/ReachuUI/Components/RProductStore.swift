@@ -242,8 +242,7 @@ public struct RProductStore: View {
     
     private var loadingView: some View {
         VStack(spacing: ReachuSpacing.md) {
-            ProgressView()
-                .tint(adaptiveColors.primary)
+            RCustomLoader(style: .rotate, size: 40)
             Text("Loading products...")
                 .font(ReachuTypography.caption1)
                 .foregroundColor(adaptiveColors.textSecondary)

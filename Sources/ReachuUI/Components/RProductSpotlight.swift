@@ -181,14 +181,29 @@ public struct RProductSpotlight: View {
             } else if shouldHide {
                 EmptyView()
             } else if let config = config {
-                if shouldShowLoading {
+                ZStack {
+                    // Skeleton - fades out when content is ready
                     skeletonView
-                } else if shouldShowError {
-                    errorView
-                } else if let product = product {
-                    spotlightContentView(product: product, highlightText: cachedHighlightText)
-                } else {
-                    emptyStateView
+                        .opacity(shouldShowLoading ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3), value: shouldShowLoading)
+                    
+                    // Error view
+                    if shouldShowError {
+                        errorView
+                            .opacity(shouldShowLoading ? 0.0 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: shouldShowLoading)
+                    }
+                    
+                    // Content - fades in when ready
+                    if let product = product {
+                        spotlightContentView(product: product, highlightText: cachedHighlightText)
+                            .opacity(shouldShowLoading ? 0.0 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: shouldShowLoading)
+                    } else if !shouldShowLoading && !shouldShowError {
+                        emptyStateView
+                            .opacity(shouldShowLoading ? 0.0 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: shouldShowLoading)
+                    }
                 }
             }
         }

@@ -242,10 +242,16 @@ public struct RProductCarousel: View {
             } else if shouldHide {
                 EmptyView()
             } else if effectiveConfig != nil {
-                if shouldShowLoading || products.isEmpty {
+                ZStack {
+                    // Skeleton - fades out when content is ready
                     skeletonView
-                } else {
+                        .opacity(shouldShowLoading || products.isEmpty ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3), value: shouldShowLoading || products.isEmpty)
+                    
+                    // Content - fades in when ready
                     carouselContent
+                        .opacity(shouldShowLoading || products.isEmpty ? 0.0 : 1.0)
+                        .animation(.easeInOut(duration: 0.3), value: shouldShowLoading || products.isEmpty)
                 }
             } else {
                 // Show skeleton loader while waiting for config
@@ -559,7 +565,7 @@ public struct RProductCarousel: View {
                         url: url,
                         placeholder: AnyView(Rectangle()
                             .fill(adaptiveColors.surfaceSecondary)
-                            .overlay { ProgressView().tint(adaptiveColors.primary) }),
+                            .overlay { RCustomLoader(style: .rotate, size: 30) }),
                         errorView: AnyView(Rectangle()
                             .fill(adaptiveColors.surfaceSecondary)
                             .overlay {
@@ -672,7 +678,7 @@ public struct RProductCarousel: View {
                         placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .fill(adaptiveColors.surfaceSecondary)
                             .frame(width: 90, height: 90)
-                            .overlay { ProgressView().tint(adaptiveColors.primary) }),
+                            .overlay { RCustomLoader(style: .rotate, size: 24) }),
                         errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                             .fill(adaptiveColors.surfaceSecondary)
                             .frame(width: 90, height: 90)
@@ -739,8 +745,7 @@ public struct RProductCarousel: View {
     
     private var loadingView: some View {
         VStack(spacing: ReachuSpacing.md) {
-            ProgressView()
-                .tint(adaptiveColors.primary)
+            RCustomLoader(style: .rotate, size: 40)
             Text("Loading products...")
                 .font(ReachuTypography.caption1)
                 .foregroundColor(adaptiveColors.textSecondary)
@@ -825,21 +830,19 @@ public struct RProductCarousel: View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let horizontalPadding = ReachuSpacing.md * 2 // Padding on both sides
-            // Use full width minus padding
             let cardWidth = screenWidth - horizontalPadding
             let cardHeight = cardWidth * 1.3 // Balanced aspect ratio (approximately 3:4)
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.md) {
                     ForEach(0..<3, id: \.self) { _ in
-                        skeletonCardViewFull(width: cardWidth, height: cardHeight)
+                        skeletonCardViewFull()
+                            .frame(width: cardWidth, height: cardHeight)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md)
             }
-            .frame(width: screenWidth, height: cardHeight)
         }
-        .aspectRatio(1.0 / 1.3, contentMode: .fit) // Maintain balanced aspect ratio
     }
     
     /// Compact layout skeleton
@@ -847,126 +850,182 @@ public struct RProductCarousel: View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let horizontalPadding = ReachuSpacing.md * 2 // Padding on both sides
-            let spacing = ReachuSpacing.sm // Spacing between cards
-            // Calculate card width to show 2 cards at once with a bit of preview for the third
-            let cardWidth = (screenWidth - horizontalPadding - spacing) / 2.1
-            let cardHeight = cardWidth * 0.8 // Shorter aspect ratio for compact
+            let spacing = ReachuSpacing.md // Spacing between cards (matches carouselContentCompact)
+            // Calculate card width to show 2 cards at once
+            let cardWidth = (screenWidth - horizontalPadding - spacing) / 2.0
             
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: ReachuSpacing.sm) {
+                HStack(spacing: ReachuSpacing.md) {
                     ForEach(0..<4, id: \.self) { _ in
-                        skeletonCardViewCompact(width: cardWidth, height: cardHeight)
+                        skeletonCardViewCompact()
+                            .frame(width: cardWidth)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md)
             }
         }
-        .aspectRatio(2.1 / 1.68, contentMode: .fit) // Maintain aspect ratio for compact skeleton (2 cards + spacing)
     }
     
-    private func skeletonCardViewFull(width: CGFloat, height: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
-            // Image skeleton
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+    private func skeletonCardViewFull() -> some View {
+        // Use exact same structure as fullLayoutProductCardView but with placeholders
+        VStack(alignment: .leading, spacing: 0) {
+            // Image skeleton - matches real card image aspect ratio
+            Rectangle()
                 .fill(adaptiveColors.surfaceSecondary)
-                .frame(width: width, height: height * 0.7)
+                .aspectRatio(contentMode: .fit)
+                .frame(maxWidth: .infinity)
                 .shimmerEffect()
             
-            // Title skeleton
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                .frame(width: width * 0.7, height: 16)
-                .shimmerEffect()
-            
-            // Price skeleton
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                .frame(width: width * 0.4, height: 14)
-                .shimmerEffect()
+            // Product Info skeleton - matches real card padding structure exactly
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                // Brand skeleton (optional, matches real card structure)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 60, height: 10)
+                    .shimmerEffect()
+                
+                // Title skeleton
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(height: 16)
+                    .shimmerEffect()
+                
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 120, height: 16)
+                    .shimmerEffect()
+                
+                // Price skeleton
+                HStack {
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                        .frame(width: 60, height: 16)
+                        .shimmerEffect()
+                    
+                    Spacer()
+                }
+                .frame(minHeight: 32) // Matches real card minHeight
+            }
+            .padding(ReachuSpacing.md)
         }
-        .frame(width: width, height: height)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .reachuCardShadow(for: colorScheme)
         .padding(.horizontal, ReachuSpacing.md)
     }
     
-    private func skeletonCardViewCompact(width: CGFloat, height: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
-            // Image skeleton (smaller)
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                .fill(adaptiveColors.surfaceSecondary)
-                .frame(width: width, height: height * 0.6)
-                .shimmerEffect()
+    private func skeletonCardViewCompact() -> some View {
+        // Use exact same structure as RProductCard.grid but with placeholders
+        VStack(alignment: .leading, spacing: ReachuSpacing.sm) {
+            // Image skeleton - matches RProductCard.grid image height (160)
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    .fill(adaptiveColors.surfaceSecondary)
+                    .frame(height: 160)
+                    .shimmerEffect()
+            }
             
-            // Title skeleton (shorter)
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                .frame(width: width * 0.6, height: 12)
-                .shimmerEffect()
-            
-            // Price skeleton (smaller)
-            RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                .frame(width: width * 0.35, height: 12)
-                .shimmerEffect()
+            // Product Info skeleton - matches RProductCard.grid structure exactly
+            VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
+                // Brand skeleton (optional, matches RProductCard structure)
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 50, height: 12)
+                    .shimmerEffect()
+                
+                // Title skeleton
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(height: 16)
+                    .shimmerEffect()
+                
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 100, height: 16)
+                    .shimmerEffect()
+                
+                // Price skeleton
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 60, height: 14)
+                    .shimmerEffect()
+            }
+            .padding(ReachuSpacing.md)
         }
-        .frame(width: width, height: height)
-        .padding(.horizontal, ReachuSpacing.sm)
+        .background(adaptiveColors.surface)
+        .cornerRadius(ReachuBorderRadius.large)
+        .reachuCardShadow(for: colorScheme)
     }
     
     /// Horizontal layout skeleton
     private var skeletonViewHorizontal: some View {
         GeometryReader { geometry in
             let screenWidth = geometry.size.width
-            let cardWidth = screenWidth * 0.9
-            let cardHeight: CGFloat = 140
+            let cardWidth = screenWidth * 0.9 // 90% of screen width for horizontal cards
+            let cardHeight: CGFloat = 110 // Reduced height for horizontal cards
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: ReachuSpacing.md) {
                     ForEach(0..<3, id: \.self) { _ in
-                        skeletonHorizontalCardView(width: cardWidth, height: cardHeight)
+                        skeletonHorizontalCardView()
+                            .frame(width: cardWidth, height: cardHeight)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.md)
             }
         }
-        .frame(height: 140)
     }
     
-    private func skeletonHorizontalCardView(width: CGFloat, height: CGFloat) -> some View {
-        HStack(spacing: ReachuSpacing.md) {
-            // Image skeleton on the left
+    private func skeletonHorizontalCardView() -> some View {
+        // Use exact same structure as horizontalProductCardView but with placeholders
+        HStack(spacing: ReachuSpacing.sm) {
+            // Image skeleton on the left - matches horizontalProductCardView (90x90)
             RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
                 .fill(adaptiveColors.surfaceSecondary)
-                .frame(width: 120, height: 120)
+                .frame(width: 90, height: 90)
                 .shimmerEffect()
             
-            // Description skeleton on the right
+            // Description skeleton on the right - matches horizontalProductCardView structure exactly
             VStack(alignment: .leading, spacing: ReachuSpacing.xs) {
                 // Title skeleton
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                     .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                    .frame(width: width * 0.5, height: 16)
+                    .frame(height: 16)
+                    .shimmerEffect()
+                
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                    .frame(width: 100, height: 16)
                     .shimmerEffect()
                 
                 // Brand skeleton
                 RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                     .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                    .frame(width: width * 0.3, height: 12)
+                    .frame(width: 50, height: 12)
                     .shimmerEffect()
-                
-                Spacer()
                 
                 // Price skeleton
-                RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
-                    .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
-                    .frame(width: width * 0.25, height: 14)
-                    .shimmerEffect()
+                VStack(alignment: .leading, spacing: 2) {
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(adaptiveColors.surfaceSecondary.opacity(0.6))
+                        .frame(width: 50, height: 14)
+                        .shimmerEffect()
+                    
+                    // Spacer for compare price
+                    RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
+                        .fill(Color.clear)
+                        .frame(height: 12)
+                }
+                .frame(minHeight: 28) // Matches real card minHeight
+                
+                Spacer() // Push everything to top
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(ReachuSpacing.md)
-        .frame(width: width, height: height)
+        .padding(ReachuSpacing.sm)
         .background(adaptiveColors.surface)
         .cornerRadius(ReachuBorderRadius.large)
+        .reachuCardShadow(for: colorScheme)
     }
     
     // MARK: - Helper Methods

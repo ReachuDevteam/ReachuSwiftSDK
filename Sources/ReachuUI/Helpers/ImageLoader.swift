@@ -1,5 +1,7 @@
 import SwiftUI
 import Foundation
+import ReachuDesignSystem
+import ReachuCore
 
 #if os(iOS)
 import UIKit
@@ -111,7 +113,7 @@ struct LoadedImage: View {
     
     init(
         url: URL?,
-        placeholder: AnyView = AnyView(ProgressView()),
+        placeholder: AnyView = AnyView(RCustomLoader(style: .rotate, size: 30)),
         errorView: AnyView? = nil
     ) {
         self.url = url

@@ -257,8 +257,7 @@ public struct RLiveShowFullScreenOverlay: View {
                                 VStack {
                                     Text("Loading HLS Stream...")
                                         .foregroundColor(.white)
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    RCustomLoader(style: .rotate, size: 40, color: .white)
                                 }
                             )
                     }

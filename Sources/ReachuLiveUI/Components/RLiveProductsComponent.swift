@@ -69,8 +69,7 @@ public struct RLiveProductsComponent: View {
                 Rectangle()
                     .fill(Color.gray.opacity(0.3))
                     .overlay(
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        RCustomLoader(style: .rotate, size: 24, color: .white)
                     )
             }
             .frame(width: 90, height: 90)

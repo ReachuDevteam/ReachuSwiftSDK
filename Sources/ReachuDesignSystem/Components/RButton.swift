@@ -74,9 +74,7 @@ public struct RButton: View {
         Button(action: action) {
             HStack(spacing: ReachuSpacing.xs) {
                 if isLoading {
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: foregroundColor))
-                        .scaleEffect(0.8)
+                    RCustomLoader(style: .rotate, size: size == .small ? 16 : size == .medium ? 20 : 24, color: foregroundColor, speed: 1.5)
                 } else if let icon = icon {
                     Image(systemName: icon)
                         .font(size.font)

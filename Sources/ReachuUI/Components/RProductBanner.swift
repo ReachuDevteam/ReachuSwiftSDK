@@ -317,17 +317,25 @@ public struct RProductBanner: View {
         Group {
             if !shouldShow {
                 EmptyView()
-            } else if let config = config, let styling = effectiveStyling {
-                // Show banner using styling (cached or freshly calculated)
-                bannerContent(config: config, styling: styling)
-                    .id("banner-\(currentConfigId ?? "unknown")") // Force update when config changes
-                    .onAppear {
-                        // Ensure styling is cached after render
-                        updateCachedStylingIfNeeded()
-                    }
             } else {
-                // Show skeleton loader while loading
-                skeletonView
+                ZStack {
+                    // Skeleton - fades out when content is ready
+                    skeletonView
+                        .opacity((config == nil || effectiveStyling == nil) ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.3), value: config != nil && effectiveStyling != nil)
+                    
+                    // Content - fades in when ready
+                    if let config = config, let styling = effectiveStyling {
+                        bannerContent(config: config, styling: styling)
+                            .id("banner-\(currentConfigId ?? "unknown")") // Force update when config changes
+                            .opacity((config == nil || effectiveStyling == nil) ? 0.0 : 1.0)
+                            .animation(.easeInOut(duration: 0.3), value: config != nil && effectiveStyling != nil)
+                            .onAppear {
+                                // Ensure styling is cached after render
+                                updateCachedStylingIfNeeded()
+                            }
+                    }
+                }
             }
         }
         .onChange(of: campaignManager.isCampaignActive) { _ in
@@ -455,16 +463,15 @@ public struct RProductBanner: View {
             
             ZStack {
                 // Background image from config - using cached URL
-                LoadedImage(
-                    url: styling.imageURL ?? URL(string: "about:blank"),
-                    placeholder: AnyView(Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: bannerHeight)
-                        .overlay {
-                            ProgressView()
-                                .tint(adaptiveColors.textPrimary)
-                        }),
+                    LoadedImage(
+                        url: styling.imageURL ?? URL(string: "about:blank"),
+                        placeholder: AnyView(Rectangle()
+                            .fill(adaptiveColors.surfaceSecondary)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: bannerHeight)
+                            .overlay {
+                                RCustomLoader(style: .rotate, size: 40)
+                            }),
                     errorView: AnyView(Rectangle()
                         .fill(adaptiveColors.surfaceSecondary)
                         .frame(maxWidth: .infinity)

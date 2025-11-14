@@ -238,7 +238,7 @@ public struct RProductDetailOverlay: View {
                     url: URL(string: displayImages[0].url),
                     placeholder: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                         .fill(ReachuColors.background)
-                        .overlay { ProgressView() }),
+                        .overlay { RCustomLoader(style: .rotate, size: 30) }),
                     errorView: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                         .fill(ReachuColors.background)
                         .overlay {
@@ -264,7 +264,7 @@ public struct RProductDetailOverlay: View {
                                 url: URL(string: image.url),
                                 placeholder: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                     .fill(ReachuColors.background)
-                                    .overlay { ProgressView() }),
+                                    .overlay { RCustomLoader(style: .rotate, size: 30) }),
                                 errorView: AnyView(RoundedRectangle(cornerRadius: productDetailConfig.imageCornerRadius)
                                     .fill(ReachuColors.background)
                                     .overlay {
@@ -299,8 +299,7 @@ public struct RProductDetailOverlay: View {
                                         placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                             .fill(ReachuColors.background)
                                             .overlay {
-                                                ProgressView()
-                                                    .scaleEffect(0.5)
+                                                RCustomLoader(style: .rotate, size: 16)
                                             }),
                                         errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.small)
                                             .fill(ReachuColors.background)
@@ -621,9 +620,7 @@ public struct RProductDetailOverlay: View {
                             .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(adaptiveColors.surface)
                     } else if isAddingToCart {
-                        ProgressView()
-                            .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.surface))
-                            .scaleEffect(0.8)
+                        RCustomLoader(style: .rotate, size: 20, color: adaptiveColors.surface, speed: 1.5)
                     } else {
                         Image(systemName: "cart.badge.plus")
                             .font(.system(size: 18, weight: .semibold))

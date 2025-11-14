@@ -81,9 +81,7 @@ public struct RLiveProductCard: View {
             Rectangle()
                 .fill(adaptiveColors.surfaceSecondary)
                 .overlay(
-                    ProgressView()
-                        .progressViewStyle(CircularProgressViewStyle(tint: adaptiveColors.primary))
-                        .scaleEffect(0.8)
+                    RCustomLoader(style: .rotate, size: 20, speed: 1.5)
                 )
         }
         .frame(width: 60, height: 60)
