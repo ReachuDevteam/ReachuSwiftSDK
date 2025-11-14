@@ -307,6 +307,10 @@ public class CheckoutViewModel: ObservableObject {
         checkoutTotals?.totals?.total ?? (cartManager.cartTotal + cartManager.shippingTotal - appliedDiscount)
     }
     
+    public var finalTotal: Double {
+        return checkoutTotal
+    }
+    
     public var shippingAmountText: String {
         if cartManager.shippingTotal > 0 {
             return "\(cartManager.shippingCurrency) \(String(format: "%.2f", cartManager.shippingTotal))"
