@@ -295,11 +295,16 @@ public class CheckoutViewModel: ObservableObject {
         cartManager.cartTotal
     }
     
+    public var checkoutDiscount: Double {
+        appliedDiscount
+    }
+    
+    public var checkoutTax: Double {
+        checkoutTotals?.totals?.taxes ?? 0.0
+    }
+    
     public var checkoutTotal: Double {
-        let subtotal = checkoutSubtotal
-        let shipping = cartManager.shippingTotal
-        let discount = appliedDiscount
-        return max(0, subtotal + shipping - discount)
+        checkoutTotals?.totals?.total ?? (cartManager.cartTotal + cartManager.shippingTotal - appliedDiscount)
     }
     
     public var shippingAmountText: String {
@@ -849,6 +854,44 @@ public class CheckoutViewModel: ObservableObject {
 }
 
 // MARK: - Supporting Types
+
+public enum PaymentMethod: String, CaseIterable {
+    case stripe = "stripe"
+    case klarna = "klarna"
+    case vipps = "vipps"
+    
+    public var displayName: String {
+        switch self {
+        case .stripe: return "Credit Card"
+        case .klarna: return "Pay with Klarna"
+        case .vipps: return "Vipps"
+        }
+    }
+    
+    public var icon: String {
+        switch self {
+        case .stripe: return "creditcard.fill"
+        case .klarna: return "k.square.fill"
+        case .vipps: return "v.square.fill"
+        }
+    }
+    
+    public var imageName: String? {
+        switch self {
+        case .stripe: return "stripe"
+        case .klarna: return "klarna"
+        case .vipps: return "vipps"
+        }
+    }
+    
+    public var iconColor: Color {
+        switch self {
+        case .stripe: return .blue
+        case .klarna: return .orange
+        case .vipps: return .purple
+        }
+    }
+}
 
 public enum CheckoutStep: CaseIterable {
     case address
