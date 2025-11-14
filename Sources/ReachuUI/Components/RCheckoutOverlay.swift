@@ -4039,83 +4039,50 @@ extension RCheckoutOverlay {
             if let last = cartManager.lastDiscountCode {
                 if last.caseInsensitiveCompare(code) == .orderedSame {
                     _ = await cartManager.discountRemoveApplied(code: last)
+                    await loadCheckoutTotals()
+                    await MainActor.run {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            appliedDiscount = 0.0
+                            discountMessage = ""
+                        }
+                    }
+                    return
                 } else {
                     _ = await cartManager.discountRemoveApplied(code: last)
                 }
             }
 
-            switch code {
+            var applied = await cartManager.discountApply(code: code)
+            if !applied {
+                _ = await cartManager.discountCreate(
+                    code: code,
+                    percentage: 10
+                )
+                applied = await cartManager.discountApply(code: code)
+            }
 
-            case "SAVE10", "SAVE20":
-                let percent: Double = (code == "SAVE20") ? 0.20 : 0.10
-                let percentInt = Int(percent * 100)
-
-                var applied = await cartManager.discountApply(code: code)
-                if !applied {
-                    _ = await cartManager.discountCreate(
-                        code: code,
-                        percentage: percentInt
-                    )
-                    applied = await cartManager.discountApply(code: code)
-                }
-
+            if applied {
+                await loadCheckoutTotals()
+                
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    appliedDiscount = cartManager.cartTotal * percent
-                    discountMessage = "\(percentInt)% discount applied!"
+                    appliedDiscount = cartManager.cartTotal * 0.10
+                    discountMessage = "10% discount applied!"
                 }
                 #if os(iOS)
                     UINotificationFeedbackGenerator().notificationOccurred(
                         .success
                     )
                 #endif
-
-            case "FREE10", "WELCOME":
-                _ = await cartManager.discountApply(code: code)
-
-                let fixed: Double = (code == "WELCOME") ? 15.0 : 10.0
+            } else {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                    appliedDiscount = fixed
-                    discountMessage =
-                        (code == "WELCOME")
-                        ? "Welcome discount applied!" : "$10 off applied!"
+                    appliedDiscount = 0.0
+                    discountMessage = "Invalid discount code"
                 }
                 #if os(iOS)
                     UINotificationFeedbackGenerator().notificationOccurred(
-                        .success
+                        .error
                     )
                 #endif
-
-            default:
-                var applied = await cartManager.discountApply(code: code)
-                if !applied {
-                    _ = await cartManager.discountCreate(
-                        code: code,
-                        percentage: 10
-                    )
-                    applied = await cartManager.discountApply(code: code)
-                }
-
-                if applied {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        appliedDiscount = cartManager.cartTotal * 0.10
-                        discountMessage = "10% discount applied!"
-                    }
-                    #if os(iOS)
-                        UINotificationFeedbackGenerator().notificationOccurred(
-                            .success
-                        )
-                    #endif
-                } else {
-                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                        appliedDiscount = 0.0
-                        discountMessage = "Invalid discount code"
-                    }
-                    #if os(iOS)
-                        UINotificationFeedbackGenerator().notificationOccurred(
-                            .error
-                        )
-                    #endif
-                }
             }
 
             if !discountMessage.isEmpty && appliedDiscount > 0 {
