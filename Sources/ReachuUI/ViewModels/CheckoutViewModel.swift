@@ -75,7 +75,7 @@ public class CheckoutViewModel: ObservableObject {
         @Published public var klarnaNativeContentHeight: CGFloat = 420
         @Published public var klarnaAvailableCategories: [KlarnaNativePaymentMethodCategoryDto] = []
         @Published public var klarnaSelectedCategoryIdentifier: String = ""
-        private let klarnaSuccessURLString = "https://tuapp.com/checkout/klarna-return"
+        public let klarnaSuccessURLString = "https://tuapp.com/checkout/klarna-return"
         @Published public var klarnaAutoAuthorize = false
         @Published public var showKlarnaErrorToast = false
         @Published public var klarnaErrorMessage = ""

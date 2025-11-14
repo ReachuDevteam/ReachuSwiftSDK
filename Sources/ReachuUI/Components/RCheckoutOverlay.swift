@@ -17,150 +17,19 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Environment
     @EnvironmentObject private var cartManager: CartManager
-    @EnvironmentObject private var checkoutDraft: CheckoutDraft  // ⬅️ Exponemos estado al contexto
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
-    @StateObject private var vippsHandler = VippsPaymentHandler.shared
+    
+    // MARK: - ViewModel
+    @State private var viewModel: CheckoutViewModel?
     
     private var adaptiveColors: AdaptiveColors {
         ReachuColors.adaptive(for: colorScheme)
     }
     
-    // MARK: - State
-    @State private var checkoutStep: CheckoutStep = .address
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @State private var isEditingAddress = false
-
-    // Address Information
-    @State private var firstName = ""
-    @State private var lastName = ""
-    @State private var email = ""
-    @State private var phone = ""
-    @State private var phoneCountryCode = ""
-    @State private var phoneCountryCodeISO: String? = nil
-    @State private var address1 = ""
-    @State private var address2 = ""
-    @State private var city = ""
-    @State private var province = ""
-    @State private var country = ""
-    @State private var zip = ""
-
-    // Payment Information
-    @State private var selectedPaymentMethod: PaymentMethod = .stripe
-    @State private var availablePaymentMethods: [PaymentMethod] = []
-    @State private var acceptsTerms = true
-    @State private var acceptsPurchaseConditions = true
-
-    // Discount Code
-    @State private var discountCode = ""
-    @State private var appliedDiscount: Double = 0.0
-    @State private var discountMessage = ""
-
-    // Checkout totals
-    @State private var checkoutTotals: GetCheckoutDto?
-
-    // Vipps Payment Tracking
-    @State private var vippsPaymentInProgress = false
-    @State private var vippsCheckoutId: String?
-    @State private var vippsRetryCount = 0
-    @State private var vippsMaxRetries = 30 // 5 minutos
-    @State private var vippsRetryTimer: Timer?
-
-    #if os(iOS)
-        @State private var paymentSheet: PaymentSheet?
-        @State private var shouldPresentStripeSheet = false
-    #endif
-
-    #if os(iOS) && canImport(KlarnaMobileSDK)
-        @State private var showKlarnaNativeSheet = false
-        @State private var klarnaNativeInitData: InitPaymentKlarnaNativeDto?
-        @State private var klarnaNativeContentHeight: CGFloat = 420
-        @State private var klarnaAvailableCategories: [KlarnaNativePaymentMethodCategoryDto] = []
-        @State private var klarnaSelectedCategoryIdentifier: String = ""
-        private let klarnaSuccessURLString =
-            "https://tuapp.com/checkout/klarna-return"
-        @State private var klarnaAutoAuthorize = false // To trigger authorization automatically
-        @State private var showKlarnaErrorToast = false
-        @State private var klarnaErrorMessage = ""
-    #endif
-
-    private var draftSyncKey: String {
-        [
-            firstName, lastName, email, phone, phoneCountryCode,
-            address1, address2, city, province, country, zip,
-            cartManager.items.compactMap { $0.shippingId }.joined(separator: ","),
-            selectedPaymentMethod.rawValue,
-            String(acceptsTerms), String(acceptsPurchaseConditions),
-            String(appliedDiscount), cartManager.currency,
-        ].joined(separator: "|")
-    }
-
-    // MARK: - Checkout Steps
-    public enum CheckoutStep: CaseIterable {
-        case address
-        case orderSummary
-        case review
-        case success
-        case error
-
-        var title: String {
-            switch self {
-            case .address: return "Address"
-            case .orderSummary: return "Order Summary"
-            case .review: return "Review"
-            case .success: return "Complete"
-            case .error: return "Error"
-            }
-        }
-    }
-
-    // MARK: - Payment Methods (Real Reachu Methods)
-    public enum PaymentMethod: String, CaseIterable {
-        case stripe = "stripe"
-        case klarna = "klarna"
-        case vipps = "vipps"
-
-        var displayName: String {
-            switch self {
-            case .stripe: return "Credit Card"
-            case .klarna: return "Pay with Klarna"
-            case .vipps: return "Vipps"
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .stripe: return "creditcard.fill"
-            case .klarna: return "k.square.fill"
-            case .vipps: return "v.square.fill"
-            }
-        }
-        
-        var imageName: String? {
-            switch self {
-            case .stripe: return "stripe"
-            case .klarna: return "klarna"
-            case .vipps: return "vipps"
-            }
-        }
-
-        var iconColor: Color {
-            switch self {
-            case .stripe: return .purple
-            case .klarna: return Color(hex: "#FFB3C7")
-            case .vipps: return Color(hex: "#FF5B24")
-            }
-        }
-
-        var supportsInstallments: Bool {
-            switch self {
-            case .klarna:
-                return true
-            default:
-                return false
-            }
-        }
-    }
+    // MARK: - Type Aliases (for backward compatibility)
+    public typealias CheckoutStep = ReachuUI.CheckoutStep
+    public typealias PaymentMethod = ReachuUI.PaymentMethod
 
     // MARK: - Initialization
     
@@ -176,6 +45,19 @@ public struct RCheckoutOverlay: View {
     public let userProvince: String?
     public let userCountry: String?
     public let userZip: String?
+    
+    // Store user data for ViewModel initialization
+    private let userFirstName: String?
+    private let userLastName: String?
+    private let userEmail: String?
+    private let userPhone: String?
+    private let userPhoneCountryCode: String?
+    private let userAddress1: String?
+    private let userAddress2: String?
+    private let userCity: String?
+    private let userProvince: String?
+    private let userCountry: String?
+    private let userZip: String?
     
     public init(
         userFirstName: String? = nil,
@@ -202,49 +84,76 @@ public struct RCheckoutOverlay: View {
         self.userCountry = userCountry
         self.userZip = userZip
     }
+    
+    // Helper to create ViewModel with EnvironmentObjects
+    private func createViewModel() -> CheckoutViewModel {
+        CheckoutViewModel(
+            cartManager: cartManager,
+            checkoutDraft: checkoutDraft,
+            vippsHandler: VippsPaymentHandler.shared,
+            adaptiveColors: adaptiveColors,
+            userFirstName: userFirstName,
+            userLastName: userLastName,
+            userEmail: userEmail,
+            userPhone: userPhone,
+            userPhoneCountryCode: userPhoneCountryCode,
+            userAddress1: userAddress1,
+            userAddress2: userAddress2,
+            userCity: userCity,
+            userProvince: userProvince,
+            userCountry: userCountry,
+            userZip: userZip
+        )
+    }
 
     // MARK: - Main Content
     private var mainContent: some View {
         NavigationView {
             VStack(spacing: 0) {
                 // Content based on step
-                switch checkoutStep {
-                case .address:
-                    addressStepView
-                case .orderSummary:
-                    orderSummaryStepView
-                case .review:
-                    reviewStepView
-                case .success:
-                    successStepView
-                case .error:
-                    errorStepView
+                if let viewModel = viewModel {
+                    switch viewModel.currentStep {
+                    case .address:
+                        CheckoutAddressStep(viewModel: viewModel)
+                    case .orderSummary:
+                        CheckoutOrderSummaryStep(viewModel: viewModel)
+                    case .review:
+                        CheckoutReviewStep(viewModel: viewModel)
+                    case .success:
+                        successStepView
+                    case .error:
+                        errorStepView
+                    }
+                } else {
+                    // Loading state while ViewModel initializes
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-            .onChange(of: checkoutStep) { newStep in
+            .onChange(of: viewModel?.currentStep) { newStep in
+                guard let newStep = newStep else { return }
                 if newStep == .orderSummary {
                     Task { @MainActor in
-                        isLoading = true
-                        await loadCheckoutTotals()
+                        viewModel?.isLoading = true
+                        await viewModel?.loadCheckoutTotals()
                         
                         // Refresh shipping options and auto-select if only one option
                         await cartManager.refreshShippingOptions()
                         
                         // Auto-select shipping if only one option available for each item
                         for item in cartManager.items {
-                            // Only auto-select if item doesn't have shipping selected and has exactly one option
                             if (item.shippingId == nil || item.shippingId!.isEmpty) && item.availableShippings.count == 1 {
                                 let singleOption = item.availableShippings[0]
                                 cartManager.setShippingOption(for: item.id, optionId: singleOption.id)
                             }
                         }
                         
-                        isLoading = false
+                        viewModel?.isLoading = false
                     }
                 } else if newStep == .success {
                     // Track transaction completed
-                    if let checkoutId = cartManager.checkoutId, 
-                       let checkoutDto = checkoutTotals,
+                    if let checkoutId = cartManager.checkoutId,
+                       let checkoutDto = viewModel?.checkoutTotals,
                        let totals = checkoutDto.totals {
                         let products = cartManager.items.map { item -> [String: Any] in
                             [
@@ -259,7 +168,7 @@ public struct RCheckoutOverlay: View {
                             checkoutId: checkoutId,
                             revenue: totals.total,
                             currency: totals.currencyCode,
-                            paymentMethod: selectedPaymentMethod.rawValue,
+                            paymentMethod: viewModel?.selectedPaymentMethod.rawValue ?? "unknown",
                             products: products,
                             discount: totals.discounts,
                             shipping: totals.shipping,
@@ -270,18 +179,18 @@ public struct RCheckoutOverlay: View {
                     // Reset cart and create new one after successful payment
                     Task { @MainActor in
                         ReachuLogger.debug("Payment successful - resetting cart and creating new one", component: "RCheckoutOverlay")
-                        isLoading = true
+                        viewModel?.isLoading = true
                         await cartManager.resetCartAndCreateNew()
-                        isLoading = false
+                        viewModel?.isLoading = false
                     }
                 }
             }
             .onChange(of: cartManager.checkoutId) { checkoutId in
-                if let checkoutId = checkoutId, checkoutStep == .orderSummary {
+                if let checkoutId = checkoutId, viewModel?.currentStep == .orderSummary {
                     Task { @MainActor in
-                        isLoading = true
-                        await loadCheckoutTotals()
-                        isLoading = false
+                        viewModel?.isLoading = true
+                        await viewModel?.loadCheckoutTotals()
+                        viewModel?.isLoading = false
                     }
                 }
             }
@@ -291,12 +200,12 @@ public struct RCheckoutOverlay: View {
             #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    if checkoutStep != .success {
+                    if viewModel?.currentStep != .success {
                         Button(action: {
-                            if cartManager.items.isEmpty || checkoutStep == .address {
+                            if cartManager.items.isEmpty || viewModel?.currentStep == .address {
                                 cartManager.hideCheckout()
                             } else {
-                                goToPreviousStep()
+                                viewModel?.goToPreviousStep()
                             }
                         }) {
                             Image(systemName: cartManager.items.isEmpty ? "xmark" : "arrow.left")
@@ -318,37 +227,38 @@ public struct RCheckoutOverlay: View {
             mainContent
             .onAppear {
                 ReachuLogger.debug("onAppear triggered", component: "RCheckoutOverlay")
-                syncSelectedMarket()
+                // Initialize ViewModel with EnvironmentObjects
+                if viewModel == nil {
+                    viewModel = createViewModel()
+                }
+                
+                viewModel?.syncSelectedMarket()
                 Task { @MainActor in
-                    isLoading = true
-                    await loadAvailablePaymentMethods()
-                    isLoading = false
+                    viewModel?.isLoading = true
+                    await viewModel?.loadAvailablePaymentMethods()
+                    viewModel?.isLoading = false
                 }
             }
             .onChange(of: cartManager.phoneCode) { newValue in
-                syncPhoneCode(newValue)
+                viewModel?.syncPhoneCode(newValue)
             }
             .onChange(of: cartManager.selectedMarket) { newMarket in
-                syncSelectedMarket()
-                // When market changes from API, update phone country code ISO
-                if let market = newMarket {
-                    phoneCountryCodeISO = market.code
-                }
+                viewModel?.syncSelectedMarket()
             }
-            .onChange(of: vippsHandler.paymentStatus) { newStatus in
-                handleVippsPaymentStatusChange(newStatus)
+            .onChange(of: VippsPaymentHandler.shared.paymentStatus) { newStatus in
+                viewModel?.handleVippsPaymentStatusChange(newStatus)
             }
             .onDisappear {
                 // Clean up timer when view disappears
-                stopVippsRetryTimer()
+                viewModel?.stopVippsRetryTimer()
             }
             .overlay {
-            if isLoading {
+            if let viewModel = viewModel, viewModel.isLoading {
                 loadingOverlay
             }
             
             // Vipps Payment in Progress Overlay
-            if vippsPaymentInProgress {
+            if let viewModel = viewModel, viewModel.vippsPaymentInProgress {
                 VStack {
                     Spacer()
                     HStack(spacing: 12) {
@@ -364,8 +274,8 @@ public struct RCheckoutOverlay: View {
                                 .foregroundColor(adaptiveColors.surface.opacity(0.9))
                                 .lineLimit(2)
                             
-                            if vippsRetryCount > 0 {
-                                Text(RLocalizedString(ReachuTranslationKey.verifyingPayment.rawValue) + " (\(vippsRetryCount)/\(vippsMaxRetries))")
+                            if viewModel.vippsRetryCount > 0 {
+                                Text(RLocalizedString(ReachuTranslationKey.verifyingPayment.rawValue) + " (\(viewModel.vippsRetryCount)/\(viewModel.vippsMaxRetries))")
                                     .font(.system(size: 10))
                                     .foregroundColor(adaptiveColors.surface.opacity(0.7))
                             }
@@ -383,12 +293,12 @@ public struct RCheckoutOverlay: View {
                     .padding(.bottom, 40)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: vippsPaymentInProgress)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.vippsPaymentInProgress)
             }
             
             // Toast de error de Klarna
             #if os(iOS) && canImport(KlarnaMobileSDK)
-            if showKlarnaErrorToast {
+            if let viewModel = viewModel, viewModel.showKlarnaErrorToast {
                 VStack {
                     Spacer()
                     HStack(spacing: 12) {
@@ -401,7 +311,7 @@ public struct RCheckoutOverlay: View {
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white)
                             
-                            Text(klarnaErrorMessage)
+                            Text(viewModel.klarnaErrorMessage)
                                 .font(.system(size: 12))
                                 .foregroundColor(.white.opacity(0.9))
                                 .lineLimit(2)
@@ -419,91 +329,37 @@ public struct RCheckoutOverlay: View {
                     .padding(.bottom, 40)
                 }
                 .transition(.move(edge: .bottom).combined(with: .opacity))
-                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: showKlarnaErrorToast)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: viewModel.showKlarnaErrorToast)
             }
             #endif
             
             // Invisible overlay for Klarna auto-authorization
             #if os(iOS) && canImport(KlarnaMobileSDK)
-            if klarnaAutoAuthorize,
-               let initData = klarnaNativeInitData,
-               let returnURL = URL(string: klarnaSuccessURLString),
-               !klarnaSelectedCategoryIdentifier.isEmpty {
+            if let viewModel = viewModel,
+               viewModel.klarnaAutoAuthorize,
+               let initData = viewModel.klarnaNativeInitData,
+               let returnURL = URL(string: viewModel.klarnaSuccessURLString),
+               !viewModel.klarnaSelectedCategoryIdentifier.isEmpty {
                 HiddenKlarnaAutoAuthorize(
                     initData: initData,
-                    categoryIdentifier: klarnaSelectedCategoryIdentifier,
+                    categoryIdentifier: viewModel.klarnaSelectedCategoryIdentifier,
                     returnURL: returnURL,
                     onAuthorized: { authToken, finalizeRequired in
                         Task { @MainActor in
-                            ReachuLogger.debug("Step 5: Usuario autorizó el pago en Klarna", component: "RCheckoutOverlay")
-                            ReachuLogger.debug("AuthToken (primeros 20): \(authToken.prefix(20))...", component: "RCheckoutOverlay")
-                            ReachuLogger.debug("FinalizeRequired: \(finalizeRequired)", component: "RCheckoutOverlay")
-                            ReachuLogger.debug("Step 6: Llamando a backend para confirmar pago", component: "RCheckoutOverlay")
-                            
-                            isLoading = true
-                            klarnaAutoAuthorize = false
-                            
-                            // Build input for confirm
-                            let customer = KlarnaNativeCustomerInputDto(
-                                email: email,
-                                phone: phoneCountryCode + phone
-                            )
-                            
-                            let shippingAddress = KlarnaNativeAddressInputDto(
-                                givenName: firstName,
-                                familyName: lastName,
-                                email: email,
-                                phone: phoneCountryCode + phone,
-                                streetAddress: address1,
-                                streetAddress2: address2.isEmpty ? nil : address2,
-                                city: city,
-                                region: province.isEmpty ? nil : province,
-                                postalCode: zip,
-                                country: getCountryCode(from: country)
-                            )
-                            
-                            let billingAddress = shippingAddress
-                            
-                            ReachuLogger.debug("CheckoutId: \(cartManager.checkoutId ?? "nil"), Email: \(email)", component: "RCheckoutOverlay")
-                            
-                            // Call backend to confirm payment
-                            guard let result = await cartManager.confirmKlarnaNative(
-                                authorizationToken: authToken,
-                                autoCapture: true,
-                                customer: customer,
-                                billingAddress: billingAddress,
-                                shippingAddress: shippingAddress
-                            ) else {
-                                ReachuLogger.error("Backend no pudo confirmar el pago", component: "RCheckoutOverlay")
-                                ReachuLogger.error("Verificar: AuthToken válido, Backend respondió, Klarna API respondió", component: "RCheckoutOverlay")
-                                ReachuLogger.error("Setting checkoutStep to .error (Klarna confirm failed)", component: "RCheckoutOverlay")
-                                errorMessage = "Failed to confirm Klarna payment"
-                                checkoutStep = .error
-                                isLoading = false
-                                return
-                            }
-                            
-                            ReachuLogger.success("Step 7: PAGO EXITOSO - OrderId: \(result.orderId), FraudStatus: \(result.fraudStatus)", component: "RCheckoutOverlay")
-                            
-                            klarnaNativeInitData = nil
-                            checkoutStep = .success
-                            isLoading = false
+                            guard let viewModel = viewModel else { return }
+                            await viewModel.confirmKlarnaPayment(authToken: authToken, finalizeRequired: finalizeRequired)
                         }
                     },
                     onFailed: { message in
                         Task { @MainActor in
-                            ReachuLogger.error("Pago falló o fue cancelado - Mensaje: \(message)", component: "RCheckoutOverlay")
-                            ReachuLogger.error("Razones posibles: Usuario canceló, Klarna rechazó, Error de red, Token expiró", component: "RCheckoutOverlay")
-                            
-                            klarnaAutoAuthorize = false
-                            klarnaNativeInitData = nil
-                            // Return to orderSummary and show toast
-                            checkoutStep = .orderSummary
-                            klarnaErrorMessage = message.isEmpty ? "Payment was cancelled or failed. Please try again." : message
-                            showKlarnaErrorToast = true
-                            // Auto-hide toast after 4 seconds
+                            guard let viewModel = viewModel else { return }
+                            viewModel.klarnaAutoAuthorize = false
+                            viewModel.klarnaNativeInitData = nil
+                            viewModel.currentStep = .orderSummary
+                            viewModel.klarnaErrorMessage = message.isEmpty ? "Payment was cancelled or failed. Please try again." : message
+                            viewModel.showKlarnaErrorToast = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
-                                showKlarnaErrorToast = false
+                                viewModel.showKlarnaErrorToast = false
                             }
                         }
                     }
@@ -513,86 +369,71 @@ public struct RCheckoutOverlay: View {
         }
         #if os(iOS) && canImport(KlarnaMobileSDK)
             .sheet(
-                isPresented: $showKlarnaNativeSheet,
+                isPresented: Binding(
+                    get: { viewModel?.showKlarnaNativeSheet ?? false },
+                    set: { viewModel?.showKlarnaNativeSheet = $0 }
+                ),
                 onDismiss: {
-                    klarnaNativeInitData = nil
-                    klarnaNativeContentHeight = 420
-                    klarnaAvailableCategories = []
-                    klarnaSelectedCategoryIdentifier = ""
-                    if checkoutStep != .success && checkoutStep != .error {
-                        checkoutStep = .orderSummary  // cerrar=cancel
+                    viewModel?.klarnaNativeInitData = nil
+                    viewModel?.klarnaNativeContentHeight = 420
+                    viewModel?.klarnaAvailableCategories = []
+                    viewModel?.klarnaSelectedCategoryIdentifier = ""
+                    if viewModel?.currentStep != .success && viewModel?.currentStep != .error {
+                        viewModel?.currentStep = .orderSummary
                     }
                 }
             ) {
-                if let initData = klarnaNativeInitData,
-                    let returnURL = URL(string: klarnaSuccessURLString),
-                    !klarnaAvailableCategories.isEmpty,
-                    !klarnaSelectedCategoryIdentifier.isEmpty
+                if let viewModel = viewModel,
+                   let initData = viewModel.klarnaNativeInitData,
+                   let returnURL = URL(string: viewModel.klarnaSuccessURLString),
+                   !viewModel.klarnaAvailableCategories.isEmpty,
+                   !viewModel.klarnaSelectedCategoryIdentifier.isEmpty
                 {
                     KlarnaNativePaymentSheet(
                         initData: initData,
-                        categories: klarnaAvailableCategories,
-                        selectedCategory: $klarnaSelectedCategoryIdentifier,
+                        categories: viewModel.klarnaAvailableCategories,
+                        selectedCategory: Binding(
+                            get: { viewModel.klarnaSelectedCategoryIdentifier },
+                            set: { viewModel.klarnaSelectedCategoryIdentifier = $0 }
+                        ),
                         returnURL: returnURL,
-                        contentHeight: $klarnaNativeContentHeight,
-                        autoAuthorize: $klarnaAutoAuthorize,
+                        contentHeight: Binding(
+                            get: { viewModel.klarnaNativeContentHeight },
+                            set: { viewModel.klarnaNativeContentHeight = $0 }
+                        ),
+                        autoAuthorize: Binding(
+                            get: { viewModel.klarnaAutoAuthorize },
+                            set: { viewModel.klarnaAutoAuthorize = $0 }
+                        ),
                         onAuthorized: { authToken, finalizeRequired in
                             Task { @MainActor in
-                                // Este callback ya no se usa (flujo antiguo con sheet)
-                                // El flujo actual usa HiddenKlarnaAutoAuthorize con su propio callback
-                                isLoading = false
-                                return
-
-                                let customer = klarnaTestCustomer()
-                                let address = klarnaTestAddress()
-                                let result = await cartManager.confirmKlarnaNative(
-                                    authorizationToken: authToken,
-                                    autoCapture: finalizeRequired ? nil : true,
-                                    customer: customer,
-                                    billingAddress: address,
-                                    shippingAddress: address
-                                )
-                                isLoading = false
-
-                                if let confirmation = result {
-                                    checkoutStep = .success
-                                    klarnaNativeInitData = nil
-                                } else {
-                                    ReachuLogger.error("Setting checkoutStep to .error (proceedToNext failed)", component: "RCheckoutOverlay")
-                                    checkoutStep = .error
-                                }
-
-                                showKlarnaNativeSheet = false
+                                guard let viewModel = viewModel else { return }
+                                await viewModel.confirmKlarnaPayment(authToken: authToken, finalizeRequired: finalizeRequired)
                             }
                         },
                         onFailed: { message in
                             Task { @MainActor in
-                                errorMessage = message
+                                viewModel?.errorMessage = message
                             }
                         },
                         onDismiss: {
-                            showKlarnaNativeSheet = false
+                            viewModel?.showKlarnaNativeSheet = false
                         }
                     )
-                    .interactiveDismissDisabled(isLoading)
+                    .interactiveDismissDisabled(viewModel.isLoading)
                 } else {
                     Text("No Klarna payment methods available.")
                     .padding()
                     .onAppear {
-                        ReachuLogger.error("Setting checkoutStep to .error (KlarnaNativePaymentSheet onAppear)", component: "RCheckoutOverlay")
-                        showKlarnaNativeSheet = false
-                        checkoutStep = .error
+                        viewModel?.showKlarnaNativeSheet = false
+                        viewModel?.currentStep = .error
                     }
                 }
             }
         #endif
 
         .onAppear {
-            loadInitialData()
-            syncDraftFromState()
-        }
-        .onChange(of: draftSyncKey) { _ in
-            syncDraftFromState()
+            // ViewModel initialization is handled in mainContent.onAppear
         }
         }
     }
@@ -1392,181 +1233,150 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Success Step View
     private var successStepView: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        Group {
+            if let viewModel = viewModel {
+                VStack(spacing: 0) {
+                    Spacer()
 
-            VStack(spacing: ReachuSpacing.lg) {
-                // Animated Success Icon
-                ZStack {
-                    Circle()
-                        .fill(ReachuColors.success)
-                        .frame(width: 100, height: 100)
-                        .scaleEffect(checkoutStep == .success ? 1.0 : 0.5)
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.6).delay(
-                                0.2
-                            ),
-                            value: checkoutStep
-                        )
+                    VStack(spacing: ReachuSpacing.lg) {
+                        // Animated Success Icon
+                        ZStack {
+                            Circle()
+                                .fill(ReachuColors.success)
+                                .frame(width: 100, height: 100)
+                                .scaleEffect(viewModel.currentStep == .success ? 1.0 : 0.5)
+                                .animation(
+                                    .spring(response: 0.6, dampingFraction: 0.6).delay(0.2),
+                                    value: viewModel.currentStep
+                                )
 
-                    Image(systemName: "checkmark")
-                        .font(.system(size: 45, weight: .bold))
-                        .foregroundColor(.white)
-                        .scaleEffect(checkoutStep == .success ? 1.0 : 0.0)
-                        .animation(
-                            .spring(response: 0.4, dampingFraction: 0.6).delay(
-                                0.4
-                            ),
-                            value: checkoutStep
-                        )
-                }
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 45, weight: .bold))
+                                .foregroundColor(.white)
+                                .scaleEffect(viewModel.currentStep == .success ? 1.0 : 0.0)
+                                .animation(
+                                    .spring(response: 0.4, dampingFraction: 0.6).delay(0.4),
+                                    value: viewModel.currentStep
+                                )
+                        }
 
-                // Success Message (smaller and more compact)
-                VStack(spacing: ReachuSpacing.sm) {
-                    Text(RLocalizedString(ReachuTranslationKey.purchaseComplete.rawValue))
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(ReachuColors.textPrimary)
-                        .multilineTextAlignment(.center)
-                        .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                        .animation(
-                            .easeInOut(duration: 0.5).delay(0.6),
-                            value: checkoutStep
-                        )
+                        // Success Message
+                        VStack(spacing: ReachuSpacing.sm) {
+                            Text(RLocalizedString(ReachuTranslationKey.purchaseComplete.rawValue))
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .multilineTextAlignment(.center)
+                                .opacity(viewModel.currentStep == .success ? 1.0 : 0.0)
+                                .animation(.easeInOut(duration: 0.5).delay(0.6), value: viewModel.currentStep)
 
-                    Text(
-                        selectedPaymentMethod == .klarna
-                            ? RLocalizedString(ReachuTranslationKey.purchaseCompleteMessageKlarna.rawValue)
-                            : RLocalizedString(ReachuTranslationKey.purchaseCompleteMessage.rawValue)
-                    )
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(ReachuColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, ReachuSpacing.xl)
-                    .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                    .animation(
-                        .easeInOut(duration: 0.5).delay(0.8),
-                        value: checkoutStep
-                    )
-                }
-            }
+                            Text(
+                                viewModel.selectedPaymentMethod == .klarna
+                                    ? RLocalizedString(ReachuTranslationKey.purchaseCompleteMessageKlarna.rawValue)
+                                    : RLocalizedString(ReachuTranslationKey.purchaseCompleteMessage.rawValue)
+                            )
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundColor(ReachuColors.textSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, ReachuSpacing.xl)
+                            .opacity(viewModel.currentStep == .success ? 1.0 : 0.0)
+                            .animation(.easeInOut(duration: 0.5).delay(0.8), value: viewModel.currentStep)
+                        }
+                    }
 
-            Spacer()
+                    Spacer()
 
-            // Bottom Close Button
-            VStack {
-                RButton(
-                    title: RLocalizedString(ReachuTranslationKey.close.rawValue),
-                    style: .primary,
-                    size: .large
-                ) {
-                    cartManager.hideCheckout()
-                    Task {
-                        // Reset cart and create new one after successful payment
-                        await cartManager.resetCartAndCreateNew()
+                    // Bottom Close Button
+                    VStack {
+                        RButton(
+                            title: RLocalizedString(ReachuTranslationKey.close.rawValue),
+                            style: .primary,
+                            size: .large
+                        ) {
+                            cartManager.hideCheckout()
+                            Task {
+                                await cartManager.resetCartAndCreateNew()
+                            }
+                        }
+                        .padding(.horizontal, ReachuSpacing.lg)
+                        .padding(.bottom, ReachuSpacing.xl)
+                        .opacity(viewModel.currentStep == .success ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(1.0), value: viewModel.currentStep)
                     }
                 }
-                .padding(.horizontal, ReachuSpacing.lg)
-                .padding(.bottom, ReachuSpacing.xl)
-                .opacity(checkoutStep == .success ? 1.0 : 0.0)
-                .animation(
-                    .easeInOut(duration: 0.5).delay(1.0),
-                    value: checkoutStep
-                )
             }
         }
     }
 
     // MARK: - Error Step View
     private var errorStepView: some View {
-        VStack(spacing: 0) {
-            Spacer()
+        Group {
+            if let viewModel = viewModel {
+                VStack(spacing: 0) {
+                    Spacer()
 
-            VStack(spacing: ReachuSpacing.lg) {
-                // Animated Error Icon
-                ZStack {
-                    Circle()
-                        .fill(ReachuColors.error)
-                        .frame(width: 100, height: 100)
-                        .scaleEffect(checkoutStep == .error ? 1.0 : 0.5)
-                        .animation(
-                            .spring(response: 0.6, dampingFraction: 0.6).delay(
-                                0.2
-                            ),
-                            value: checkoutStep
-                        )
+                    VStack(spacing: ReachuSpacing.lg) {
+                        // Animated Error Icon
+                        ZStack {
+                            Circle()
+                                .fill(ReachuColors.error)
+                                .frame(width: 100, height: 100)
+                                .scaleEffect(viewModel.currentStep == .error ? 1.0 : 0.5)
+                                .animation(.spring(response: 0.6, dampingFraction: 0.6).delay(0.2), value: viewModel.currentStep)
 
-                    Image(systemName: "xmark")
-                        .font(.system(size: 45, weight: .bold))
-                        .foregroundColor(.white)
-                        .scaleEffect(checkoutStep == .error ? 1.0 : 0.0)
-                        .animation(
-                            .spring(response: 0.4, dampingFraction: 0.6).delay(
-                                0.4
-                            ),
-                            value: checkoutStep
-                        )
-                }
+                            Image(systemName: "xmark")
+                                .font(.system(size: 45, weight: .bold))
+                                .foregroundColor(.white)
+                                .scaleEffect(viewModel.currentStep == .error ? 1.0 : 0.0)
+                                .animation(.spring(response: 0.4, dampingFraction: 0.6).delay(0.4), value: viewModel.currentStep)
+                        }
 
-                // Error Message
-                VStack(spacing: ReachuSpacing.sm) {
-                    Text("Payment Failed")
-                        .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(ReachuColors.textPrimary)
-                        .multilineTextAlignment(.center)
-                        .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                        .animation(
-                            .easeInOut(duration: 0.5).delay(0.6),
-                            value: checkoutStep
-                        )
+                        // Error Message
+                        VStack(spacing: ReachuSpacing.sm) {
+                            Text("Payment Failed")
+                                .font(.system(size: 24, weight: .bold))
+                                .foregroundColor(ReachuColors.textPrimary)
+                                .multilineTextAlignment(.center)
+                                .opacity(viewModel.currentStep == .error ? 1.0 : 0.0)
+                                .animation(.easeInOut(duration: 0.5).delay(0.6), value: viewModel.currentStep)
 
-                    Text(
-                        "There was an issue processing your payment. Please check your payment information and try again."
-                    )
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundColor(ReachuColors.textSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, ReachuSpacing.xl)
-                    .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                    .animation(
-                        .easeInOut(duration: 0.5).delay(0.8),
-                        value: checkoutStep
-                    )
+                            Text(viewModel.errorMessage ?? "There was an issue processing your payment. Please check your payment information and try again.")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundColor(ReachuColors.textSecondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, ReachuSpacing.xl)
+                                .opacity(viewModel.currentStep == .error ? 1.0 : 0.0)
+                                .animation(.easeInOut(duration: 0.5).delay(0.8), value: viewModel.currentStep)
+                        }
+                    }
+
+                    Spacer()
+
+                    // Bottom Action Buttons
+                    VStack(spacing: ReachuSpacing.md) {
+                        RButton(
+                            title: "Try Again",
+                            style: .primary,
+                            size: .large
+                        ) {
+                            viewModel.currentStep = .orderSummary
+                        }
+                        .opacity(viewModel.currentStep == .error ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(1.0), value: viewModel.currentStep)
+
+                        RButton(
+                            title: "Go Back",
+                            style: .secondary,
+                            size: .large
+                        ) {
+                            cartManager.hideCheckout()
+                        }
+                        .opacity(viewModel.currentStep == .error ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.5).delay(1.1), value: viewModel.currentStep)
+                    }
+                    .padding(.horizontal, ReachuSpacing.lg)
+                    .padding(.bottom, ReachuSpacing.xl)
                 }
             }
-
-            Spacer()
-
-            // Bottom Action Buttons
-            VStack(spacing: ReachuSpacing.md) {
-                RButton(
-                    title: "Try Again",
-                    style: .primary,
-                    size: .large
-                ) {
-                    // Go back to order summary to retry
-                    checkoutStep = .orderSummary
-                }
-                .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                .animation(
-                    .easeInOut(duration: 0.5).delay(1.0),
-                    value: checkoutStep
-                )
-
-                RButton(
-                    title: "Go Back",
-                    style: .secondary,
-                    size: .large
-                ) {
-                    cartManager.hideCheckout()
-                }
-                .opacity(checkoutStep == .error ? 1.0 : 0.0)
-                .animation(
-                    .easeInOut(duration: 0.5).delay(1.1),
-                    value: checkoutStep
-                )
-            }
-            .padding(.horizontal, ReachuSpacing.lg)
-            .padding(.bottom, ReachuSpacing.xl)
         }
     }
 
