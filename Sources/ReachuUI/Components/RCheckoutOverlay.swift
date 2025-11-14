@@ -33,19 +33,6 @@ public struct RCheckoutOverlay: View {
 
     // MARK: - Initialization
     
-    // Optional user data parameters
-    public let userFirstName: String?
-    public let userLastName: String?
-    public let userEmail: String?
-    public let userPhone: String?
-    public let userPhoneCountryCode: String?
-    public let userAddress1: String?
-    public let userAddress2: String?
-    public let userCity: String?
-    public let userProvince: String?
-    public let userCountry: String?
-    public let userZip: String?
-    
     // Store user data for ViewModel initialization
     private let userFirstName: String?
     private let userLastName: String?
@@ -438,7 +425,13 @@ public struct RCheckoutOverlay: View {
         }
     }
 
-    // MARK: - Address Step View
+    // MARK: - Old Views (Removed - Now using CheckoutAddressStep, CheckoutOrderSummaryStep, CheckoutReviewStep)
+    // These views have been extracted to separate components and are no longer used
+    // The old views (addressStepView, orderSummaryStepView, paymentStepView, reviewStepView) 
+    // have been removed. See CheckoutAddressStep, CheckoutOrderSummaryStep, CheckoutReviewStep components.
+    
+    /*
+    // MARK: - Address Step View (REMOVED - Now using CheckoutAddressStep)
     private var addressStepView: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -1150,86 +1143,8 @@ public struct RCheckoutOverlay: View {
         }
     }
 
-    // MARK: - Review Step View
-    private var reviewStepView: some View {
-        Group {
-            #if os(iOS)
-                if selectedPaymentMethod == .stripe && shouldPresentStripeSheet {
-                    Color.clear
-                        .onAppear {
-                            presentStripePaymentSheet()
-                        }
-                } else {
-                    VStack(spacing: 0) {
-                        ScrollView {
-                            VStack(
-                                alignment: .leading,
-                                spacing: ReachuSpacing.lg
-                            ) {
-                                Text(RLocalizedString(ReachuTranslationKey.reviewOrder.rawValue))
-                                    .font(ReachuTypography.title2)
-                                    .foregroundColor(ReachuColors.textPrimary)
-                                    .padding(.horizontal, ReachuSpacing.lg)
-                                    .padding(.top, ReachuSpacing.lg)
-
-                                Text("Order review content...")
-                                    .padding(.horizontal, ReachuSpacing.lg)
-
-                                Spacer(minLength: 100)
-                            }
-                        }
-
-                        VStack {
-                            RButton(
-                                title: RLocalizedString(ReachuTranslationKey.completePurchase.rawValue),
-                                style: .primary,
-                                size: .large
-                            ) {
-                                Task { @MainActor in
-                                    isLoading = true
-                                    await prepareStripePaymentSheet()
-                                    isLoading = false
-                                    shouldPresentStripeSheet = true
-                                }
-                            }
-                            .padding(.horizontal, ReachuSpacing.lg)
-                            .padding(.vertical, ReachuSpacing.md)
-                        }
-                        .background(ReachuColors.surface)
-                    }
-                }
-            #else
-                VStack(spacing: 0) {
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: ReachuSpacing.lg) {
-                            Text("Review Order")
-                                .font(ReachuTypography.title2)
-                                .foregroundColor(ReachuColors.textPrimary)
-                                .padding(.horizontal, ReachuSpacing.lg)
-                                .padding(.top, ReachuSpacing.lg)
-
-                            Text("Order review content...")
-                                .padding(.horizontal, ReachuSpacing.lg)
-
-                            Spacer(minLength: 100)
-                        }
-                    }
-                    VStack {
-                        RButton(
-                            title: "Complete Purchase",
-                            style: .primary,
-                            size: .large
-                        ) {
-                            checkoutStep = .review
-                        }
-                        .padding(.horizontal, ReachuSpacing.lg)
-                        .padding(.vertical, ReachuSpacing.md)
-                    }
-                    .background(ReachuColors.surface)
-                }
-            #endif
-        }
-    }
+    // MARK: - Review Step View (REMOVED - Now using CheckoutReviewStep)
+    */
 
     // MARK: - Success Step View
     private var successStepView: some View {
