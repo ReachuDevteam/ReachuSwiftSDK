@@ -90,7 +90,7 @@ public class KlarnaPaymentHandler {
         customer: KlarnaNativeCustomerInputDto,
         shippingAddress: KlarnaNativeAddressInputDto,
         billingAddress: KlarnaNativeAddressInputDto
-    ) async -> Result<ConfirmKlarnaNativeDto, KlarnaError> {
+    ) async -> Result<ConfirmPaymentKlarnaNativeDto, KlarnaError> {
         guard let result = await cartManager.confirmKlarnaNative(
             authorizationToken: authToken,
             autoCapture: true,

@@ -371,10 +371,6 @@ public class CheckoutViewModel: ObservableObject {
         syncPhoneCode(phoneCountryCode)
     }
     
-    private func syncPhoneCode(_ code: String) {
-        phoneCountryCode = code
-        // Additional sync logic if needed
-    }
     
     private func syncPhoneCountryCodeISO(_ code: String) {
         if let selectedMarket = cartManager.selectedMarket,
@@ -849,6 +845,24 @@ public class CheckoutViewModel: ObservableObject {
 }
 
 // MARK: - Supporting Types
+
+public enum CheckoutStep: CaseIterable {
+    case address
+    case orderSummary
+    case review
+    case success
+    case error
+    
+    public var title: String {
+        switch self {
+        case .address: return "Address"
+        case .orderSummary: return "Order Summary"
+        case .review: return "Review"
+        case .success: return "Complete"
+        case .error: return "Error"
+        }
+    }
+}
 
 public enum PaymentMethod: String, CaseIterable {
     case stripe = "stripe"
