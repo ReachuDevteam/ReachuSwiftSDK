@@ -91,7 +91,7 @@
     "enableGuestCheckout": true,
     "requirePhoneNumber": true,
     "defaultShippingCountry": "NO",
-    "supportedPaymentMethods": ["stripe", "klarna", "vipps"]
+    "supportedPaymentMethods": ["stripe", "klarna", "vipps", "paypal"]
   },
   "productDetail": {
     "showNavigationTitle": false,
@@ -107,17 +107,29 @@
     "phoneCode": "+47",
     "flag": "https://flagcdn.com/w320/no.png"
   },
-  "localization": {
-    "defaultLanguage": "no",
-    "fallbackLanguage": "en",
-    "translationsFile": "reachu-translations"
-  },
   "liveShow": {
     "campaignId": 20,
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
     }
+  },
+  "localization": {
+    "defaultLanguage": "no",
+    "fallbackLanguage": "en",
+    "translationsFile": "reachu-translations"
+  },
+  "analytics": {
+    "enabled": true,
+    "mixpanelToken": "9195a4c4d8a7bb1ea3df1554a3f0b127",
+    "apiHost": "https://api-eu.mixpanel.com",
+    "trackComponentViews": true,
+    "trackComponentClicks": true,
+    "trackImpressions": true,
+    "trackTransactions": true,
+    "trackProductEvents": true,
+    "autocapture": false,
+    "recordSessionsPercent": 0
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",
