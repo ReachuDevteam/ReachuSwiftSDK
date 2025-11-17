@@ -186,28 +186,20 @@ struct VGHomeView: View {
                     }
                     .padding(.top, 24)
                     .padding(.horizontal, 16)
-                    // Auto-loads based on ReachuConfiguration (currency/country)
+
                     RProductCarousel(componentId: "product-carousel-template", layout: "compact")
-                    //RProductSlider(
-                        //title: "",
-                        //layout: .cards,
-                        //maxItems: 6,
-                        //currency: cartManager.currency,
-                        //country: cartManager.country
-                    //)
-                    //.environmentObject(cartManager)
-                    //.padding(.bottom, 8)
                 }
                 VStack(alignment: .leading, spacing: 10) {    
-                    ROfferBannerDynamic(
-                        onNavigateToStore: {
-                            showProducts = true
-                        }
-                    )
-                    .padding(.horizontal, 16)
+                    if let bannerConfig = componentManager.activeBanner {
+                        ROfferBannerDynamic(
+                            onNavigateToStore: {
+                                showProducts = true
+                            }
+                        )
+                        .padding(.horizontal, 16)
+                    }
                 }
                 .environment(\.colorScheme, .light)
-            // .frame(maxWidth: geometry.size.width)
                 .padding(.bottom, 100)            
             }
         }

@@ -118,6 +118,7 @@
   },
   "liveShow": {
     "campaignId": 20,
+    "status": "active",
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"

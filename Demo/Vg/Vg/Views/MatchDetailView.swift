@@ -7,6 +7,7 @@ struct MatchDetailView: View {
     let matchSubtitle: String
     let onBackTapped: () -> Void
     let onShareTapped: () -> Void
+    @State private var showProducts = false
     
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft
@@ -122,32 +123,34 @@ struct MatchDetailView: View {
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(maxWidth: 80, maxHeight: 24)
+                                    .onTapGesture {
+                                        showProducts = true
+                                    }
                             }
                         }
                         .padding(.top, 24)
                         .padding(.horizontal, 16)
                         // Auto-loads based on ReachuConfiguration (currency/country)
                         RProductCarousel(componentId: "product-carousel-template", layout: "compact")
-
-                        if let bannerConfig = componentManager.activeBanner {
-                            ROfferBanner(config: bannerConfig)
-                        }
-                        //RProductSlider(
-                            //title: nil,
-                            //products: nil,
-                            //categoryId: nil,
-                            //layout: .cards,
-                            //showSeeAll: false,
-                            //maxItems: 12
-                        //)
-                        //.padding(.bottom, 8)
                     }
-                        
-                    // Bottom padding
-                    Spacer()
-                        .frame(height: 100)
                 }
+                VStack(alignment: .leading, spacing: 10) {   
+                    if let bannerConfig = componentManager.activeBanner { 
+                        ROfferBannerDynamic(
+                            onNavigateToStore: {
+                                showProducts = true
+                            }
+                        )
+                        .padding(.horizontal, 16)
+                    }
+                }
+                .environment(\.colorScheme, .light)
             }
+        }
+        .sheet(isPresented: $showProducts) {
+            ProductsView(onBackTapped: {
+                showProducts = false
+            })
         }
     }
 }

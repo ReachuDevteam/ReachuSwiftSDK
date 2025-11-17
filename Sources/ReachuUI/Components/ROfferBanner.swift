@@ -574,7 +574,7 @@ struct TimeUnit: View {
 /// This component connects to ComponentManager and displays the active banner
 /// It handles loading states, errors, and real-time updates via WebSocket
 public struct ROfferBannerDynamic: View {
-    @StateObject private var componentManager = ComponentManager.shared
+    @ObservedObject private var componentManager = ComponentManager.shared
     @ObservedObject private var campaignManager = CampaignManager.shared
     @State private var isLoading = true
     @State private var hasError = false
@@ -625,28 +625,29 @@ public struct ROfferBannerDynamic: View {
                 EmptyView()
             } else {
                 ZStack {
-                    // Skeleton - show when loading OR when no banner exists OR on initial load
-                    let showSkeleton = isLoading || componentManager.activeBanner == nil || !hasShownInitialSkeleton
+                    // Determine if we should show skeleton
+                    // Show skeleton only when: loading AND no banner available, OR initial load hasn't completed
+                    let showSkeleton = (isLoading && componentManager.activeBanner == nil) || (!hasShownInitialSkeleton && componentManager.activeBanner == nil)
                     
                     loadingSkeleton
                         .opacity(showSkeleton ? 1.0 : 0.0)
                         .animation(.easeInOut(duration: 0.3), value: showSkeleton)
                     
                     // Error view
-                    if hasError && !isLoading {
+                    if hasError && !isLoading && componentManager.activeBanner == nil {
                         errorView
                             .opacity(1.0)
                             .animation(.easeInOut(duration: 0.3), value: hasError)
                     }
                     
-                    // Content - fades in when ready
-                    if let bannerConfig = componentManager.activeBanner, !showSkeleton {
+                    // Content - show when banner is available and skeleton should be hidden
+                    if let bannerConfig = componentManager.activeBanner {
                         ROfferBanner(
                             config: bannerConfig,
                             onNavigateToStore: onNavigateToStore
                         )
-                            .id(bannerConfig.countdownEndDate) // Force recreation when date changes
-                            .opacity(1.0)
+                            .id("\(bannerConfig.countdownEndDate)-\(bannerConfig.title)") // Force recreation when config changes
+                            .opacity(showSkeleton ? 0.0 : 1.0)
                             .animation(.easeInOut(duration: 0.3), value: showSkeleton)
                     }
                 }
@@ -654,15 +655,26 @@ public struct ROfferBannerDynamic: View {
             // If no banner and not loading, show nothing (banner is hidden)
         }
         .onAppear {
-            // Show skeleton initially, even if banner is cached
-            hasShownInitialSkeleton = false
-            
-            Task {
-                // Small delay to ensure skeleton is visible
-                try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+            // Check if banner is already available
+            if componentManager.activeBanner != nil && componentManager.isConnected {
+                // Banner already available - show it immediately
                 hasShownInitialSkeleton = true
+                isLoading = false
+            } else if componentManager.activeBanner != nil {
+                // Banner available but connection status unknown - show it anyway
+                hasShownInitialSkeleton = true
+                isLoading = false
+            } else {
+                // No banner yet - show skeleton and connect
+                hasShownInitialSkeleton = false
                 
-                await connectToBackend()
+                Task {
+                    // Small delay to ensure skeleton is visible
+                    try? await Task.sleep(nanoseconds: 300_000_000) // 300ms
+                    hasShownInitialSkeleton = true
+                    
+                    await connectToBackend()
+                }
             }
         }
         .onDisappear {
@@ -670,13 +682,29 @@ public struct ROfferBannerDynamic: View {
             // ComponentManager manages its own lifecycle
         }
         .onChange(of: componentManager.activeBanner) { newBanner in
-            // Reset loading state when banner changes
+            // Update state when banner changes
             if newBanner != nil {
+                // Banner became available
                 isLoading = false
                 hasError = false
-            } else if !isLoading {
-                // Banner was removed
+                hasShownInitialSkeleton = true // Ensure skeleton is hidden
+            } else {
+                // Banner was removed - only set loading if we're actually loading
+                // Don't set isLoading to true here, as the banner might just be temporarily unavailable
+                if isLoading {
+                    // Keep loading state if we're already loading
+                } else {
+                    // Banner removed but not loading - this is normal (no active banner)
+                    isLoading = false
+                }
+            }
+        }
+        .onChange(of: componentManager.isConnected) { isConnected in
+            // When connection status changes, check if we should update loading state
+            if isConnected && componentManager.activeBanner != nil {
+                // Connected and banner available - ensure we're not loading
                 isLoading = false
+                hasShownInitialSkeleton = true
             }
         }
     }
@@ -786,6 +814,12 @@ public struct ROfferBannerDynamic: View {
     // MARK: - Connection Logic
     
     private func connectToBackend() async {
+        // If banner is already available and connected, don't reconnect
+        if componentManager.activeBanner != nil && componentManager.isConnected {
+            isLoading = false
+            return
+        }
+        
         isLoading = true
         hasError = false
         errorMessage = nil
@@ -793,8 +827,21 @@ public struct ROfferBannerDynamic: View {
         do {
             await componentManager.connect()
             
-            // Wait a bit for initial load
-            try await Task.sleep(nanoseconds: 1_000_000_000) // 1 second
+            // Wait a bit for initial load, but check periodically if banner becomes available
+            var waited = 0
+            let maxWait = 10_000_000_000 // 1 second total
+            let checkInterval = 100_000_000 // Check every 100ms
+            
+            while waited < maxWait {
+                try await Task.sleep(nanoseconds: UInt64(checkInterval))
+                waited += checkInterval
+                
+                // If banner becomes available, stop waiting
+                if componentManager.activeBanner != nil {
+                    isLoading = false
+                    return
+                }
+            }
             
             // Check if we got a banner or if connection is established
             if componentManager.activeBanner == nil && componentManager.isConnected {
