@@ -14,6 +14,7 @@ struct VGHomeView: View {
     @State private var showMatchDetail = false
     @State private var selectedMatchTitle = ""
     @State private var selectedMatchSubtitle = ""
+    @State private var showProducts = false
     
     @EnvironmentObject private var cartManager: CartManager
     @EnvironmentObject private var checkoutDraft: CheckoutDraft
@@ -58,6 +59,11 @@ struct VGHomeView: View {
                     print("📤 [VG] Share match: \(selectedMatchTitle)")
                 }
             )
+        }
+        .sheet(isPresented: $showProducts) {
+            ProductsView(onBackTapped: {
+                showProducts = false
+            })
         }
     }
     
@@ -173,16 +179,15 @@ struct VGHomeView: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: 80, maxHeight: 24)
+                                .onTapGesture {
+                                    showProducts = true
+                                }
                         }
                     }
                     .padding(.top, 24)
                     .padding(.horizontal, 16)
                     // Auto-loads based on ReachuConfiguration (currency/country)
                     RProductCarousel(componentId: "product-carousel-template", layout: "compact")
-
-                    if let bannerConfig = componentManager.activeBanner {
-                        ROfferBanner(config: bannerConfig)
-                    }
                     //RProductSlider(
                         //title: "",
                         //layout: .cards,
@@ -193,6 +198,15 @@ struct VGHomeView: View {
                     //.environmentObject(cartManager)
                     //.padding(.bottom, 8)
                 }
+                VStack(alignment: .leading, spacing: 10) {    
+                    ROfferBannerDynamic(
+                        onNavigateToStore: {
+                            showProducts = true
+                        }
+                    )
+                    .padding(.horizontal, 16)
+                }
+                .environment(\.colorScheme, .light)
             // .frame(maxWidth: geometry.size.width)
                 .padding(.bottom, 100)            
             }
