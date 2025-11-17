@@ -85,41 +85,59 @@ struct VGVideoPlayer: View {
     }
     
     private var controlsOverlay: some View {
-        VStack {
-            Spacer()
-            HStack(spacing: 16) {
-                Button(action: { playerViewModel.rewind() }) {
-                    Image(systemName: "gobackward.30")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.15))
-                        .clipShape(Circle())
+        GeometryReader { geometry in
+            VStack {
+                Spacer()
+                HStack {
+                    Spacer()
+                    HStack(spacing: 16) {
+                        Button(action: { playerViewModel.rewind() }) {
+                            Image(systemName: "gobackward.30")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                        
+                        Button(action: { playerViewModel.togglePlayPause() }) {
+                            Image(systemName: playerViewModel.isPlaying ? "pause.fill" : "play.fill")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundColor(.white)
+                                .frame(width: 56, height: 56)
+                                .background(VGTheme.Colors.red)
+                                .clipShape(Circle())
+                                .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
+                        }
+                        
+                        Button(action: { playerViewModel.forward() }) {
+                            Image(systemName: "goforward.30")
+                                .font(.system(size: 20, weight: .semibold))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                                .background(Color.white.opacity(0.15))
+                                .clipShape(Circle())
+                        }
+                    }
+                    Spacer()
                 }
-                
-                Button(action: { playerViewModel.togglePlayPause() }) {
-                    Image(systemName: playerViewModel.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(.white)
-                        .frame(width: 56, height: 56)
-                        .background(VGTheme.Colors.red)
-                        .clipShape(Circle())
-                        .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
-                }
-                
-                Button(action: { playerViewModel.forward() }) {
-                    Image(systemName: "goforward.30")
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(width: 44, height: 44)
-                        .background(Color.white.opacity(0.15))
-                        .clipShape(Circle())
-                }
+                .padding(.bottom, chatBottomPadding(geometry: geometry))
             }
-            .padding(.bottom, 16)
+            .padding(.horizontal, 16)
         }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
+    }
+    
+    private func chatBottomPadding(geometry: GeometryProxy) -> CGFloat {
+        let chatHeight: CGFloat
+        if isChatExpanded {
+            // Chat expandido: usar 40% de la altura de la pantalla + padding
+            chatHeight = geometry.size.height * 0.4 + 20
+        } else {
+            // Chat colapsado: altura del handle (40 en landscape, 60 en portrait)
+            chatHeight = isLandscape ? 40 : 60
+        }
+        // Añadir padding adicional para separación
+        return chatHeight + 20
     }
 }
 
