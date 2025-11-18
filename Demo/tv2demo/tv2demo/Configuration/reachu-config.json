@@ -19,6 +19,7 @@
       "textPrimary": "#000000",
       "textSecondary": "#757575",
       "textTertiary": "#9E9E9E",
+      "textOnPrimary": "#FFFFFF",
       "border": "#E0E0E0",
       "borderSecondary": "#BDBDBD"
     },
@@ -35,6 +36,7 @@
       "textPrimary": "#FFFFFF",
       "textSecondary": "#B3B3B3",
       "textTertiary": "#808080",
+      "textOnPrimary": "#FFFFFF",
       "border": "#3D3450",
       "borderSecondary": "#4A4A4A"
     }
