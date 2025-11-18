@@ -177,6 +177,7 @@ public struct AdaptiveColors {
     public var textPrimary: Color { themeColors.textPrimary }
     public var textSecondary: Color { themeColors.textSecondary }
     public var textTertiary: Color { themeColors.textTertiary }
+    public var textOnPrimary: Color { themeColors.textOnPrimary }
     
     // MARK: - Border Colors
     public var border: Color { themeColors.border }
