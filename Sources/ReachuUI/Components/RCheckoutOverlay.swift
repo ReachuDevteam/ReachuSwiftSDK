@@ -840,14 +840,14 @@ public struct RCheckoutOverlay: View {
                     HStack {
                         Text(RLocalizedString(ReachuTranslationKey.proceedToCheckout.rawValue))
                             .font(ReachuTypography.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                         
                         Spacer()
                         
                         Text("\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))")
                             .font(ReachuTypography.headline)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.vertical, ReachuSpacing.md)
@@ -1017,14 +1017,14 @@ public struct RCheckoutOverlay: View {
                     HStack {
                         Text(RLocalizedString(ReachuTranslationKey.initiatePayment.rawValue))
                             .font(ReachuTypography.headline)
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                         
                         Spacer()
                         
                         Text("\(cartManager.currency) \(String(format: "%.2f", checkoutTotal))")
                             .font(ReachuTypography.headline)
                             .fontWeight(.bold)
-                            .foregroundColor(.white)
+                            .foregroundColor(adaptiveColors.surface)
                     }
                     .padding(.horizontal, ReachuSpacing.lg)
                     .padding(.vertical, ReachuSpacing.md)
@@ -3229,7 +3229,7 @@ extension RCheckoutOverlay {
                 }) {
                     Text("Apply")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(adaptiveColors.surface)
                         .padding(.horizontal, ReachuSpacing.md)
                         .padding(.vertical, ReachuSpacing.sm)
                         .background(
