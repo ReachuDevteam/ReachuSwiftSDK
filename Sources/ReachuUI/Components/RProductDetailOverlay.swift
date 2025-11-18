@@ -633,19 +633,19 @@ public struct RProductDetailOverlay: View {
                     if showCheckmark {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(adaptiveColors.surface)
+                            .foregroundColor(.white)
                     } else if isAddingToCart {
-                        RCustomLoader(style: .rotate, size: 20, color: adaptiveColors.surface, speed: 1.5)
+                        RCustomLoader(style: .rotate, size: 20, color: .white, speed: 1.5)
                     } else {
                         Image(systemName: "cart.badge.plus")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(adaptiveColors.surface)
+                            .foregroundColor(.white)
                     }
                     
                     // Button text
                     Text(showCheckmark ? RLocalizedString(ReachuTranslationKey.completePurchase.rawValue) : isAddingToCart ? RLocalizedString(ReachuTranslationKey.loading.rawValue) : RLocalizedString(ReachuTranslationKey.addToCart.rawValue))
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(adaptiveColors.surface)
+                        .foregroundColor(.white)
                     
                     Spacer()
                     
@@ -653,7 +653,7 @@ public struct RProductDetailOverlay: View {
                     if !isAddingToCart && !showCheckmark {
                         Text(formatted(amount: Double(currentPriceWithTaxes) * Double(quantity)))
                             .font(.system(size: 16, weight: .bold))
-                            .foregroundColor(adaptiveColors.surface)
+                            .foregroundColor(.white)
                     }
                 }
                 .padding(.horizontal, ReachuSpacing.lg)

@@ -144,6 +144,7 @@ public struct RFloatingCartIndicator: View {
             .onChange(of: cartManager.itemCount) { newCount in
                 triggerBounceAnimation()
             }
+            .zIndex(9999)
         }
         
     }

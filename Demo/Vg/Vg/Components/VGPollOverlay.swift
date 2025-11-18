@@ -398,7 +398,7 @@ struct VGPollOverlay: View {
                     .fill(
                         selectedOption == option.text 
                         ? VGTheme.Colors.red
-                        : Color(hex: "3A3D5C")
+                        : VGTheme.Colors.red.opacity(0.8)
                     )
             )
         }
