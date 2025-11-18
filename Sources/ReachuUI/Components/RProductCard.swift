@@ -350,7 +350,7 @@ public struct RProductCard: View {
     private func discountBadge(text: String) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
-            .foregroundColor(adaptiveColors.surface)
+            .foregroundColor(.white)
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .background(

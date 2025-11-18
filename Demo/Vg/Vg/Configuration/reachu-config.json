@@ -31,14 +31,14 @@
       "error": "#FF453A",
       "info": "#0A84FF",
       "background": "#000000",
-      "surface": "#FFFFFF",
+      "surface": "#1C1C1E",
       "surfaceSecondary": "#2C2C2E",
       "textPrimary": "#FFFFFF",
       "textSecondary": "#8E8E93",
       "textTertiary": "#48484A",
       "border": "#38383A",
       "borderSecondary": "#48484A",
-      "priceColor": "#bbbbbb"
+      "priceColor": "#FF0000"
     },
     "borderRadius": {
       "small": 4,
