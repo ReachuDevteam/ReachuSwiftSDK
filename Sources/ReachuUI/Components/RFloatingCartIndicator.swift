@@ -199,17 +199,17 @@ public struct RFloatingCartIndicator: View {
                 Text(RLocalizedString(ReachuTranslationKey.cart.rawValue))
                     .font(size == .small ? .system(size: 10, weight: .medium) : ReachuTypography.caption1)
                     .fontWeight(.medium)
-                    .foregroundColor(adaptiveColors.surface.opacity(0.9))
+                    .foregroundColor(adaptiveColors.textOnPrimary.opacity(0.9))
                 
                 Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
                     .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
-                    .foregroundColor(adaptiveColors.surface)
+                    .foregroundColor(adaptiveColors.textOnPrimary)
             }
             
             // Checkout arrow
             Image(systemName: "chevron.right")
                 .font(size == .small ? .system(size: 10) : .caption)
-                .foregroundColor(adaptiveColors.surface.opacity(0.8))
+                .foregroundColor(adaptiveColors.textOnPrimary.opacity(0.8))
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
@@ -227,7 +227,7 @@ public struct RFloatingCartIndicator: View {
             // Price only
             Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
                 .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
-                .foregroundColor(adaptiveColors.surface)
+                .foregroundColor(adaptiveColors.textOnPrimary)
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
@@ -245,7 +245,7 @@ public struct RFloatingCartIndicator: View {
             // Count only
             Text("\(cartManager.itemCount)")
                 .font(size == .small ? .system(size: 10, weight: .semibold) : ReachuTypography.bodyBold)
-                .foregroundColor(adaptiveColors.surface)
+                .foregroundColor(adaptiveColors.textOnPrimary)
         }
         .padding(.horizontal, size.horizontalPadding)
         .padding(.vertical, size.verticalPadding)
@@ -276,7 +276,7 @@ public struct RFloatingCartIndicator: View {
             // Cart icon centered
             Image(systemName: "cart.fill")
                 .font(size.iconSize)
-                .foregroundColor(adaptiveColors.surface)
+                .foregroundColor(adaptiveColors.textOnPrimary)
             
             // Item count badge - top right corner
             VStack {
@@ -290,7 +290,7 @@ public struct RFloatingCartIndicator: View {
                         .padding(.vertical, size == .small ? 2 : 2)
                         .background(
                             Capsule()
-                                .fill(adaptiveColors.surface)
+                                .fill(adaptiveColors.textOnPrimary)
                         )
                         .scaleEffect(bounceAnimation ? 1.15 : 1.0)
                         .animation(.spring(response: 0.3, dampingFraction: 0.6), value: bounceAnimation)
