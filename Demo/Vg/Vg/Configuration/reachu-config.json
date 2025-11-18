@@ -19,6 +19,7 @@
       "textPrimary": "#000000",
       "textSecondary": "#8E8E93",
       "textTertiary": "#C7C7CC",
+      "textOnPrimary": "#FFFFFF",
       "border": "#E5E5EA",
       "borderSecondary": "#D1D1D6",
       "priceColor": "#bbbbbb"
@@ -36,6 +37,7 @@
       "textPrimary": "#FFFFFF",
       "textSecondary": "#8E8E93",
       "textTertiary": "#48484A",
+      "textOnPrimary": "#FFFFFF",
       "border": "#38383A",
       "borderSecondary": "#48484A",
       "priceColor": "#FF0000"

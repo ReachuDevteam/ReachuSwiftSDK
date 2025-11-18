@@ -363,6 +363,7 @@ public class ConfigurationLoader {
             textPrimary: hexToColor(config.lightColors?.textPrimary ?? "#000000"),
             textSecondary: hexToColor(config.lightColors?.textSecondary ?? "#8E8E93"),
             textTertiary: hexToColor(config.lightColors?.textTertiary ?? "#C7C7CC"),
+            textOnPrimary: hexToColor(config.lightColors?.textOnPrimary ?? "#FFFFFF"),
             border: hexToColor(config.lightColors?.border ?? "#E5E5EA"),
             borderSecondary: hexToColor(config.lightColors?.borderSecondary ?? "#D1D1D6"),
             priceColor: config.lightColors?.priceColor != nil ? hexToColor(config.lightColors!.priceColor!) : nil  // Use primary if not specified
@@ -385,6 +386,7 @@ public class ConfigurationLoader {
                 textPrimary: hexToColor(darkColorsConfig.textPrimary ?? "#FFFFFF"),
                 textSecondary: hexToColor(darkColorsConfig.textSecondary ?? "#8E8E93"),
                 textTertiary: hexToColor(darkColorsConfig.textTertiary ?? "#48484A"),
+                textOnPrimary: hexToColor(darkColorsConfig.textOnPrimary ?? "#FFFFFF"),
                 border: hexToColor(darkColorsConfig.border ?? "#38383A"),
                 borderSecondary: hexToColor(darkColorsConfig.borderSecondary ?? "#48484A"),
                 priceColor: darkColorsConfig.priceColor != nil ? hexToColor(darkColorsConfig.priceColor!) : nil  // Use primary if not specified
@@ -806,6 +808,7 @@ private struct JSONColorConfiguration: Codable {
     let textPrimary: String?
     let textSecondary: String?
     let textTertiary: String?
+    let textOnPrimary: String?  // Text color when displayed on primary color background
     let border: String?
     let borderSecondary: String?
     let priceColor: String?  // Customizable product price color

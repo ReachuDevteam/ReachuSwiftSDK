@@ -171,6 +171,7 @@ public struct ColorScheme {
     public let textPrimary: Color
     public let textSecondary: Color
     public let textTertiary: Color
+    public let textOnPrimary: Color  // Text color when displayed on primary color background
     
     // Border Colors
     public let border: Color
@@ -192,6 +193,7 @@ public struct ColorScheme {
         textPrimary: Color = .black,
         textSecondary: Color = Color(.sRGB, red: 0.557, green: 0.557, blue: 0.576, opacity: 1.0), // #8E8E93
         textTertiary: Color = Color(.sRGB, red: 0.780, green: 0.780, blue: 0.800, opacity: 1.0), // #C7C7CC
+        textOnPrimary: Color = .white,  // Default to white on primary color
         border: Color = Color(.sRGB, red: 0.898, green: 0.898, blue: 0.918, opacity: 1.0), // #E5E5EA
         borderSecondary: Color = Color(.sRGB, red: 0.820, green: 0.820, blue: 0.839, opacity: 1.0), // #D1D1D6
         priceColor: Color? = nil  // If nil, defaults to primary
@@ -208,6 +210,7 @@ public struct ColorScheme {
         self.textPrimary = textPrimary
         self.textSecondary = textSecondary
         self.textTertiary = textTertiary
+        self.textOnPrimary = textOnPrimary
         self.border = border
         self.borderSecondary = borderSecondary
         self.priceColor = priceColor ?? primary  // Default to primary if not specified
