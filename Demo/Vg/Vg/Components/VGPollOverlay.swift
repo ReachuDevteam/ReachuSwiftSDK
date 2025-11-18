@@ -173,7 +173,7 @@ struct VGPollOverlay: View {
                     .padding(.horizontal, 16)
                 
                 // Subtitle (optional helper text)
-                Text("Få raskere tilgang til kampene fra forsiden")
+                Text("Get faster access to matches from the home screen")
                     .font(.system(size: isLandscape ? 12 : 10, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
                     .multilineTextAlignment(.center)
@@ -220,14 +220,14 @@ struct VGPollOverlay: View {
                     .padding(.top, 8)
                 
                 // Title
-                Text("Resultater")
+                Text("Results")
                     .font(.system(size: isLandscape ? 18 : 14, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.horizontal, 16)
                 
-                Text("Takk for at du stemte!")
+                Text("Thank you for voting!")
                     .font(.system(size: isLandscape ? 13 : 10, weight: .regular))
-                    .foregroundColor(Color(hex: "7B5FFF"))
+                    .foregroundColor(VGTheme.Colors.red)
                     .padding(.horizontal, 16)
                 
                 // Results bars
@@ -264,7 +264,7 @@ struct VGPollOverlay: View {
                 
                 Text("\(Int(percentage))%")
                     .font(.system(size: isLandscape ? 15 : 12, weight: .bold))
-                    .foregroundColor(isSelected ? Color(hex: "7B5FFF") : .white)
+                    .foregroundColor(isSelected ? VGTheme.Colors.red : .white)
             }
             
             // Progress bar
@@ -276,7 +276,7 @@ struct VGPollOverlay: View {
                     
                     // Fill
                     RoundedRectangle(cornerRadius: isLandscape ? 10 : 8)
-                        .fill(isSelected ? Color(hex: "7B5FFF") : Color(hex: "5B5FCF"))
+                        .fill(isSelected ? VGTheme.Colors.red : VGTheme.Colors.red.opacity(0.6))
                         .frame(width: geometry.size.width * (percentage / 100))
                 }
             }
@@ -350,7 +350,7 @@ struct VGPollOverlay: View {
                             Circle()
                                 .fill(
                                     LinearGradient(
-                                        colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
+                                        colors: [VGTheme.Colors.red, VGTheme.Colors.red.opacity(0.8)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
@@ -373,7 +373,7 @@ struct VGPollOverlay: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [Color(hex: "5B5FCF"), Color(hex: "7B7FEF")],
+                                colors: [VGTheme.Colors.red, VGTheme.Colors.red.opacity(0.8)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
@@ -397,7 +397,7 @@ struct VGPollOverlay: View {
                 RoundedRectangle(cornerRadius: isLandscape ? 20 : 18)
                     .fill(
                         selectedOption == option.text 
-                        ? Color(hex: "5B5FCF")
+                        ? VGTheme.Colors.red
                         : Color(hex: "3A3D5C")
                     )
             )

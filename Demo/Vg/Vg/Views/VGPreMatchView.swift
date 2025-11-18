@@ -47,7 +47,7 @@ struct VGPreMatchView: View {
                         HStack(spacing: 12) {
                             Image(systemName: "play.fill")
                                 .font(.system(size: 18, weight: .bold))
-                            Text("Play")
+                            Text("Watch Live")
                                 .font(.system(size: 18, weight: .semibold))
                         }
                         .foregroundColor(.white)

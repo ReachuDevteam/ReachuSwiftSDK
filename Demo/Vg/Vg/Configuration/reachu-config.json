@@ -7,7 +7,7 @@
     "name": "VG Demo Theme",
     "mode": "automatic",
     "lightColors": {
-      "primary": "#bbbbbb",
+      "primary": "#FF0000",
       "secondary": "#F7931E",
       "success": "#34C759",
       "warning": "#FF9500",
@@ -24,7 +24,7 @@
       "priceColor": "#bbbbbb"
     },
     "darkColors": {
-      "primary": "#bbbbbb",
+      "primary": "#FF0000",
       "secondary": "#F7931E",
       "success": "#32D74B",
       "warning": "#FF9F0A",

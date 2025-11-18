@@ -178,7 +178,7 @@ private struct LivePreviewWithPlayButton: View {
                     .font(.system(size: 22, weight: .bold))
                     .foregroundColor(.white)
                 
-                Text("Champions League · En vivo")
+                Text("Champions League · Live now")
                     .font(.system(size: 15, weight: .regular))
                     .foregroundColor(.white.opacity(0.7))
             }
