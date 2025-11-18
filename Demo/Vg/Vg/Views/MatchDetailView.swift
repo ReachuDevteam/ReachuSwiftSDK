@@ -47,34 +47,7 @@ struct MatchDetailView: View {
                     .padding(.bottom, 16)
                     
                     // Main content area (video)
-                    VStack(spacing: 0) {
-                        LivePreviewWithPlayButton()
-                        
-                        // Match details
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text(matchTitle)
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-                            
-                            HStack {
-                                Text(matchSubtitle)
-                                    .font(.system(size: 15, weight: .regular))
-                                    .foregroundColor(.white.opacity(0.7))
-                                
-                                Spacer()
-                                
-                                Button(action: onShareTapped) {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.7))
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                    }
+                    LivePreviewWithPlayButton()
                     
                     // "Neste" section
                     VStack(alignment: .leading, spacing: 16) {
@@ -158,48 +131,63 @@ struct MatchDetailView: View {
 // MARK: - Live preview hero with Play button
 
 private struct LivePreviewWithPlayButton: View {
-    @State private var showPlayer = false
+    @State private var showPreMatchView = false
     
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            // Imagen del live (placeholder usando assets del proyecto)
-            Image("card2x1")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(height: 220)
-                .clipped()
-                .overlay(
-                    // Sutil degradado para legibilidad en la parte inferior
-                    LinearGradient(
-                        colors: [Color.black.opacity(0.0), Color.black.opacity(0.45)],
-                        startPoint: .top,
-                        endPoint: .bottom
+        VStack(spacing: 0) {
+            ZStack(alignment: .bottomLeading) {
+                // Background image
+                Image("bg")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 220)
+                    .clipped()
+                    .overlay(
+                        // Sutil degradado para legibilidad en la parte inferior
+                        LinearGradient(
+                            colors: [Color.black.opacity(0.0), Color.black.opacity(0.45)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
                     )
-                )
-            
-            // Botón Play en esquina inferior izquierda
-            Button(action: { showPlayer = true }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 14, weight: .bold))
-                    Text("Play")
-                        .font(.system(size: 15, weight: .semibold))
+                
+                // Botón Play en esquina inferior izquierda
+                Button(action: { showPreMatchView = true }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text("Play")
+                            .font(.system(size: 15, weight: .semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .background(VGTheme.Colors.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
                 }
-                .foregroundColor(.white)
-                .padding(.vertical, 10)
-                .padding(.horizontal, 14)
-                .background(VGTheme.Colors.red)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
+                .padding(.leading, 16)
+                .padding(.bottom, 14)
             }
-            .padding(.leading, 16)
-            .padding(.bottom, 14)
+            .contentShape(Rectangle())
+            .onTapGesture { showPreMatchView = true }
+            
+            // Match title and description below the image
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Barcelona - PSG")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Text("Champions League · En vivo")
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundColor(.white.opacity(0.7))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
-        .contentShape(Rectangle())
-        .onTapGesture { showPlayer = true }
-        .fullScreenCover(isPresented: $showPlayer) {
-            VGFullScreenPlayerView()
-                .preferredColorScheme(.dark)
+        .fullScreenCover(isPresented: $showPreMatchView) {
+            VGPreMatchView()
         }
     }
 }
