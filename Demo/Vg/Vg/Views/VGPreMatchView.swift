@@ -26,15 +26,15 @@ struct VGPreMatchView: View {
                         Spacer()
                         Button(action: { dismiss() }) {
                             Image(systemName: "xmark")
-                                .font(.system(size: 18, weight: .semibold))
+                                .font(.system(size: 20, weight: .semibold))
                                 .foregroundColor(.white)
-                                .frame(width: 40, height: 40)
-                                .background(Color.black.opacity(0.5))
+                                .frame(width: 44, height: 44)
+                                .background(Color.black.opacity(0.6))
                                 .clipShape(Circle())
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, geometry.safeAreaInsets.top + 10)
+                    .padding(.top, 20)
                     
                     Spacer()
                     
