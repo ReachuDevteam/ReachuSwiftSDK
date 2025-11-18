@@ -119,11 +119,22 @@ struct MatchDetailView: View {
                 }
                 .environment(\.colorScheme, .light)
             }
+            
+            // Floating cart indicator - always on top
+            RFloatingCartIndicator(
+                customPadding: EdgeInsets(top: 0, leading: 0, bottom: 80, trailing: 16)
+            )
+            .zIndex(10000)
         }
         .sheet(isPresented: $showProducts) {
             ProductsView(onBackTapped: {
                 showProducts = false
             })
+        }
+        .sheet(isPresented: $cartManager.isCheckoutPresented) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
 }
@@ -132,6 +143,8 @@ struct MatchDetailView: View {
 
 private struct LivePreviewWithPlayButton: View {
     @State private var showPreMatchView = false
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     
     var body: some View {
         VStack(spacing: 0) {
@@ -188,6 +201,8 @@ private struct LivePreviewWithPlayButton: View {
         }
         .fullScreenCover(isPresented: $showPreMatchView) {
             VGPreMatchView()
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
 }

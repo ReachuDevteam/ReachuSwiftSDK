@@ -1,7 +1,11 @@
 import SwiftUI
+import ReachuUI
+import ReachuCore
 
 struct VGFullScreenPlayerView: View {
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     
     var body: some View {
         ZStack {
@@ -25,6 +29,18 @@ struct VGFullScreenPlayerView: View {
                 }
                 Spacer()
             }
+            .zIndex(100)
+            
+            // Floating cart indicator - always on top
+            RFloatingCartIndicator(
+                customPadding: EdgeInsets(top: 0, leading: 0, bottom: 80, trailing: 16)
+            )
+            .zIndex(10000)
+        }
+        .sheet(isPresented: $cartManager.isCheckoutPresented) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
 }

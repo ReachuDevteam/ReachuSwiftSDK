@@ -1,8 +1,12 @@
 import SwiftUI
+import ReachuUI
+import ReachuCore
 
 struct VGPreMatchView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showPlayer = false
+    @EnvironmentObject private var cartManager: CartManager
+    @EnvironmentObject private var checkoutDraft: CheckoutDraft
     
     var body: some View {
         GeometryReader { geometry in
@@ -66,11 +70,24 @@ struct VGPreMatchView: View {
                 }
                 .frame(width: geometry.size.width)
             }
+            
+            // Floating cart indicator - always on top
+            RFloatingCartIndicator(
+                customPadding: EdgeInsets(top: 0, leading: 0, bottom: 80, trailing: 16)
+            )
+            .zIndex(10000)
         }
         .ignoresSafeArea()
         .fullScreenCover(isPresented: $showPlayer) {
             VGFullScreenPlayerView()
                 .preferredColorScheme(.dark)
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
+        }
+        .sheet(isPresented: $cartManager.isCheckoutPresented) {
+            RCheckoutOverlay()
+                .environmentObject(cartManager)
+                .environmentObject(checkoutDraft)
         }
     }
 }
