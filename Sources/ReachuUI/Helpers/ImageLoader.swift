@@ -104,14 +104,14 @@ class ImageLoader: ObservableObject {
 }
 
 /// SwiftUI view that uses ImageLoader for reliable image loading
-struct LoadedImage: View {
-    let url: URL?
-    let placeholder: AnyView
-    let errorView: AnyView
+public struct LoadedImage: View {
+    public let url: URL?
+    public let placeholder: AnyView
+    public let errorView: AnyView
     
     @StateObject private var loader = ImageLoader()
     
-    init(
+    public init(
         url: URL?,
         placeholder: AnyView = AnyView(RCustomLoader(style: .rotate, size: 30)),
         errorView: AnyView? = nil
@@ -121,7 +121,7 @@ struct LoadedImage: View {
         self.errorView = errorView ?? AnyView(Image(systemName: "photo"))
     }
     
-    var body: some View {
+    public var body: some View {
         Group {
             if let image = loader.image {
                 image

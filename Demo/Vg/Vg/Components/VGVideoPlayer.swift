@@ -2,13 +2,24 @@ import SwiftUI
 import AVKit
 import AVFoundation
 import Combine
+import ReachuCore
+import ReachuUI
 
 struct VGVideoPlayer: View {
     @StateObject private var playerViewModel = VGVideoPlayerViewModel()
     @StateObject private var webSocketManager = WebSocketManager()
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @EnvironmentObject private var cartManager: CartManager
     @State private var isChatExpanded = false
     @State private var showPoll = false
+    @State private var showProduct = false
+    
+    // SDK Client para fetch de productos
+    private var sdkClient: SdkClient {
+        let config = ReachuConfiguration.shared
+        let baseURL = URL(string: config.environment.graphQLURL)!
+        return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
+    }
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
@@ -45,8 +56,36 @@ struct VGVideoPlayer: View {
                     isChatExpanded = expanded
                 }
                 
+                // Product Overlay (sobre el chat y poll)
+                if let productEvent = webSocketManager.currentProduct, showProduct {
+                    VGProductOverlay(
+                        productEvent: productEvent,
+                        isChatExpanded: isChatExpanded,
+                        sdk: sdkClient,
+                        currency: cartManager.currency,
+                        country: cartManager.country,
+                        onAddToCart: { productDto in
+                            if let apiProduct = productDto {
+                                print("🛍️ [Product] Agregando producto de la API al carrito: \(apiProduct.title)")
+                                let product = convertDtoToProduct(apiProduct)
+                                Task {
+                                    await cartManager.addProduct(product, quantity: 1)
+                                    print("✅ [Product] Producto agregado al carrito")
+                                }
+                            } else {
+                                print("⚠️ [Product] Producto de la API aún no disponible")
+                            }
+                        },
+                        onDismiss: {
+                            withAnimation {
+                                showProduct = false
+                            }
+                        }
+                    )
+                }
+                
                 // Poll overlay
-                if showPoll, let poll = webSocketManager.currentPoll {
+                if let poll = webSocketManager.currentPoll, showPoll {
                     VGPollOverlay(
                         poll: poll,
                         isChatExpanded: isChatExpanded,
@@ -71,12 +110,34 @@ struct VGVideoPlayer: View {
                 playerViewModel.cleanup()
                 webSocketManager.disconnect()
             }
+            .onReceive(webSocketManager.$currentProduct) { newProduct in
+                print("🎯 [VideoPlayer] Producto recibido: \(newProduct?.name ?? "nil")")
+                if newProduct != nil {
+                    print("🎯 [VideoPlayer] Mostrando producto")
+                    withAnimation {
+                        showProduct = true
+                    }
+                    // Auto-ocultar después de 30 segundos
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                        withAnimation {
+                            print("🎯 [VideoPlayer] Ocultando producto")
+                            showProduct = false
+                        }
+                    }
+                }
+            }
             .onReceive(webSocketManager.$currentPoll) { newPoll in
+                print("🎯 [VideoPlayer] Poll recibido: \(newPoll?.question ?? "nil")")
                 if newPoll != nil {
+                    print("🎯 [VideoPlayer] Mostrando poll")
                     withAnimation { showPoll = true }
                     if let duration = newPoll?.duration {
+                        print("🎯 [VideoPlayer] Auto-ocultar en \(duration)s")
                         DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(duration)) {
-                            withAnimation { showPoll = false }
+                            withAnimation {
+                                print("🎯 [VideoPlayer] Ocultando poll")
+                                showPoll = false
+                            }
                         }
                     }
                 }
@@ -138,6 +199,89 @@ struct VGVideoPlayer: View {
         }
         // Añadir padding adicional para separación
         return chatHeight + 20
+    }
+    
+    // MARK: - Helpers
+    
+    /// Convierte ProductDto a Product para el CartManager
+    private func convertDtoToProduct(_ dto: ProductDto) -> Product {
+        let price = convertPrice(dto.price)
+        let variants = convertVariants(dto.variants)
+        let images = convertImages(dto.images)
+        
+        let options = dto.options.map {
+            Option(id: $0.id, name: $0.name, order: $0.order, values: $0.values)
+        }
+        
+        let categories = dto.categories?.map {
+            _Category(id: $0.id, name: $0.name)
+        }
+        
+        return Product(
+            id: dto.id,
+            title: dto.title,
+            brand: dto.brand,
+            description: dto.description,
+            tags: dto.tags,
+            sku: dto.sku,
+            quantity: dto.quantity,
+            price: price,
+            variants: variants,
+            barcode: dto.barcode,
+            options: options,
+            categories: categories,
+            images: images,
+            product_shipping: nil,
+            supplier: dto.supplier,
+            supplier_id: dto.supplierId,
+            imported_product: dto.importedProduct,
+            referral_fee: dto.referralFee,
+            options_enabled: dto.optionsEnabled,
+            digital: dto.digital,
+            origin: dto.origin,
+            return: nil
+        )
+    }
+    
+    /// Convierte PriceDto a Price
+    private func convertPrice(_ priceDto: PriceDto) -> Price {
+        return Price(
+            amount: Float(priceDto.amount),
+            currency_code: priceDto.currencyCode,
+            amount_incl_taxes: priceDto.amountInclTaxes.map { Float($0) },
+            tax_amount: priceDto.taxAmount.map { Float($0) },
+            tax_rate: priceDto.taxRate.map { Float($0) },
+            compare_at: priceDto.compareAt.map { Float($0) },
+            compare_at_incl_taxes: priceDto.compareAtInclTaxes.map { Float($0) }
+        )
+    }
+    
+    /// Convierte ProductImageDto a ProductImage
+    private func convertImages(_ imageDtos: [ProductImageDto]) -> [ProductImage] {
+        return imageDtos.map {
+            ProductImage(
+                id: $0.id,
+                url: $0.url,
+                width: $0.width,
+                height: $0.height,
+                order: $0.order ?? 0
+            )
+        }
+    }
+    
+    /// Convierte VariantDto a Variant
+    private func convertVariants(_ variantDtos: [VariantDto]) -> [Variant] {
+        return variantDtos.map { variantDto in
+            Variant(
+                id: variantDto.id,
+                barcode: variantDto.barcode,
+                price: convertPrice(variantDto.price),
+                quantity: variantDto.quantity,
+                sku: variantDto.sku,
+                title: variantDto.title,
+                images: convertImages(variantDto.images)
+            )
+        }
     }
 }
 
