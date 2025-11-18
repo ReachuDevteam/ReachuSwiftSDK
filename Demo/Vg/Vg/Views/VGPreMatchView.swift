@@ -23,14 +23,14 @@ struct VGPreMatchView: View {
                     Spacer()
                     Button(action: { dismiss() }) {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 18, weight: .semibold))
                             .foregroundColor(.white)
-                            .frame(width: 36, height: 36)
-                            .background(Color.white.opacity(0.15))
+                            .frame(width: 40, height: 40)
+                            .background(Color.black.opacity(0.5))
                             .clipShape(Circle())
                     }
-                    .padding(.trailing, 20)
-                    .padding(.top, 10)
+                    .padding(.trailing, 16)
+                    .padding(.top, 50)
                 }
                 
                 Spacer()
