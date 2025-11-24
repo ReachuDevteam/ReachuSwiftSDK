@@ -1573,14 +1573,15 @@ public struct RCheckoutOverlay: View {
     // MARK: - Helper Views
 
     private var loadingOverlay: some View {
-        Color.white.opacity(0.85)
+        // Adaptive background: dark in dark mode, light in light mode
+        adaptiveColors.background.opacity(0.85)
             .overlay {
                 VStack(spacing: ReachuSpacing.md) {
                     RCustomLoader(style: .rotate, size: 48, speed: 1.2)
 
                     Text("Processing...")
                         .font(ReachuTypography.caption1)
-                        .foregroundColor(Color.gray.opacity(0.6))
+                        .foregroundColor(adaptiveColors.textSecondary)
                 }
             }
             .ignoresSafeArea()
