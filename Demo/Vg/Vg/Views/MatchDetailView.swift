@@ -47,7 +47,7 @@ struct MatchDetailView: View {
                     .padding(.bottom, 16)
                     
                     // Main content area (video)
-                    LivePreviewWithPlayButton()
+                        LivePreviewWithPlayButton()
                     
                     // "Neste" section
                     VStack(alignment: .leading, spacing: 16) {
@@ -148,41 +148,41 @@ private struct LivePreviewWithPlayButton: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            ZStack(alignment: .bottomLeading) {
+        ZStack(alignment: .bottomLeading) {
                 // Background image
                 Image("bg")
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(height: 220)
-                    .clipped()
-                    .overlay(
-                        // Sutil degradado para legibilidad en la parte inferior
-                        LinearGradient(
-                            colors: [Color.black.opacity(0.0), Color.black.opacity(0.45)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(height: 220)
+                .clipped()
+                .overlay(
+                    // Sutil degradado para legibilidad en la parte inferior
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.0), Color.black.opacity(0.45)],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-                
-                // Botón Play en esquina inferior izquierda
+                )
+            
+            // Botón Play en esquina inferior izquierda
                 Button(action: { showPreMatchView = true }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
-                            .font(.system(size: 14, weight: .bold))
-                        Text("Play")
-                            .font(.system(size: 15, weight: .semibold))
-                    }
-                    .foregroundColor(.white)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 14)
-                    .background(VGTheme.Colors.red)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
+                HStack(spacing: 8) {
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("Play")
+                        .font(.system(size: 15, weight: .semibold))
                 }
-                .padding(.leading, 16)
-                .padding(.bottom, 14)
+                .foregroundColor(.white)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 14)
+                .background(VGTheme.Colors.red)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .shadow(color: VGTheme.Colors.red.opacity(0.6), radius: 8, x: 0, y: 0)
             }
-            .contentShape(Rectangle())
+            .padding(.leading, 16)
+            .padding(.bottom, 14)
+        }
+        .contentShape(Rectangle())
             .onTapGesture { showPreMatchView = true }
             
             // Match title and description below the image
