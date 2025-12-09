@@ -374,6 +374,13 @@ public struct RProductCard: View {
                 )
                 .fontWeight(.semibold)
                 .foregroundColor(adaptiveColors.priceColor)
+                .onAppear {
+                    print("💰 [RProductCard] Showing product: \(product.title)")
+                    print("💰 [RProductCard] Price amount: \(product.price.amount)")
+                    print("💰 [RProductCard] Price with taxes: \(product.price.amount_incl_taxes ?? 0.0)")
+                    print("💰 [RProductCard] Display amount: \(product.price.displayAmount)")
+                    print("💰 [RProductCard] Currency: \(product.price.currency_code)")
+                }
             
             if let compareAtAmount = product.price.displayCompareAtAmount {
                 Text(compareAtAmount)

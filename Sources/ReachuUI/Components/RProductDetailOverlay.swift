@@ -375,6 +375,26 @@ public struct RProductDetailOverlay: View {
                     Text(formatted(amount: Double(currentPriceWithTaxes)))
                         .font(ReachuTypography.title3)
                         .foregroundColor(adaptiveColors.priceColor)
+                        .onAppear {
+                            print("🎯 [RProductDetailOverlay] Product detail opened")
+                            print("🎯 [RProductDetailOverlay] Product: \(product.title)")
+                            print("🎯 [RProductDetailOverlay] Product ID: \(product.id)")
+                            print("🎯 [RProductDetailOverlay] Base price amount: \(product.price.amount)")
+                            print("🎯 [RProductDetailOverlay] Price with taxes: \(product.price.amount_incl_taxes ?? 0.0)")
+                            print("🎯 [RProductDetailOverlay] Total variants: \(product.variants.count)")
+                            if let variant = selectedVariant {
+                                print("🎯 [RProductDetailOverlay] ⚠️ VARIANT SELECTED!")
+                                print("🎯 [RProductDetailOverlay] Variant title: \(variant.title)")
+                                print("🎯 [RProductDetailOverlay] Variant ID: \(variant.id)")
+                                print("🎯 [RProductDetailOverlay] Variant price amount: \(variant.price.amount)")
+                                print("🎯 [RProductDetailOverlay] Variant price with taxes: \(variant.price.amount_incl_taxes ?? 0.0)")
+                            } else {
+                                print("🎯 [RProductDetailOverlay] No variant selected, using product price")
+                            }
+                            print("🎯 [RProductDetailOverlay] Current price with taxes: \(currentPriceWithTaxes)")
+                            print("🎯 [RProductDetailOverlay] Currency: \(product.price.currency_code)")
+                            print("🎯 [RProductDetailOverlay] Formatted display: \(formatted(amount: Double(currentPriceWithTaxes)))")
+                        }
                     
                     // Compare at price (if available) - use compare at with taxes if available
                     if let compareAt = compareAtWithTaxes, compareAt > currentPriceWithTaxes {
@@ -826,13 +846,24 @@ public struct RProductDetailOverlay: View {
     
     /// Initialize default options from first variant
     private func initializeDefaultOptions() {
+        print("🔧 [RProductDetailOverlay] Initializing default options...")
+        print("🔧 [RProductDetailOverlay] Total variants: \(product.variants.count)")
+        
+        for (index, variant) in product.variants.enumerated() {
+            print("🔧 [RProductDetailOverlay] Variant[\(index)]: \(variant.title)")
+            print("🔧 [RProductDetailOverlay]   Price: \(variant.price.amount), with taxes: \(variant.price.amount_incl_taxes ?? 0.0)")
+        }
+        
         guard let firstVariant = product.variants.first else {
+            print("🔧 [RProductDetailOverlay] No variants, selectedVariant = nil")
             selectedVariant = nil
             return
         }
         
         let sortedOpts = sortedOptions
         guard !sortedOpts.isEmpty else {
+            print("🔧 [RProductDetailOverlay] No options, selecting first variant: \(firstVariant.title)")
+            print("🔧 [RProductDetailOverlay] First variant price: \(firstVariant.price.amount), with taxes: \(firstVariant.price.amount_incl_taxes ?? 0.0)")
             selectedVariant = firstVariant
             return
         }
@@ -845,6 +876,8 @@ public struct RProductDetailOverlay: View {
             }
         }
         
+        print("🔧 [RProductDetailOverlay] Selecting first variant with options: \(firstVariant.title)")
+        print("🔧 [RProductDetailOverlay] First variant price: \(firstVariant.price.amount), with taxes: \(firstVariant.price.amount_incl_taxes ?? 0.0)")
         selectedVariant = firstVariant
     }
     

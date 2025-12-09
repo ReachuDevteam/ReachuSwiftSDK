@@ -153,11 +153,22 @@ extension CartManager {
     // MARK: - Sync
 
     internal func sync(from cart: CartDto) {
+        print("🔄 [CartModule] ========== SYNC FROM BACKEND ==========")
+        print("🔄 [CartModule] Cart ID: \(cart.cartId)")
+        print("🔄 [CartModule] Currency: \(cart.currency)")
+        print("🔄 [CartModule] Line items count: \(cart.lineItems.count)")
+        
         currentCartId = cart.cartId
         currency = cart.currency
         country = cart.shippingCountry ?? country
 
         items = cart.lineItems.map { line in
+            print("🔄 [CartModule] --- Line Item ---")
+            print("🔄 [CartModule] Product: \(line.title ?? "Unknown")")
+            print("🔄 [CartModule] Product ID: \(line.productId)")
+            print("🔄 [CartModule] Backend price amount: \(line.price.amount)")
+            print("🔄 [CartModule] Backend price with taxes: \(line.price.amountInclTaxes ?? 0.0)")
+            print("🔄 [CartModule] Quantity: \(line.quantity)")
             let sortedImages = (line.image ?? []).sorted { lhs, rhs in
                 let lOrder = lhs.order ?? 0
                 let rOrder = rhs.order ?? 0
@@ -223,8 +234,15 @@ extension CartManager {
 
         // Recalculate cartTotal using prices with taxes from items (what customer actually pays)
         cartTotal = items.reduce(0) { total, item in
-            total + (item.price * Double(item.quantity))
+            let itemTotal = item.price * Double(item.quantity)
+            print("🔄 [CartModule] Item '\(item.title)': price=\(item.price) × qty=\(item.quantity) = \(itemTotal)")
+            return total + itemTotal
         }
+        
+        print("🔄 [CartModule] ========== SYNC COMPLETE ==========")
+        print("🔄 [CartModule] Cart Total: \(cartTotal)")
+        print("🔄 [CartModule] Currency: \(currency)")
+        print("🔄 [CartModule] Total items in cart: \(items.count)")
         
         // Recalculate shippingTotal using shipping prices with taxes from items (what customer actually pays)
         shippingTotal = items.reduce(0) { total, item in
@@ -498,12 +516,26 @@ extension CartManager {
         variant: ReachuCore.Variant? = nil,
         quantity: Int = 1
     ) async {
+        print("🛒 [CartModule] ========== ADD PRODUCT TO CART ==========")
+        print("🛒 [CartModule] Product: \(product.title)")
+        print("🛒 [CartModule] Product ID: \(product.id)")
+        print("🛒 [CartModule] Base price amount: \(product.price.amount)")
+        print("🛒 [CartModule] Price with taxes: \(product.price.amount_incl_taxes ?? 0.0)")
+        print("🛒 [CartModule] Currency: \(product.price.currency_code)")
+        print("🛒 [CartModule] Quantity to add: \(quantity)")
+        
         isLoading = true
         errorMessage = nil
 
         let previousCount = itemCount
         let selectedVariant = variant ?? product.variants.first
         let selectedVariantId = selectedVariant?.id
+        
+        if let v = selectedVariant {
+            print("🛒 [CartModule] Variant selected: \(v.title)")
+            print("🛒 [CartModule] Variant price amount: \(v.price.amount)")
+            print("🛒 [CartModule] Variant price with taxes: \(v.price.amount_incl_taxes ?? 0.0)")
+        }
 
         let hadExistingItem = items.contains {
             $0.productId == product.id && $0.variantId == selectedVariantId

@@ -158,8 +158,13 @@ struct ViaplayProductOverlay: View {
         if let apiProduct = viewModel.product {
             // Use price with taxes if available, otherwise use base price
             let priceToShow = apiProduct.price.amountInclTaxes ?? apiProduct.price.amount
-            return "\(apiProduct.price.currencyCode) \(String(format: "%.2f", priceToShow))"
+            let formatted = "\(apiProduct.price.currencyCode) \(String(format: "%.2f", priceToShow))"
+            print("📦 [ViaplayProductOverlay] Using API price: \(formatted)")
+            print("📦 [ViaplayProductOverlay] API base: \(apiProduct.price.amount), with taxes: \(apiProduct.price.amountInclTaxes ?? 0.0)")
+            return formatted
         }
+        print("⚠️ [ViaplayProductOverlay] API product not loaded, using WebSocket price: \(productEvent.price)")
+        print("⚠️ [ViaplayProductOverlay] WebSocket productId: \(productEvent.productId)")
         return productEvent.price
     }
     

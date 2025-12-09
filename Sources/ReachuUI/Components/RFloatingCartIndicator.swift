@@ -201,7 +201,7 @@ public struct RFloatingCartIndicator: View {
                     .fontWeight(.medium)
                     .foregroundColor(adaptiveColors.textOnPrimary.opacity(0.9))
                 
-                Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
+                Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
                     .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
                     .foregroundColor(adaptiveColors.textOnPrimary)
             }
@@ -225,7 +225,7 @@ public struct RFloatingCartIndicator: View {
             cartIconWithBadge
             
             // Price only
-            Text("\(cartManager.currency) \(String(format: "%.0f", cartManager.cartTotal))")
+            Text("\(cartManager.currency) \(String(format: "%.2f", cartManager.cartTotal))")
                 .font(size == .small ? .system(size: 12, weight: .semibold) : ReachuTypography.bodyBold)
                 .foregroundColor(adaptiveColors.textOnPrimary)
         }

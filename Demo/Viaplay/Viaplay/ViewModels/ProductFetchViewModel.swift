@@ -58,7 +58,11 @@ class ProductFetchViewModel: ObservableObject {
             if let fetchedProduct = products.first {
                 self.product = fetchedProduct
                 print("✅ [ProductFetch] Producto obtenido: \(fetchedProduct.title)")
-                print("   Precio: \(formatPrice(fetchedProduct.price))")
+                print("   Product ID: \(fetchedProduct.id)")
+                print("   Precio base: \(fetchedProduct.price.amount)")
+                print("   Precio con impuestos: \(fetchedProduct.price.amountInclTaxes ?? 0.0)")
+                print("   Moneda: \(fetchedProduct.price.currencyCode)")
+                print("   Formatted: \(formatPrice(fetchedProduct.price))")
                 if let imageUrl = fetchedProduct.images.first?.url {
                     print("   Imagen: \(imageUrl)")
                 }
