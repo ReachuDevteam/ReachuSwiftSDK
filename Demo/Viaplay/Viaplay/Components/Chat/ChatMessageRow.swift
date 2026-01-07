@@ -50,25 +50,27 @@ struct ChatMessageRow: View {
 }
 
 #Preview {
-    let message1 = ChatMessage(
-        username: "MatchMaster",
-        text: "Beste kampen denne sesongen",
-        usernameColor: .orange,
-        likes: 5,
-        timestamp: Date().addingTimeInterval(-20)
-    )
-    
-    let message2 = ChatMessage(
-        username: "SportsFan23",
-        text: "KJØR PÅ!!!",
-        usernameColor: .cyan,
-        likes: 3,
-        timestamp: Date().addingTimeInterval(-45)
-    )
-    
-    return VStack(spacing: 12) {
-        ChatMessageRow(message: message1)
-        ChatMessageRow(message: message2, compact: true)
+    VStack(spacing: 12) {
+        ChatMessageRow(
+            message: ChatMessage(
+                username: "MatchMaster",
+                text: "Beste kampen denne sesongen",
+                usernameColor: .orange,
+                likes: 5,
+                timestamp: Date().addingTimeInterval(-20)
+            )
+        )
+        
+        ChatMessageRow(
+            message: ChatMessage(
+                username: "SportsFan23",
+                text: "KJØR PÅ!!!",
+                usernameColor: .cyan,
+                likes: 3,
+                timestamp: Date().addingTimeInterval(-45)
+            ),
+            compact: true
+        )
     }
     .padding()
     .background(Color.black)

@@ -132,10 +132,14 @@ private struct LiveScoreItem: View {
 }
 
 #Preview {
-    MatchContentView(
-        selectedTab: .all,
-        viewModel: LiveMatchViewModel(match: Match.barcelonaPSG)
-    )
+    MatchContentView_PreviewWrapper()
+}
+
+private struct MatchContentView_PreviewWrapper: View {
+    @StateObject var viewModel = LiveMatchViewModel(match: Match.barcelonaPSG)
+    var body: some View {
+        MatchContentView(selectedTab: .all, viewModel: viewModel)
+    }
 }
 
 

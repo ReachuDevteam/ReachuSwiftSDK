@@ -21,7 +21,7 @@ struct MatchNavigationTabs: View {
             
             HStack(spacing: 0) {
                 ForEach(MatchTab.allCases, id: \.self) { tab in
-                    TabButton(
+                    MatchTabButton(
                         tab: tab,
                         isSelected: selectedTab == tab,
                         onTap: {
@@ -37,9 +37,9 @@ struct MatchNavigationTabs: View {
     }
 }
 
-// MARK: - Tab Button
+// MARK: - Match Tab Button
 
-private struct TabButton: View {
+private struct MatchTabButton: View {
     let tab: MatchTab
     let isSelected: Bool
     let onTap: () -> Void
@@ -66,13 +66,14 @@ private struct TabButton: View {
 }
 
 #Preview {
-    struct PreviewWrapper: View {
-        @State var selectedTab: MatchTab = .all
-        var body: some View {
-            MatchNavigationTabs(selectedTab: $selectedTab)
-        }
+    MatchNavigationTabs_PreviewWrapper()
+}
+
+private struct MatchNavigationTabs_PreviewWrapper: View {
+    @State var selectedTab: MatchTab = .all
+    var body: some View {
+        MatchNavigationTabs(selectedTab: $selectedTab)
     }
-    return PreviewWrapper()
 }
 
 

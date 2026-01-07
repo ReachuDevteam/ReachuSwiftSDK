@@ -328,45 +328,7 @@ struct ViaplayChatOverlay: View {
     }
 }
 // MARK: - Chat Message Row
-struct ChatMessageRow: View {
-    let message: ChatMessage
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Circle()
-                .fill(message.usernameColor.opacity(0.3))
-                .frame(width: 28, height: 28)
-                .overlay(
-                    Text(String(message.username.prefix(1)))
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(message.usernameColor)
-                )
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(message.username)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(message.usernameColor)
-                    Text(timeAgo(from: message.timestamp))
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
-                }
-                Text(message.text)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.95))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 4)
-    }
-    private func timeAgo(from date: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(date))
-        if seconds < 60 { return "\(seconds)s" }
-        let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m" }
-        let hours = minutes / 60
-        return "\(hours)h"
-    }
-}
+// NOTE: Using ChatMessageRow from Components/Chat/ChatMessageRow.swift
 // MARK: - Chat Message Model
 // NOTE: Using ChatMessage from Models/Chat/ChatModels.swift
 // MARK: - Chat Manager

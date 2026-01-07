@@ -65,13 +65,11 @@ struct ChatListView: View {
 }
 
 #Preview {
-    let messages = [
-        ChatMessage(username: "MatchMaster", text: "Beste kampen!", usernameColor: .orange, likes: 5, timestamp: Date()),
-        ChatMessage(username: "SportsFan23", text: "KJØR PÅ!!!", usernameColor: .cyan, likes: 3, timestamp: Date().addingTimeInterval(-30))
-    ]
-    
-    return ChatListView(
-        messages: messages,
+    ChatListView(
+        messages: [
+            ChatMessage(username: "MatchMaster", text: "Beste kampen!", usernameColor: .orange, likes: 5, timestamp: Date()),
+            ChatMessage(username: "SportsFan23", text: "KJØR PÅ!!!", usernameColor: .cyan, likes: 3, timestamp: Date().addingTimeInterval(-30))
+        ],
         viewerCount: 1234
     )
 }
