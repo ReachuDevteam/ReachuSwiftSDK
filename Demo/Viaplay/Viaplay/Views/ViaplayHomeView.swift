@@ -12,6 +12,7 @@ struct ViaplayHomeView: View {
     @Binding var selectedTab: Int
     @Binding var showSportView: Bool
     @State private var scrollOffset: CGFloat = 0
+    @State private var showEntertainmentView = false
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
@@ -69,6 +70,77 @@ struct ViaplayHomeView: View {
                         }
                         .padding(.horizontal, 16)
                         .frame(maxWidth: geometry.size.width)
+                        
+                        // Entertainment Interactive Components Button
+                        Button {
+                            showEntertainmentView = true
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.3)],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: "sparkles")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(
+                                            LinearGradient(
+                                                colors: [.blue, .purple],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Entretenimiento Interactivo")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white)
+                                    
+                                    Text("Trivia, encuestas y más")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(.white.opacity(0.5))
+                            }
+                            .padding()
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                Color.blue.opacity(0.2),
+                                                Color.purple.opacity(0.2)
+                                            ],
+                                            startPoint: .leading,
+                                            endPoint: .trailing
+                                        )
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(
+                                                LinearGradient(
+                                                    colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.5)],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                ),
+                                                lineWidth: 1
+                                            )
+                                    )
+                            )
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 20)
                         
                         // Akkurat nå ser andre på Section
                         VStack(alignment: .leading, spacing: 10) {
@@ -241,6 +313,9 @@ struct ViaplayHomeView: View {
                 }
             }
             .frame(width: geometry.size.width)
+            .sheet(isPresented: $showEntertainmentView) {
+                EntertainmentView()
+            }
         }
     }
 }
