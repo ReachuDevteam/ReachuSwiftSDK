@@ -37,7 +37,7 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
   - Detalles de reachu-config.json
   - Opciones disponibles
 
-### 🏗️ Refactorización
+### 🏗️ Refactorización y Arquitectura
 - **[REFACTORING_PLAN.md](REFACTORING_PLAN.md)** - Plan de refactorización
   - Análisis de duplicación
   - Componentes a crear
@@ -47,6 +47,12 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
   - 20 componentes creados
   - Métricas de mejora
   - Cómo usar los componentes
+
+- **[LOGIC_SEPARATION.md](LOGIC_SEPARATION.md)** ⭐ - Arquitectura en capas
+  - Separación de lógica en 4 capas
+  - Ejemplos antes/después
+  - Flujo de datos completo
+  - Responsabilidades por archivo
 
 ### 🐛 Debugging
 - **[PRICE_LOGGING_GUIDE.md](../../PRICE_LOGGING_GUIDE.md)** - Debugging de precios
@@ -73,13 +79,15 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
 | Necesito... | Ver archivo... |
 |-------------|----------------|
 | **Saber dónde estamos** | [CURRENT_STATUS.md](CURRENT_STATUS.md) ⭐ |
-| Ver qué falta | [CURRENT_STATUS.md](CURRENT_STATUS.md) → Sección "⏳ Lo que FALTA" |
+| **Entender arquitectura** | [LOGIC_SEPARATION.md](LOGIC_SEPARATION.md) ⭐ |
+| Ver qué falta | [CURRENT_STATUS.md](CURRENT_STATUS.md) → "⏳ Lo que FALTA" |
 | Configurar el SDK | [SETUP_COMPLETE.md](SETUP_COMPLETE.md) |
 | Entender la refactorización | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) |
-| Usar componentes | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) → "Componentes Disponibles" |
+| Ver separación de lógica | [LOGIC_SEPARATION.md](LOGIC_SEPARATION.md) |
+| Usar componentes | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) → "Componentes" |
 | Debuggear precios | [PRICE_LOGGING_GUIDE.md](../../PRICE_LOGGING_GUIDE.md) |
 | Usar Entertainment | [QUICK_START.md](QUICK_START.md) |
-| Compilar proyecto | [CURRENT_STATUS.md](CURRENT_STATUS.md) → "Comandos Útiles" |
+| Compilar proyecto | [CURRENT_STATUS.md](CURRENT_STATUS.md) → "Comandos" |
 
 ---
 
