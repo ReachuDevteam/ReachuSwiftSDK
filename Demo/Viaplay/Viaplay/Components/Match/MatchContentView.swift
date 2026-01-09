@@ -16,12 +16,21 @@ struct MatchContentView: View {
             Group {
                 switch selectedTab {
                 case .all:
-                    AllContentFeed(
-                        items: viewModel.mixedContentItems(),
-                        statistics: viewModel.matchStatistics,
-                        onPollVote: viewModel.handlePollVote,
-                        onSelectTab: viewModel.selectTab
-                    )
+                    if viewModel.useTimelineSync {
+                        AllContentFeed(
+                            timelineEvents: viewModel.visibleTimelineEvents(),
+                            statistics: viewModel.matchStatistics,
+                            onPollVote: viewModel.handlePollVote,
+                            onSelectTab: viewModel.selectTab
+                        )
+                    } else {
+                        AllContentFeed(
+                            timelineEvents: [],  // Fallback to old system
+                            statistics: viewModel.matchStatistics,
+                            onPollVote: viewModel.handlePollVote,
+                            onSelectTab: viewModel.selectTab
+                        )
+                    }
                     
                 case .chat:
                     ChatListView(

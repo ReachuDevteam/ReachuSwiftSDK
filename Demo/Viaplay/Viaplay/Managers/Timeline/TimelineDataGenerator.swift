@@ -17,17 +17,16 @@ struct TimelineDataGenerator {
         
         // MARK: - Match Events
         
-        // 0' - Kick Off
-        events.append(AnyTimelineEvent(MatchGoalEvent(
+        // 0' - Kick Off (Announcement style)
+        events.append(AnyTimelineEvent(AnnouncementEvent(
             id: "kickoff",
             videoTimestamp: 0,
-            player: "",
-            team: .home,
-            score: "0-0",
-            assistBy: nil,
-            isOwnGoal: false,
-            isPenalty: false,
-            metadata: ["event": "kickoff"]
+            title: "⚽ Avspark",
+            message: "Kampen starter! Barcelona vs PSG",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "kickoff"]
         )))
         
         // 5' - Substitution
@@ -101,6 +100,18 @@ struct TimelineDataGenerator {
         )))
         
         // MARK: - Chat Messages (Sincronizados con eventos)
+        
+        // MARK: - Pre-Match & Early Game
+        
+        // 0'10" - Admin welcome
+        events.append(AnyTimelineEvent(AdminCommentEvent(
+            id: "admin-welcome",
+            videoTimestamp: 10,
+            adminName: "Magnus Drivenes",
+            comment: "Velkommen til Champions League! En fantastisk kveld venter oss.",
+            isPinned: false,
+            metadata: nil
+        )))
         
         // 0'45" - Chat inicial
         events.append(AnyTimelineEvent(ChatMessageEvent(
@@ -225,17 +236,45 @@ struct TimelineDataGenerator {
         
         // MARK: - Tweets (en momentos clave)
         
-        // 13'30" - Tweet de un jugador
+        // 2' - Tweet al inicio
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-2",
+            videoTimestamp: 120,
+            authorName: "Luka Modrić",
+            authorHandle: "@LukaModric10",
+            authorAvatar: nil,  // Will use placeholder
+            tweetText: "Nikada ne odustaj! ⚽🔥 #ChampionsLeague",
+            isVerified: true,
+            likes: 1345,
+            retweets: 878,
+            metadata: nil
+        )))
+        
+        // 8' - Otro tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-8",
+            videoTimestamp: 480,
+            authorName: "Erling Haaland",
+            authorHandle: "@ErlingHaaland",
+            authorAvatar: nil,
+            tweetText: "Alltid klar for neste mål! ⚽🎯",
+            isVerified: true,
+            likes: 2340,
+            retweets: 1456,
+            metadata: nil
+        )))
+        
+        // 13'30" - Tweet después del gol
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-13",
             videoTimestamp: 810,
-            authorName: "Erling Haaland",
-            authorHandle: "@ErlingHaaland",
-            authorAvatar: "https://pbs.twimg.com/profile_images/...",
-            tweetText: "Alltid klar for neste mål! ⚽🎯 #ChampionsLeague",
+            authorName: "Kylian Mbappé",
+            authorHandle: "@KMbappe",
+            authorAvatar: nil,
+            tweetText: "Champions League! C'est magnifique! ⚡🔥",
             isVerified: true,
-            likes: 12340,
-            retweets: 3456,
+            likes: 4567,
+            retweets: 2123,
             metadata: nil
         )))
         
@@ -256,12 +295,32 @@ struct TimelineDataGenerator {
         
         // MARK: - Admin Comments (comentarios importantes)
         
+        // 10' - Admin tactical note
+        events.append(AnyTimelineEvent(AdminCommentEvent(
+            id: "admin-10",
+            videoTimestamp: 600,
+            adminName: "Magnus Drivenes",
+            comment: "Barcelona kontrollerer ballen godt. PSG venter på sin sjanse.",
+            isPinned: false,
+            metadata: nil
+        )))
+        
         // 13'15" - Admin comment sobre el gol
         events.append(AnyTimelineEvent(AdminCommentEvent(
             id: "admin-13",
             videoTimestamp: 795,
-            adminName: "Kommentator",
+            adminName: "Magnus Drivenes",
             comment: "Nydelig mål! Dette er Champions League på sitt beste!",
+            isPinned: true,
+            metadata: nil
+        )))
+        
+        // 32'15" - Admin comment sobre segundo gol
+        events.append(AnyTimelineEvent(AdminCommentEvent(
+            id: "admin-32",
+            videoTimestamp: 1935,
+            adminName: "Magnus Drivenes",
+            comment: "Mbeumo dobler ledelsen! Fantastisk lagarbeid!",
             isPinned: true,
             metadata: nil
         )))

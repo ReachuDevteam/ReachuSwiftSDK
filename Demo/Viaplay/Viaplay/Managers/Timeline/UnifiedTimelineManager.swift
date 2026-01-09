@@ -74,9 +74,16 @@ class UnifiedTimelineManager: ObservableObject {
         allEvents.removeAll()
     }
     
+    // MARK: - Match Duration Constants
+    
+    static let firstHalfDuration: TimeInterval = 2700  // 45 minutes
+    static let halfTimeDuration: TimeInterval = 900    // 15 minutes pause
+    static let secondHalfDuration: TimeInterval = 2700 // 45 minutes
+    static let totalMatchDuration: TimeInterval = 6300 // 105 minutes total (45+15+45)
+    
     /// Update video time (called by video player or scrubber)
     func updateVideoTime(_ seconds: TimeInterval) {
-        let clampedTime = max(0, min(seconds, 5400))  // 0-90 minutes
+        let clampedTime = max(0, min(seconds, Self.totalMatchDuration))
         currentVideoTime = clampedTime
     }
     
@@ -89,6 +96,31 @@ class UnifiedTimelineManager: ObservableObject {
     /// Go to LIVE (end of available content)
     func goToLive(maxMinute: Int = 90) {
         updateVideoTime(TimeInterval(maxMinute * 60))
+    }
+    
+    /// Get match phase at current time
+    func currentMatchPhase() -> MatchPhase {
+        if currentVideoTime < Self.firstHalfDuration {
+            return .firstHalf
+        } else if currentVideoTime < Self.firstHalfDuration + Self.halfTimeDuration {
+            return .halfTime
+        } else {
+            return .secondHalf
+        }
+    }
+}
+
+enum MatchPhase {
+    case firstHalf
+    case halfTime
+    case secondHalf
+    
+    var displayName: String {
+        switch self {
+        case .firstHalf: return "1. omgang"
+        case .halfTime: return "Pause"
+        case .secondHalf: return "2. omgang"
+        }
     }
     
     // MARK: - Filtering by Type
