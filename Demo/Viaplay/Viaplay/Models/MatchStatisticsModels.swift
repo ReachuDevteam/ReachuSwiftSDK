@@ -82,7 +82,7 @@ struct MatchEvent: Identifiable {
     let description: String?
     let score: String? // "1-0"
     
-    enum EventType {
+    enum EventType: Equatable {
         case goal
         case yellowCard
         case redCard
