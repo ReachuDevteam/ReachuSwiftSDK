@@ -136,13 +136,8 @@ class LiveMatchViewModel: ObservableObject {
         // Load pre-generated timeline data
         let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
         
-        // Add each event individually (AnyTimelineEvent already wraps the concrete type)
-        for wrappedEvent in generatedEvents {
-            timeline.allEvents.append(wrappedEvent)
-        }
-        
-        // Sort all events by timestamp
-        timeline.allEvents.sort { $0.videoTimestamp < $1.videoTimestamp }
+        // Add all wrapped events at once
+        timeline.addWrappedEvents(generatedEvents)
         
         // Initial load of visible messages
         chatManager.loadMessagesFromTimeline()

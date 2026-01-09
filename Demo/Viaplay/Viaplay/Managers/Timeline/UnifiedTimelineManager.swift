@@ -58,6 +58,12 @@ class UnifiedTimelineManager: ObservableObject {
         }
     }
     
+    /// Add multiple wrapped events (for pre-generated data)
+    func addWrappedEvents(_ events: [AnyTimelineEvent]) {
+        allEvents.append(contentsOf: events)
+        allEvents.sort { $0.videoTimestamp < $1.videoTimestamp }
+    }
+    
     /// Remove an event
     func removeEvent(id: String) {
         allEvents.removeAll { $0.id == id }
