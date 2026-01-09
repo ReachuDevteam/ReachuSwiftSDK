@@ -145,18 +145,13 @@ struct SportDetailView: View {
                             
                             // Live Match View button (with chat and interactives)
                             Button(action: { showLiveMatchView = true }) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "message.fill")
-                                        .font(.system(size: 16, weight: .bold))
-                                    
-                                    Text("Ver con Chat Interactivo")
-                                        .font(.system(size: 15, weight: .semibold))
-                                }
-                                .foregroundColor(.white)
-                                .frame(width: geometry.size.width - 32)
-                                .frame(height: 44)
-                                .background(Color.blue)
-                                .cornerRadius(10)
+                                Text("Se med Interaktiv Chat")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.white)
+                                    .frame(width: geometry.size.width - 32)
+                                    .frame(height: 44)
+                                    .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                                    .cornerRadius(10)
                             }
                             
                             HStack(spacing: 10) {
