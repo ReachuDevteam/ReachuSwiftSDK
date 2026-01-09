@@ -145,7 +145,7 @@ struct SportDetailView: View {
                             
                             // Live Match View button (with chat and interactives)
                             Button(action: { showLiveMatchView = true }) {
-                                Text("Se med Interaktiv Chat")
+                                Text("Interaktiv Demo")
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white)
                                     .frame(width: geometry.size.width - 32)
