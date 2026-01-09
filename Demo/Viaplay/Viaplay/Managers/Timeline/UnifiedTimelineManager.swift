@@ -155,6 +155,18 @@ enum MatchPhase {
         visibleEvents(ofType: .productHighlight).compactMap { $0.event as? ProductTimelineEvent }
     }
     
+    func visiblePolls() -> [PollTimelineEvent] {
+        visibleEvents(ofType: .poll).compactMap { $0.event as? PollTimelineEvent }
+    }
+    
+    func visibleAdminComments() -> [AdminCommentEvent] {
+        visibleEvents(ofType: .adminComment).compactMap { $0.event as? AdminCommentEvent }
+    }
+    
+    func visibleAnnouncements() -> [AnnouncementEvent] {
+        visibleEvents(ofType: .announcement).compactMap { $0.event as? AnnouncementEvent }
+    }
+    
     // MARK: - Backend Integration Helpers
     
     /// Export events for backend sync (JSON ready)

@@ -232,6 +232,11 @@ class LiveMatchViewModel: ObservableObject {
         return timeline.visibleEvents(ofType: type)
     }
     
+    func allTimelineEvents() -> [AnyTimelineEvent] {
+        guard useTimelineSync else { return [] }
+        return timeline.allEvents
+    }
+    
     // MARK: - Mixed Content
     
     struct MixedContentItem: Identifiable {
