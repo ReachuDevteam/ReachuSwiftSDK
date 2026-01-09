@@ -15,6 +15,7 @@ struct VideoTimelineControl: View {
     let totalDuration: Int
     let onPlayPause: () -> Void
     let onFullscreen: () -> Void
+    let onSeek: ((Int) -> Void)?  // NEW: Called when user scrubs
     
     init(
         currentMinute: Int,
@@ -23,7 +24,8 @@ struct VideoTimelineControl: View {
         isPlaying: Bool = false,
         totalDuration: Int = 90,
         onPlayPause: @escaping () -> Void = {},
-        onFullscreen: @escaping () -> Void = {}
+        onFullscreen: @escaping () -> Void = {},
+        onSeek: ((Int) -> Void)? = nil
     ) {
         self.currentMinute = currentMinute
         self._selectedMinute = selectedMinute
@@ -32,6 +34,7 @@ struct VideoTimelineControl: View {
         self.totalDuration = totalDuration
         self.onPlayPause = onPlayPause
         self.onFullscreen = onFullscreen
+        self.onSeek = onSeek
     }
     
     var body: some View {
@@ -159,6 +162,7 @@ struct TimelineScrubber: View {
                                     let percentage = max(0, min(1, value.location.x / geometry.size.width))
                                     let minute = Int(percentage * CGFloat(totalDuration))
                                     selectedMinute = minute
+                                    onSeek?(minute)  // Notify ViewModel to update timeline
                                 }
                         )
                 }

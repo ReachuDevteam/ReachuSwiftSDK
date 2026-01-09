@@ -3,6 +3,7 @@
 //  Viaplay
 //
 //  Manager para simular eventos del partido en tiempo real
+//  Integrated with UnifiedTimelineManager
 //
 
 import Foundation
@@ -19,6 +20,15 @@ class MatchSimulationManager: ObservableObject {
     private var timer: Timer?
     private var eventTimer: Timer?
     private let matchDuration: Int = 90
+    
+    // Timeline integration (optional)
+    private weak var timeline: UnifiedTimelineManager?
+    
+    // MARK: - Initialization
+    
+    init(timeline: UnifiedTimelineManager? = nil) {
+        self.timeline = timeline
+    }
     
     // Eventos predefinidos para simular
     private let simulatedEvents: [(minute: Int, event: () -> MatchEvent)] = [
@@ -90,6 +100,11 @@ class MatchSimulationManager: ObservableObject {
                 let event = simulatedEvent.event()
                 events.append(event)
                 
+                // Add to unified timeline if available
+                if let timeline = timeline {
+                    addEventToTimeline(event, timeline: timeline)
+                }
+                
                 // Actualizar marcador si es un gol
                 if case .goal = event.type {
                     if event.team == .home {
@@ -105,6 +120,51 @@ class MatchSimulationManager: ObservableObject {
                     object: event
                 )
             }
+        }
+    }
+    
+    // MARK: - Timeline Integration
+    
+    private func addEventToTimeline(_ event: MatchEvent, timeline: UnifiedTimelineManager) {
+        let videoTimestamp = TimeInterval(event.minute * 60)
+        
+        switch event.type {
+        case .goal:
+            timeline.addEvent(MatchGoalEvent(
+                id: event.id.uuidString,
+                videoTimestamp: videoTimestamp,
+                player: event.player ?? "",
+                team: event.team == .home ? .home : .away,
+                score: event.score ?? "",
+                assistBy: nil,
+                isOwnGoal: false,
+                isPenalty: false,
+                metadata: nil
+            ))
+            
+        case .yellowCard, .redCard:
+            timeline.addEvent(MatchCardEvent(
+                id: event.id.uuidString,
+                videoTimestamp: videoTimestamp,
+                player: event.player ?? "",
+                team: event.team == .home ? .home : .away,
+                cardType: event.type == .yellowCard ? .yellow : .red,
+                reason: event.description,
+                metadata: nil
+            ))
+            
+        case .substitution(let playerIn, let playerOut):
+            timeline.addEvent(MatchSubstitutionEvent(
+                id: event.id.uuidString,
+                videoTimestamp: videoTimestamp,
+                playerIn: playerIn,
+                playerOut: playerOut,
+                team: event.team == .home ? .home : .away,
+                metadata: nil
+            ))
+            
+        default:
+            break
         }
     }
     

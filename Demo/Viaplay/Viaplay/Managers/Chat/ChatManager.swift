@@ -3,6 +3,7 @@
 //  Viaplay
 //
 //  Manager for chat messages and simulation
+//  Integrated with UnifiedTimelineManager for video sync
 //
 
 import Foundation
@@ -17,6 +18,9 @@ class ChatManager: ObservableObject {
     private var timer: Timer?
     private var viewerTimer: Timer?
     private let maxMessages = 100
+    
+    // Timeline integration (optional - for sync with video)
+    private weak var timeline: UnifiedTimelineManager?
     
     private let simulatedUsers: [(String, Color)] = [
         ("SportsFan23", .cyan),
@@ -69,18 +73,29 @@ class ChatManager: ObservableObject {
         "NÅ SKJER DET!",
     ]
     
+    // MARK: - Initialization
+    
+    init(timeline: UnifiedTimelineManager? = nil) {
+        self.timeline = timeline
+    }
+    
     // MARK: - Public Methods
     
-    func startSimulation() {
+    func startSimulation(withTimeline: Bool = false) {
         viewerCount = Int.random(in: 800...1500)
         
-        // Add initial messages
-        for _ in 0..<4 {
-            addSimulatedMessage()
+        if withTimeline, timeline != nil {
+            // Don't add random messages - timeline will provide them
+            // Just start viewer count updates
+        } else {
+            // Add initial messages (old behavior)
+            for _ in 0..<4 {
+                addSimulatedMessage()
+            }
+            
+            // Schedule periodic messages
+            scheduleNextMessage()
         }
-        
-        // Schedule periodic messages
-        scheduleNextMessage()
         
         // Update viewer count periodically
         viewerTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
@@ -117,17 +132,44 @@ class ChatManager: ObservableObject {
     private func addSimulatedMessage() {
         let user = simulatedUsers.randomElement()!
         let messageText = simulatedMessages.randomElement()!
+        
+        // Use timeline time if available, otherwise use estimated time
+        let videoTime = timeline?.currentVideoTime ?? TimeInterval(messages.count * 60)
+        
         let message = ChatMessage(
             username: user.0,
             text: messageText,
             usernameColor: user.1,
             likes: Int.random(in: 0...12),
-            timestamp: Date()
+            timestamp: Date(),
+            videoTimestamp: videoTime
         )
         
         messages.append(message)
+        
+        // Add to timeline if available
+        timeline?.addEvent(message.toTimelineEvent())
+        
         if messages.count > maxMessages {
             messages.removeFirst()
+        }
+    }
+    
+    // MARK: - Timeline Integration
+    
+    /// Load messages from timeline (replaces simulation when using timeline)
+    func loadMessagesFromTimeline() {
+        guard let timeline = timeline else { return }
+        let chatEvents = timeline.visibleChatMessages()
+        messages = chatEvents.map { event in
+            ChatMessage(
+                username: event.username,
+                text: event.text,
+                usernameColor: event.colorValue,
+                likes: event.likes,
+                timestamp: event.timestamp,
+                videoTimestamp: event.videoTimestamp
+            )
         }
     }
 }

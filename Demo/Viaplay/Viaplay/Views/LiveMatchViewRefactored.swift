@@ -56,7 +56,10 @@ struct LiveMatchViewRefactored: View {
                         events: viewModel.matchSimulation.events,
                         isPlaying: viewModel.playerViewModel.isPlaying,
                         onPlayPause: viewModel.playerViewModel.togglePlayPause,
-                        onFullscreen: { /* TODO */ }
+                        onFullscreen: { /* TODO */ },
+                        onSeek: { minute in
+                            viewModel.jumpToMinute(minute)
+                        }
                     )
                 }
             }
