@@ -48,7 +48,8 @@ struct VideoTimelineControl: View {
                     currentMinute: currentMinute,
                     selectedMinute: $selectedMinute,
                     events: events,
-                    totalDuration: totalDuration
+                    totalDuration: totalDuration,
+                    onSeek: onSeek
                 )
                 
                 // Controls
@@ -97,6 +98,7 @@ struct TimelineScrubber: View {
     @Binding var selectedMinute: Int?
     let events: [MatchEvent]
     let totalDuration: Int
+    let onSeek: ((Int) -> Void)?
     
     private var displayMinute: Int {
         selectedMinute ?? currentMinute
