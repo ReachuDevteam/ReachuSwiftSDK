@@ -34,6 +34,7 @@ struct LiveMatchViewRefactored: View {
                         currentMinute: viewModel.matchSimulation.currentMinute,
                         onDismiss: onDismiss
                     )
+                    .padding(.top, -8)
                     
                     // Navigation tabs (closer to header)
                     MatchNavigationTabs(selectedTab: $viewModel.selectedTab)

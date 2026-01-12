@@ -15,11 +15,11 @@ struct MatchHeaderView: View {
     let onDismiss: () -> Void
     
     var body: some View {
-        VStack(spacing: 12) {
-            // Sponsor and close button in same row
-            HStack {
-                // Sponsor (left side)
-                HStack(spacing: 6) {
+        VStack(spacing: 8) {
+            // Sponsor and close button (same row)
+            ZStack {
+                // Sponsor (absolutely centered)
+                VStack(spacing: 2) {
                     Text("Sponset av")
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
@@ -27,26 +27,27 @@ struct MatchHeaderView: View {
                     Image("logo1")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(height: 16)
+                        .frame(height: 18)
                 }
                 
-                Spacer()
-                
-                // Close button (right side)
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
-                        .frame(width: 32, height: 32)
-                        .background(
-                            Circle()
-                                .fill(Color.white.opacity(0.1))
-                        )
+                // Close button (positioned right)
+                HStack {
+                    Spacer()
+                    
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.8))
+                            .padding(8)
+                            .background(
+                                Circle()
+                                    .fill(Color.white.opacity(0.1))
+                            )
+                    }
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
+            .padding(.horizontal, 12)
+            .padding(.top, 5)
             
             // Teams and Score
             HStack(spacing: 16) {
