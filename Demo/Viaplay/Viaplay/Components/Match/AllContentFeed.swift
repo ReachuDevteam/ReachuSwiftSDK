@@ -50,20 +50,38 @@ struct AllContentFeed: View {
                                     removal: .opacity
                                 ))
                         }
+                        
+                        // Invisible anchor at bottom
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottom")
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .padding(.bottom, canChat ? (80 + keyboardHeight) : 12)
                 }
+                .onAppear {
+                    // Scroll to bottom on first appear
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
                 .onChange(of: timelineEvents.count) { _ in
-                    scrollToBottom(proxy: proxy)
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onChange(of: timelineEvents.map { $0.id }) { _ in
-                    // Update when events change (not just count)
-                    scrollToBottom(proxy: proxy)
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onChange(of: keyboardHeight) { _ in
-                    scrollToBottom(proxy: proxy, delay: 0.1)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
+                    }
                 }
             }
             
@@ -87,18 +105,6 @@ struct AllContentFeed: View {
         }
         .onDisappear {
             removeKeyboardObservers()
-        }
-    }
-    
-    // MARK: - Helpers
-    
-    private func scrollToBottom(proxy: ScrollViewProxy, delay: TimeInterval = 0) {
-        if let lastEvent = timelineEvents.sorted(by: { $0.videoTimestamp < $1.videoTimestamp }).last {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    proxy.scrollTo(lastEvent.id, anchor: .bottom)
-                }
-            }
         }
     }
     

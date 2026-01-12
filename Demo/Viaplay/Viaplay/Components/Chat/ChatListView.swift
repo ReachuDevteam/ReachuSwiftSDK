@@ -84,20 +84,39 @@ struct ChatListView: View {
                                     removal: .opacity
                                 ))
                         }
+                        
+                        // Invisible anchor at bottom
+                        Color.clear
+                            .frame(height: 1)
+                            .id("bottom")
                     }
                     .padding(.bottom, canChat && isLive ? (80 + keyboardHeight) : 12)
                 }
+                .onAppear {
+                    // Scroll to bottom on first appear
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
+                }
                 .onChange(of: messages.count) { _ in
-                    // Auto-scroll to newest message (at bottom)
-                    scrollToBottom(proxy: proxy)
+                    // Auto-scroll to bottom
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onChange(of: messages.map { $0.id }) { _ in
-                    // Update when messages change (not just count)
-                    scrollToBottom(proxy: proxy)
+                    // Update when messages change
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        proxy.scrollTo("bottom", anchor: .bottom)
+                    }
                 }
                 .onChange(of: keyboardHeight) { _ in
-                    // Auto-scroll when keyboard appears
-                    scrollToBottom(proxy: proxy, delay: 0.1)
+                    // Scroll when keyboard appears
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
+                    }
                 }
             }
             
@@ -124,18 +143,6 @@ struct ChatListView: View {
         }
         .onDisappear {
             removeKeyboardObservers()
-        }
-    }
-    
-    // MARK: - Helpers
-    
-    private func scrollToBottom(proxy: ScrollViewProxy, delay: TimeInterval = 0) {
-        if let lastMessage = messages.last {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(.easeOut(duration: 0.3)) {
-                    proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                }
-            }
         }
     }
     
