@@ -20,17 +20,47 @@ struct StatPreviewCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Statistics")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white)
+            // Header with Viaplay branding and sponsor
+            HStack(spacing: 8) {
+                // Viaplay icon
+                Image("icon ")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Viaplay Statistics")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 4) {
+                        Text("Live Stats")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("•")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.4))
+                        
+                        Text("Oppdatert nå")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
                 
                 Spacer()
                 
-                Button(action: onViewAll) {
-                    Text("View All")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+                // XXL Sports sponsor
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Sponset av")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 50, maxHeight: 16)
                 }
             }
             

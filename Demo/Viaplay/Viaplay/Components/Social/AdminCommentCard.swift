@@ -15,15 +15,11 @@ struct AdminCommentCard: View {
             // Header
             HStack(spacing: 8) {
                 // Viaplay logo badge
-                ZStack {
-                    Circle()
-                        .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
-                        .frame(width: 32, height: 32)
-                    
-                    Text("V")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                }
+                Image("icon ")  // Viaplay icon from assets
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(comment.adminName)
