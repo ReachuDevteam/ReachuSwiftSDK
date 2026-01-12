@@ -16,7 +16,9 @@ struct VideoTimelineControl: View {
     let totalDuration: Int
     let onPlayPause: () -> Void
     let onToggleMute: () -> Void
-    let onSeek: ((Int) -> Void)?  // NEW: Called when user scrubs
+    let onSeek: ((Int) -> Void)?
+    
+    @State private var isExpanded: Bool = false
     
     init(
         currentMinute: Int,
@@ -46,24 +48,45 @@ struct VideoTimelineControl: View {
                 .background(Color.white.opacity(0.2))
             
             VStack(spacing: 12) {
-                // Timeline Scrubber
-                TimelineScrubber(
-                    currentMinute: currentMinute,
-                    selectedMinute: $selectedMinute,
-                    events: events,
-                    totalDuration: totalDuration,
-                    onSeek: onSeek
-                )
+                // Timeline Scrubber (expandible)
+                if isExpanded {
+                    TimelineScrubber(
+                        currentMinute: currentMinute,
+                        selectedMinute: $selectedMinute,
+                        events: events,
+                        totalDuration: totalDuration,
+                        onSeek: onSeek
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                }
                 
-                // Controls
+                // Controls (siempre visible)
                 HStack(spacing: 20) {
-                    // Time indicator
-                    if let selected = selectedMinute {
-                        Text("\(selected)'")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white)
-                    } else {
-                        LiveBadge(size: .medium)
+                    // Time indicator / Toggle button
+                    Button(action: {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            isExpanded.toggle()
+                        }
+                    }) {
+                        HStack(spacing: 6) {
+                            if let selected = selectedMinute {
+                                Text("\(selected)'")
+                                    .font(.system(size: 14, weight: .medium))
+                                    .foregroundColor(.white)
+                            } else {
+                                LiveBadge(size: .medium, showPulse: true)
+                            }
+                            
+                            Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.1))
+                        )
                     }
                     
                     Spacer()
@@ -88,7 +111,7 @@ struct VideoTimelineControl: View {
                 }
                 .padding(.horizontal, 20)
             }
-            .padding(.vertical, 16)
+            .padding(.vertical, isExpanded ? 16 : 12)
             .background(Color(hex: "1F1E26"))
         }
     }

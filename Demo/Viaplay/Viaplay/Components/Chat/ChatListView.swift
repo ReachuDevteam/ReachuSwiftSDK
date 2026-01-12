@@ -17,6 +17,7 @@ struct ChatListView: View {
     
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
+    @State private var keyboardHeight: CGFloat = 0
     
     init(
         messages: [ChatMessage],
@@ -84,15 +85,15 @@ struct ChatListView: View {
                                 ))
                         }
                     }
-                    .padding(.bottom, canChat && isLive ? 80 : 12)
+                    .padding(.bottom, canChat && isLive ? (80 + keyboardHeight) : 12)
                 }
                 .onChange(of: messages.count) { _ in
                     // Auto-scroll to newest message (at bottom)
-                    if let lastMessage = messages.last {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
-                        }
-                    }
+                    scrollToBottom(proxy: proxy)
+                }
+                .onChange(of: keyboardHeight) { _ in
+                    // Auto-scroll when keyboard appears
+                    scrollToBottom(proxy: proxy, delay: 0.1)
                 }
             }
             
@@ -111,9 +112,57 @@ struct ChatListView: View {
                         // Send like animation
                     }
                 )
+                .offset(y: -keyboardHeight)
             }
         }
         .background(Color(hex: "1B1B25"))
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onAppear {
+            setupKeyboardObservers()
+        }
+        .onDisappear {
+            removeKeyboardObservers()
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private func scrollToBottom(proxy: ScrollViewProxy, delay: TimeInterval = 0) {
+        if let lastMessage = messages.last {
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                }
+            }
+        }
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else { return }
+            withAnimation(.easeOut(duration: 0.3)) {
+                keyboardHeight = keyboardFrame.height
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { _ in
+            withAnimation(.easeOut(duration: 0.3)) {
+                keyboardHeight = 0
+            }
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
 }
 
