@@ -1,0 +1,196 @@
+//
+//  ContestCard.swift
+//  Viaplay
+//
+//  Molecular component: Contest/giveaway card
+//
+
+import SwiftUI
+
+struct ContestCard: View {
+    let title: String
+    let prize: String
+    let hasParticipated: Bool
+    let onParticipate: () -> Void
+    
+    @State private var showSuccessAnimation = false
+    @State private var participated = false
+    
+    init(
+        title: String = "Vinn en drakt fra ditt favorittlag!",
+        prize: String = "Fotballdrakt",
+        hasParticipated: Bool = false,
+        onParticipate: @escaping () -> Void = {}
+    ) {
+        self.title = title
+        self.prize = prize
+        self.hasParticipated = hasParticipated
+        self.onParticipate = onParticipate
+        _participated = State(initialValue: hasParticipated)
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header
+            HStack(spacing: 8) {
+                // Avatar with trophy
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.96, green: 0.08, blue: 0.42),
+                                    Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.7)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: "trophy.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Viaplay Konkurranse")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 4) {
+                        Text("Premie")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("•")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.4))
+                        
+                        Text("Aktiv nå")
+                            .font(.system(size: 10))
+                            .foregroundColor(.green)
+                    }
+                }
+                
+                Spacer()
+                
+                // XXL Sports sponsor
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Sponset av")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 50, maxHeight: 16)
+                }
+            }
+            
+            // Title
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white)
+                .lineSpacing(1)
+            
+            // Prize
+            HStack(spacing: 8) {
+                Image(systemName: "gift.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+                
+                Text("Premie: \(prize)")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.9))
+            }
+            
+            // Participate button
+            Button(action: {
+                if !participated {
+                    participated = true
+                    onParticipate()
+                    
+                    // Success animation
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                        showSuccessAnimation = true
+                    }
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        withAnimation {
+                            showSuccessAnimation = false
+                        }
+                    }
+                }
+            }) {
+                HStack(spacing: 6) {
+                    if showSuccessAnimation {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.green)
+                            .transition(.scale.combined(with: .opacity))
+                        
+                        Text("Deltatt!")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.green)
+                    } else if participated {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("Allerede deltatt")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.6))
+                    } else {
+                        Image(systemName: "star.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white)
+                        
+                        Text("Delta")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            participated 
+                            ? Color.white.opacity(0.1)
+                            : Color(red: 0.96, green: 0.08, blue: 0.42)
+                        )
+                )
+            }
+            .disabled(participated)
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.4),
+                                    Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
+    }
+}
+
+#Preview {
+    VStack(spacing: 16) {
+        ContestCard()
+        ContestCard(hasParticipated: true)
+    }
+    .padding()
+    .background(Color.black)
+}

@@ -204,14 +204,29 @@ struct AllContentFeed: View {
                 // TODO: Convert PollTimelineEvent to InteractiveComponent for PollCard
                 EmptyView()
                 
-            // Announcements
+            // Announcements (including contests)
             case .announcement:
                 if let announcement = wrappedEvent.event as? AnnouncementEvent {
-                    AnnouncementCard(announcement: announcement)
+                    // Check if it's a contest
+                    if announcement.metadata?["type"] == "contest" {
+                        ContestCard(
+                            title: announcement.title.replacingOccurrences(of: "🏆 ", with: ""),
+                            prize: announcement.metadata?["prize"] ?? "Premie",
+                            onParticipate: {
+                                print("🏆 Usuario participa en concurso!")
+                            }
+                        )
                         .transition(.asymmetric(
-                            insertion: .move(edge: .top).combined(with: .opacity),
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
                             removal: .opacity
                         ))
+                    } else {
+                        AnnouncementCard(announcement: announcement)
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                    }
                 }
                 
             // Statistics

@@ -402,6 +402,18 @@ struct TimelineDataGenerator {
         
         // MARK: - Polls (en momentos específicos)
         
+        // 7' - Concurso (Contest)
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "contest-7",
+            videoTimestamp: 420,  // 7 minutos
+            title: "🏆 Vinn en drakt fra ditt favorittlag!",
+            message: "Delta i konkurransen og få sjansen til å vinne en signert drakt fra XXL Sports.",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Delta",
+            metadata: ["type": "contest", "prize": "Fotballdrakt"]
+        )))
+        
         // 10' - Poll sobre resultado
         events.append(AnyTimelineEvent(PollTimelineEvent(
             id: "poll-10",
