@@ -143,11 +143,8 @@ struct HighlightSummaryView: View {
     
     @ViewBuilder
     private func eventRow(_ event: SummaryEvent) -> some View {
-        Button(action: {
-            if let video = event.videoHighlight {
-                selectedVideo = video
-            }
-        }) {
+        VStack(spacing: 0) {
+            // Event info row
             HStack(alignment: .center, spacing: 12) {
                 // Left side (for home team)
                 if event.team == "Barcelona" {
@@ -223,13 +220,14 @@ struct HighlightSummaryView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .background(
-                event.hasVideo 
-                ? Color.white.opacity(0.05)
-                : Color.clear
-            )
+            
+            // Video preview if available
+            if let video = event.videoHighlight {
+                HighlightVideoCard(highlight: video)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 8)
+            }
         }
-        .disabled(!event.hasVideo)
     }
     
     @ViewBuilder
