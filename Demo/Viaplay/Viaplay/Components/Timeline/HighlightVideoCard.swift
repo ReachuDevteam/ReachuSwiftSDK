@@ -112,7 +112,7 @@ struct HighlightVideoCard: View {
             }
             
             // Reactions (same as tweets)
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 ForEach(["🔥", "❤️", "⚽", "🏆", "👍", "🎯"], id: \.self) { emoji in
                     CompactReactionButton(
                         emoji: emoji,
@@ -413,17 +413,17 @@ private struct CompactReactionButton: View {
             }
             onTap()
         }) {
-            HStack(spacing: 3) {
+            HStack(spacing: 2) {
                 Text(emoji)
-                    .font(.system(size: 14))
-                    .scaleEffect(isAnimating ? 1.2 : 1.0)
+                    .font(.system(size: 12))
+                    .scaleEffect(isAnimating ? 1.15 : 1.0)
                 
                 Text(formatCount(count))
-                    .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
                     .foregroundColor(.white.opacity(isSelected ? 1.0 : 0.65))
             }
-            .padding(.horizontal, 7)
-            .padding(.vertical, 4)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
             .background(
                 Capsule()
                     .fill(
