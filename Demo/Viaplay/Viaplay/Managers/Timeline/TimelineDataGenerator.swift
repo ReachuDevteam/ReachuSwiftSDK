@@ -39,10 +39,10 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        // 13' - GOL A. Diallo
+        // 13' - GOL A. Diallo + Commentary
         events.append(AnyTimelineEvent(MatchGoalEvent(
             id: "goal-13",
-            videoTimestamp: 780,  // 13 * 60
+            videoTimestamp: 780,
             player: "A. Diallo",
             team: .home,
             score: "1-0",
@@ -51,6 +51,8 @@ struct TimelineDataGenerator {
             isPenalty: false,
             metadata: nil
         )))
+        
+        // Goal commentary (sin crear el evento, ya usaremos admin comment existente)
         
         // 18' - Yellow Card
         events.append(AnyTimelineEvent(MatchCardEvent(
@@ -87,10 +89,54 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
+        // 44' - Before halftime
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-44",
+            videoTimestamp: 2640,
+            minute: 44,
+            text: "Dean Huijsen (Real Madrid) finds some space inside the box to connect with the resulting corner kick. He sends a fine header towards the top right corner, but one of the defenders deflect it onto the post. Maybe next time.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 45' - Goal commentary
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-45-goal",
+            videoTimestamp: 2700,
+            minute: 45,
+            text: "Goal! Pedri gets to the ball, slips Robert Lewandowski (Barcelona) into the area and he scores with a delightful chipped finish to make it 2-1.",
+            commentaryType: .goal,
+            isHighlighted: true,
+            metadata: nil
+        )))
+        
+        // 45+6' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-45-6-chance",
+            videoTimestamp: 2760,
+            minute: 45,
+            text: "Gonzalo Garcia (Real Madrid) is the first to get to a rebound inside the penalty area and his weak, but precise effort finds its way into the back of the net, bouncing in off the crossbar.",
+            commentaryType: .goal,
+            isHighlighted: true,
+            metadata: nil
+        )))
+        
+        // 45+8' - Halftime
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-45-8",
+            videoTimestamp: 2780,
+            minute: 45,
+            text: "3 min. of stoppage-time to be played.",
+            commentaryType: .halftime,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
         // 45' - Half Time
         events.append(AnyTimelineEvent(AnnouncementEvent(
             id: "halftime",
-            videoTimestamp: 2700,  // 45 * 60
+            videoTimestamp: 2700,
             title: "Pause",
             message: "Første omgang ferdig",
             imageUrl: nil,
@@ -101,15 +147,134 @@ struct TimelineDataGenerator {
         
         // MARK: - Chat Messages (Sincronizados con eventos)
         
-        // MARK: - Pre-Match & Early Game
+        // MARK: - Pre-Match & Commentary
         
-        // 0'10" - Admin welcome
-        events.append(AnyTimelineEvent(AdminCommentEvent(
-            id: "admin-welcome",
+        // Pre-match
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-prematch",
             videoTimestamp: 10,
-            adminName: "Magnus Drivenes",
-            comment: "Velkommen til Champions League! En fantastisk kveld venter oss.",
-            isPinned: false,
+            minute: 0,
+            text: "Hello, welcome to our live play-by-play commentaries. You will be able to see a written form of all the interesting moments of the game, so you won't miss a thing. Sit back and have fun.",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-lineups",
+            videoTimestamp: 30,
+            minute: 0,
+            text: "Before the start of the game, you can see the starting lineups for today's clash.",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-supervisor",
+            videoTimestamp: 50,
+            minute: 0,
+            text: "Jose Munuera will supervise the game today.",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 1' - Kickoff commentary
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-1-kickoff",
+            videoTimestamp: 60,
+            minute: 1,
+            text: "The first half of this match is about to start.",
+            commentaryType: .kickoff,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-1-start",
+            videoTimestamp: 65,
+            minute: 1,
+            text: "Barcelona will kick the game off.",
+            commentaryType: .kickoff,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 1' - Tackle
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-1-tackle",
+            videoTimestamp: 70,
+            minute: 1,
+            text: "Jose Munuera blows his whistle after Eduardo Camavinga (Real Madrid) brings one of his opponents down with a strong tackle.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 3' - Pass
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-3",
+            videoTimestamp: 180,
+            minute: 3,
+            text: "Fermín (Barcelona) slides a pass forward, but one of the defenders cuts it out.",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 4' - Foul
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-4",
+            videoTimestamp: 240,
+            minute: 4,
+            text: "Alvaro Carreras (Real Madrid) makes a rough challenge and the referee blows for a foul.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 5' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-5",
+            videoTimestamp: 300,
+            minute: 5,
+            text: "Another attempt to send the ball beyond the defence by Pedri (Barcelona) is thwarted and cleared to safety.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 6' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-6",
+            videoTimestamp: 360,
+            minute: 6,
+            text: "Jules Kounde (Barcelona) whips the ball into the penalty area, but one of the defenders is alert and spanks it away.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 8' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-8-corner",
+            videoTimestamp: 480,
+            minute: 8,
+            text: "Rodrygo (Real Madrid) attempts to find a teammate with the corner, but the effort is snuffed out by the goalkeeper.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 11' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-11",
+            videoTimestamp: 660,
+            minute: 11,
+            text: "Alejandro Balde (Barcelona) did his best to latch on to a crossfield pass, but it was too long and it goes out of play.",
+            commentaryType: .general,
+            isHighlighted: false,
             metadata: nil
         )))
         
@@ -142,6 +307,39 @@ struct TimelineDataGenerator {
             username: "TacticsGuru",
             text: "Interessant bytte så tidlig",
             usernameColor: .teal
+        )))
+        
+        // 46' - Second half start
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-46",
+            videoTimestamp: 2760,
+            minute: 46,
+            text: "The whistle blows and Jose Munuera starts the second half.",
+            commentaryType: .kickoff,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 46' - Foul
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-46-foul",
+            videoTimestamp: 2780,
+            minute: 46,
+            text: "Frenkie de Jong (Barcelona) makes a rough challenge and Jose Munuera blows his whistle for a foul.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 47' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-47",
+            videoTimestamp: 2820,
+            minute: 47,
+            text: "Vinicius Junior (Real Madrid) sends a pass into the penalty area, but the opponent manages to cut it out. Real Madrid will have a chance to score from a corner.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
         )))
         
         // 13'05" - JUSTO DESPUÉS DEL GOL

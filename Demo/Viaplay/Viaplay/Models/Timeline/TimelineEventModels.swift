@@ -64,6 +64,43 @@ struct AdminCommentEvent: TimelineEvent {
     var displayPriority: Int { 10 }  // Higher priority (shows on top)
 }
 
+// MARK: - Commentary Event (Play-by-play)
+// Note: Uses adminComment as eventType but distinct struct for rendering
+
+struct CommentaryEvent: TimelineEvent {
+    let id: String
+    let videoTimestamp: TimeInterval
+    let minute: Int
+    let text: String
+    let commentaryType: CommentaryType
+    let isHighlighted: Bool
+    let metadata: [String: String]?
+    
+    var eventType: TimelineEventType { .adminComment }
+    var displayPriority: Int { isHighlighted ? 8 : 3 }
+    
+    enum CommentaryType: String, Codable {
+        case general, goal, chance, card, substitution, corner, foul, save, halftime, kickoff
+        
+        var icon: String {
+            switch self {
+            case .general: return ""
+            case .goal: return "soccerball.circle.fill"
+            case .chance: return "soccerball"
+            case .card: return "rectangle.fill"
+            case .substitution: return "arrow.triangle.2.circlepath"
+            case .corner: return "flag.fill"
+            case .foul: return "hand.raised.fill"
+            case .save: return "hand.raised.circle.fill"
+            case .halftime: return "pause.circle.fill"
+            case .kickoff: return "play.circle.fill"
+            }
+        }
+        
+        var hasIcon: Bool { !icon.isEmpty }
+    }
+}
+
 // MARK: - Tweet Event
 
 struct TweetEvent: TimelineEvent {

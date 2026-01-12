@@ -172,9 +172,16 @@ struct AllContentFeed: View {
                     // ChatMessageRow already has its own transition
                 }
                 
-            // Admin comments
+            // Admin comments & Commentary
             case .adminComment:
-                if let adminEvent = wrappedEvent.event as? AdminCommentEvent {
+                // Try commentary first, then admin comment
+                if let commentaryEvent = wrappedEvent.event as? CommentaryEvent {
+                    CommentaryCard(commentary: commentaryEvent)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                } else if let adminEvent = wrappedEvent.event as? AdminCommentEvent {
                     AdminCommentCard(comment: adminEvent)
                         .transition(.asymmetric(
                             insertion: .move(edge: .trailing).combined(with: .opacity),
