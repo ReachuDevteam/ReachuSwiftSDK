@@ -16,21 +16,9 @@ struct MatchHeaderView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            // Back button and sponsor in same row
+            // Sponsor and close button in same row
             HStack {
-                Button(action: onDismiss) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Back")
-                            .font(.system(size: 16))
-                    }
-                    .foregroundColor(.white)
-                }
-                
-                Spacer()
-                
-                // Sponsor (moved from below)
+                // Sponsor (left side)
                 HStack(spacing: 6) {
                     Text("Sponset av")
                         .font(.system(size: 9, weight: .medium))
@@ -41,9 +29,24 @@ struct MatchHeaderView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(height: 16)
                 }
+                
+                Spacer()
+                
+                // Close button (right side)
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .frame(width: 32, height: 32)
+                        .background(
+                            Circle()
+                                .fill(Color.white.opacity(0.1))
+                        )
+                }
             }
             .padding(.horizontal, 16)
-            .padding(.top, 4)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
             
             // Teams and Score
             HStack(spacing: 16) {
