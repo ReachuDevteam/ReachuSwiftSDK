@@ -14,14 +14,14 @@ struct AdminCommentCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack(spacing: 8) {
-                // Admin badge
+                // Viaplay logo badge
                 ZStack {
                     Circle()
                         .fill(Color(red: 0.96, green: 0.08, blue: 0.42))
                         .frame(width: 32, height: 32)
                     
-                    Image(systemName: "megaphone.fill")
-                        .font(.system(size: 16))
+                    Text("V")
+                        .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                 }
                 

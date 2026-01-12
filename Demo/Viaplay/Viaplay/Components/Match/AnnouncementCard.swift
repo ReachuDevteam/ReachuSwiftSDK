@@ -13,13 +13,20 @@ struct AnnouncementCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Icon and title
-            HStack(spacing: 8) {
-                Image(systemName: "megaphone.fill")
-                    .font(.system(size: 16))
-                    .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+            HStack(spacing: 10) {
+                // Use sport icons instead of emojis
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.2))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: eventIcon(for: announcement.title))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+                }
                 
-                Text(announcement.title)
-                    .font(.system(size: 16, weight: .bold))
+                Text(cleanTitle(announcement.title))
+                    .font(.system(size: 15, weight: .bold))
                     .foregroundColor(.white)
                 
                 Spacer()
@@ -44,11 +51,32 @@ struct AnnouncementCard: View {
                 }
             }
         }
-        .padding()
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.08))
         )
+    }
+    
+    // MARK: - Helpers
+    
+    private func eventIcon(for title: String) -> String {
+        if title.contains("Avspark") || title.contains("⚽") {
+            return "soccerball.circle.fill"
+        } else if title.contains("Pause") || title.contains("⏸") {
+            return "pause.circle.fill"
+        } else if title.contains("Fulltid") {
+            return "flag.checkered.circle.fill"
+        } else {
+            return "megaphone.fill"
+        }
+    }
+    
+    private func cleanTitle(_ title: String) -> String {
+        // Remove emojis from title
+        title.replacingOccurrences(of: "⚽ ", with: "")
+            .replacingOccurrences(of: "⏸ ", with: "")
+            .replacingOccurrences(of: "🏁 ", with: "")
     }
 }
 

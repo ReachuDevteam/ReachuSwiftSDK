@@ -118,6 +118,9 @@ class LiveMatchViewModel: ObservableObject {
             // Update chat to show new visible messages
             self.chatManager.loadMessagesFromTimeline()
             
+            // Trigger UI update by changing published property
+            self.objectWillChange.send()
+            
             // Stop at 90 minutes
             if self.timeline.currentMinute >= 90 {
                 self.stopTimelinePlayback()

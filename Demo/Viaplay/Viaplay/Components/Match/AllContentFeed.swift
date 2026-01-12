@@ -58,6 +58,10 @@ struct AllContentFeed: View {
                 .onChange(of: timelineEvents.count) { _ in
                     scrollToBottom(proxy: proxy)
                 }
+                .onChange(of: timelineEvents.map { $0.id }) { _ in
+                    // Update when events change (not just count)
+                    scrollToBottom(proxy: proxy)
+                }
                 .onChange(of: keyboardHeight) { _ in
                     scrollToBottom(proxy: proxy, delay: 0.1)
                 }
@@ -128,64 +132,88 @@ struct AllContentFeed: View {
     
     @ViewBuilder
     private func renderEvent(_ wrappedEvent: AnyTimelineEvent) -> some View {
-        switch wrappedEvent.eventType {
-        // Match events
-        case .matchGoal, .matchCard, .matchSubstitution, .matchKickOff, .matchHalfTime, .matchFullTime:
-            if let matchEvent = wrappedEvent.event as? MatchEvent {
-                TimelineEventCard(event: matchEvent)
-            } else {
+        Group {
+            switch wrappedEvent.eventType {
+            // Match events
+            case .matchGoal, .matchCard, .matchSubstitution, .matchKickOff, .matchHalfTime, .matchFullTime:
+                if let matchEvent = wrappedEvent.event as? MatchEvent {
+                    TimelineEventCard(event: matchEvent)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.9).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                } else {
+                    EmptyView()
+                }
+                
+            // Chat
+            case .chatMessage:
+                if let chatEvent = wrappedEvent.event as? ChatMessageEvent {
+                    ChatMessageRow(
+                        message: ChatMessage(
+                            username: chatEvent.username,
+                            text: chatEvent.text,
+                            usernameColor: chatEvent.colorValue,
+                            likes: chatEvent.likes,
+                            timestamp: chatEvent.timestamp,
+                            videoTimestamp: chatEvent.videoTimestamp
+                        )
+                    )
+                    // ChatMessageRow already has its own transition
+                }
+                
+            // Admin comments
+            case .adminComment:
+                if let adminEvent = wrappedEvent.event as? AdminCommentEvent {
+                    AdminCommentCard(comment: adminEvent)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                }
+                
+            // Tweets
+            case .tweet:
+                if let tweetEvent = wrappedEvent.event as? TweetEvent {
+                    TweetCard(tweet: tweetEvent)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
+                            removal: .scale(scale: 0.95).combined(with: .opacity)
+                        ))
+                }
+                
+            // Polls
+            case .poll:
+                // TODO: Convert PollTimelineEvent to InteractiveComponent for PollCard
+                EmptyView()
+                
+            // Announcements
+            case .announcement:
+                if let announcement = wrappedEvent.event as? AnnouncementEvent {
+                    AnnouncementCard(announcement: announcement)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                }
+                
+            // Statistics
+            case .statisticsUpdate:
+                StatPreviewCard(
+                    statistics: statistics,
+                    onViewAll: { onSelectTab(.statistics) }
+                )
+                .transition(.asymmetric(
+                    insertion: .scale(scale: 0.9).combined(with: .opacity),
+                    removal: .opacity
+                ))
+                
+            // Other types - add as needed
+            default:
                 EmptyView()
             }
-            
-        // Chat
-        case .chatMessage:
-            if let chatEvent = wrappedEvent.event as? ChatMessageEvent {
-                ChatMessageRow(
-                    message: ChatMessage(
-                        username: chatEvent.username,
-                        text: chatEvent.text,
-                        usernameColor: chatEvent.colorValue,
-                        likes: chatEvent.likes,
-                        timestamp: chatEvent.timestamp,
-                        videoTimestamp: chatEvent.videoTimestamp
-                    )
-                )
-            }
-            
-        // Admin comments
-        case .adminComment:
-            if let adminEvent = wrappedEvent.event as? AdminCommentEvent {
-                AdminCommentCard(comment: adminEvent)
-            }
-            
-        // Tweets
-        case .tweet:
-            if let tweetEvent = wrappedEvent.event as? TweetEvent {
-                TweetCard(tweet: tweetEvent)
-            }
-            
-        // Polls
-        case .poll:
-            // TODO: Convert PollTimelineEvent to InteractiveComponent for PollCard
-            EmptyView()
-            
-        // Announcements
-        case .announcement:
-            if let announcement = wrappedEvent.event as? AnnouncementEvent {
-                AnnouncementCard(announcement: announcement)
-            }
-            
-        // Statistics
-        case .statisticsUpdate:
-            StatPreviewCard(
-                statistics: statistics,
-                onViewAll: { onSelectTab(.statistics) }
-            )
-            
-        // Other types - add as needed
-        default:
-            EmptyView()
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: wrappedEvent.id)
     }
 }
 

@@ -91,6 +91,10 @@ struct ChatListView: View {
                     // Auto-scroll to newest message (at bottom)
                     scrollToBottom(proxy: proxy)
                 }
+                .onChange(of: messages.map { $0.id }) { _ in
+                    // Update when messages change (not just count)
+                    scrollToBottom(proxy: proxy)
+                }
                 .onChange(of: keyboardHeight) { _ in
                     // Auto-scroll when keyboard appears
                     scrollToBottom(proxy: proxy, delay: 0.1)
