@@ -266,9 +266,9 @@ struct LiveMatchView: View {
                     
                     Spacer()
                     
-                    // Fullscreen
-                    Button(action: {}) {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    // Mute/Unmute
+                    Button(action: { playerViewModel.toggleMute() }) {
+                        Image(systemName: playerViewModel.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 18))
                             .foregroundColor(.white)
                     }
