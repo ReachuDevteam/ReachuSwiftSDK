@@ -108,20 +108,19 @@ class LiveMatchViewModel: ObservableObject {
     private var playbackTimer: Timer?
     
     private func startTimelinePlayback() {
-        // Simulate video playback (advance 1 second every 0.5 seconds for better performance)
-        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        // Simulate video playback (advance 1 second every 0.1 seconds - original speed)
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self, self.selectedMinute == nil else { return }
             
             let previousMinute = self.timeline.currentMinute
-            let previousEventCount = self.timeline.visibleEvents.count
             
-            // Advance timeline by 5 seconds per tick (faster, less frequent updates)
-            self.timeline.updateVideoTime(self.timeline.currentVideoTime + 5)
+            // Advance timeline by 1 second
+            self.timeline.updateVideoTime(self.timeline.currentVideoTime + 1)
             
-            // Reload messages when minute changes
+            // Only reload and update when minute actually changes
             if self.timeline.currentMinute != previousMinute {
                 self.chatManager.loadMessagesFromTimeline()
-                // Trigger UI update when minute changes
+                // Trigger UI update only when minute changes (not every 0.1s)
                 self.objectWillChange.send()
             }
             
