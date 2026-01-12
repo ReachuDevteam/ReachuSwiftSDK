@@ -191,9 +191,12 @@ struct HighlightVideoCard: View {
     }
     
     private func startReactionSimulation() {
-        countUpdateTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2.0...4.0), repeats: true) { _ in
+        // Disabled for performance on device
+        #if DEBUG
+        #if targetEnvironment(simulator)
+        countUpdateTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 3.0...6.0), repeats: true) { _ in
             let randomEmoji = ["🔥", "❤️", "⚽", "🏆", "👍", "🎯"].randomElement()!
-            let increment = Int.random(in: 1...3)
+            let increment = Int.random(in: 1...2)
             
             withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                 reactionCounts[randomEmoji, default: 0] += increment
@@ -203,6 +206,8 @@ struct HighlightVideoCard: View {
                 }
             }
         }
+        #endif
+        #endif
     }
     
     private func stopReactionSimulation() {
