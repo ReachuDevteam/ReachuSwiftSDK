@@ -33,10 +33,10 @@ struct TweetCard: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Header with avatar and info (match chat size)
-            HStack(spacing: 10) {
-                // Avatar (same size as chat - 32px)
+        VStack(alignment: .leading, spacing: 10) {
+            // Header with avatar and info
+            HStack(spacing: 8) {
+                // Avatar (32px - same as chat)
                 AsyncImage(url: URL(string: tweet.authorAvatar ?? "")) { image in
                     image
                         .resizable()
@@ -52,37 +52,38 @@ struct TweetCard: View {
                         )
                         .overlay(
                             Text(String(tweet.authorName.prefix(1)))
-                                .font(.system(size: 14, weight: .bold))
+                                .font(.system(size: 13, weight: .bold))
                                 .foregroundColor(.white)
                         )
                 }
-                .frame(width: 40, height: 40)
+                .frame(width: 32, height: 32)
                 .clipShape(Circle())
                 
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 3) {
                         Text(tweet.authorName)
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
+                            .lineLimit(1)
                         
                         if tweet.isVerified {
                             Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 13))
+                                .font(.system(size: 11))
                                 .foregroundColor(.blue)
                         }
                     }
                     
-                    HStack(spacing: 5) {
+                    HStack(spacing: 4) {
                         Text("via X")
-                            .font(.system(size: 11))
+                            .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.6))
                         
                         Text("•")
-                            .font(.system(size: 11))
+                            .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.4))
                         
                         Text(timeAgo(from: tweet.videoTimestamp))
-                            .font(.system(size: 11))
+                            .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.6))
                     }
                 }
@@ -90,32 +91,29 @@ struct TweetCard: View {
                 Spacer()
             }
             
-            // Tweet text (match chat text size)
+            // Tweet text
             Text(tweet.tweetText)
-                .font(.system(size: 14))
+                .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.95))
                 .fixedSize(horizontal: false, vertical: true)
-                .lineSpacing(2)
+                .lineSpacing(1)
             
-            // Reactions row (interactive)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 14) {
-                    ForEach(["🔥", "❤️", "⚽", "🏆", "👍", "🎯"], id: \.self) { emoji in
-                        ReactionButton(
-                            emoji: emoji,
-                            count: reactionCounts[emoji] ?? 0,
-                            isSelected: userReactions.contains(emoji),
-                            isAnimating: animatingReaction == emoji,
-                            onTap: {
-                                handleReaction(emoji)
-                            }
-                        )
-                    }
+            // Reactions row (interactive) - More compact
+            HStack(spacing: 10) {
+                ForEach(["🔥", "❤️", "⚽", "🏆", "👍", "🎯"], id: \.self) { emoji in
+                    CompactReactionButton(
+                        emoji: emoji,
+                        count: reactionCounts[emoji] ?? 0,
+                        isSelected: userReactions.contains(emoji),
+                        isAnimating: animatingReaction == emoji,
+                        onTap: {
+                            handleReaction(emoji)
+                        }
+                    )
                 }
-                .padding(.horizontal, 2)
             }
         }
-        .padding(14)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.05))
@@ -226,6 +224,69 @@ struct TweetCard: View {
     }
 }
 
+// MARK: - Compact Reaction Button
+
+private struct CompactReactionButton: View {
+    let emoji: String
+    let count: Int
+    let isSelected: Bool
+    let isAnimating: Bool
+    let onTap: () -> Void
+    
+    @State private var scale: CGFloat = 1.0
+    
+    private func formatCount(_ count: Int) -> String {
+        if count >= 1000 {
+            return String(format: "%.1fK", Double(count) / 1000.0)
+        }
+        return "\(count)"
+    }
+    
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                scale = 0.9
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    scale = 1.0
+                }
+            }
+            onTap()
+        }) {
+            HStack(spacing: 3) {
+                Text(emoji)
+                    .font(.system(size: 14))
+                    .scaleEffect(isAnimating ? 1.2 : 1.0)
+                
+                Text(formatCount(count))
+                    .font(.system(size: 11, weight: isSelected ? .semibold : .medium))
+                    .foregroundColor(.white.opacity(isSelected ? 1.0 : 0.65))
+            }
+            .padding(.horizontal, 7)
+            .padding(.vertical, 4)
+            .background(
+                Capsule()
+                    .fill(
+                        isSelected 
+                        ? Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.25)
+                        : Color.white.opacity(0.06)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(
+                                isSelected 
+                                ? Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.4)
+                                : Color.clear,
+                                lineWidth: 0.5
+                            )
+                    )
+            )
+        }
+        .scaleEffect(scale)
+    }
+}
+
 #Preview {
     TweetCard(
         tweet: TweetEvent(
@@ -233,7 +294,7 @@ struct TweetCard: View {
             videoTimestamp: 810,
             authorName: "Luka Modrić",
             authorHandle: "@LukaModric10",
-            authorAvatar: "https://pbs.twimg.com/profile_images/1234/avatar.jpg",
+            authorAvatar: "https://pbs.twimg.com/profile_images/1467838580013015046/Ri-Mx4k0_400x400.jpg",
             tweetText: "Nikada ne odustaj! ⚽🔥 #ChampionsLeague",
             isVerified: true,
             likes: 1345,

@@ -236,13 +236,13 @@ struct TimelineDataGenerator {
         
         // MARK: - Tweets (en momentos clave)
         
-        // 2' - Tweet al inicio
+        // 2' - Tweet al inicio (Luka Modrić - Real Madrid)
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-2",
             videoTimestamp: 120,
             authorName: "Luka Modrić",
             authorHandle: "@LukaModric10",
-            authorAvatar: nil,  // Will use placeholder
+            authorAvatar: "https://pbs.twimg.com/profile_images/1467838580013015046/Ri-Mx4k0_400x400.jpg",
             tweetText: "Nikada ne odustaj! ⚽🔥 #ChampionsLeague",
             isVerified: true,
             likes: 1345,
@@ -250,13 +250,13 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        // 8' - Otro tweet
+        // 8' - Otro tweet (Erling Haaland - Manchester City)
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-8",
             videoTimestamp: 480,
             authorName: "Erling Haaland",
             authorHandle: "@ErlingHaaland",
-            authorAvatar: nil,
+            authorAvatar: "https://pbs.twimg.com/profile_images/1618611381585408002/yvY87tJm_400x400.jpg",
             tweetText: "Alltid klar for neste mål! ⚽🎯",
             isVerified: true,
             likes: 2340,
@@ -264,17 +264,31 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        // 13'30" - Tweet después del gol
+        // 13'30" - Tweet después del gol (Kylian Mbappé - PSG/Real Madrid)
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-13",
             videoTimestamp: 810,
             authorName: "Kylian Mbappé",
             authorHandle: "@KMbappe",
-            authorAvatar: nil,
+            authorAvatar: "https://pbs.twimg.com/profile_images/1654969131244240896/rCJEZU4q_400x400.jpg",
             tweetText: "Champions League! C'est magnifique! ⚡🔥",
             isVerified: true,
             likes: 4567,
             retweets: 2123,
+            metadata: nil
+        )))
+        
+        // 20' - Tweet de Cristiano Ronaldo
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-20",
+            videoTimestamp: 1200,
+            authorName: "Cristiano Ronaldo",
+            authorHandle: "@Cristiano",
+            authorAvatar: "https://pbs.twimg.com/profile_images/1594446880498401282/o4L2z8Yw_400x400.jpg",
+            tweetText: "Grande Champions League! Siuuu! 🔥⚽",
+            isVerified: true,
+            likes: 8910,
+            retweets: 3456,
             metadata: nil
         )))
         
