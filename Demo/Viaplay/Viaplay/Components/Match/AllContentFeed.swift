@@ -91,7 +91,7 @@ struct AllContentFeed: View {
 
 #Preview {
     AllContentFeed(
-        items: [],
+        timelineEvents: [],
         statistics: MatchStatistics.mock(for: Match.barcelonaPSG),
         onPollVote: { _, _ in },
         onSelectTab: { _ in }

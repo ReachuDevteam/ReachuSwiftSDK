@@ -201,18 +201,13 @@ class LiveMatchViewModel: ObservableObject {
     }
     
     func filteredPolls() -> [InteractiveComponent] {
-        if useTimelineSync {
-            // Get polls from timeline
-            let pollEvents = timeline.visiblePolls()
-            // TODO: Convert PollTimelineEvent to InteractiveComponent
-            return entertainmentManager.activeComponents.filter { $0.type == .poll }
-        } else {
-            return entertainmentManager.activeComponents.filter { component in
-                guard component.type == .poll, let startTime = component.startTime else { return false }
-                let timeDiff = Date().timeIntervalSince(startTime)
-                let pollMinute = Int(timeDiff / 60)
-                return pollMinute <= currentFilterMinute
-            }
+        // For now, use entertainment manager polls
+        // TODO: Integrate PollTimelineEvent when needed
+        return entertainmentManager.activeComponents.filter { component in
+            guard component.type == .poll, let startTime = component.startTime else { return false }
+            let timeDiff = Date().timeIntervalSince(startTime)
+            let pollMinute = Int(timeDiff / 60)
+            return pollMinute <= currentFilterMinute
         }
     }
     
@@ -229,12 +224,12 @@ class LiveMatchViewModel: ObservableObject {
     
     func visibleTimelineEvents(ofType type: TimelineEventType) -> [AnyTimelineEvent] {
         guard useTimelineSync else { return [] }
-        return timeline.visibleEvents(ofType: type)
+        return timeline.visibleEvents.filter { $0.eventType == type }
     }
     
     func allTimelineEvents() -> [AnyTimelineEvent] {
         guard useTimelineSync else { return [] }
-        return timeline.allEvents
+        return timeline.allEvents  // This is a property, not a function
     }
     
     // MARK: - Mixed Content

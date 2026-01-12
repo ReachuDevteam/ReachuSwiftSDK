@@ -12,9 +12,10 @@ struct VideoTimelineControl: View {
     @Binding var selectedMinute: Int?
     let events: [MatchEvent]
     let isPlaying: Bool
+    let isMuted: Bool
     let totalDuration: Int
     let onPlayPause: () -> Void
-    let onFullscreen: () -> Void
+    let onToggleMute: () -> Void
     let onSeek: ((Int) -> Void)?  // NEW: Called when user scrubs
     
     init(
@@ -22,18 +23,20 @@ struct VideoTimelineControl: View {
         selectedMinute: Binding<Int?>,
         events: [MatchEvent],
         isPlaying: Bool = false,
+        isMuted: Bool = true,
         totalDuration: Int = 90,
         onPlayPause: @escaping () -> Void = {},
-        onFullscreen: @escaping () -> Void = {},
+        onToggleMute: @escaping () -> Void = {},
         onSeek: ((Int) -> Void)? = nil
     ) {
         self.currentMinute = currentMinute
         self._selectedMinute = selectedMinute
         self.events = events
         self.isPlaying = isPlaying
+        self.isMuted = isMuted
         self.totalDuration = totalDuration
         self.onPlayPause = onPlayPause
-        self.onFullscreen = onFullscreen
+        self.onToggleMute = onToggleMute
         self.onSeek = onSeek
     }
     
@@ -76,9 +79,9 @@ struct VideoTimelineControl: View {
                     
                     Spacer()
                     
-                    // Fullscreen
-                    Button(action: onFullscreen) {
-                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                    // Mute/Unmute
+                    Button(action: onToggleMute) {
+                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                             .font(.system(size: 18))
                             .foregroundColor(.white)
                     }
@@ -213,6 +216,8 @@ struct TimelineScrubber: View {
 
 private struct VideoTimelineControl_PreviewWrapper: View {
     @State var selectedMinute: Int? = nil
+    @State var isMuted: Bool = true
+    
     var body: some View {
         VideoTimelineControl(
             currentMinute: 45,
@@ -221,7 +226,9 @@ private struct VideoTimelineControl_PreviewWrapper: View {
                 MatchEvent(minute: 13, type: .goal, player: "A. Diallo", team: .home, description: nil, score: "1-0"),
                 MatchEvent(minute: 18, type: .yellowCard, player: "Casemiro", team: .home, description: nil, score: nil)
             ],
-            isPlaying: true
+            isPlaying: true,
+            isMuted: isMuted,
+            onToggleMute: { isMuted.toggle() }
         )
         .background(Color(hex: "1B1B25"))
     }

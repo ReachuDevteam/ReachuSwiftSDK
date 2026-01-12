@@ -60,8 +60,8 @@ class UnifiedTimelineManager: ObservableObject {
     
     /// Add multiple wrapped events (for pre-generated data)
     func addWrappedEvents(_ events: [AnyTimelineEvent]) {
-        allEvents.append(contentsOf: events)
-        allEvents.sort { $0.videoTimestamp < $1.videoTimestamp }
+        self.allEvents.append(contentsOf: events)
+        self.allEvents.sort { $0.videoTimestamp < $1.videoTimestamp }
     }
     
     /// Remove an event
@@ -108,63 +108,45 @@ class UnifiedTimelineManager: ObservableObject {
             return .secondHalf
         }
     }
-}
-
-enum MatchPhase {
-    case firstHalf
-    case halfTime
-    case secondHalf
-    
-    var displayName: String {
-        switch self {
-        case .firstHalf: return "1. omgang"
-        case .halfTime: return "Pause"
-        case .secondHalf: return "2. omgang"
-        }
-    }
     
     // MARK: - Filtering by Type
     
-    func visibleEvents(ofType type: TimelineEventType) -> [AnyTimelineEvent] {
-        visibleEvents.filter { $0.eventType == type }
+    func events(ofType type: TimelineEventType) -> [AnyTimelineEvent] {
+        return visibleEvents.filter { $0.eventType == type }
     }
     
-    func visibleEvents(ofCategory category: TimelineEventCategory) -> [AnyTimelineEvent] {
-        visibleEvents.filter { $0.eventType.category == category }
+    func events(ofCategory category: TimelineEventCategory) -> [AnyTimelineEvent] {
+        return visibleEvents.filter { $0.eventType.category == category }
     }
     
     // MARK: - Type-Safe Getters
     
     func visibleChatMessages() -> [ChatMessageEvent] {
-        visibleEvents(ofType: .chatMessage).compactMap { $0.event as? ChatMessageEvent }
+        events(ofType: .chatMessage).compactMap { $0.event as? ChatMessageEvent }
     }
     
     func visibleMatchGoals() -> [MatchGoalEvent] {
-        visibleEvents(ofType: .matchGoal).compactMap { $0.event as? MatchGoalEvent }
+        events(ofType: .matchGoal).compactMap { $0.event as? MatchGoalEvent }
     }
     
     func visiblePolls() -> [PollTimelineEvent] {
-        visibleEvents(ofType: .poll).compactMap { $0.event as? PollTimelineEvent }
+        events(ofType: .poll).compactMap { $0.event as? PollTimelineEvent }
     }
     
     func visibleTweets() -> [TweetEvent] {
-        visibleEvents(ofType: .tweet).compactMap { $0.event as? TweetEvent }
+        events(ofType: .tweet).compactMap { $0.event as? TweetEvent }
     }
     
     func visibleProducts() -> [ProductTimelineEvent] {
-        visibleEvents(ofType: .productHighlight).compactMap { $0.event as? ProductTimelineEvent }
-    }
-    
-    func visiblePolls() -> [PollTimelineEvent] {
-        visibleEvents(ofType: .poll).compactMap { $0.event as? PollTimelineEvent }
+        events(ofType: .productHighlight).compactMap { $0.event as? ProductTimelineEvent }
     }
     
     func visibleAdminComments() -> [AdminCommentEvent] {
-        visibleEvents(ofType: .adminComment).compactMap { $0.event as? AdminCommentEvent }
+        events(ofType: .adminComment).compactMap { $0.event as? AdminCommentEvent }
     }
     
     func visibleAnnouncements() -> [AnnouncementEvent] {
-        visibleEvents(ofType: .announcement).compactMap { $0.event as? AnnouncementEvent }
+        events(ofType: .announcement).compactMap { $0.event as? AnnouncementEvent }
     }
     
     // MARK: - Backend Integration Helpers
@@ -186,6 +168,20 @@ enum MatchPhase {
     func importEventsFromBackend(_ data: Data) throws {
         // TODO: Implement when backend structure is defined
         // Will decode JSON and create appropriate event objects
+    }
+}
+
+enum MatchPhase {
+    case firstHalf
+    case halfTime
+    case secondHalf
+    
+    var displayName: String {
+        switch self {
+        case .firstHalf: return "1. omgang"
+        case .halfTime: return "Pause"
+        case .secondHalf: return "2. omgang"
+        }
     }
 }
 
