@@ -3,59 +3,86 @@
 //  Viaplay
 //
 //  Molecular component: Tweet card with reactions
-//  Style based on X/Twitter posts
+//  Style based on X/Twitter posts with Viaplay branding
 //
 
 import SwiftUI
 
 struct TweetCard: View {
     let tweet: TweetEvent
+    let onReact: ((String) -> Void)?
+    
+    @State private var reactionCounts: [String: Int] = [:]
+    @State private var userReactions: Set<String> = []
+    @State private var animatingReaction: String?
+    @State private var countUpdateTimer: Timer?
+    
+    init(tweet: TweetEvent, onReact: ((String) -> Void)? = nil) {
+        self.tweet = tweet
+        self.onReact = onReact
+        
+        // Initialize reaction counts
+        _reactionCounts = State(initialValue: [
+            "🔥": tweet.likes / 4,
+            "❤️": tweet.likes / 5,
+            "⚽": tweet.retweets,
+            "🏆": tweet.likes / 8,
+            "👍": tweet.likes / 6,
+            "🎯": tweet.likes / 12
+        ])
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header with avatar and info
-            HStack(spacing: 12) {
-                // Avatar
+        VStack(alignment: .leading, spacing: 14) {
+            // Header with avatar and info (match chat size)
+            HStack(spacing: 10) {
+                // Avatar (same size as chat - 32px)
                 AsyncImage(url: URL(string: tweet.authorAvatar ?? "")) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Circle()
-                        .fill(Color.blue.opacity(0.3))
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.blue, Color.blue.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                         .overlay(
                             Text(String(tweet.authorName.prefix(1)))
-                                .font(.system(size: 18, weight: .bold))
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white)
                         )
                 }
-                .frame(width: 48, height: 48)
+                .frame(width: 40, height: 40)
                 .clipShape(Circle())
                 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 4) {
                         Text(tweet.authorName)
-                            .font(.system(size: 15, weight: .bold))
+                            .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white)
                         
                         if tweet.isVerified {
                             Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 14))
+                                .font(.system(size: 13))
                                 .foregroundColor(.blue)
                         }
                     }
                     
-                    HStack(spacing: 6) {
+                    HStack(spacing: 5) {
                         Text("via X")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.6))
                         
                         Text("•")
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.4))
                         
                         Text(timeAgo(from: tweet.videoTimestamp))
-                            .font(.system(size: 12))
+                            .font(.system(size: 11))
                             .foregroundColor(.white.opacity(0.6))
                     }
                 }
@@ -63,29 +90,114 @@ struct TweetCard: View {
                 Spacer()
             }
             
-            // Tweet text
+            // Tweet text (match chat text size)
             Text(tweet.tweetText)
-                .font(.system(size: 15))
-                .foregroundColor(.white)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.95))
                 .fixedSize(horizontal: false, vertical: true)
+                .lineSpacing(2)
             
-            // Reactions row
+            // Reactions row (interactive)
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ReactionCount(emoji: "🔥", count: formatCount(tweet.likes / 4))
-                    ReactionCount(emoji: "❤️", count: formatCount(tweet.likes / 5))
-                    ReactionCount(emoji: "⚽", count: formatCount(tweet.retweets))
-                    ReactionCount(emoji: "🏆", count: formatCount(tweet.likes / 8))
-                    ReactionCount(emoji: "👍", count: formatCount(tweet.likes / 6))
-                    ReactionCount(emoji: "🎯", count: formatCount(tweet.likes / 12))
+                HStack(spacing: 14) {
+                    ForEach(["🔥", "❤️", "⚽", "🏆", "👍", "🎯"], id: \.self) { emoji in
+                        ReactionButton(
+                            emoji: emoji,
+                            count: reactionCounts[emoji] ?? 0,
+                            isSelected: userReactions.contains(emoji),
+                            isAnimating: animatingReaction == emoji,
+                            onTap: {
+                                handleReaction(emoji)
+                            }
+                        )
+                    }
                 }
+                .padding(.horizontal, 2)
             }
         }
-        .padding(16)
+        .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color(red: 0.96, green: 0.08, blue: 0.42),
+                                    Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.3)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1.5
+                        )
+                )
+                .shadow(
+                    color: Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.2),
+                    radius: 8,
+                    x: 0,
+                    y: 4
+                )
         )
+        .onAppear {
+            startReactionSimulation()
+        }
+        .onDisappear {
+            stopReactionSimulation()
+        }
+    }
+    
+    // MARK: - Reaction Handling
+    
+    private func handleReaction(_ emoji: String) {
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if userReactions.contains(emoji) {
+                // Remove reaction
+                userReactions.remove(emoji)
+                reactionCounts[emoji, default: 0] -= 1
+            } else {
+                // Add reaction
+                userReactions.insert(emoji)
+                reactionCounts[emoji, default: 0] += 1
+                
+                // Animate
+                animatingReaction = emoji
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    animatingReaction = nil
+                }
+            }
+        }
+        
+        onReact?(emoji)
+    }
+    
+    // MARK: - Reaction Simulation
+    
+    private func startReactionSimulation() {
+        // Simulate reactions coming in (like people reacting in real-time)
+        countUpdateTimer = Timer.scheduledTimer(withTimeInterval: Double.random(in: 2.0...4.0), repeats: true) { _ in
+            let randomEmoji = ["🔥", "❤️", "⚽", "🏆", "👍", "🎯"].randomElement()!
+            let increment = Int.random(in: 1...3)
+            
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                reactionCounts[randomEmoji, default: 0] += increment
+                
+                // Quick flash animation
+                animatingReaction = randomEmoji
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    animatingReaction = nil
+                }
+            }
+        }
+    }
+    
+    private func stopReactionSimulation() {
+        countUpdateTimer?.invalidate()
+        countUpdateTimer = nil
     }
     
     // MARK: - Helpers
@@ -111,23 +223,6 @@ struct TweetCard: View {
             return String(format: "%.1fK", Double(count) / 1000.0)
         }
         return "\(count)"
-    }
-}
-
-// MARK: - Reaction Count
-
-private struct ReactionCount: View {
-    let emoji: String
-    let count: String
-    
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(emoji)
-                .font(.system(size: 18))
-            Text(count)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.7))
-        }
     }
 }
 
