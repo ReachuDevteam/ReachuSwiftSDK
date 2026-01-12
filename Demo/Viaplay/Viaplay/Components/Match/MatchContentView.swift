@@ -56,8 +56,7 @@ struct MatchContentView: View {
                         highlights: viewModel.timeline.events(ofType: .highlight)
                             .compactMap { $0.event as? HighlightTimelineEvent },
                         matchEvents: viewModel.matchSimulation.events,
-                        currentMinute: viewModel.matchSimulation.currentMinute,
-                        selectedMinute: viewModel.selectedMinute
+                        timeline: viewModel.timeline
                     )
                     
                 case .liveScores:

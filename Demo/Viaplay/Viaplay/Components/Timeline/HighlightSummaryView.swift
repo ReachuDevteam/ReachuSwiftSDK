@@ -11,47 +11,96 @@ import SwiftUI
 struct HighlightSummaryView: View {
     let highlights: [HighlightTimelineEvent]
     let matchEvents: [MatchEvent]
-    let currentMinute: Int
-    let selectedMinute: Int?
+    @ObservedObject var timeline: UnifiedTimelineManager
     
     @State private var selectedVideo: HighlightTimelineEvent?
     
-    private var displayMinute: Int {
-        selectedMinute ?? currentMinute
+    // Use timeline's current video time (same as All and Chat)
+    private var currentVideoTime: TimeInterval {
+        timeline.currentVideoTime
     }
     
-    // Combine all events for summary
+    private var displayMinute: Int {
+        Int(currentVideoTime / 60)
+    }
+    
+    // Combine all events for summary (filtered by timeline)
     private var summaryEvents: [SummaryEvent] {
         var events: [SummaryEvent] = []
         
-        // Add match events (goals, cards, subs)
-        for matchEvent in matchEvents.filter({ $0.minute <= displayMinute }) {
-            events.append(SummaryEvent(
-                id: matchEvent.id.uuidString,
-                minute: matchEvent.minute,
-                type: eventType(from: matchEvent),
-                player: matchEvent.player ?? "",
-                team: matchEvent.team == .home ? "Barcelona" : "Real Madrid",
-                score: matchEvent.score,
-                assistBy: nil,
-                hasVideo: hasVideo(for: matchEvent),
-                videoHighlight: videoForEvent(matchEvent)
-            ))
+        print("🎬 [HighlightSummary] Current video time: \(currentVideoTime)s (\(displayMinute)')")
+        print("🎬 [HighlightSummary] Total match events: \(matchEvents.count)")
+        
+        // Filter by videoTimestamp (same as All tab)
+        let visibleEvents = matchEvents.filter { 
+            TimeInterval($0.minute * 60) <= currentVideoTime 
         }
         
-        return events.sorted { $0.minute > $1.minute }  // Newest first
+        print("🎬 [HighlightSummary] Visible events after filter: \(visibleEvents.count)")
+        
+        // Add match events (goals, cards, subs)
+        for matchEvent in visibleEvents {
+            // Only show important events (goals, cards, subs)
+            switch matchEvent.type {
+            case .goal, .yellowCard, .redCard, .substitution:
+                print("🎬 [HighlightSummary] Adding event: \(matchEvent.minute)' \(matchEvent.type)")
+                events.append(SummaryEvent(
+                    id: matchEvent.id.uuidString,
+                    minute: matchEvent.minute,
+                    type: eventType(from: matchEvent),
+                    player: matchEvent.player ?? "",
+                    team: matchEvent.team == .home ? "Barcelona" : "Real Madrid",
+                    score: matchEvent.score,
+                    assistBy: nil,
+                    hasVideo: hasVideo(for: matchEvent),
+                    videoHighlight: videoForEvent(matchEvent)
+                ))
+            default:
+                break
+            }
+        }
+        
+        print("🎬 [HighlightSummary] Total summary events: \(events.count)")
+        return events
     }
     
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                // Half sections
-                if summaryEvents.contains(where: { $0.minute <= 45 }) {
-                    halfSection(title: "1ST HALF", score: "2-2", events: summaryEvents.filter { $0.minute <= 45 })
+                // Only show halves that are visible in timeline
+                if displayMinute >= 1 && summaryEvents.contains(where: { $0.minute <= 45 }) {
+                    halfSection(
+                        title: "1ST HALF",
+                        score: calculateHalfScore(events: summaryEvents.filter { $0.minute <= 45 }),
+                        events: summaryEvents.filter { $0.minute <= 45 }
+                    )
                 }
                 
-                if summaryEvents.contains(where: { $0.minute > 45 }) {
-                    halfSection(title: "2ND HALF", score: "1-0", events: summaryEvents.filter { $0.minute > 45 })
+                if displayMinute > 45 && summaryEvents.contains(where: { $0.minute > 45 }) {
+                    halfSection(
+                        title: "2ND HALF",
+                        score: calculateHalfScore(events: summaryEvents.filter { $0.minute > 45 }),
+                        events: summaryEvents.filter { $0.minute > 45 }
+                    )
+                }
+                
+                // Empty state when no events yet
+                if summaryEvents.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "clock")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.3))
+                        
+                        Text("Ingen hendelser ennå")
+                            .font(.system(size: 15))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("Venter på kampstart...")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.4))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 80)
                 }
             }
             .padding(.vertical, 16)
@@ -245,6 +294,12 @@ struct HighlightSummaryView: View {
         let eventMinute = matchEvent.minute
         return highlights.first { abs($0.displayMinute - eventMinute) <= 1 }
     }
+    
+    private func calculateHalfScore(events: [SummaryEvent]) -> String {
+        let homeGoals = events.filter { $0.type == .goal && $0.team == "Barcelona" }.count
+        let awayGoals = events.filter { $0.type == .goal && $0.team == "Real Madrid" }.count
+        return "\(homeGoals) - \(awayGoals)"
+    }
 }
 
 // MARK: - Models
@@ -274,7 +329,6 @@ enum SummaryEventType {
         matchEvents: [
             MatchEvent(minute: 13, type: .goal, player: "A. Diallo", team: .home, description: nil, score: "1-0")
         ],
-        currentMinute: 90,
-        selectedMinute: nil
+        timeline: UnifiedTimelineManager()
     )
 }
