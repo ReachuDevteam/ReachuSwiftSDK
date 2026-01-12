@@ -11,6 +11,8 @@ struct ChatMessageRow: View {
     let message: ChatMessage
     let compact: Bool
     
+    @State private var appeared = false
+    
     init(message: ChatMessage, compact: Bool = false) {
         self.message = message
         self.compact = compact
@@ -23,6 +25,7 @@ struct ChatMessageRow: View {
                 color: message.usernameColor,
                 size: compact ? 28 : 32
             )
+            .scaleEffect(appeared ? 1 : 0.8)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 4) {
@@ -46,6 +49,13 @@ struct ChatMessageRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 4)
+        .opacity(appeared ? 1 : 0)
+        .offset(x: appeared ? 0 : -20)
+        .onAppear {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                appeared = true
+            }
+        }
     }
 }
 

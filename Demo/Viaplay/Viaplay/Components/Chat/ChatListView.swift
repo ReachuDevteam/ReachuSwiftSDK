@@ -48,37 +48,52 @@ struct ChatListView: View {
     var body: some View {
         VStack(spacing: 0) {
             // Messages scroll view
-            ScrollView {
-                VStack(spacing: 12) {
-                    // Header
-                    HStack {
-                        Text(title)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                        
-                        Spacer()
-                        
-                        if isLive && viewerCount > 0 {
-                            HStack(spacing: 4) {
-                                Circle()
-                                    .fill(Color.red)
-                                    .frame(width: 8, height: 8)
-                                Text("\(viewerCount)")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.7))
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 12) {
+                        // Header
+                        HStack {
+                            Text(title)
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                            
+                            Spacer()
+                            
+                            if isLive && viewerCount > 0 {
+                                HStack(spacing: 4) {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 8, height: 8)
+                                    Text("\(viewerCount)")
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.7))
+                                }
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 12)
+                        
+                        // Messages (oldest to newest - antiguos arriba, nuevos abajo)
+                        ForEach(messages) { message in
+                            ChatMessageRow(message: message, compact: compact)
+                                .padding(.horizontal, 16)
+                                .id(message.id)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .opacity
+                                ))
+                        }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
-                    
-                    // Messages
-                    ForEach(messages) { message in
-                        ChatMessageRow(message: message, compact: compact)
-                            .padding(.horizontal, 16)
+                    .padding(.bottom, canChat && isLive ? 80 : 12)
+                }
+                .onChange(of: messages.count) { _ in
+                    // Auto-scroll to newest message (at bottom)
+                    if let lastMessage = messages.last {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
                     }
                 }
-                .padding(.bottom, canChat && isLive ? 80 : 12)
             }
             
             // Chat input (only in LIVE mode)

@@ -37,15 +37,31 @@ struct AllContentFeed: View {
     var body: some View {
         VStack(spacing: 0) {
             // Events scroll view
-            ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(timelineEvents, id: \.id) { wrappedEvent in
-                        renderEvent(wrappedEvent)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Events oldest to newest (antiguos arriba, nuevos abajo)
+                        ForEach(timelineEvents.sorted { $0.videoTimestamp < $1.videoTimestamp }, id: \.id) { wrappedEvent in
+                            renderEvent(wrappedEvent)
+                                .id(wrappedEvent.id)
+                                .transition(.asymmetric(
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .opacity
+                                ))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    .padding(.bottom, canChat ? 80 : 12)
+                }
+                .onChange(of: timelineEvents.count) { _ in
+                    // Auto-scroll to newest event (at bottom)
+                    if let lastEvent = timelineEvents.last {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo(lastEvent.id, anchor: .bottom)
+                        }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, canChat ? 80 : 12)
             }
             
             // Chat input
