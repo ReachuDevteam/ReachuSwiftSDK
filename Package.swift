@@ -35,10 +35,10 @@ let package = Package(
         ),
 
         // LiveShow - optional target (FASE 3)
-        .library(
-            name: "ReachuLiveShow",
-            targets: ["ReachuCore", "ReachuLiveShow"]
-        ),
+        // .library(
+        //     name: "ReachuLiveShow",
+        //     targets: ["ReachuCore", "ReachuLiveShow"]
+        // ),
 
         // Testing utilities - internal testing helpers
         .library(
@@ -47,19 +47,27 @@ let package = Package(
         ),
 
         // LiveShow UI Components - optional target (FASE 3)
-        .library(
-            name: "ReachuLiveUI",
-            targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
-        ),
+        // .library(
+        //     name: "ReachuLiveUI",
+        //     targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
+        // ),
 
         // Complete SDK - everything included
+        // .library(
+        //     name: "ReachuComplete",
+        //     targets: [
+        //         "ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI",
+        //     ]
+        // ),
         .library(
-            name: "ReachuComplete",
+            name: "ReachuSDK",
             targets: [
-                "ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI",
+                "ReachuCore",
+                "ReachuNetwork",
+                "ReachuDesignSystem",
+                "ReachuUI"
             ]
-        ),
-
+        ),        
     ],
     dependencies: [
         // GraphQL client for Reachu API
