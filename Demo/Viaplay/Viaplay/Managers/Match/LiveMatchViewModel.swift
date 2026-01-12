@@ -142,8 +142,22 @@ class LiveMatchViewModel: ObservableObject {
         // Load pre-generated timeline data
         let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
         
+        print("📊 [LiveMatchViewModel] Loading timeline data...")
+        print("📊 [LiveMatchViewModel] Total events generated: \(generatedEvents.count)")
+        
+        // Count by type
+        let highlightCount = generatedEvents.filter { $0.eventType == .highlight }.count
+        let chatCount = generatedEvents.filter { $0.eventType == .chatMessage }.count
+        let tweetCount = generatedEvents.filter { $0.eventType == .tweet }.count
+        
+        print("📊 [LiveMatchViewModel] Highlights: \(highlightCount)")
+        print("📊 [LiveMatchViewModel] Chats: \(chatCount)")
+        print("📊 [LiveMatchViewModel] Tweets: \(tweetCount)")
+        
         // Add all wrapped events at once
         timeline.addWrappedEvents(generatedEvents)
+        
+        print("📊 [LiveMatchViewModel] Timeline now has \(timeline.allEvents.count) events")
         
         // Initial load of visible messages
         chatManager.loadMessagesFromTimeline()

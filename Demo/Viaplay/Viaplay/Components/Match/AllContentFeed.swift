@@ -255,9 +255,12 @@ struct AllContentFeed: View {
                 if let highlightEvent = wrappedEvent.event as? HighlightTimelineEvent {
                     HighlightVideoCard(highlight: highlightEvent)
                         .transition(.asymmetric(
-                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
                             removal: .opacity
                         ))
+                } else {
+                    Text("DEBUG: Highlight event but cast failed")
+                        .foregroundColor(.red)
                 }
                 
             // Other types - add as needed
