@@ -94,26 +94,22 @@ struct ChatListView: View {
                 }
                 .onAppear {
                     // Scroll to bottom on first appear
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
                 .onChange(of: messages.count) { _ in
-                    // Auto-scroll to bottom
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
-                    }
-                }
-                .onChange(of: messages.map { $0.id }) { _ in
-                    // Update when messages change
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                    // Auto-scroll to bottom when count changes
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
                 .onChange(of: keyboardHeight) { _ in
                     // Scroll when keyboard appears
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.easeOut(duration: 0.3)) {
+                        withAnimation(.easeOut(duration: 0.2)) {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
                     }

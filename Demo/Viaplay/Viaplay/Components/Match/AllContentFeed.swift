@@ -66,19 +66,23 @@ struct AllContentFeed: View {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
-                .onChange(of: timelineEvents.count) { _ in
-                    withAnimation(.easeOut(duration: 0.3)) {
+                .onAppear {
+                    // Scroll to bottom on first appear
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                         proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
-                .onChange(of: timelineEvents.map { $0.id }) { _ in
-                    withAnimation(.easeOut(duration: 0.3)) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                .onChange(of: timelineEvents.count) { _ in
+                    // Only scroll when count actually changes
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("bottom", anchor: .bottom)
+                        }
                     }
                 }
                 .onChange(of: keyboardHeight) { _ in
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        withAnimation(.easeOut(duration: 0.3)) {
+                        withAnimation(.easeOut(duration: 0.2)) {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
                     }
