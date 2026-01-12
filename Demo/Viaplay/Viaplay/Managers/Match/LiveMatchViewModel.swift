@@ -8,6 +8,8 @@
 import Foundation
 import SwiftUI
 import Combine
+import AVFoundation
+import CoreMedia
 
 @MainActor
 class LiveMatchViewModel: ObservableObject {
