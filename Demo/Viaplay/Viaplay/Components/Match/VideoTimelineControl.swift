@@ -144,7 +144,7 @@ struct VideoTimelineControl: View {
                     .padding(.horizontal, 16)
                 }
             }
-            .padding(.vertical, isExpanded ? 16 : 12)
+            .padding(.vertical, isExpanded ? 12 : 8)
             .background(Color(hex: "1F1E26"))
         }
     }

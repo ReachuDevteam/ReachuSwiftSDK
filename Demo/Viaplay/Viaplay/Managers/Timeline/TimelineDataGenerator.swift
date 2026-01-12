@@ -417,30 +417,45 @@ struct TimelineDataGenerator {
         // 10' - Poll sobre resultado
         events.append(AnyTimelineEvent(PollTimelineEvent(
             id: "poll-10",
-            videoTimestamp: 600,  // 10 minutos
+            videoTimestamp: 600,
             question: "Hvem vinner denne kampen?",
             options: [
                 .init(id: "opt1", text: "Barcelona", voteCount: 3456, percentage: 65),
-                .init(id: "opt2", text: "PSG", voteCount: 1234, percentage: 23),
+                .init(id: "opt2", text: "Real Madrid", voteCount: 1234, percentage: 23),
                 .init(id: "opt3", text: "Uavgjort", voteCount: 645, percentage: 12)
             ],
-            duration: 600,  // Active for 10 minutes
-            endTimestamp: 1200,  // Closes at minute 20
+            duration: 600,
+            endTimestamp: 1200,
             metadata: nil
         )))
         
-        // 30' - Poll sobre MVP
+        // 20' - Poll sobre neste mål
         events.append(AnyTimelineEvent(PollTimelineEvent(
-            id: "poll-30",
-            videoTimestamp: 1800,  // 30 minutos
-            question: "Hvem er best så langt?",
+            id: "poll-20",
+            videoTimestamp: 1200,
+            question: "Hvem scorer neste mål?",
+            options: [
+                .init(id: "opt1", text: "Barcelona", voteCount: 2890, percentage: 58),
+                .init(id: "opt2", text: "Real Madrid", voteCount: 1567, percentage: 31),
+                .init(id: "opt3", text: "Ingen flere mål", voteCount: 543, percentage: 11)
+            ],
+            duration: 900,
+            endTimestamp: 2100,
+            metadata: nil
+        )))
+        
+        // 35' - Poll sobre beste spiller
+        events.append(AnyTimelineEvent(PollTimelineEvent(
+            id: "poll-35",
+            videoTimestamp: 2100,
+            question: "Hvem er beste spiller så langt?",
             options: [
                 .init(id: "opt1", text: "A. Diallo", voteCount: 2345, percentage: 45),
                 .init(id: "opt2", text: "Bruno Fernandes", voteCount: 1789, percentage: 34),
                 .init(id: "opt3", text: "B. Mbeumo", voteCount: 1098, percentage: 21)
             ],
             duration: 600,
-            endTimestamp: 2400,
+            endTimestamp: 2700,
             metadata: nil
         )))
         

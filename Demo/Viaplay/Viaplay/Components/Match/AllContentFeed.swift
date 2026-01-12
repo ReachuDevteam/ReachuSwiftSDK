@@ -201,8 +201,18 @@ struct AllContentFeed: View {
                 
             // Polls
             case .poll:
-                // TODO: Convert PollTimelineEvent to InteractiveComponent for PollCard
-                EmptyView()
+                if let pollEvent = wrappedEvent.event as? PollTimelineEvent {
+                    TimelinePollCard(
+                        poll: pollEvent,
+                        onVote: { optionId in
+                            print("📊 Usuario votó: \(optionId) en poll: \(pollEvent.id)")
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+                }
                 
             // Announcements (including contests)
             case .announcement:

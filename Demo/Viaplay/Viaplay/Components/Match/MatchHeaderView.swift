@@ -15,8 +15,8 @@ struct MatchHeaderView: View {
     let onDismiss: () -> Void
     
     var body: some View {
-        VStack(spacing: 16) {
-            // Back button
+        VStack(spacing: 12) {
+            // Back button and sponsor in same row
             HStack {
                 Button(action: onDismiss) {
                     HStack(spacing: 4) {
@@ -27,9 +27,23 @@ struct MatchHeaderView: View {
                     }
                     .foregroundColor(.white)
                 }
+                
                 Spacer()
+                
+                // Sponsor (moved from below)
+                HStack(spacing: 6) {
+                    Text("Sponset av")
+                        .font(.system(size: 9, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(height: 16)
+                }
             }
             .padding(.horizontal, 16)
+            .padding(.top, 4)
             
             // Teams and Score
             HStack(spacing: 16) {
@@ -74,7 +88,7 @@ struct MatchHeaderView: View {
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+            .padding(.bottom, 4)
         }
     }
 }

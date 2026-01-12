@@ -26,7 +26,7 @@ struct LiveMatchViewRefactored: View {
                 Color(hex: "1B1B25").ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Header with teams and score
+                    // Header with teams and score (now includes sponsor)
                     MatchHeaderView(
                         match: match,
                         homeScore: viewModel.matchSimulation.homeScore,
@@ -34,12 +34,8 @@ struct LiveMatchViewRefactored: View {
                         currentMinute: viewModel.matchSimulation.currentMinute,
                         onDismiss: onDismiss
                     )
-                    .padding(.top, 8)
                     
-                    // Sponsor banner
-                    SponsorBanner()
-                    
-                    // Navigation tabs
+                    // Navigation tabs (closer to header)
                     MatchNavigationTabs(selectedTab: $viewModel.selectedTab)
                     
                     // Content area (changes based on selected tab)

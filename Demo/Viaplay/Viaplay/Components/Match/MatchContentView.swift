@@ -64,11 +64,12 @@ struct MatchContentView: View {
                     
                 case .polls:
                     PollsListView(
-                        activePolls: viewModel.entertainmentManager.activeComponents.filter { $0.type == .poll },
-                        completedPolls: viewModel.entertainmentManager.completedComponents.filter { $0.type == .poll },
-                        upcomingPolls: viewModel.entertainmentManager.upcomingComponents.filter { $0.type == .poll },
-                        hasResponded: viewModel.entertainmentManager.hasUserResponded,
-                        onVote: viewModel.handlePollVote
+                        timelinePolls: viewModel.timeline.events(ofType: .poll)
+                            .compactMap { $0.event as? PollTimelineEvent },
+                        contests: viewModel.timeline.events(ofType: .announcement)
+                            .compactMap { $0.event as? AnnouncementEvent }
+                            .filter { $0.metadata?["type"] == "contest" },
+                        timeline: viewModel.timeline
                     )
                     
                 case .statistics:
