@@ -218,6 +218,16 @@ struct AllContentFeed: View {
                     removal: .opacity
                 ))
                 
+            // Highlights with video
+            case .highlight:
+                if let highlightEvent = wrappedEvent.event as? HighlightTimelineEvent {
+                    HighlightVideoCard(highlight: highlightEvent)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                }
+                
             // Other types - add as needed
             default:
                 EmptyView()

@@ -112,14 +112,21 @@ class LiveMatchViewModel: ObservableObject {
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self, self.selectedMinute == nil else { return }
             
+            let previousMinute = self.timeline.currentMinute
+            let previousEventCount = self.timeline.visibleEvents.count
+            
             // Advance timeline by 1 second
             self.timeline.updateVideoTime(self.timeline.currentVideoTime + 1)
             
-            // Update chat to show new visible messages
-            self.chatManager.loadMessagesFromTimeline()
+            // Reload messages when minute changes
+            if self.timeline.currentMinute != previousMinute {
+                self.chatManager.loadMessagesFromTimeline()
+            }
             
-            // Trigger UI update by changing published property
-            self.objectWillChange.send()
+            // Trigger UI update if visible events changed (for All tab)
+            if self.timeline.visibleEvents.count != previousEventCount {
+                self.objectWillChange.send()
+            }
             
             // Stop at 90 minutes
             if self.timeline.currentMinute >= 90 {

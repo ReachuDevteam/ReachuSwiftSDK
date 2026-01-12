@@ -52,14 +52,20 @@ struct MatchContentView: View {
                     )
                     
                 case .highlights:
-                    HighlightsListView(
-                        goalEvents: viewModel.filteredEvents().filter {
-                            if case .goal = $0.type { return true }
-                            return false
-                        },
-                        currentMinute: viewModel.matchSimulation.currentMinute,
-                        selectedMinute: viewModel.selectedMinute
-                    )
+                    if viewModel.useTimelineSync {
+                        HighlightsListView(
+                            highlights: viewModel.timeline.events(ofType: .highlight)
+                                .compactMap { $0.event as? HighlightTimelineEvent },
+                            currentMinute: viewModel.matchSimulation.currentMinute,
+                            selectedMinute: viewModel.selectedMinute
+                        )
+                    } else {
+                        HighlightsListView(
+                            highlights: [],
+                            currentMinute: viewModel.matchSimulation.currentMinute,
+                            selectedMinute: viewModel.selectedMinute
+                        )
+                    }
                     
                 case .liveScores:
                     LiveScoresListView()

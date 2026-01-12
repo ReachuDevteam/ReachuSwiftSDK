@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct HighlightsListView: View {
-    let goalEvents: [MatchEvent]
+    let highlights: [HighlightTimelineEvent]
     let currentMinute: Int
     let selectedMinute: Int?
     
@@ -18,31 +18,63 @@ struct HighlightsListView: View {
     
     private var title: String {
         if let minute = selectedMinute {
-            return "Highlights at \(minute)'"
+            return "Høydepunkter til \(minute)'"
         }
-        return "Highlights"
+        return "Høydepunkter"
+    }
+    
+    // Filter highlights by current time
+    private var visibleHighlights: [HighlightTimelineEvent] {
+        highlights.filter { $0.displayMinute <= displayMinute }
+            .sorted { $0.videoTimestamp > $1.videoTimestamp }  // Newest first
     }
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                Text(title)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 12)
+            VStack(spacing: 12) {
+                // Header
+                HStack {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    Text("\(visibleHighlights.count)")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.6))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color.white.opacity(0.1))
+                        )
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
                 
-                // Goal highlights
-                ForEach(Array(goalEvents.enumerated()), id: \.element.id) { index, event in
-                    HighlightCard(event: event, index: index)
+                // Highlight videos
+                ForEach(visibleHighlights) { highlight in
+                    HighlightVideoCard(highlight: highlight)
                         .padding(.horizontal, 16)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .opacity
+                        ))
                 }
                 
-                // Additional highlights every 10 minutes
-                ForEach(Array(stride(from: 10, through: displayMinute, by: 10).enumerated()), id: \.offset) { index, minute in
-                    HighlightCard(minute: minute, index: index + goalEvents.count)
-                        .padding(.horizontal, 16)
+                if visibleHighlights.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "play.rectangle")
+                            .font(.system(size: 48))
+                            .foregroundColor(.white.opacity(0.3))
+                        
+                        Text("Ingen høydepunkter ennå")
+                            .font(.system(size: 15))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 60)
                 }
             }
             .padding(.vertical, 12)
@@ -53,9 +85,17 @@ struct HighlightsListView: View {
 
 #Preview {
     HighlightsListView(
-        goalEvents: [
-            MatchEvent(minute: 13, type: .goal, player: "A. Diallo", team: .home, description: nil, score: "1-0"),
-            MatchEvent(minute: 32, type: .goal, player: "B. Mbeumo", team: .home, description: nil, score: "2-0")
+        highlights: [
+            HighlightTimelineEvent(
+                id: "h1",
+                videoTimestamp: 780,
+                title: "MÅL: A. Diallo",
+                description: "Nydelig avslutning!",
+                thumbnailUrl: nil,
+                clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66",
+                highlightType: .goal,
+                metadata: nil
+            )
         ],
         currentMinute: 45,
         selectedMinute: nil

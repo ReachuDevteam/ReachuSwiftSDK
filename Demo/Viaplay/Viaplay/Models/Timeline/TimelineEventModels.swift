@@ -254,10 +254,61 @@ struct HighlightTimelineEvent: TimelineEvent {
     let description: String?
     let thumbnailUrl: String?
     let clipUrl: String?
+    let highlightType: HighlightType
     let metadata: [String: String]?
     
     var eventType: TimelineEventType { .highlight }
     var displayPriority: Int { 4 }
+    
+    enum HighlightType: String, Codable {
+        case goal = "goal"
+        case chance = "chance"
+        case save = "save"
+        case yellowCard = "yellow_card"
+        case redCard = "red_card"
+        case tackle = "tackle"
+        case pass = "pass"
+        case other = "other"
+        
+        var displayName: String {
+            switch self {
+            case .goal: return "Mål"
+            case .chance: return "Sjanse"
+            case .save: return "Redning"
+            case .yellowCard: return "Gult kort"
+            case .redCard: return "Rødt kort"
+            case .tackle: return "Takling"
+            case .pass: return "Pasning"
+            case .other: return "Høydepunkt"
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .goal: return "soccerball.circle.fill"
+            case .chance: return "target"
+            case .save: return "hand.raised.fill"
+            case .yellowCard: return "rectangle.fill"
+            case .redCard: return "rectangle.fill"
+            case .tackle: return "figure.soccer"
+            case .pass: return "arrow.triangle.swap"
+            case .other: return "star.fill"
+            }
+        }
+        
+        var iconColor: String {
+            switch self {
+            case .goal: return "green"
+            case .chance: return "orange"
+            case .save: return "blue"
+            case .yellowCard: return "yellow"
+            case .redCard: return "red"
+            case .tackle: return "cyan"
+            case .pass: return "purple"
+            case .other: return "white"
+            }
+        }
+    }
 }
 
 // MARK: - Statistics Update Event

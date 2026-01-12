@@ -161,7 +161,7 @@ class ChatManager: ObservableObject {
     func loadMessagesFromTimeline() {
         guard let timeline = timeline else { return }
         let chatEvents = timeline.visibleChatMessages()
-        messages = chatEvents.map { event in
+        let newMessages = chatEvents.map { event in
             ChatMessage(
                 username: event.username,
                 text: event.text,
@@ -170,6 +170,11 @@ class ChatManager: ObservableObject {
                 timestamp: event.timestamp,
                 videoTimestamp: event.videoTimestamp
             )
+        }
+        
+        // Only update if different (prevent unnecessary updates)
+        if newMessages.count != messages.count {
+            messages = newMessages
         }
     }
 }

@@ -292,6 +292,44 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
+        // MARK: - Highlights (con videos de Firebase)
+        
+        // 13' - Highlight del gol de Diallo
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "highlight-goal-13",
+            videoTimestamp: 780,  // 13 minutos
+            title: "MÅL: A. Diallo",
+            description: "Nydelig avslutning fra Diallo!",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66",
+            highlightType: .goal,
+            metadata: ["score": "1-0", "player": "A. Diallo"]
+        )))
+        
+        // 25' - Highlight de ocasión
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "highlight-chance-25",
+            videoTimestamp: 1500,  // 25 minutos
+            title: "Stor sjanse!",
+            description: "Nesten 2-0 for Barcelona!",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/2.MP4?alt=media&token=9011a94a-1085-4b69-bd41-3b1432ca577a",
+            highlightType: .chance,
+            metadata: ["team": "home"]
+        )))
+        
+        // 18' - Highlight de tarjeta amarilla
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "highlight-card-18",
+            videoTimestamp: 1080,  // 18 minutos
+            title: "Gult kort: Casemiro",
+            description: "Falta táctica fra Casemiro",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/3.MP4?alt=media&token=f28dadf8-05df-4544-a21f-a4c45836793f",
+            highlightType: .yellowCard,
+            metadata: ["player": "Casemiro", "team": "home"]
+        )))
+        
         // MARK: - Products (en momentos específicos)
         
         // 20' - Product highlight
