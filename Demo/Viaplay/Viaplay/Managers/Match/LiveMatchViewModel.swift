@@ -185,6 +185,9 @@ class LiveMatchViewModel: ObservableObject {
     }
     
     func sendChatMessage(_ text: String) {
+        print("💬 [LiveMatchViewModel] Sending chat message: \(text)")
+        print("💬 [LiveMatchViewModel] Current video time: \(timeline.currentVideoTime)s (\(timeline.currentMinute)')")
+        
         let message = ChatMessage(
             username: "Angelo",  // TODO: Get from user profile
             text: text,
@@ -194,11 +197,20 @@ class LiveMatchViewModel: ObservableObject {
             videoTimestamp: timeline.currentVideoTime
         )
         
+        print("💬 [LiveMatchViewModel] Message created with timestamp: \(message.videoTimestamp)")
+        
+        // Add to ChatManager
         chatManager.addMessage(message)
+        print("💬 [LiveMatchViewModel] Added to ChatManager. Total messages: \(chatManager.messages.count)")
         
         // Add to timeline if using sync
         if useTimelineSync {
             timeline.addEvent(message.toTimelineEvent())
+            print("💬 [LiveMatchViewModel] Added to timeline. Total events: \(timeline.allEvents.count)")
+            
+            // Force reload messages from timeline
+            chatManager.loadMessagesFromTimeline()
+            print("💬 [LiveMatchViewModel] Reloaded from timeline. Visible messages: \(chatManager.messages.count)")
         }
     }
     
