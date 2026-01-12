@@ -52,11 +52,23 @@ struct MatchContentView: View {
                     )
                     
                 case .highlights:
-                    HighlightSummaryView(
-                        highlights: viewModel.timeline.events(ofType: .highlight)
-                            .compactMap { $0.event as? HighlightTimelineEvent },
-                        matchEvents: viewModel.matchSimulation.events,
-                        timeline: viewModel.timeline
+                    // Same style as All, but filtered to highlight-worthy events
+                    AllContentFeed(
+                        timelineEvents: viewModel.visibleTimelineEvents().filter { event in
+                            // Only show highlight-worthy events
+                            switch event.eventType {
+                            case .matchGoal, .matchCard, .matchSubstitution,
+                                 .highlight, .adminComment:
+                                return true
+                            default:
+                                return false
+                            }
+                        },
+                        statistics: viewModel.matchStatistics,
+                        canChat: false,  // No chat input in Highlights tab
+                        onPollVote: viewModel.handlePollVote,
+                        onSelectTab: viewModel.selectTab,
+                        onSendMessage: nil
                     )
                     
                 case .liveScores:
