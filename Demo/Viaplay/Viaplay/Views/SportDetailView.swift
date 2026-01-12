@@ -316,7 +316,7 @@ struct SportDetailView: View {
                 .environmentObject(cartManager)
         }
         .fullScreenCover(isPresented: $showLiveMatchView) {
-            LiveMatchViewRefactored(match: createMatchFromDetail()) {
+            LiveMatchView(match: createMatchFromDetail()) {
                 showLiveMatchView = false
             }
         }

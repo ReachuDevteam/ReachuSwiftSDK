@@ -216,8 +216,6 @@ struct TimelineScrubber: View {
 
 private struct VideoTimelineControl_PreviewWrapper: View {
     @State var selectedMinute: Int? = nil
-    @State var isMuted: Bool = true
-    
     var body: some View {
         VideoTimelineControl(
             currentMinute: 45,
@@ -226,9 +224,7 @@ private struct VideoTimelineControl_PreviewWrapper: View {
                 MatchEvent(minute: 13, type: .goal, player: "A. Diallo", team: .home, description: nil, score: "1-0"),
                 MatchEvent(minute: 18, type: .yellowCard, player: "Casemiro", team: .home, description: nil, score: nil)
             ],
-            isPlaying: true,
-            isMuted: isMuted,
-            onToggleMute: { isMuted.toggle() }
+            isPlaying: true
         )
         .background(Color(hex: "1B1B25"))
     }

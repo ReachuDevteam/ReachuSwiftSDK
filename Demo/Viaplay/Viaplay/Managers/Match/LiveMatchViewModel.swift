@@ -8,8 +8,6 @@
 import Foundation
 import SwiftUI
 import Combine
-import AVFoundation
-import CoreMedia
 
 @MainActor
 class LiveMatchViewModel: ObservableObject {
@@ -77,7 +75,6 @@ class LiveMatchViewModel: ObservableObject {
     // MARK: - Lifecycle Methods
     
     func onAppear() {
-        // Setup audio player (same video as ViaplayVideoPlayer but audio-only)
         playerViewModel.setupPlayer()
         
         if useTimelineSync {
@@ -88,9 +85,6 @@ class LiveMatchViewModel: ObservableObject {
             
             // Start timeline playback
             startTimelinePlayback()
-            
-            // Sync timeline with video player time
-            syncTimelineWithVideoPlayer()
         } else {
             // Old mode: random simulation
             chatManager.startSimulation(withTimeline: false)
@@ -107,13 +101,11 @@ class LiveMatchViewModel: ObservableObject {
         chatManager.stopSimulation()
         matchSimulation.stopSimulation()
         stopTimelinePlayback()
-        stopVideoSync()
     }
     
     // MARK: - Timeline Playback
     
     private var playbackTimer: Timer?
-    private var videoSyncTimer: Timer?
     
     private func startTimelinePlayback() {
         // Simulate video playback (advance 1 second every 0.1 seconds for demo speed)
@@ -136,27 +128,6 @@ class LiveMatchViewModel: ObservableObject {
     private func stopTimelinePlayback() {
         playbackTimer?.invalidate()
         playbackTimer = nil
-    }
-    
-    /// Sync timeline with actual video player time
-    private func syncTimelineWithVideoPlayer() {
-        videoSyncTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
-            guard let self = self, 
-                  let player = self.playerViewModel.player,
-                  self.selectedMinute == nil else { return }
-            
-            let currentTime = player.currentTime().seconds
-            if !currentTime.isNaN && currentTime > 0 {
-                // Update timeline to match video
-                self.timeline.updateVideoTime(currentTime)
-                self.chatManager.loadMessagesFromTimeline()
-            }
-        }
-    }
-    
-    private func stopVideoSync() {
-        videoSyncTimer?.invalidate()
-        videoSyncTimer = nil
     }
     
     // MARK: - Timeline Data Loading
