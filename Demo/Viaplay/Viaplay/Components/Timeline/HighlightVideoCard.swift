@@ -83,6 +83,18 @@ struct HighlightVideoCard: View {
                 }
                 
                 Spacer()
+                
+                // XXL Sports sponsor logo
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Sponset av")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 50, maxHeight: 16)
+                }
             }
             
             // Title and description
