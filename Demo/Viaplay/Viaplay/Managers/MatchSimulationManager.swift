@@ -52,23 +52,45 @@ class MatchSimulationManager: ObservableObject {
         guard !isPlaying else { return }
         isPlaying = true
         
+        // Pre-load all events at start (for demo purposes)
+        if events.isEmpty {
+            for simulatedEvent in simulatedEvents {
+                let event = simulatedEvent.event()
+                events.append(event)
+                
+                // Add to timeline if available
+                if let timeline = timeline {
+                    addEventToTimeline(event, timeline: timeline)
+                }
+            }
+            print("⚽ [MatchSimulation] Pre-loaded \(events.count) events")
+        }
+        
         // Timer para minutos
         timer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self else { return }
                 if self.currentMinute < self.matchDuration {
                     self.currentMinute += 1
-                    self.checkForEvents()
+                    self.updateScore()
                 } else {
                     self.stopSimulation()
                 }
             }
         }
-        
-        // Agregar evento inicial
-        if let firstEvent = simulatedEvents.first {
-            events.append(firstEvent.event())
+    }
+    
+    private func updateScore() {
+        // Update score based on current minute
+        let goalsUpToNow = events.filter { 
+            $0.minute <= currentMinute && {
+                if case .goal = $0.type { return true }
+                return false
+            }()
         }
+        
+        homeScore = goalsUpToNow.filter { $0.team == .home }.count
+        awayScore = goalsUpToNow.filter { $0.team == .away }.count
     }
     
     func stopSimulation() {
