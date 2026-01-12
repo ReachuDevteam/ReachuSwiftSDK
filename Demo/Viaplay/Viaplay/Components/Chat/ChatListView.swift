@@ -12,53 +12,91 @@ struct ChatListView: View {
     let viewerCount: Int
     let selectedMinute: Int?
     let compact: Bool
+    let canChat: Bool
+    let onSendMessage: ((String) -> Void)?
     
-    init(messages: [ChatMessage], viewerCount: Int = 0, selectedMinute: Int? = nil, compact: Bool = false) {
+    @State private var messageText = ""
+    @FocusState private var isInputFocused: Bool
+    
+    init(
+        messages: [ChatMessage],
+        viewerCount: Int = 0,
+        selectedMinute: Int? = nil,
+        compact: Bool = false,
+        canChat: Bool = true,
+        onSendMessage: ((String) -> Void)? = nil
+    ) {
         self.messages = messages
         self.viewerCount = viewerCount
         self.selectedMinute = selectedMinute
         self.compact = compact
+        self.canChat = canChat
+        self.onSendMessage = onSendMessage
     }
     
     private var title: String {
         if let minute = selectedMinute {
-            return "Chat at \(minute)'"
+            return "Chat ved \(minute)'"
         }
         return "Live Chat"
     }
     
+    private var isLive: Bool {
+        selectedMinute == nil
+    }
+    
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                // Header
-                HStack {
-                    Text(title)
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                    
-                    Spacer()
-                    
-                    if selectedMinute == nil && viewerCount > 0 {
-                        HStack(spacing: 4) {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                            Text("\(viewerCount)")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.white.opacity(0.7))
+        VStack(spacing: 0) {
+            // Messages scroll view
+            ScrollView {
+                VStack(spacing: 12) {
+                    // Header
+                    HStack {
+                        Text(title)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Spacer()
+                        
+                        if isLive && viewerCount > 0 {
+                            HStack(spacing: 4) {
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 8, height: 8)
+                                Text("\(viewerCount)")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.7))
+                            }
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 12)
+                    
+                    // Messages
+                    ForEach(messages) { message in
+                        ChatMessageRow(message: message, compact: compact)
+                            .padding(.horizontal, 16)
+                    }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                
-                // Messages
-                ForEach(messages) { message in
-                    ChatMessageRow(message: message, compact: compact)
-                        .padding(.horizontal, 16)
-                }
+                .padding(.bottom, canChat && isLive ? 80 : 12)
             }
-            .padding(.vertical, 12)
+            
+            // Chat input (only in LIVE mode)
+            if canChat && isLive {
+                ChatInputBar(
+                    messageText: $messageText,
+                    isFocused: $isInputFocused,
+                    onSend: {
+                        guard !messageText.isEmpty else { return }
+                        onSendMessage?(messageText)
+                        messageText = ""
+                        isInputFocused = false
+                    },
+                    onLike: {
+                        // Send like animation
+                    }
+                )
+            }
         }
         .background(Color(hex: "1B1B25"))
     }

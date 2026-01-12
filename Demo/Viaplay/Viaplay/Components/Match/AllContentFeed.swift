@@ -10,18 +10,57 @@ import SwiftUI
 struct AllContentFeed: View {
     let timelineEvents: [AnyTimelineEvent]
     let statistics: MatchStatistics
+    let canChat: Bool
     let onPollVote: (String, String) -> Void
     let onSelectTab: (MatchTab) -> Void
+    let onSendMessage: ((String) -> Void)?
+    
+    @State private var messageText = ""
+    @FocusState private var isInputFocused: Bool
+    
+    init(
+        timelineEvents: [AnyTimelineEvent],
+        statistics: MatchStatistics,
+        canChat: Bool = true,
+        onPollVote: @escaping (String, String) -> Void,
+        onSelectTab: @escaping (MatchTab) -> Void,
+        onSendMessage: ((String) -> Void)? = nil
+    ) {
+        self.timelineEvents = timelineEvents
+        self.statistics = statistics
+        self.canChat = canChat
+        self.onPollVote = onPollVote
+        self.onSelectTab = onSelectTab
+        self.onSendMessage = onSendMessage
+    }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                ForEach(timelineEvents, id: \.id) { wrappedEvent in
-                    renderEvent(wrappedEvent)
+        VStack(spacing: 0) {
+            // Events scroll view
+            ScrollView {
+                VStack(spacing: 16) {
+                    ForEach(timelineEvents, id: \.id) { wrappedEvent in
+                        renderEvent(wrappedEvent)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, canChat ? 80 : 12)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            
+            // Chat input
+            if canChat {
+                ChatInputBar(
+                    messageText: $messageText,
+                    isFocused: $isInputFocused,
+                    onSend: {
+                        guard !messageText.isEmpty else { return }
+                        onSendMessage?(messageText)
+                        messageText = ""
+                        isInputFocused = false
+                    }
+                )
+            }
         }
         .background(Color(hex: "1B1B25"))
     }

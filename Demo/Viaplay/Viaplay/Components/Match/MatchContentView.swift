@@ -20,15 +20,23 @@ struct MatchContentView: View {
                         AllContentFeed(
                             timelineEvents: viewModel.visibleTimelineEvents(),
                             statistics: viewModel.matchStatistics,
+                            canChat: true,
                             onPollVote: viewModel.handlePollVote,
-                            onSelectTab: viewModel.selectTab
+                            onSelectTab: viewModel.selectTab,
+                            onSendMessage: { text in
+                                viewModel.sendChatMessage(text)
+                            }
                         )
                     } else {
                         AllContentFeed(
-                            timelineEvents: [],  // Fallback to old system
+                            timelineEvents: [],
                             statistics: viewModel.matchStatistics,
+                            canChat: true,
                             onPollVote: viewModel.handlePollVote,
-                            onSelectTab: viewModel.selectTab
+                            onSelectTab: viewModel.selectTab,
+                            onSendMessage: { text in
+                                viewModel.sendChatMessage(text)
+                            }
                         )
                     }
                     
@@ -36,7 +44,11 @@ struct MatchContentView: View {
                     ChatListView(
                         messages: viewModel.filteredChatMessages(),
                         viewerCount: viewModel.chatManager.viewerCount,
-                        selectedMinute: viewModel.selectedMinute
+                        selectedMinute: viewModel.selectedMinute,
+                        canChat: true,
+                        onSendMessage: { text in
+                            viewModel.sendChatMessage(text)
+                        }
                     )
                     
                 case .highlights:

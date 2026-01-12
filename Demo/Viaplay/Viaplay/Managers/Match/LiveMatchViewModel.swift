@@ -184,6 +184,24 @@ class LiveMatchViewModel: ObservableObject {
         }
     }
     
+    func sendChatMessage(_ text: String) {
+        let message = ChatMessage(
+            username: "Angelo",  // TODO: Get from user profile
+            text: text,
+            usernameColor: Color(red: 0.96, green: 0.08, blue: 0.42),  // Viaplay pink
+            likes: 0,
+            timestamp: Date(),
+            videoTimestamp: timeline.currentVideoTime
+        )
+        
+        chatManager.addMessage(message)
+        
+        // Add to timeline if using sync
+        if useTimelineSync {
+            timeline.addEvent(message.toTimelineEvent())
+        }
+    }
+    
     // MARK: - Content Filtering (Timeline-based)
     
     func filteredChatMessages() -> [ChatMessage] {
