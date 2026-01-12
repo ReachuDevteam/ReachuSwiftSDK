@@ -82,15 +82,14 @@ class MatchSimulationManager: ObservableObject {
     
     private func updateScore() {
         // Update score based on current minute
-        let goalsUpToNow = events.filter { 
-            $0.minute <= currentMinute && {
-                if case .goal = $0.type { return true }
-                return false
-            }()
+        let goalsUpToNow = events.filter { event in
+            guard event.minute <= currentMinute else { return false }
+            if case .goal = event.type { return true }
+            return false
         }
         
-        homeScore = goalsUpToNow.filter { $0.team == .home }.count
-        awayScore = goalsUpToNow.filter { $0.team == .away }.count
+        homeScore = goalsUpToNow.filter { $0.team == MatchEvent.TeamSide.home }.count
+        awayScore = goalsUpToNow.filter { $0.team == MatchEvent.TeamSide.away }.count
     }
     
     func stopSimulation() {
