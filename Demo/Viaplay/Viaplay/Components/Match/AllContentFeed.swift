@@ -63,7 +63,7 @@ struct AllContentFeed: View {
                 }
             }
             
-            // Chat input
+            // Chat input - Fixed at bottom
             if canChat {
                 ChatInputBar(
                     messageText: $messageText,
@@ -75,11 +75,9 @@ struct AllContentFeed: View {
                         isInputFocused = false
                     }
                 )
-                .offset(y: -keyboardHeight)
             }
         }
         .background(Color(hex: "1B1B25"))
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
             setupKeyboardObservers()
         }

@@ -97,7 +97,7 @@ struct ChatListView: View {
                 }
             }
             
-            // Chat input (only in LIVE mode)
+            // Chat input (only in LIVE mode) - Fixed at bottom
             if canChat && isLive {
                 ChatInputBar(
                     messageText: $messageText,
@@ -112,11 +112,9 @@ struct ChatListView: View {
                         // Send like animation
                     }
                 )
-                .offset(y: -keyboardHeight)
             }
         }
         .background(Color(hex: "1B1B25"))
-        .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
             setupKeyboardObservers()
         }

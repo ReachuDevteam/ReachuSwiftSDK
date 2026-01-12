@@ -60,56 +60,89 @@ struct VideoTimelineControl: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                 }
                 
-                // Controls (siempre visible)
-                HStack(spacing: 20) {
-                    // Time indicator / Toggle button
-                    Button(action: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isExpanded.toggle()
-                        }
-                    }) {
-                        HStack(spacing: 6) {
-                            if let selected = selectedMinute {
-                                Text("\(selected)'")
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white)
-                            } else {
-                                LiveBadge(size: .medium, showPulse: true)
+                // Controls
+                if isExpanded {
+                    // Full controls when expanded
+                    HStack(spacing: 20) {
+                        // Time indicator / Toggle button
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isExpanded.toggle()
                             }
-                            
-                            Image(systemName: isExpanded ? "chevron.down" : "chevron.up")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.6))
+                        }) {
+                            HStack(spacing: 6) {
+                                if let selected = selectedMinute {
+                                    Text("\(selected)'")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
+                                } else {
+                                    LiveBadge(size: .medium, showPulse: true)
+                                }
+                                
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Capsule().fill(Color.white.opacity(0.1)))
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(Color.white.opacity(0.1))
-                        )
+                        
+                        Spacer()
+                        
+                        // Play/Pause - Centered
+                        Button(action: onPlayPause) {
+                            Image(systemName: isPlaying ? "pause.fill" : "play.fill")
+                                .font(.system(size: 24))
+                                .foregroundColor(.white)
+                                .frame(width: 48, height: 48)
+                                .contentShape(Circle())
+                        }
+                        .frame(maxWidth: .infinity)
+                        
+                        Spacer()
+                        
+                        // Mute/Unmute
+                        Button(action: onToggleMute) {
+                            Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white)
+                                .frame(width: 44, height: 44)
+                        }
                     }
-                    
-                    Spacer()
-                    
-                    // Play/Pause
-                    Button(action: onPlayPause) {
-                        Image(systemName: isPlaying ? "pause.fill" : "play.fill")
-                            .font(.system(size: 24))
-                            .foregroundColor(.white)
-                            .frame(width: 44, height: 44)
-                            .background(Circle().fill(Color.white.opacity(0.2)))
+                    .padding(.horizontal, 16)
+                } else {
+                    // Minimized: Only LIVE badge
+                    HStack {
+                        Spacer()
+                        
+                        Button(action: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                isExpanded.toggle()
+                            }
+                        }) {
+                            HStack(spacing: 6) {
+                                if let selected = selectedMinute {
+                                    Text("\(selected)'")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundColor(.white)
+                                } else {
+                                    LiveBadge(size: .medium, showPulse: true)
+                                }
+                                
+                                Image(systemName: "chevron.up")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.6))
+                            }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.white.opacity(0.1)))
+                        }
+                        
+                        Spacer()
                     }
-                    
-                    Spacer()
-                    
-                    // Mute/Unmute
-                    Button(action: onToggleMute) {
-                        Image(systemName: isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white)
-                    }
+                    .padding(.horizontal, 16)
                 }
-                .padding(.horizontal, 20)
             }
             .padding(.vertical, isExpanded ? 16 : 12)
             .background(Color(hex: "1F1E26"))
