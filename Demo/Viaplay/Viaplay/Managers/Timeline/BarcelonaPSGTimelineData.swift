@@ -785,11 +785,24 @@ extension TimelineDataGenerator {
         )))
         
         // Add random chat messages throughout
-        let randomChats = generateRandomChatMessages(count: 30, maxMinute: 90)
+        let randomChats = TimelineDataGenerator.generateRandomChatMessages(count: 40, maxMinute: 90)
+        print("💬 [BarcelonaPSG] Generated \(randomChats.count) random chat messages")
         for chat in randomChats {
             events.append(AnyTimelineEvent(chat))
         }
         
-        return events.sorted { $0.videoTimestamp < $1.videoTimestamp }
+        print("🎬 [BarcelonaPSG] Total events before sort: \(events.count)")
+        let sorted = events.sorted { $0.videoTimestamp < $1.videoTimestamp }
+        print("🎬 [BarcelonaPSG] Returning \(sorted.count) sorted events")
+        
+        // Count by type for debugging
+        let tweets = sorted.filter { $0.eventType == .tweet }.count
+        let chats = sorted.filter { $0.eventType == .chatMessage }.count
+        let highlights = sorted.filter { $0.eventType == .highlight }.count
+        let polls = sorted.filter { $0.eventType == .poll }.count
+        
+        print("🎬 [BarcelonaPSG] Tweets: \(tweets), Chats: \(chats), Highlights: \(highlights), Polls: \(polls)")
+        
+        return sorted
     }
 }
