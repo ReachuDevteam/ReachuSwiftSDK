@@ -139,20 +139,24 @@ class LiveMatchViewModel: ObservableObject {
     // MARK: - Timeline Data Loading
     
     private func loadTimelineData() {
-        // Load pre-generated timeline data
-        let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
+        // Load rich Barcelona vs PSG timeline
+        let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGRichTimeline()
         
-        print("📊 [LiveMatchViewModel] Loading timeline data...")
+        print("📊 [LiveMatchViewModel] Loading rich timeline data...")
         print("📊 [LiveMatchViewModel] Total events generated: \(generatedEvents.count)")
         
         // Count by type
         let highlightCount = generatedEvents.filter { $0.eventType == .highlight }.count
         let chatCount = generatedEvents.filter { $0.eventType == .chatMessage }.count
         let tweetCount = generatedEvents.filter { $0.eventType == .tweet }.count
+        let pollCount = generatedEvents.filter { $0.eventType == .poll }.count
+        let commentaryCount = generatedEvents.filter { $0.eventType == .adminComment }.count
         
         print("📊 [LiveMatchViewModel] Highlights: \(highlightCount)")
         print("📊 [LiveMatchViewModel] Chats: \(chatCount)")
         print("📊 [LiveMatchViewModel] Tweets: \(tweetCount)")
+        print("📊 [LiveMatchViewModel] Polls: \(pollCount)")
+        print("📊 [LiveMatchViewModel] Commentary: \(commentaryCount)")
         
         // Add all wrapped events at once
         timeline.addWrappedEvents(generatedEvents)

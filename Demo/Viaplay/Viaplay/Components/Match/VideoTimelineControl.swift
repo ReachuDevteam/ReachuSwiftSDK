@@ -169,11 +169,34 @@ struct TimelineScrubber: View {
     
     private func eventMarkerColor(for eventType: MatchEvent.EventType) -> Color {
         switch eventType {
-        case .goal: return .green
-        case .yellowCard: return .yellow
-        case .redCard: return .red
-        case .substitution: return .blue
-        default: return .white.opacity(0.6)
+        case .goal: return Color(red: 0.0, green: 1.0, blue: 0.0)  // Bright green
+        case .yellowCard: return Color(red: 1.0, green: 1.0, blue: 0.0)  // Yellow
+        case .redCard: return Color(red: 1.0, green: 0.0, blue: 0.0)  // Red
+        case .substitution: return Color(red: 0.0, green: 0.8, blue: 1.0)  // Cyan
+        case .kickOff: return .white  // White for kickoff
+        case .halfTime: return .white.opacity(0.9)  // White for halftime
+        case .fullTime: return .white.opacity(0.9)  // White for fulltime
+        default: return .white.opacity(0.5)
+        }
+    }
+    
+    private func eventMarkerSize(for eventType: MatchEvent.EventType) -> CGFloat {
+        switch eventType {
+        case .goal: return 10  // Larger for goals
+        case .redCard: return 10  // Larger for red cards
+        case .yellowCard: return 8
+        case .kickOff, .halfTime, .fullTime: return 12  // Largest for phase changes
+        case .substitution: return 6
+        default: return 6
+        }
+    }
+    
+    private func isSpecialMarker(_ eventType: MatchEvent.EventType) -> Bool {
+        switch eventType {
+        case .kickOff, .halfTime, .fullTime:
+            return true
+        default:
+            return false
         }
     }
     
@@ -193,22 +216,50 @@ struct TimelineScrubber: View {
                         .frame(width: geometry.size.width * progress, height: 4)
                         .cornerRadius(2)
                     
-                    // Event markers
+                    // Event markers (with variable sizes and special indicators)
                     ForEach(events, id: \.id) { event in
                         let position = CGFloat(event.minute) / CGFloat(totalDuration)
-                        Circle()
-                            .fill(eventMarkerColor(for: event.type))
-                            .frame(width: 8, height: 8)
-                            .offset(x: geometry.size.width * position - 4)
+                        let size = eventMarkerSize(for: event.type)
+                        
+                        ZStack {
+                            // Main marker
+                            Circle()
+                                .fill(eventMarkerColor(for: event.type))
+                                .frame(width: size, height: size)
+                            
+                            // Special phase markers (kickoff, halftime, fulltime)
+                            if isSpecialMarker(event.type) {
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 1.5)
+                                    .frame(width: size + 3, height: size + 3)
+                            }
+                        }
+                        .offset(x: geometry.size.width * position - size/2)
                     }
                     
-                    // Highlight markers (every 10 minutes)
-                    ForEach(Array(stride(from: 10, through: min(currentMinute, totalDuration), by: 10)), id: \.self) { minute in
-                        let position = CGFloat(minute) / CGFloat(totalDuration)
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                            .offset(x: geometry.size.width * position - 5)
+                    // Phase markers (kickoff at 0', halftime at 45', second half at 46')
+                    // Kickoff marker (0')
+                    Rectangle()
+                        .fill(Color.white.opacity(0.3))
+                        .frame(width: 2, height: 12)
+                        .offset(x: -1, y: -4)
+                    
+                    // Halftime marker (45')
+                    if currentMinute >= 45 {
+                        let halftimePosition = CGFloat(45) / CGFloat(totalDuration)
+                        Rectangle()
+                            .fill(Color.white.opacity(0.4))
+                            .frame(width: 2, height: 12)
+                            .offset(x: geometry.size.width * halftimePosition - 1, y: -4)
+                    }
+                    
+                    // Second half marker (46')
+                    if currentMinute >= 46 {
+                        let secondHalfPosition = CGFloat(46) / CGFloat(totalDuration)
+                        Rectangle()
+                            .fill(Color.green.opacity(0.4))
+                            .frame(width: 2, height: 12)
+                            .offset(x: geometry.size.width * secondHalfPosition - 1, y: -4)
                     }
                     
                     // Thumb
