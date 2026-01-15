@@ -45,10 +45,10 @@ class UnifiedTimelineManager: ObservableObject {
         return String(format: "%d:%02d", minutes, seconds)
     }
     
-    /// All events visible at current video time
+    /// All events visible at current video time (user's position, not live)
     var visibleEvents: [AnyTimelineEvent] {
         allEvents
-            .filter { $0.videoTimestamp <= currentVideoTime }
+            .filter { $0.videoTimestamp <= currentVideoTime }  // Use user's position
             .sorted { event1, event2 in
                 if event1.videoTimestamp == event2.videoTimestamp {
                     return event1.displayPriority > event2.displayPriority

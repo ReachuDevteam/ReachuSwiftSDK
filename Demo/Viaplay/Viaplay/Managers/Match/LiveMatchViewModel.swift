@@ -190,9 +190,11 @@ class LiveMatchViewModel: ObservableObject {
         selectedMinute = minute
         
         if useTimelineSync {
-            timeline.jumpToMinute(minute)
+            // Update user's position in timeline
+            timeline.updateVideoTime(TimeInterval(minute * 60))
             chatManager.loadMessagesFromTimeline()
-            stopTimelinePlayback()  // Pause when user scrubs
+            // Trigger UI update to show new visible events
+            objectWillChange.send()
         }
     }
     
