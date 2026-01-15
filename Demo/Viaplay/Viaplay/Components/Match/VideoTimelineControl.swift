@@ -216,8 +216,8 @@ struct TimelineScrubber: View {
                         .frame(width: geometry.size.width * progress, height: 4)
                         .cornerRadius(2)
                     
-                    // Event markers (with variable sizes and special indicators)
-                    ForEach(events, id: \.id) { event in
+                    // Event markers (only show events that have already occurred)
+                    ForEach(events.filter { $0.minute <= displayMinute }, id: \.id) { event in
                         let position = CGFloat(event.minute) / CGFloat(totalDuration)
                         let size = eventMarkerSize(for: event.type)
                         
@@ -235,31 +235,34 @@ struct TimelineScrubber: View {
                             }
                         }
                         .offset(x: geometry.size.width * position - size/2)
+                        .transition(.scale.combined(with: .opacity))
                     }
                     
-                    // Phase markers (kickoff at 0', halftime at 45', second half at 46')
-                    // Kickoff marker (0')
+                    // Phase markers (only show if that phase has been reached)
+                    // Kickoff marker (0') - always visible
                     Rectangle()
                         .fill(Color.white.opacity(0.3))
                         .frame(width: 2, height: 12)
                         .offset(x: -1, y: -4)
                     
-                    // Halftime marker (45')
-                    if currentMinute >= 45 {
+                    // Halftime marker (45') - only if we've reached minute 45
+                    if displayMinute >= 45 {
                         let halftimePosition = CGFloat(45) / CGFloat(totalDuration)
                         Rectangle()
                             .fill(Color.white.opacity(0.4))
                             .frame(width: 2, height: 12)
                             .offset(x: geometry.size.width * halftimePosition - 1, y: -4)
+                            .transition(.opacity)
                     }
                     
-                    // Second half marker (46')
-                    if currentMinute >= 46 {
+                    // Second half marker (46') - only if we've reached minute 46
+                    if displayMinute >= 46 {
                         let secondHalfPosition = CGFloat(46) / CGFloat(totalDuration)
                         Rectangle()
                             .fill(Color.green.opacity(0.4))
                             .frame(width: 2, height: 12)
                             .offset(x: geometry.size.width * secondHalfPosition - 1, y: -4)
+                            .transition(.opacity)
                     }
                     
                     // Thumb
