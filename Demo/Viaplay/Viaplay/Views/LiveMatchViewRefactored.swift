@@ -48,13 +48,16 @@ struct LiveMatchViewRefactored: View {
                     
                     // Video controls and timeline
                     VideoTimelineControl(
-                        currentMinute: viewModel.matchSimulation.currentMinute,
+                        currentMinute: viewModel.timeline.currentMinute,
+                        liveMinute: viewModel.timeline.liveMinute,
+                        isAtLive: viewModel.timeline.isLive,
                         selectedMinute: $viewModel.selectedMinute,
                         events: viewModel.matchSimulation.events,
                         isPlaying: viewModel.playerViewModel.isPlaying,
                         isMuted: viewModel.playerViewModel.isMuted,
                         onPlayPause: viewModel.playerViewModel.togglePlayPause,
                         onToggleMute: viewModel.playerViewModel.toggleMute,
+                        onGoToLive: viewModel.goToLive,
                         onSeek: { minute in
                             viewModel.jumpToMinute(minute)
                         }

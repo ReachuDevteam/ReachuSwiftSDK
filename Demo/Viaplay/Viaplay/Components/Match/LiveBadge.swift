@@ -9,6 +9,7 @@ import SwiftUI
 
 struct LiveBadge: View {
     let size: Size
+    let isLive: Bool  // NEW: Is user at live position?
     let showPulse: Bool
     
     enum Size {
@@ -33,21 +34,22 @@ struct LiveBadge: View {
         }
     }
     
-    init(size: Size = .medium, showPulse: Bool = true) {
+    init(size: Size = .medium, isLive: Bool = true, showPulse: Bool = true) {
         self.size = size
+        self.isLive = isLive
         self.showPulse = showPulse
     }
     
     var body: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(Color.red)
+                .fill(isLive ? Color.red : Color.gray)  // Red when live, gray when behind
                 .frame(width: size.dotSize, height: size.dotSize)
-                .opacity(showPulse ? 1.0 : 0.8)
+                .opacity(showPulse && isLive ? 1.0 : 0.6)
             
             Text("LIVE")
                 .font(.system(size: size.fontSize, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(isLive ? .white : .white.opacity(0.6))
         }
     }
 }

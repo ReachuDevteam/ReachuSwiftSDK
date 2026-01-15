@@ -9,6 +9,8 @@ import SwiftUI
 
 struct VideoTimelineControl: View {
     let currentMinute: Int
+    let liveMinute: Int  // NEW: Real live position
+    let isAtLive: Bool    // NEW: Is user at live position?
     @Binding var selectedMinute: Int?
     let events: [MatchEvent]
     let isPlaying: Bool
@@ -16,12 +18,15 @@ struct VideoTimelineControl: View {
     let totalDuration: Int
     let onPlayPause: () -> Void
     let onToggleMute: () -> Void
+    let onGoToLive: () -> Void  // NEW: Called when tapping LIVE
     let onSeek: ((Int) -> Void)?
     
     @State private var isExpanded: Bool = false
     
     init(
         currentMinute: Int,
+        liveMinute: Int = 0,
+        isAtLive: Bool = true,
         selectedMinute: Binding<Int?>,
         events: [MatchEvent],
         isPlaying: Bool = false,
@@ -29,9 +34,12 @@ struct VideoTimelineControl: View {
         totalDuration: Int = 90,
         onPlayPause: @escaping () -> Void = {},
         onToggleMute: @escaping () -> Void = {},
+        onGoToLive: @escaping () -> Void = {},
         onSeek: ((Int) -> Void)? = nil
     ) {
         self.currentMinute = currentMinute
+        self.liveMinute = liveMinute
+        self.isAtLive = isAtLive
         self._selectedMinute = selectedMinute
         self.events = events
         self.isPlaying = isPlaying
@@ -39,6 +47,7 @@ struct VideoTimelineControl: View {
         self.totalDuration = totalDuration
         self.onPlayPause = onPlayPause
         self.onToggleMute = onToggleMute
+        self.onGoToLive = onGoToLive
         self.onSeek = onSeek
     }
     

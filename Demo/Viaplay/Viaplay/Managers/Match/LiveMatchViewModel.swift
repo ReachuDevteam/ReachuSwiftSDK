@@ -108,24 +108,28 @@ class LiveMatchViewModel: ObservableObject {
     private var playbackTimer: Timer?
     
     private func startTimelinePlayback() {
-        // Simulate video playback (advance 1 second every 0.1 seconds - original speed)
+        // Simulate video playback (advance LIVE time)
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            guard let self = self, self.selectedMinute == nil else { return }
+            guard let self = self else { return }
             
-            let previousMinute = self.timeline.currentMinute
+            let previousMinute = self.timeline.liveMinute
             
-            // Advance timeline by 1 second
-            self.timeline.updateVideoTime(self.timeline.currentVideoTime + 1)
+            // Always advance LIVE time (real-time position)
+            self.timeline.updateLiveTime(self.timeline.liveVideoTime + 1)
             
-            // Only reload and update when minute actually changes
-            if self.timeline.currentMinute != previousMinute {
+            // If user is watching live (not scrubbed back), update their position too
+            if self.selectedMinute == nil && self.timeline.isLive {
+                // User is watching live - stays in sync
+            }
+            
+            // Reload when minute changes
+            if self.timeline.liveMinute != previousMinute {
                 self.chatManager.loadMessagesFromTimeline()
-                // Trigger UI update only when minute changes (not every 0.1s)
                 self.objectWillChange.send()
             }
             
             // Stop at 90 minutes
-            if self.timeline.currentMinute >= 90 {
+            if self.timeline.liveMinute >= 90 {
                 self.stopTimelinePlayback()
             }
         }
@@ -196,9 +200,9 @@ class LiveMatchViewModel: ObservableObject {
         selectedMinute = nil
         
         if useTimelineSync {
-            timeline.goToLive(maxMinute: matchSimulation.currentMinute)
+            timeline.goToLive()  // Jump to live position
             chatManager.loadMessagesFromTimeline()
-            startTimelinePlayback()  // Resume playback
+            // Playback already running, just sync position
         }
     }
     

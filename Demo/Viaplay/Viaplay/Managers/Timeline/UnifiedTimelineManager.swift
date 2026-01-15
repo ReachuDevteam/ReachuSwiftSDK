@@ -15,13 +15,28 @@ class UnifiedTimelineManager: ObservableObject {
     
     // MARK: - Published Properties
     
-    @Published var currentVideoTime: TimeInterval = 0  // Seconds (0-5400 for 90 min match)
+    @Published var currentVideoTime: TimeInterval = 0  // User's current position (can be in past)
+    @Published var liveVideoTime: TimeInterval = 0     // Real-time position (always advancing)
     @Published private(set) var allEvents: [AnyTimelineEvent] = []
     
     // MARK: - Computed Properties
     
     var currentMinute: Int {
         Int(currentVideoTime / 60)
+    }
+    
+    var liveMinute: Int {
+        Int(liveVideoTime / 60)
+    }
+    
+    /// Is user watching LIVE (at real-time position)?
+    var isLive: Bool {
+        abs(currentVideoTime - liveVideoTime) < 5  // Within 5 seconds = live
+    }
+    
+    /// How far behind live is the user?
+    var timeBehindLive: TimeInterval {
+        max(0, liveVideoTime - currentVideoTime)
     }
     
     var currentDisplayTime: String {
@@ -81,10 +96,21 @@ class UnifiedTimelineManager: ObservableObject {
     static let secondHalfDuration: TimeInterval = 2700 // 45 minutes
     static let totalMatchDuration: TimeInterval = 6300 // 105 minutes total (45+15+45)
     
-    /// Update video time (called by video player or scrubber)
+    /// Update user's video time (called by scrubber)
     func updateVideoTime(_ seconds: TimeInterval) {
-        let clampedTime = max(0, min(seconds, Self.totalMatchDuration))
+        let clampedTime = max(0, min(seconds, liveVideoTime))  // Can't go past live
         currentVideoTime = clampedTime
+    }
+    
+    /// Update live time (called by playback timer)
+    func updateLiveTime(_ seconds: TimeInterval) {
+        let clampedTime = max(0, min(seconds, Self.totalMatchDuration))
+        liveVideoTime = clampedTime
+        
+        // If user is watching live, keep them in sync
+        if isLive {
+            currentVideoTime = liveVideoTime
+        }
     }
     
     /// Jump to specific minute
@@ -93,9 +119,9 @@ class UnifiedTimelineManager: ObservableObject {
         updateVideoTime(seconds)
     }
     
-    /// Go to LIVE (end of available content)
-    func goToLive(maxMinute: Int = 90) {
-        updateVideoTime(TimeInterval(maxMinute * 60))
+    /// Go to LIVE (jump to real-time position)
+    func goToLive() {
+        currentVideoTime = liveVideoTime
     }
     
     /// Get match phase at current time
