@@ -601,6 +601,18 @@ extension TimelineDataGenerator {
             metadata: ["type": "halftime", "phase": "halftime"]
         )))
         
+        // Halftime stats event
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "halftime-stats",
+            videoTimestamp: 2705,
+            title: "Statistikk første omgang",
+            message: "Se tallene fra første omgang",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Se statistikk",
+            metadata: ["type": "halftime-stats", "phase": "halftime"]
+        )))
+        
         events.append(AnyTimelineEvent(CommentaryEvent(
             id: "comm-45",
             videoTimestamp: 2702,

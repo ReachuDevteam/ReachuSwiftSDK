@@ -52,14 +52,23 @@ struct MatchContentView: View {
                     )
                     
                 case .highlights:
-                    // Same style as All, but filtered to highlight-worthy events
+                    // Same style as All, but filtered to highlight-worthy events + lineups
                     AllContentFeed(
                         timelineEvents: viewModel.visibleTimelineEvents().filter { event in
-                            // Only show highlight-worthy events
+                            // Show highlights + lineups + stats events
                             switch event.eventType {
                             case .matchGoal, .matchCard, .matchSubstitution,
-                                 .highlight, .adminComment:
+                                 .highlight, .adminComment, .statisticsUpdate:
                                 return true
+                            case .announcement:
+                                // Include lineups and stats announcements
+                                if let announcement = event.event as? AnnouncementEvent {
+                                    return announcement.metadata?["type"] == "lineup" ||
+                                           announcement.metadata?["type"] == "halftime-stats" ||
+                                           announcement.metadata?["type"] == "fulltime-stats" ||
+                                           announcement.metadata?["type"] == "final-stats"
+                                }
+                                return false
                             default:
                                 return false
                             }
