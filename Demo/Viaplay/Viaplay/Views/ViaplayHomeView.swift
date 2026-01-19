@@ -66,7 +66,9 @@ struct ViaplayHomeView: View {
                                 Color.clear
                                     .frame(maxWidth: .infinity)
                             }
-                        
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: geometry.size.width)
                         
                         // Akkurat nå ser andre på Section
                         VStack(alignment: .leading, spacing: 10) {
