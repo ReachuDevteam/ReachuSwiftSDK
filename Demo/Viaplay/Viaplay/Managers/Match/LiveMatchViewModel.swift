@@ -26,7 +26,6 @@ class LiveMatchViewModel: ObservableObject {
     
     let chatManager: ChatManager
     let matchSimulation: MatchSimulationManager
-    let entertainmentManager: EntertainmentManager
     let playerViewModel: VideoPlayerViewModel
     
     // MARK: - Match Data
@@ -63,7 +62,6 @@ class LiveMatchViewModel: ObservableObject {
         // Initialize managers with timeline
         self.chatManager = ChatManager(timeline: timeline)
         self.matchSimulation = MatchSimulationManager(timeline: timeline)
-        self.entertainmentManager = EntertainmentManager(userId: "viaplay-user-123")
         self.playerViewModel = VideoPlayerViewModel()
         
         // Pre-load timeline with demo data
@@ -89,10 +87,6 @@ class LiveMatchViewModel: ObservableObject {
             // Old mode: random simulation
             chatManager.startSimulation(withTimeline: false)
             matchSimulation.startSimulation()
-        }
-        
-        Task {
-            await entertainmentManager.loadComponents()
         }
     }
     
