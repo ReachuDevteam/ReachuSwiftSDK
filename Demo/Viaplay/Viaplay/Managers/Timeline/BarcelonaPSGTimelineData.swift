@@ -29,8 +29,55 @@ extension TimelineDataGenerator {
             metadata: ["type": "pre-match"]
         )))
         
-        // -12' - Lineups (will create actual lineup cards)
-        // Note: These will be rendered as LineupCard components
+        // -12' - Barcelona Lineup
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "pre-lineup-home",
+            videoTimestamp: -720,
+            title: "Oppstilling Barcelona",
+            message: "4-3-3 formasjon",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: [
+                "type": "lineup",
+                "team": "home",
+                "formation": "4-3-3",
+                "players": "Ter Stegen,Koundé,Araújo,Christensen,Alba,Busquets,De Jong,Pedri,Dembélé,Lewandowski,Ferran"
+            ]
+        )))
+        
+        // -11' - PSG Lineup
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "pre-lineup-away",
+            videoTimestamp: -660,
+            title: "Oppstilling PSG",
+            message: "4-4-2 formasjon",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: [
+                "type": "lineup",
+                "team": "away",
+                "formation": "4-4-2",
+                "players": "Donnarumma,Hakimi,Marquinhos,Ramos,Mendes,Vitinha,Verratti,Ruiz,Zaire-Emery,Mbappé,Kolo Muani"
+            ]
+        )))
+        
+        // -8' - Player Interview
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "pre-interview",
+            videoTimestamp: -480,
+            title: "Spillerintervju: Lamine Yamal",
+            message: "Vi er klare. Dette blir en stor kamp for oss. Vi skal gi alt for fansene.",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: [
+                "type": "interview",
+                "player": "Lamine Yamal",
+                "team": "Barcelona"
+            ]
+        )))
         
         // -10' - Prediction Poll
         events.append(AnyTimelineEvent(PollTimelineEvent(

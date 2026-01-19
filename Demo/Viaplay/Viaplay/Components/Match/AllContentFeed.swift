@@ -214,23 +214,78 @@ struct AllContentFeed: View {
                     ))
                 }
                 
-            // Announcements (including contests)
+            // Announcements (including contests, lineups, interviews, etc.)
             case .announcement:
                 if let announcement = wrappedEvent.event as? AnnouncementEvent {
-                    // Check if it's a contest
-                    if announcement.metadata?["type"] == "contest" {
+                    // Check metadata type for special rendering
+                    switch announcement.metadata?["type"] {
+                    case "contest":
                         ContestCard(
                             title: announcement.title.replacingOccurrences(of: "🏆 ", with: ""),
                             prize: announcement.metadata?["prize"] ?? "Premie",
                             onParticipate: {
-                                print("🏆 Usuario participa en concurso!")
+                                print("🏆 Usuario participa!")
                             }
                         )
                         .transition(.asymmetric(
                             insertion: .scale(scale: 0.95).combined(with: .opacity),
                             removal: .opacity
                         ))
-                    } else {
+                        
+                    case "lineup":
+                        // Render lineup card
+                        if let team = announcement.metadata?["team"],
+                           let formation = announcement.metadata?["formation"],
+                           let playersString = announcement.metadata?["players"] {
+                            let playerNames = playersString.components(separatedBy: ",")
+                            let players = playerNames.enumerated().map { index, name in
+                                PlayerInfo(number: index + 1, name: name, position: "")
+                            }
+                            
+                            LineupCard(
+                                teamName: announcement.title.replacingOccurrences(of: "Oppstilling ", with: ""),
+                                formation: formation,
+                                players: players,
+                                teamColor: team == "home" ? .blue : .red,
+                                isHome: team == "home"
+                            )
+                            .transition(.asymmetric(
+                                insertion: .move(edge: .top).combined(with: .opacity),
+                                removal: .opacity
+                            ))
+                        }
+                        
+                    case "interview":
+                        // Render interview card
+                        PlayerInterviewCard(
+                            playerName: announcement.metadata?["player"] ?? "",
+                            playerPhoto: nil,
+                            quote: announcement.message,
+                            teamName: announcement.metadata?["team"] ?? ""
+                        )
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                        
+                    case "final-stats":
+                        // Render final stats
+                        FinalStatsCard(
+                            statistics: statistics,
+                            homeScore: 3,  // TODO: Get from match result
+                            awayScore: 1
+                        )
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                        
+                    case "prediction":
+                        // Already handled as poll
+                        EmptyView()
+                        
+                    default:
+                        // Regular announcement
                         AnnouncementCard(announcement: announcement)
                             .transition(.asymmetric(
                                 insertion: .move(edge: .top).combined(with: .opacity),

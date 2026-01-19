@@ -100,7 +100,8 @@ class UnifiedTimelineManager: ObservableObject {
     
     /// Update user's video time (called by scrubber)
     func updateVideoTime(_ seconds: TimeInterval) {
-        let clampedTime = max(0, min(seconds, liveVideoTime))  // Can't go past live
+        // Allow negative time for pre-match, cap at live position
+        let clampedTime = max(-Self.preMatchDuration, min(seconds, liveVideoTime))
         currentVideoTime = clampedTime
     }
     

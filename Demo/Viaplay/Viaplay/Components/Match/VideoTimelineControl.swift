@@ -173,7 +173,9 @@ struct TimelineScrubber: View {
     }
     
     private var progress: CGFloat {
-        CGFloat(displayMinute) / CGFloat(totalDuration)
+        // Normalize from -15 to 105 minutes to 0.0 to 1.0
+        let normalizedMinute = CGFloat(displayMinute + 15)  // Shift by 15 to make -15 = 0
+        return normalizedMinute / CGFloat(totalDuration + 15)  // totalDuration is now relative to 0
     }
     
     private func eventMarkerColor(for eventType: MatchEvent.EventType) -> Color {
@@ -284,9 +286,10 @@ struct TimelineScrubber: View {
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
                                     let percentage = max(0, min(1, value.location.x / geometry.size.width))
-                                    let minute = Int(percentage * CGFloat(totalDuration))
+                                    // Map percentage to -15 to 105 minute range
+                                    let minute = Int(percentage * CGFloat(totalDuration + 15)) - 15
                                     selectedMinute = minute
-                                    onSeek?(minute)  // Notify ViewModel to update timeline
+                                    onSeek?(minute)
                                 }
                         )
                 }
@@ -295,6 +298,10 @@ struct TimelineScrubber: View {
             
             // Labels
             HStack {
+                Text("-15'")
+                    .font(.system(size: 9))
+                    .foregroundColor(.white.opacity(0.4))
+                
                 Text("0'")
                     .font(.system(size: 10))
                     .foregroundColor(.white.opacity(0.5))
@@ -302,7 +309,7 @@ struct TimelineScrubber: View {
                 Spacer()
                 
                 if selectedMinute == nil {
-                    LiveBadge(size: .small)
+                    LiveBadge(size: .small, isLive: true)
                 } else {
                     Text("\(selectedMinute!)'")
                         .font(.system(size: 10, weight: .medium))
@@ -322,6 +329,10 @@ struct TimelineScrubber: View {
                 Text("90'")
                     .font(.system(size: 10))
                     .foregroundColor(.white.opacity(0.5))
+                
+                Text("105'")
+                    .font(.system(size: 9))
+                    .foregroundColor(.white.opacity(0.4))
             }
             .padding(.horizontal, 20)
         }

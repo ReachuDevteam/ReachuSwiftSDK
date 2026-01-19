@@ -55,6 +55,7 @@ struct LiveMatchViewRefactored: View {
                         events: viewModel.matchSimulation.events,
                         isPlaying: viewModel.playerViewModel.isPlaying,
                         isMuted: viewModel.playerViewModel.isMuted,
+                        totalDuration: 120,  // Changed from 90 to 120 minutes
                         onPlayPause: viewModel.playerViewModel.togglePlayPause,
                         onToggleMute: viewModel.playerViewModel.toggleMute,
                         onGoToLive: viewModel.goToLive,
