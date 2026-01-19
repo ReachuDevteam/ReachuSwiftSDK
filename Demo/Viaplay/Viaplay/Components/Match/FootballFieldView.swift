@@ -102,42 +102,35 @@ struct FootballFieldView: View {
         return positions[player.number] ?? CGPoint(x: width * 0.5, y: height * 0.5)
     }
     
-    // MARK: - 4-4-2 Formation
+    // MARK: - 4-4-2 Formation (PSG)
     
     private func position442(_ player: FieldPlayer, in size: CGSize) -> CGPoint {
         let width = size.width
         let height = size.height
         
-        switch player.position {
-        case .goalkeeper:
-            return CGPoint(x: width * 0.5, y: height * 0.92)
+        // PSG 4-4-2 specific positioning
+        let positions: [Int: CGPoint] = [
+            // Goalkeeper
+            99: CGPoint(x: width * 0.5, y: height * 0.95),
             
-        case .defender:
-            let defenderY = height * 0.75
-            switch player.number {
-            case 1...4:
-                let spacing = width / 5
-                return CGPoint(x: spacing * CGFloat(player.number), y: defenderY)
-            default: return CGPoint(x: width * 0.5, y: defenderY)
-            }
+            // Defenders (4 players - back line)
+            2:  CGPoint(x: width * 0.15, y: height * 0.80),  // Right back Hakimi
+            5:  CGPoint(x: width * 0.38, y: height * 0.80),  // Center back Marquinhos
+            4:  CGPoint(x: width * 0.62, y: height * 0.80),  // Center back Ramos
+            25: CGPoint(x: width * 0.85, y: height * 0.80),  // Left back Mendes
             
-        case .midfielder:
-            let midfielderY = height * 0.50
-            switch player.number {
-            case 5...8:
-                let spacing = width / 5
-                return CGPoint(x: spacing * CGFloat(player.number - 4), y: midfielderY)
-            default: return CGPoint(x: width * 0.5, y: midfielderY)
-            }
+            // Midfielders (4 players - middle line)
+            17: CGPoint(x: width * 0.15, y: height * 0.55),  // Left mid Vitinha
+            8:  CGPoint(x: width * 0.38, y: height * 0.55),  // Center mid Ruiz
+            19: CGPoint(x: width * 0.62, y: height * 0.55),  // Center mid Lee
+            33: CGPoint(x: width * 0.85, y: height * 0.55),  // Right mid Zaïre-Emery
             
-        case .forward:
-            let forwardY = height * 0.25
-            let leftX = width * 0.35
-            let rightX = width * 0.65
-            return player.number == 9 
-                ? CGPoint(x: leftX, y: forwardY)
-                : CGPoint(x: rightX, y: forwardY)
-        }
+            // Forwards (2 players - attack line)
+            7:  CGPoint(x: width * 0.35, y: height * 0.25),  // Left forward Mbappé
+            23: CGPoint(x: width * 0.65, y: height * 0.25)   // Right forward Kolo Muani
+        ]
+        
+        return positions[player.number] ?? CGPoint(x: width * 0.5, y: height * 0.5)
     }
     
     // MARK: - 3-5-2 Formation
