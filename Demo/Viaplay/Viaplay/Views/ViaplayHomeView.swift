@@ -12,7 +12,6 @@ struct ViaplayHomeView: View {
     @Binding var selectedTab: Int
     @Binding var showSportView: Bool
     @State private var scrollOffset: CGFloat = 0
-    @State private var showEntertainmentView = false
     let heroContent = HeroContent.mock
     let continueWatchingItems = ContinueWatchingItem.mockItems
     
@@ -67,14 +66,8 @@ struct ViaplayHomeView: View {
                                 Color.clear
                                     .frame(maxWidth: .infinity)
                             }
-                        }
-                        .padding(.horizontal, 16)
-                        .frame(maxWidth: geometry.size.width)
                         
-                        // Entertainment Interactive Components Button
-                        Button {
-                            showEntertainmentView = true
-                        } label: {
+                        // Entertainment removed - now in LiveMatchView timeline
                             HStack(spacing: 16) {
                                 ZStack {
                                     Circle()
@@ -313,9 +306,6 @@ struct ViaplayHomeView: View {
                 }
             }
             .frame(width: geometry.size.width)
-            .sheet(isPresented: $showEntertainmentView) {
-                EntertainmentView()
-            }
         }
     }
 }
