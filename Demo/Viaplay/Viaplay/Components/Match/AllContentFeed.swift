@@ -140,6 +140,41 @@ struct AllContentFeed: View {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
+    // MARK: - Default Lineups
+    
+    private func getDefaultLineup(team: String, formation: String) -> [PlayerInfo] {
+        if team == "home" && formation == "4-3-3" {
+            return [
+                PlayerInfo(number: 31, name: "Ter Stegen", position: "Keeper"),
+                PlayerInfo(number: 2, name: "Koundé", position: "Forsvar"),
+                PlayerInfo(number: 15, name: "Araújo", position: "Forsvar"),
+                PlayerInfo(number: 6, name: "Christensen", position: "Forsvar"),
+                PlayerInfo(number: 13, name: "Alba", position: "Forsvar"),
+                PlayerInfo(number: 25, name: "Busquets", position: "Midtbane"),
+                PlayerInfo(number: 37, name: "De Jong", position: "Midtbane"),
+                PlayerInfo(number: 8, name: "Pedri", position: "Midtbane"),
+                PlayerInfo(number: 7, name: "Dembélé", position: "Angrep"),
+                PlayerInfo(number: 30, name: "Lewandowski", position: "Angrep"),
+                PlayerInfo(number: 10, name: "Ferran", position: "Angrep")
+            ]
+        } else if team == "away" && formation == "4-4-2" {
+            return [
+                PlayerInfo(number: 99, name: "Donnarumma", position: "Keeper"),
+                PlayerInfo(number: 2, name: "Hakimi", position: "Forsvar"),
+                PlayerInfo(number: 5, name: "Marquinhos", position: "Forsvar"),
+                PlayerInfo(number: 4, name: "Ramos", position: "Forsvar"),
+                PlayerInfo(number: 25, name: "Mendes", position: "Forsvar"),
+                PlayerInfo(number: 17, name: "Vitinha", position: "Midtbane"),
+                PlayerInfo(number: 8, name: "Ruiz", position: "Midtbane"),
+                PlayerInfo(number: 19, name: "Lee", position: "Midtbane"),
+                PlayerInfo(number: 33, name: "Zaïre-Emery", position: "Midtbane"),
+                PlayerInfo(number: 7, name: "Mbappé", position: "Angrep"),
+                PlayerInfo(number: 23, name: "Kolo Muani", position: "Angrep")
+            ]
+        }
+        return []
+    }
+    
     @ViewBuilder
     private func renderEvent(_ wrappedEvent: AnyTimelineEvent) -> some View {
         Group {
@@ -233,14 +268,11 @@ struct AllContentFeed: View {
                         ))
                         
                     case "lineup":
-                        // Render lineup card
+                        // Render lineup card with proper positions
                         if let team = announcement.metadata?["team"],
-                           let formation = announcement.metadata?["formation"],
-                           let playersString = announcement.metadata?["players"] {
-                            let playerNames = playersString.components(separatedBy: ",")
-                            let players = playerNames.enumerated().map { index, name in
-                                PlayerInfo(number: index + 1, name: name, position: "")
-                            }
+                           let formation = announcement.metadata?["formation"] {
+                            // Use default lineups with correct positions
+                            let players = getDefaultLineup(team: team, formation: formation)
                             
                             LineupCard(
                                 teamName: announcement.title.replacingOccurrences(of: "Oppstilling ", with: ""),

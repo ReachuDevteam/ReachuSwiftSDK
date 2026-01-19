@@ -74,39 +74,32 @@ struct FootballFieldView: View {
         let width = size.width
         let height = size.height
         
-        // Half field positioning (attacking half only)
-        switch player.position {
-        case .goalkeeper:
-            // Not shown in attacking half
-            return CGPoint(x: width * 0.5, y: height * 1.2)  // Off screen
+        // 4-3-3 specific positioning (half field - attacking)
+        // Based on actual player numbers from the data
+        
+        let positions: [Int: CGPoint] = [
+            // Goalkeeper (off-screen or bottom)
+            31: CGPoint(x: width * 0.5, y: height * 0.95),
             
-        case .defender:
-            let defenderY = height * 0.85  // Very back
-            let defenders = players.filter { $0.position == .defender }.sorted { $0.number < $1.number }
-            if let index = defenders.firstIndex(where: { $0.number == player.number }) {
-                let spacing = width / CGFloat(defenders.count + 1)
-                return CGPoint(x: spacing * CGFloat(index + 1), y: defenderY)
-            }
-            return CGPoint(x: width * 0.5, y: defenderY)
+            // Defenders (4 players - back line)
+            2:  CGPoint(x: width * 0.15, y: height * 0.80),  // Left back
+            15: CGPoint(x: width * 0.35, y: height * 0.80),  // Center back
+            6:  CGPoint(x: width * 0.65, y: height * 0.80),  // Center back
+            13: CGPoint(x: width * 0.85, y: height * 0.80),  // Right back
             
-        case .midfielder:
-            let midfielderY = height * 0.55  // Middle
-            let midfielders = players.filter { $0.position == .midfielder }.sorted { $0.number < $1.number }
-            if let index = midfielders.firstIndex(where: { $0.number == player.number }) {
-                let spacing = width / CGFloat(midfielders.count + 1)
-                return CGPoint(x: spacing * CGFloat(index + 1), y: midfielderY)
-            }
-            return CGPoint(x: width * 0.5, y: midfielderY)
+            // Midfielders (3 players - middle line)
+            25: CGPoint(x: width * 0.25, y: height * 0.55),  // Left mid
+            37: CGPoint(x: width * 0.50, y: height * 0.55),  // Center mid
+            8:  CGPoint(x: width * 0.75, y: height * 0.55),  // Right mid
             
-        case .forward:
-            let forwardY = height * 0.20  // Front
-            let forwards = players.filter { $0.position == .forward }.sorted { $0.number < $1.number }
-            if let index = forwards.firstIndex(where: { $0.number == player.number }) {
-                let spacing = width / CGFloat(forwards.count + 1)
-                return CGPoint(x: spacing * CGFloat(index + 1), y: forwardY)
-            }
-            return CGPoint(x: width * 0.5, y: forwardY)
-        }
+            // Forwards (3 players - attack line)
+            7:  CGPoint(x: width * 0.20, y: height * 0.25),  // Left wing
+            30: CGPoint(x: width * 0.50, y: height * 0.25),  // Striker
+            10: CGPoint(x: width * 0.80, y: height * 0.25)   // Right wing
+        ]
+        
+        // Return position for this player or default center
+        return positions[player.number] ?? CGPoint(x: width * 0.5, y: height * 0.5)
     }
     
     // MARK: - 4-4-2 Formation
