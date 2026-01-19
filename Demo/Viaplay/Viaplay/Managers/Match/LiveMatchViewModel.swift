@@ -254,15 +254,9 @@ class LiveMatchViewModel: ObservableObject {
         }
     }
     
-    func filteredPolls() -> [InteractiveComponent] {
-        // For now, use entertainment manager polls
-        // TODO: Integrate PollTimelineEvent when needed
-        return entertainmentManager.activeComponents.filter { component in
-            guard component.type == .poll, let startTime = component.startTime else { return false }
-            let timeDiff = Date().timeIntervalSince(startTime)
-            let pollMinute = Int(timeDiff / 60)
-            return pollMinute <= currentFilterMinute
-        }
+    func filteredPolls() -> [PollTimelineEvent] {
+        // Get polls from timeline
+        return timeline.visiblePolls()
     }
     
     func filteredEvents() -> [MatchEvent] {
@@ -286,25 +280,7 @@ class LiveMatchViewModel: ObservableObject {
         return timeline.allEvents  // This is a property, not a function
     }
     
-    // MARK: - Mixed Content
-    
-    struct MixedContentItem: Identifiable {
-        let id = UUID()
-        let type: ContentType
-        let timestamp: Date
-        let event: MatchEvent?
-        let chatMessage: ChatMessage?
-        let poll: InteractiveComponent?
-        let highlightIndex: Int?
-        
-        enum ContentType {
-            case timelineEvent
-            case chatMessage
-            case poll
-            case statistics
-            case highlight
-        }
-    }
+    // MARK: - Mixed Content (deprecated - now using timeline events)
     
     func mixedContentItems() -> [MixedContentItem] {
         var items: [MixedContentItem] = []
