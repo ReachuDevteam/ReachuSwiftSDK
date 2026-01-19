@@ -14,24 +14,35 @@ struct FieldLinesView: View {
             let height = geometry.size.height
             
             ZStack {
-                // Outer border
-                Rectangle()
-                    .stroke(Color.white.opacity(0.4), lineWidth: 2)
-                    .padding(8)
+                // Outer border (3 sides only - no bottom for half field)
+                Path { path in
+                    path.move(to: CGPoint(x: 8, y: height))
+                    path.addLine(to: CGPoint(x: 8, y: 8))
+                    path.addLine(to: CGPoint(x: width - 8, y: 8))
+                    path.addLine(to: CGPoint(x: width - 8, y: height))
+                }
+                .stroke(Color.white.opacity(0.4), lineWidth: 2)
                 
-                // Bottom line (was center line - now at bottom for half field)
+                // Midfield line (at bottom for half field)
                 Path { path in
                     path.move(to: CGPoint(x: 8, y: height - 8))
                     path.addLine(to: CGPoint(x: width - 8, y: height - 8))
                 }
                 .stroke(Color.white.opacity(0.4), lineWidth: 2)
                 
-                // Center circle (at bottom for half field)
+                // Half center circle (at bottom, clipped to show only top half)
                 Circle()
+                    .trim(from: 0, to: 0.5)  // Only top half of circle
                     .stroke(Color.white.opacity(0.4), lineWidth: 2)
-                    .frame(width: min(width, height) * 0.35)
+                    .frame(width: width * 0.28, height: width * 0.28)
+                    .rotationEffect(.degrees(180))  // Rotate so arc is on top
                     .position(x: width / 2, y: height - 8)
-                    .clipped()
+                
+                // Center spot
+                Circle()
+                    .fill(Color.white.opacity(0.6))
+                    .frame(width: 4, height: 4)
+                    .position(x: width / 2, y: height - 8)
                 
                 // Top penalty area
                 Path { path in
@@ -59,44 +70,11 @@ struct FieldLinesView: View {
                 }
                 .stroke(Color.white.opacity(0.4), lineWidth: 2)
                 
-                // Bottom penalty area
-                Path { path in
-                    let areaWidth = width * 0.6
-                    let areaHeight = height * 0.15
-                    let startX = (width - areaWidth) / 2
-                    let startY = height - areaHeight
-                    
-                    path.move(to: CGPoint(x: startX, y: height - 8))
-                    path.addLine(to: CGPoint(x: startX, y: startY))
-                    path.addLine(to: CGPoint(x: startX + areaWidth, y: startY))
-                    path.addLine(to: CGPoint(x: startX + areaWidth, y: height - 8))
-                }
-                .stroke(Color.white.opacity(0.4), lineWidth: 2)
-                
-                // Bottom goal area (smaller)
-                Path { path in
-                    let goalWidth = width * 0.35
-                    let goalHeight = height * 0.08
-                    let startX = (width - goalWidth) / 2
-                    let startY = height - goalHeight
-                    
-                    path.move(to: CGPoint(x: startX, y: height - 8))
-                    path.addLine(to: CGPoint(x: startX, y: startY))
-                    path.addLine(to: CGPoint(x: startX + goalWidth, y: startY))
-                    path.addLine(to: CGPoint(x: startX + goalWidth, y: height - 8))
-                }
-                .stroke(Color.white.opacity(0.4), lineWidth: 2)
-                
-                // Penalty spots
+                // Penalty spot (only top one for half field)
                 Circle()
                     .fill(Color.white.opacity(0.6))
                     .frame(width: 4, height: 4)
-                    .position(x: width / 2, y: height * 0.12)
-                
-                Circle()
-                    .fill(Color.white.opacity(0.6))
-                    .frame(width: 4, height: 4)
-                    .position(x: width / 2, y: height * 0.88)
+                    .position(x: width / 2, y: height * 0.15)
             }
         }
     }
