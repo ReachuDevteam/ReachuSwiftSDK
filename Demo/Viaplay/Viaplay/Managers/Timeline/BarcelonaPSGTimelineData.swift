@@ -30,6 +30,16 @@ extension TimelineDataGenerator {
         )))
         
         // -12' - Barcelona Lineup
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "pre-lineup-home-announce",
+            videoTimestamp: -722,
+            minute: -12,
+            text: "Vi har nå Barcelona sitt startoppstilling!",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
         events.append(AnyTimelineEvent(AnnouncementEvent(
             id: "pre-lineup-home",
             videoTimestamp: -720,
@@ -46,7 +56,32 @@ extension TimelineDataGenerator {
             ]
         )))
         
+        // -11'30" - Poll about Barcelona lineup
+        events.append(AnyTimelineEvent(PollTimelineEvent(
+            id: "pre-poll-lineup-home",
+            videoTimestamp: -690,
+            question: "Liker du Barcelona sitt startoppstilling?",
+            options: [
+                .init(id: "yes", text: "Ja, bra 11!", voteCount: 0, percentage: nil),
+                .init(id: "no", text: "Nei, ikke bra", voteCount: 0, percentage: nil),
+                .init(id: "ok", text: "Ikke så verst", voteCount: 0, percentage: nil)
+            ],
+            duration: nil,
+            endTimestamp: 0,
+            metadata: ["type": "lineup-opinion"]
+        )))
+        
         // -11' - PSG Lineup
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "pre-lineup-away-announce",
+            videoTimestamp: -662,
+            minute: -11,
+            text: "Og nå har vi PSG sitt startoppstilling!",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
         events.append(AnyTimelineEvent(AnnouncementEvent(
             id: "pre-lineup-away",
             videoTimestamp: -660,
@@ -61,6 +96,21 @@ extension TimelineDataGenerator {
                 "formation": "4-4-2",
                 "players": "Donnarumma,Hakimi,Marquinhos,Ramos,Mendes,Vitinha,Verratti,Ruiz,Zaire-Emery,Mbappé,Kolo Muani"
             ]
+        )))
+        
+        // -10'30" - Poll about PSG lineup
+        events.append(AnyTimelineEvent(PollTimelineEvent(
+            id: "pre-poll-lineup-away",
+            videoTimestamp: -630,
+            question: "Liker du PSG sitt startoppstilling?",
+            options: [
+                .init(id: "yes", text: "Ja, bra 11!", voteCount: 0, percentage: nil),
+                .init(id: "no", text: "Nei, ikke bra", voteCount: 0, percentage: nil),
+                .init(id: "ok", text: "Ikke så verst", voteCount: 0, percentage: nil)
+            ],
+            duration: nil,
+            endTimestamp: 0,
+            metadata: ["type": "lineup-opinion"]
         )))
         
         // -8' - Player Interview
