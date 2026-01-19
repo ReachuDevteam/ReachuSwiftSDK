@@ -91,10 +91,12 @@ class UnifiedTimelineManager: ObservableObject {
     
     // MARK: - Match Duration Constants
     
-    static let firstHalfDuration: TimeInterval = 2700  // 45 minutes
-    static let halfTimeDuration: TimeInterval = 900    // 15 minutes pause
-    static let secondHalfDuration: TimeInterval = 2700 // 45 minutes
-    static let totalMatchDuration: TimeInterval = 6300 // 105 minutes total (45+15+45)
+    static let preMatchDuration: TimeInterval = 900     // 15 minutes before kickoff
+    static let firstHalfDuration: TimeInterval = 2700   // 45 minutes
+    static let halfTimeDuration: TimeInterval = 900     // 15 minutes pause
+    static let secondHalfDuration: TimeInterval = 2700  // 45 minutes
+    static let postMatchDuration: TimeInterval = 900    // 15 minutes after
+    static let totalMatchDuration: TimeInterval = 7200  // 120 minutes total
     
     /// Update user's video time (called by scrubber)
     func updateVideoTime(_ seconds: TimeInterval) {
@@ -198,15 +200,19 @@ class UnifiedTimelineManager: ObservableObject {
 }
 
 enum MatchPhase {
+    case preMatch
     case firstHalf
     case halfTime
     case secondHalf
+    case postMatch
     
     var displayName: String {
         switch self {
+        case .preMatch: return "Før kampen"
         case .firstHalf: return "1. omgang"
         case .halfTime: return "Pause"
         case .secondHalf: return "2. omgang"
+        case .postMatch: return "Etter kampen"
         }
     }
 }

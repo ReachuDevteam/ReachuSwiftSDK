@@ -15,7 +15,65 @@ extension TimelineDataGenerator {
     static func generateBarcelonaPSGRichTimeline() -> [AnyTimelineEvent] {
         var events: [AnyTimelineEvent] = []
         
-        // MARK: - Pre-Match
+        // MARK: - PRE-PARTIDO (-15' to 0')
+        
+        // -15' - Velkommen
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "pre-welcome",
+            videoTimestamp: -900,
+            title: "Velkommen!",
+            message: "Barcelona mot PSG starter om 15 minutter. Gjør deg klar for en fantastisk kamp!",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "pre-match"]
+        )))
+        
+        // -12' - Lineups (will create actual lineup cards)
+        // Note: These will be rendered as LineupCard components
+        
+        // -10' - Prediction Poll
+        events.append(AnyTimelineEvent(PollTimelineEvent(
+            id: "pre-poll-prediction",
+            videoTimestamp: -600,
+            question: "Spå resultatet av kampen",
+            options: [
+                .init(id: "home", text: "Barcelona vinner", voteCount: 0, percentage: nil),
+                .init(id: "draw", text: "Uavgjort", voteCount: 0, percentage: nil),
+                .init(id: "away", text: "PSG vinner", voteCount: 0, percentage: nil)
+            ],
+            duration: nil,
+            endTimestamp: 0,
+            metadata: ["type": "prediction"]
+        )))
+        
+        // -8' - Player Interview (Lamine Yamal)
+        // Will be rendered as PlayerInterviewCard
+        
+        // -5' - H2H Stats
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "pre-h2h",
+            videoTimestamp: -300,
+            minute: -5,
+            text: "Siste 5 kamper mellom lagene: Barcelona 3 seire, PSG 2 seire. Dette blir jevnt!",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: ["type": "pre-match"]
+        )))
+        
+        // -2' - Countdown
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "pre-countdown",
+            videoTimestamp: -120,
+            title: "Kampen starter snart!",
+            message: "Bare 2 minutter til avspark. Spillerne går på banen nå.",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "pre-match"]
+        )))
+        
+        // MARK: - KAMPEN (0' to 90') - Keep all existing events
         
         events.append(AnyTimelineEvent(CommentaryEvent(
             id: "comm-pre-0",
@@ -782,6 +840,71 @@ extension TimelineDataGenerator {
             commentaryType: .halftime,
             isHighlighted: true,
             metadata: nil
+        )))
+        
+        // MARK: - POST-PARTIDO (90'+ to 105')
+        
+        // 91' - Final Stats (will be rendered as FinalStatsCard)
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-final-stats",
+            videoTimestamp: 5460,
+            title: "Sluttstatistikk",
+            message: "Se alle tallene fra kampen",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "final-stats"]
+        )))
+        
+        // 92' - Poll Results
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-poll-results",
+            videoTimestamp: 5520,
+            title: "Avstemningsresultater",
+            message: "Se hvordan andre stemte!",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "poll-results"]
+        )))
+        
+        // 93' - MOTM Voting (will be rendered as MOTMVotingCard)
+        // Handled separately as component
+        
+        // 95' - Highlights Summary
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-highlights",
+            videoTimestamp: 5700,
+            title: "Høydepunkter",
+            message: "Se alle de beste øyeblikkene fra kampen",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Se høydepunkter",
+            metadata: ["type": "highlights-summary"]
+        )))
+        
+        // 96' - Contest Winners
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-contest-winners",
+            videoTimestamp: 5760,
+            title: "Konkurranse Vinnere",
+            message: "Gratulerer til vinnerne av dagens konkurranse!",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "contest-results"]
+        )))
+        
+        // 98' - Thank You
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-thanks",
+            videoTimestamp: 5880,
+            title: "Takk for at du så på!",
+            message: "Neste kamp: Real Madrid vs Manchester City i morgen kl 21:00",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Se kampoversikt",
+            metadata: ["type": "end-message"]
         )))
         
         // Add random chat messages throughout
