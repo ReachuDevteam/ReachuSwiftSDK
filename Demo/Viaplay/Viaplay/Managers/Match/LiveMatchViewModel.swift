@@ -168,16 +168,9 @@ class LiveMatchViewModel: ObservableObject {
     // MARK: - User Actions
     
     func handlePollVote(componentId: String, optionId: String) {
-        Task {
-            do {
-                try await entertainmentManager.submitResponse(
-                    componentId: componentId,
-                    selectedOptions: [optionId]
-                )
-            } catch {
-                print("❌ Error voting: \(error)")
-            }
-        }
+        // Poll voting now handled directly in TimelinePollCard
+        print("📊 Usuario votó en poll \(componentId): opción \(optionId)")
+        // TODO: Send to backend when integrated
     }
     
     func jumpToMinute(_ minute: Int) {
