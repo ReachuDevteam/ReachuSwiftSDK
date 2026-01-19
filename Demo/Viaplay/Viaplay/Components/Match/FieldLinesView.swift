@@ -19,22 +19,19 @@ struct FieldLinesView: View {
                     .stroke(Color.white.opacity(0.4), lineWidth: 2)
                     .padding(8)
                 
-                // Center line
+                // Bottom line (was center line - now at bottom for half field)
                 Path { path in
-                    path.move(to: CGPoint(x: 8, y: height / 2))
-                    path.addLine(to: CGPoint(x: width - 8, y: height / 2))
+                    path.move(to: CGPoint(x: 8, y: height - 8))
+                    path.addLine(to: CGPoint(x: width - 8, y: height - 8))
                 }
                 .stroke(Color.white.opacity(0.4), lineWidth: 2)
                 
-                // Center circle
+                // Center circle (at bottom for half field)
                 Circle()
                     .stroke(Color.white.opacity(0.4), lineWidth: 2)
-                    .frame(width: min(width, height) * 0.25)
-                
-                // Center dot
-                Circle()
-                    .fill(Color.white.opacity(0.6))
-                    .frame(width: 6, height: 6)
+                    .frame(width: min(width, height) * 0.35)
+                    .position(x: width / 2, y: height - 8)
+                    .clipped()
                 
                 // Top penalty area
                 Path { path in

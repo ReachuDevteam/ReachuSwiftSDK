@@ -12,27 +12,27 @@ struct PlayerPositionView: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: 3) {
-            // Player circle with number
+        VStack(spacing: 2) {
+            // Player circle with number (smaller)
             ZStack {
                 Circle()
                     .fill(color)
-                    .frame(width: 34, height: 34)
+                    .frame(width: 28, height: 28)
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                            .stroke(Color.white.opacity(0.4), lineWidth: 1)
                     )
                 
                 Text("\(player.number)")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .foregroundColor(.white)
             }
             
-            // Player name
+            // Player name (smaller)
             Text(player.shortName)
-                .font(.system(size: 9, weight: .medium))
+                .font(.system(size: 8, weight: .medium))
                 .foregroundColor(.white)
-                .shadow(color: .black.opacity(0.8), radius: 2, x: 0, y: 1)
+                .shadow(color: .black.opacity(0.9), radius: 1.5, x: 0, y: 0.5)
                 .lineLimit(1)
                 .fixedSize()
         }

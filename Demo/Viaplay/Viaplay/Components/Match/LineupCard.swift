@@ -16,6 +16,33 @@ struct LineupCard: View {
     let isHome: Bool
     
     @State private var showFieldView = true  // Default to field view
+    @State private var reactionCounts: [String: Int] = [:]
+    @State private var userReactions: Set<String> = []
+    @State private var animatingReaction: String?
+    
+    init(
+        teamName: String,
+        formation: String,
+        players: [PlayerInfo],
+        teamColor: Color = .blue,
+        isHome: Bool = true
+    ) {
+        self.teamName = teamName
+        self.formation = formation
+        self.players = players
+        self.teamColor = teamColor
+        self.isHome = isHome
+        
+        // Initialize reactions
+        _reactionCounts = State(initialValue: [
+            "🔥": Int.random(in: 200...400),
+            "❤️": Int.random(in: 150...300),
+            "⚽": Int.random(in: 250...450),
+            "🏆": Int.random(in: 100...250),
+            "👍": Int.random(in: 180...350),
+            "🎯": Int.random(in: 80...200)
+        ])
+    }
     
     // MARK: - Position Mapping Helper
     
@@ -32,41 +59,30 @@ struct LineupCard: View {
         }
     }
     
-    init(
-        teamName: String,
-        formation: String,
-        players: [PlayerInfo],
-        teamColor: Color = .blue,
-        isHome: Bool = true
-    ) {
-        self.teamName = teamName
-        self.formation = formation
-        self.players = players
-        self.teamColor = teamColor
-        self.isHome = isHome
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Header
+            // Header (Viaplay avatar, not team)
             HStack(spacing: 8) {
-                // Team indicator
-                Circle()
-                    .fill(teamColor)
+                // Viaplay icon
+                Image("icon ")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
-                    .overlay(
-                        Text(isHome ? "H" : "A")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                    )
+                    .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(teamName)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.white)
+                    HStack(spacing: 4) {
+                        Text("Viaplay Oppstilling")
+                            .font(.system(size: 13, weight: .bold))
+                            .foregroundColor(.white)
+                        
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 11))
+                            .foregroundColor(.blue)
+                    }
                     
                     HStack(spacing: 4) {
-                        Text("Oppstilling")
+                        Text(teamName)
                             .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.6))
                         
@@ -74,7 +90,7 @@ struct LineupCard: View {
                             .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.4))
                         
-                        Text("Formasjon: \(formation)")
+                        Text("\(formation)")
                             .font(.system(size: 10))
                             .foregroundColor(.white.opacity(0.6))
                     }
@@ -127,7 +143,8 @@ struct LineupCard: View {
                     },
                     teamColor: teamColor
                 )
-                .frame(height: 400)
+                .frame(maxWidth: .infinity)  // Use full width
+                .frame(height: 300)  // Smaller height for half field
                 .transition(.asymmetric(
                     insertion: .scale.combined(with: .opacity),
                     removal: .scale.combined(with: .opacity)
@@ -146,6 +163,21 @@ struct LineupCard: View {
                     insertion: .move(edge: .bottom).combined(with: .opacity),
                     removal: .move(edge: .top).combined(with: .opacity)
                 ))
+            }
+            
+            // Reactions (same as tweets/highlights)
+            HStack(spacing: 8) {
+                ForEach(["🔥", "❤️", "⚽", "🏆", "👍", "🎯"], id: \.self) { emoji in
+                    CompactReactionButton(
+                        emoji: emoji,
+                        count: reactionCounts[emoji] ?? 0,
+                        isSelected: userReactions.contains(emoji),
+                        isAnimating: animatingReaction == emoji,
+                        onTap: {
+                            handleReaction(emoji)
+                        }
+                    )
+                }
             }
         }
         .padding(12)
@@ -193,6 +225,91 @@ private struct PlayerRow: View {
             
             Spacer(minLength: 0)
         }
+    }
+    
+    // MARK: - Reaction Handling
+    
+    private func handleReaction(_ emoji: String) {
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if userReactions.contains(emoji) {
+                userReactions.remove(emoji)
+                reactionCounts[emoji, default: 0] -= 1
+            } else {
+                userReactions.insert(emoji)
+                reactionCounts[emoji, default: 0] += 1
+                
+                animatingReaction = emoji
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    animatingReaction = nil
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Compact Reaction Button (same as tweets)
+
+private struct CompactReactionButton: View {
+    let emoji: String
+    let count: Int
+    let isSelected: Bool
+    let isAnimating: Bool
+    let onTap: () -> Void
+    
+    @State private var scale: CGFloat = 1.0
+    
+    private func formatCount(_ count: Int) -> String {
+        if count >= 1000 {
+            return String(format: "%.1fK", Double(count) / 1000.0)
+        }
+        return "\(count)"
+    }
+    
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.6)) {
+                scale = 0.9
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                    scale = 1.0
+                }
+            }
+            onTap()
+        }) {
+            HStack(spacing: 2) {
+                Text(emoji)
+                    .font(.system(size: 12))
+                    .scaleEffect(isAnimating ? 1.15 : 1.0)
+                
+                Text(formatCount(count))
+                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
+                    .foregroundColor(.white.opacity(isSelected ? 1.0 : 0.65))
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(
+                Capsule()
+                    .fill(
+                        isSelected 
+                        ? Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.25)
+                        : Color.white.opacity(0.06)
+                    )
+                    .overlay(
+                        Capsule()
+                            .stroke(
+                                isSelected 
+                                ? Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.4)
+                                : Color.clear,
+                                lineWidth: 0.5
+                            )
+                    )
+            )
+        }
+        .scaleEffect(scale)
     }
 }
 

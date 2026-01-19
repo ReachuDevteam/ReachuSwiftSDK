@@ -13,7 +13,7 @@ struct FootballFieldView: View {
     let players: [FieldPlayer]
     let teamColor: Color
     
-    private let fieldAspectRatio: CGFloat = 1.5  // Height is 1.5x width
+    private let fieldAspectRatio: CGFloat = 0.75  // Half field - Height is 0.75x width
     
     var body: some View {
         GeometryReader { geometry in
@@ -74,37 +74,38 @@ struct FootballFieldView: View {
         let width = size.width
         let height = size.height
         
+        // Half field positioning (attacking half only)
         switch player.position {
         case .goalkeeper:
-            return CGPoint(x: width * 0.5, y: height * 0.92)
+            // Not shown in attacking half
+            return CGPoint(x: width * 0.5, y: height * 1.2)  // Off screen
             
         case .defender:
-            let defenderY = height * 0.75
-            switch player.number {
-            case 2:  return CGPoint(x: width * 0.20, y: defenderY)  // Left back
-            case 15: return CGPoint(x: width * 0.38, y: defenderY)  // Center back 1
-            case 6:  return CGPoint(x: width * 0.62, y: defenderY)  // Center back 2
-            case 13: return CGPoint(x: width * 0.80, y: defenderY)  // Right back
-            default: return CGPoint(x: width * 0.5, y: defenderY)
+            let defenderY = height * 0.85  // Very back
+            let defenders = players.filter { $0.position == .defender }.sorted { $0.number < $1.number }
+            if let index = defenders.firstIndex(where: { $0.number == player.number }) {
+                let spacing = width / CGFloat(defenders.count + 1)
+                return CGPoint(x: spacing * CGFloat(index + 1), y: defenderY)
             }
+            return CGPoint(x: width * 0.5, y: defenderY)
             
         case .midfielder:
-            let midfielderY = height * 0.50
-            switch player.number {
-            case 25: return CGPoint(x: width * 0.25, y: midfielderY)  // Left mid
-            case 37: return CGPoint(x: width * 0.50, y: midfielderY)  // Center mid
-            case 8:  return CGPoint(x: width * 0.75, y: midfielderY)  // Right mid
-            default: return CGPoint(x: width * 0.5, y: midfielderY)
+            let midfielderY = height * 0.55  // Middle
+            let midfielders = players.filter { $0.position == .midfielder }.sorted { $0.number < $1.number }
+            if let index = midfielders.firstIndex(where: { $0.number == player.number }) {
+                let spacing = width / CGFloat(midfielders.count + 1)
+                return CGPoint(x: spacing * CGFloat(index + 1), y: midfielderY)
             }
+            return CGPoint(x: width * 0.5, y: midfielderY)
             
         case .forward:
-            let forwardY = height * 0.25
-            switch player.number {
-            case 7:  return CGPoint(x: width * 0.20, y: forwardY)   // Left wing
-            case 30: return CGPoint(x: width * 0.50, y: forwardY)   // Striker
-            case 10: return CGPoint(x: width * 0.80, y: forwardY)   // Right wing
-            default: return CGPoint(x: width * 0.5, y: forwardY)
+            let forwardY = height * 0.20  // Front
+            let forwards = players.filter { $0.position == .forward }.sorted { $0.number < $1.number }
+            if let index = forwards.firstIndex(where: { $0.number == player.number }) {
+                let spacing = width / CGFloat(forwards.count + 1)
+                return CGPoint(x: spacing * CGFloat(index + 1), y: forwardY)
             }
+            return CGPoint(x: width * 0.5, y: forwardY)
         }
     }
     
