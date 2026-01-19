@@ -15,6 +15,8 @@ struct LineupCard: View {
     let teamColor: Color
     let isHome: Bool
     
+    @State private var showFieldView = true  // Default to field view
+    
     init(
         teamName: String,
         formation: String,
@@ -78,14 +80,57 @@ struct LineupCard: View {
                 }
             }
             
-            // Players grid
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 8) {
-                ForEach(players.prefix(11), id: \.number) { player in
-                    PlayerRow(player: player, teamColor: teamColor)
+            // Toggle between field and list view
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    showFieldView.toggle()
                 }
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: showFieldView ? "list.bullet" : "field.of.play.soccer")
+                        .font(.system(size: 11))
+                    Text(showFieldView ? "Liste" : "Felt")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                .foregroundColor(.white.opacity(0.7))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color.white.opacity(0.1)))
+            }
+            
+            if showFieldView {
+                // Field visualization
+                FootballFieldView(
+                    formation: formation,
+                    players: players.map { playerInfo in
+                        FieldPlayer(
+                            number: playerInfo.number,
+                            name: playerInfo.name,
+                            shortName: playerInfo.name,
+                            position: fieldPosition(from: playerInfo.position)
+                        )
+                    },
+                    teamColor: teamColor
+                )
+                .frame(height: 400)
+                .transition(.asymmetric(
+                    insertion: .scale.combined(with: .opacity),
+                    removal: .scale.combined(with: .opacity)
+                ))
+            } else {
+                // List view (original)
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 8) {
+                    ForEach(players.prefix(11), id: \.number) { player in
+                        PlayerRow(player: player, teamColor: teamColor)
+                    }
+                }
+                .transition(.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
             }
         }
         .padding(12)
@@ -132,6 +177,21 @@ private struct PlayerRow: View {
                 .lineLimit(1)
             
             Spacer(minLength: 0)
+        }
+    }
+    
+    // MARK: - Position Mapping
+    
+    private func fieldPosition(from positionString: String) -> FieldPlayer.PlayerPosition {
+        let lower = positionString.lowercased()
+        if lower.contains("keeper") || lower.contains("målvakt") {
+            return .goalkeeper
+        } else if lower.contains("forsvar") || lower.contains("defen") {
+            return .defender
+        } else if lower.contains("midtbane") || lower.contains("mid") {
+            return .midfielder
+        } else {
+            return .forward
         }
     }
 }
