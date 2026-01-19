@@ -223,6 +223,28 @@ struct LineupCard: View {
             }
         }
     }
+    
+    // MARK: - Reaction Handling
+    
+    private func handleReaction(_ emoji: String) {
+        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+        impactFeedback.impactOccurred()
+        
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            if userReactions.contains(emoji) {
+                userReactions.remove(emoji)
+                reactionCounts[emoji, default: 0] -= 1
+            } else {
+                userReactions.insert(emoji)
+                reactionCounts[emoji, default: 0] += 1
+                
+                animatingReaction = emoji
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    animatingReaction = nil
+                }
+            }
+        }
+    }
 }
 
 // MARK: - Player Row
