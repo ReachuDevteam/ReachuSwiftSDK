@@ -52,21 +52,33 @@ struct MatchContentView: View {
                     )
                     
                 case .highlights:
-                    // Same style as All, but filtered to highlight-worthy events + lineups
+                    // Same style as All, but filtered to highlight-worthy events
                     AllContentFeed(
-                        timelineEvents: viewModel.visibleTimelineEvents().filter { event in
-                            // Show highlights + lineups + stats events
+                        timelineEvents: viewModel.timeline.visibleEvents.filter { event in
+                            // Show all important match events + lineups
                             switch event.eventType {
                             case .matchGoal, .matchCard, .matchSubstitution,
-                                 .highlight, .adminComment, .statisticsUpdate:
+                                 .highlight, .statisticsUpdate:
+                                return true
+                            case .adminComment:
+                                // Show commentary for goals and cards
+                                if let commentary = event.event as? CommentaryEvent {
+                                    return commentary.isHighlighted || 
+                                           commentary.commentaryType == .goal ||
+                                           commentary.commentaryType == .card
+                                }
                                 return true
                             case .announcement:
-                                // Include lineups and stats announcements
+                                // Include lineups, stats, and phase announcements
                                 if let announcement = event.event as? AnnouncementEvent {
-                                    return announcement.metadata?["type"] == "lineup" ||
-                                           announcement.metadata?["type"] == "halftime-stats" ||
-                                           announcement.metadata?["type"] == "fulltime-stats" ||
-                                           announcement.metadata?["type"] == "final-stats"
+                                    let type = announcement.metadata?["type"]
+                                    return type == "lineup" ||
+                                           type == "halftime-stats" ||
+                                           type == "fulltime-stats" ||
+                                           type == "final-stats" ||
+                                           type == "kickoff" ||
+                                           type == "halftime" ||
+                                           type == "fulltime"
                                 }
                                 return false
                             default:
@@ -74,7 +86,7 @@ struct MatchContentView: View {
                             }
                         },
                         statistics: viewModel.matchStatistics,
-                        canChat: false,  // No chat input in Highlights tab
+                        canChat: false,
                         onPollVote: viewModel.handlePollVote,
                         onSelectTab: viewModel.selectTab,
                         onSendMessage: nil
@@ -85,9 +97,11 @@ struct MatchContentView: View {
                     
                 case .polls:
                     PollsListView(
-                        timelinePolls: viewModel.timeline.events(ofType: .poll)
+                        timelinePolls: viewModel.timeline.allEvents
+                            .filter { $0.eventType == .poll }
                             .compactMap { $0.event as? PollTimelineEvent },
-                        contests: viewModel.timeline.events(ofType: .announcement)
+                        contests: viewModel.timeline.allEvents
+                            .filter { $0.eventType == .announcement }
                             .compactMap { $0.event as? AnnouncementEvent }
                             .filter { $0.metadata?["type"] == "contest" },
                         timeline: viewModel.timeline
