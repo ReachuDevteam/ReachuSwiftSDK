@@ -17,6 +17,21 @@ struct LineupCard: View {
     
     @State private var showFieldView = true  // Default to field view
     
+    // MARK: - Position Mapping Helper
+    
+    private func fieldPosition(from positionString: String) -> FieldPlayer.PlayerPosition {
+        let lower = positionString.lowercased()
+        if lower.contains("keeper") || lower.contains("målvakt") {
+            return .goalkeeper
+        } else if lower.contains("forsvar") || lower.contains("defen") {
+            return .defender
+        } else if lower.contains("midtbane") || lower.contains("mid") {
+            return .midfielder
+        } else {
+            return .forward
+        }
+    }
+    
     init(
         teamName: String,
         formation: String,
@@ -177,21 +192,6 @@ private struct PlayerRow: View {
                 .lineLimit(1)
             
             Spacer(minLength: 0)
-        }
-    }
-    
-    // MARK: - Position Mapping
-    
-    private func fieldPosition(from positionString: String) -> FieldPlayer.PlayerPosition {
-        let lower = positionString.lowercased()
-        if lower.contains("keeper") || lower.contains("målvakt") {
-            return .goalkeeper
-        } else if lower.contains("forsvar") || lower.contains("defen") {
-            return .defender
-        } else if lower.contains("midtbane") || lower.contains("mid") {
-            return .midfielder
-        } else {
-            return .forward
         }
     }
 }
