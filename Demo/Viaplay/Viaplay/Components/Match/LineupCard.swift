@@ -16,7 +16,7 @@ struct LineupCard: View {
     let isHome: Bool
     
     @State private var showFieldView = true  // Default to field view
-    @State private var reactionCounts: [String: Int] = [:]
+    @State private var reactionCounts: [String: Int]
     @State private var userReactions: Set<String> = []
     @State private var animatingReaction: String?
     
