@@ -102,30 +102,21 @@ class LiveMatchViewModel: ObservableObject {
     private var playbackTimer: Timer?
     
     private func startTimelinePlayback() {
-        // Simulate video playback (advance LIVE time)
+        // Simulate video playback (advance LIVE time ONLY)
         playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             guard let self = self else { return }
             
             let previousMinute = self.timeline.liveMinute
-            let previousEventCount = self.timeline.visibleEvents.count
             
-            // Always advance LIVE time (real-time position)
+            // Always advance LIVE time (real-time broadcast position)
             self.timeline.updateLiveTime(self.timeline.liveVideoTime + 1)
             
-            // If user is watching live (not scrubbed back), stays in sync automatically
-            // updateLiveTime handles this in UnifiedTimelineManager
-            
-            // Reload when minute changes OR when visible events count changes
+            // ONLY reload chat when minute changes (reduce updates)
             if self.timeline.liveMinute != previousMinute {
                 self.chatManager.loadMessagesFromTimeline()
-                print("🔄 [LiveMatch] Minute changed to \(self.timeline.liveMinute)', triggering update")
-                self.objectWillChange.send()
-            } else if self.timeline.visibleEvents.count != previousEventCount {
-                print("🔄 [LiveMatch] Event count changed: \(previousEventCount) → \(self.timeline.visibleEvents.count)")
-                self.objectWillChange.send()
             }
             
-            // Stop at 105 minutes (includes post-match)
+            // Stop at 105 minutes
             if self.timeline.liveMinute >= 105 {
                 self.stopTimelinePlayback()
             }
@@ -191,29 +182,24 @@ class LiveMatchViewModel: ObservableObject {
     }
     
     func jumpToMinute(_ minute: Int) {
-        let oldSelectedMinute = selectedMinute
         selectedMinute = minute
         
         if useTimelineSync {
             let newTime = TimeInterval(minute * 60)
-            let oldCount = timeline.visibleEvents.count
             
-            print("⏩ [LiveMatch] Jumping from \(oldSelectedMinute ?? -1)' to \(minute)' (time: \(newTime)s)")
+            print("⏩ [SCRUB] Jumped to \(minute)' (\(newTime)s)")
             
-            // Update user's position in timeline
-            timeline.updateVideoTime(newTime)
+            // CRITICAL: Update currentVideoTime (not liveTime)
+            // This controls what events are visible
+            timeline.currentVideoTime = newTime
             
-            // Force reload messages
+            // Reload chat for this position
             chatManager.loadMessagesFromTimeline()
             
-            let newCount = timeline.visibleEvents.count
-            print("⏩ [LiveMatch] Visible events changed: \(oldCount) → \(newCount)")
+            print("⏩ [SCRUB] Now showing \(timeline.visibleEvents.count) events")
             
-            // CRITICAL: Force UI update on MAIN thread
-            DispatchQueue.main.async {
-                self.objectWillChange.send()
-                print("⏩ [LiveMatch] UI update triggered")
-            }
+            // Force complete UI refresh
+            self.objectWillChange.send()
         }
     }
     
