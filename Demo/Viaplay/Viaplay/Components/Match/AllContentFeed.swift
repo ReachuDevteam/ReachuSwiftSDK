@@ -284,6 +284,7 @@ struct AllContentFeed: View {
                     switch announcement.metadata?["type"] {
                     case "contest":
                         ContestCard(
+                            contestId: announcement.id,
                             title: announcement.title.replacingOccurrences(of: "🏆 ", with: ""),
                             prize: announcement.metadata?["prize"] ?? "Premie",
                             question: announcement.metadata?["question"],

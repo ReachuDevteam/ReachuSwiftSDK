@@ -8,31 +8,34 @@
 import SwiftUI
 
 struct ContestCard: View {
+    let contestId: String
     let title: String
     let prize: String
     let question: String?
     let drawTime: String?
-    let hasParticipated: Bool
     let onParticipate: () -> Void
     
+    @StateObject private var participationManager = UserParticipationManager.shared
     @State private var showSuccessAnimation = false
-    @State private var participated = false
+    
+    private var hasParticipated: Bool {
+        participationManager.hasParticipatedInContest(contestId)
+    }
     
     init(
+        contestId: String = "contest-default",
         title: String = "Vinn en drakt fra ditt favorittlag!",
         prize: String = "Fotballdrakt",
         question: String? = nil,
         drawTime: String? = "Etter kampen",
-        hasParticipated: Bool = false,
         onParticipate: @escaping () -> Void = {}
     ) {
+        self.contestId = contestId
         self.title = title
         self.prize = prize
         self.question = question
         self.drawTime = drawTime
-        self.hasParticipated = hasParticipated
         self.onParticipate = onParticipate
-        _participated = State(initialValue: hasParticipated)
     }
     
     var body: some View {
@@ -146,8 +149,10 @@ struct ContestCard: View {
             
             // Participate button
             Button(action: {
-                if !participated {
-                    participated = true
+                if !hasParticipated {
+                    // Record participation
+                    participationManager.recordContestParticipation(contestId: contestId)
+                    
                     onParticipate()
                     
                     // Success animation
@@ -172,7 +177,7 @@ struct ContestCard: View {
                         Text("Deltatt!")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.green)
-                    } else if participated {
+                    } else if hasParticipated {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.6))
@@ -195,13 +200,13 @@ struct ContestCard: View {
                 .background(
                     RoundedRectangle(cornerRadius: 8)
                         .fill(
-                            participated 
+                            hasParticipated 
                             ? Color.white.opacity(0.1)
                             : Color(red: 0.96, green: 0.08, blue: 0.42)
                         )
                 )
             }
-            .disabled(participated)
+            .disabled(hasParticipated)
         }
         .padding(12)
         .background(

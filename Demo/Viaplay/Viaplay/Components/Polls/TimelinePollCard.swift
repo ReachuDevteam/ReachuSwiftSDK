@@ -11,9 +11,17 @@ struct TimelinePollCard: View {
     let poll: PollTimelineEvent
     let onVote: (String) -> Void
     
+    @StateObject private var participationManager = UserParticipationManager.shared
     @State private var selectedOption: String?
     @State private var showSuccessAnimation = false
-    @State private var hasVoted = false
+    
+    private var hasVoted: Bool {
+        participationManager.hasVotedInPoll(poll.id)
+    }
+    
+    private var userVote: String? {
+        participationManager.getVote(for: poll.id)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -83,12 +91,15 @@ struct TimelinePollCard: View {
                 ForEach(poll.options) { option in
                     PollTimelineOptionButton(
                         option: option,
-                        isSelected: selectedOption == option.id,
+                        isSelected: userVote == option.id,
                         isDisabled: hasVoted,
                         showSuccess: showSuccessAnimation && selectedOption == option.id,
                         onTap: {
                             selectedOption = option.id
-                            hasVoted = true
+                            
+                            // Record participation
+                            participationManager.recordPollVote(pollId: poll.id, optionId: option.id)
+                            
                             onVote(option.id)
                             
                             // Success animation
