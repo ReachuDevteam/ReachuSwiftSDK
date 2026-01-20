@@ -12,10 +12,27 @@ import Combine
 
 struct HighlightVideoCard: View {
     let highlight: HighlightTimelineEvent
+    let onShare: ((String, URL) -> Void)?  // Callback to parent
+    
     @State private var showFullscreenPlayer = false
-    @State private var showShareModal = false
     @State private var isPlaying = false
     @StateObject private var playerViewModel = InlineVideoPlayerViewModel()
+    
+    init(highlight: HighlightTimelineEvent, onShare: ((String, URL) -> Void)? = nil) {
+        self.highlight = highlight
+        self.onShare = onShare
+        
+        // Initialize reactions
+        let baseCount = 500
+        _reactionCounts = State(initialValue: [
+            "🔥": baseCount + Int.random(in: 50...200),
+            "❤️": baseCount + Int.random(in: 30...150),
+            "⚽": baseCount + Int.random(in: 100...300),
+            "🏆": baseCount + Int.random(in: 20...100),
+            "👍": baseCount + Int.random(in: 40...180),
+            "🎯": baseCount + Int.random(in: 10...80)
+        ])
+    }
     
     // Reactions (same as tweets)
     @State private var reactionCounts: [String: Int] = [:]
@@ -118,7 +135,7 @@ struct HighlightVideoCard: View {
                         showFullscreenPlayer = true
                     },
                     onTapShare: {
-                        showShareModal = true
+                        onShare?(highlight.title, url)
                     }
                 )
             }
@@ -164,20 +181,6 @@ struct HighlightVideoCard: View {
                 }
             }
         }
-        .overlay(
-            Group {
-                if showShareModal, let clipUrl = highlight.clipUrl, let url = URL(string: clipUrl) {
-                    ShareHighlightModal(
-                        highlightTitle: highlight.title,
-                        videoURL: url,
-                        onDismiss: {
-                            showShareModal = false
-                        }
-                    )
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                }
-            }
-        )
         .onAppear {
             startReactionSimulation()
         }

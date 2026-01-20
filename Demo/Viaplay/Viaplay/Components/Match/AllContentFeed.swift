@@ -18,6 +18,9 @@ struct AllContentFeed: View {
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
     @State private var keyboardHeight: CGFloat = 0
+    @State private var showShareModal = false
+    @State private var shareVideoTitle = ""
+    @State private var shareVideoURL: URL?
     
     init(
         timelineEvents: [AnyTimelineEvent],
@@ -120,6 +123,21 @@ struct AllContentFeed: View {
         .onDisappear {
             removeKeyboardObservers()
         }
+        .overlay(
+            Group {
+                if showShareModal, let url = shareVideoURL {
+                    ShareHighlightModal(
+                        highlightTitle: shareVideoTitle,
+                        videoURL: url,
+                        onDismiss: {
+                            showShareModal = false
+                        }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .zIndex(999)  // Ensure it's on top
+                }
+            }
+        )
     }
     
     private func setupKeyboardObservers() {
@@ -350,11 +368,18 @@ struct AllContentFeed: View {
             // Highlights with video
             case .highlight:
                 if let highlightEvent = wrappedEvent.event as? HighlightTimelineEvent {
-                    HighlightVideoCard(highlight: highlightEvent)
-                        .transition(.asymmetric(
-                            insertion: .scale(scale: 0.95).combined(with: .opacity),
-                            removal: .opacity
-                        ))
+                    HighlightVideoCard(
+                        highlight: highlightEvent,
+                        onShare: { title, url in
+                            shareVideoTitle = title
+                            shareVideoURL = url
+                            showShareModal = true
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity),
+                        removal: .opacity
+                    ))
                 } else {
                     Text("DEBUG: Highlight event but cast failed")
                         .foregroundColor(.red)

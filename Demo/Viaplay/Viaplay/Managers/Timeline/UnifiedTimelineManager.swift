@@ -47,14 +47,18 @@ class UnifiedTimelineManager: ObservableObject {
     
     /// All events visible at current video time (user's position, not live)
     var visibleEvents: [AnyTimelineEvent] {
-        allEvents
-            .filter { $0.videoTimestamp <= currentVideoTime }  // Use user's position
-            .sorted { event1, event2 in
-                if event1.videoTimestamp == event2.videoTimestamp {
-                    return event1.displayPriority > event2.displayPriority
-                }
-                return event1.videoTimestamp > event2.videoTimestamp  // Most recent first
+        let filtered = allEvents.filter { $0.videoTimestamp <= currentVideoTime }
+        
+        print("📺 [Timeline] currentVideoTime: \(currentVideoTime)s (\(currentMinute)')")
+        print("📺 [Timeline] Total events: \(allEvents.count)")
+        print("📺 [Timeline] Visible events: \(filtered.count)")
+        
+        return filtered.sorted { event1, event2 in
+            if event1.videoTimestamp == event2.videoTimestamp {
+                return event1.displayPriority > event2.displayPriority
             }
+            return event1.videoTimestamp > event2.videoTimestamp  // Most recent first
+        }
     }
     
     // MARK: - Public Methods

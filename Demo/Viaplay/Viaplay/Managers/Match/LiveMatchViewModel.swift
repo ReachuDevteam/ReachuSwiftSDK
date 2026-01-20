@@ -107,23 +107,26 @@ class LiveMatchViewModel: ObservableObject {
             guard let self = self else { return }
             
             let previousMinute = self.timeline.liveMinute
+            let previousEventCount = self.timeline.visibleEvents.count
             
             // Always advance LIVE time (real-time position)
             self.timeline.updateLiveTime(self.timeline.liveVideoTime + 1)
             
-            // If user is watching live (not scrubbed back), update their position too
-            if self.selectedMinute == nil && self.timeline.isLive {
-                // User is watching live - stays in sync
-            }
+            // If user is watching live (not scrubbed back), stays in sync automatically
+            // updateLiveTime handles this in UnifiedTimelineManager
             
-            // Reload when minute changes
+            // Reload when minute changes OR when visible events count changes
             if self.timeline.liveMinute != previousMinute {
                 self.chatManager.loadMessagesFromTimeline()
+                print("🔄 [LiveMatch] Minute changed to \(self.timeline.liveMinute)', triggering update")
+                self.objectWillChange.send()
+            } else if self.timeline.visibleEvents.count != previousEventCount {
+                print("🔄 [LiveMatch] Event count changed: \(previousEventCount) → \(self.timeline.visibleEvents.count)")
                 self.objectWillChange.send()
             }
             
-            // Stop at 90 minutes
-            if self.timeline.liveMinute >= 90 {
+            // Stop at 105 minutes (includes post-match)
+            if self.timeline.liveMinute >= 105 {
                 self.stopTimelinePlayback()
             }
         }

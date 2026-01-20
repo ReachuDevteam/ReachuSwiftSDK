@@ -1016,8 +1016,8 @@ extension TimelineDataGenerator {
             metadata: ["type": "end-message"]
         )))
         
-        // Add random chat messages throughout
-        let randomChats = TimelineDataGenerator.generateRandomChatMessages(count: 40, maxMinute: 90)
+        // Add random chat messages throughout (full 120 minutes)
+        let randomChats = TimelineDataGenerator.generateRandomChatMessages(count: 50, maxMinute: 105)
         print("💬 [BarcelonaPSG] Generated \(randomChats.count) random chat messages")
         for chat in randomChats {
             events.append(AnyTimelineEvent(chat))
