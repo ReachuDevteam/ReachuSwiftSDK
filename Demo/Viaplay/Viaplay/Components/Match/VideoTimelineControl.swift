@@ -56,7 +56,7 @@ struct VideoTimelineControl: View {
             Divider()
                 .background(Color.white.opacity(0.2))
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 // Timeline Scrubber (expandible)
                 if isExpanded {
                     TimelineScrubber(
@@ -143,17 +143,18 @@ struct VideoTimelineControl: View {
                                     .font(.system(size: 12, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.6))
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
                             .background(Capsule().fill(Color.white.opacity(0.1)))
                         }
                         
                         Spacer()
                     }
                     .padding(.horizontal, 16)
+                    .padding(.vertical, 2)
                 }
             }
-            .padding(.vertical, isExpanded ? 12 : 8)
+            .padding(.vertical, isExpanded ? 8 : 4)
             .background(Color(hex: "1F1E26"))
         }
     }

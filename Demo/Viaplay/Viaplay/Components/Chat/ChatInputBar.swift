@@ -33,7 +33,7 @@ struct ChatInputBar: View {
     
     var body: some View {
         HStack(spacing: 12) {
-            // User avatar
+            // User avatar (smaller)
             Circle()
                 .fill(
                     LinearGradient(
@@ -42,10 +42,10 @@ struct ChatInputBar: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 32, height: 32)
+                .frame(width: 28, height: 28)
                 .overlay(
                     Text(currentUserInitial)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white)
                 )
             
@@ -67,28 +67,28 @@ struct ChatInputBar: View {
                     }
                 }
             
-            // Like button
+            // Like button (smaller)
             Button(action: onLike) {
                 Image(systemName: "hand.thumbsup.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(currentUserColor)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(
                         Circle()
                             .fill(currentUserColor.opacity(0.2))
                     )
             }
             
-            // Send button
+            // Send button (smaller)
             Button(action: {
                 if !messageText.isEmpty {
                     onSend()
                 }
             }) {
                 Image(systemName: "paperplane.fill")
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(messageText.isEmpty ? .white.opacity(0.3) : currentUserColor)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 32, height: 32)
                     .background(
                         Circle()
                             .fill(messageText.isEmpty ? Color.white.opacity(0.1) : currentUserColor.opacity(0.2))
@@ -96,8 +96,8 @@ struct ChatInputBar: View {
             }
             .disabled(messageText.isEmpty)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 6)
         .background(Color(hex: "1F1E26"))
     }
 }
