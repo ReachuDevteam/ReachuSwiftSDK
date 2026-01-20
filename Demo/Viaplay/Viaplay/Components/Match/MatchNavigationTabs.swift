@@ -12,12 +12,7 @@ struct MatchNavigationTabs: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Drag handle
-            RoundedRectangle(cornerRadius: 3)
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 40, height: 6)
-                .padding(.top, 8)
-                .padding(.bottom, 4)
+            // Removed drag handle for cleaner look
             
             HStack(spacing: 0) {
                 ForEach(MatchTab.allCases, id: \.self) { tab in

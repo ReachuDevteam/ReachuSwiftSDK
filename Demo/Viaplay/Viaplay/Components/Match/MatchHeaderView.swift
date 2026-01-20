@@ -49,10 +49,11 @@ struct MatchHeaderView: View {
             .padding(.horizontal, 12)
             .padding(.top, 5)
             
-            // Teams and Score
-            HStack(spacing: 16) {
+            // Teams and Score (smaller logos)
+            HStack(spacing: 12) {
                 TeamLogoView(
                     team: match.homeTeam,
+                    size: 50,  // Smaller: was 60
                     imageUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/200px-FC_Barcelona_%28crest%29.svg.png"
                 )
                 .frame(maxWidth: .infinity)
@@ -65,6 +66,7 @@ struct MatchHeaderView: View {
                 
                 TeamLogoView(
                     team: match.awayTeam,
+                    size: 50,  // Smaller: was 60
                     imageUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/200px-Paris_Saint-Germain_F.C..svg.png"
                 )
                 .frame(maxWidth: .infinity)
