@@ -12,11 +12,17 @@ import Combine
 
 struct HighlightVideoCard: View {
     let highlight: HighlightTimelineEvent
-    let onShare: ((String, URL) -> Void)?  // Callback to parent
+    let onShare: ((String, URL) -> Void)?
     
     @State private var showFullscreenPlayer = false
     @State private var isPlaying = false
     @StateObject private var playerViewModel = InlineVideoPlayerViewModel()
+    
+    // Reactions
+    @State private var reactionCounts: [String: Int]
+    @State private var userReactions: Set<String> = []
+    @State private var animatingReaction: String?
+    @State private var countUpdateTimer: Timer?
     
     init(highlight: HighlightTimelineEvent, onShare: ((String, URL) -> Void)? = nil) {
         self.highlight = highlight
