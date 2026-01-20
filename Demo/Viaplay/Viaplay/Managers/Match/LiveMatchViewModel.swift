@@ -152,12 +152,26 @@ class LiveMatchViewModel: ObservableObject {
         let tweetCount = generatedEvents.filter { $0.eventType == .tweet }.count
         let pollCount = generatedEvents.filter { $0.eventType == .poll }.count
         let commentaryCount = generatedEvents.filter { $0.eventType == .adminComment }.count
+        let announcementCount = generatedEvents.filter { $0.eventType == .announcement }.count
         
         print("📊 [LiveMatchViewModel] Highlights: \(highlightCount)")
         print("📊 [LiveMatchViewModel] Chats: \(chatCount)")
         print("📊 [LiveMatchViewModel] Tweets: \(tweetCount)")
         print("📊 [LiveMatchViewModel] Polls: \(pollCount)")
         print("📊 [LiveMatchViewModel] Commentary: \(commentaryCount)")
+        print("📊 [LiveMatchViewModel] Announcements: \(announcementCount)")
+        
+        // Show timestamp distribution
+        let timestamps = generatedEvents.map { Int($0.videoTimestamp) }.sorted()
+        print("📊 [LiveMatchViewModel] Timestamp range: \(timestamps.first ?? 0)s to \(timestamps.last ?? 0)s")
+        print("📊 [LiveMatchViewModel] Events by minute:")
+        for minute in stride(from: 0, through: 105, by: 15) {
+            let eventsInRange = generatedEvents.filter {
+                $0.videoTimestamp >= TimeInterval(minute * 60) &&
+                $0.videoTimestamp < TimeInterval((minute + 15) * 60)
+            }.count
+            print("  \(minute)'-\(minute+15)': \(eventsInRange) events")
+        }
         
         // Add all wrapped events at once
         timeline.addWrappedEvents(generatedEvents)
@@ -180,11 +194,19 @@ class LiveMatchViewModel: ObservableObject {
         selectedMinute = minute
         
         if useTimelineSync {
+            let newTime = TimeInterval(minute * 60)
+            print("⏩ [LiveMatch] Jumping to minute \(minute) (time: \(newTime)s)")
+            
             // Update user's position in timeline
-            timeline.updateVideoTime(TimeInterval(minute * 60))
+            timeline.updateVideoTime(newTime)
             chatManager.loadMessagesFromTimeline()
-            // Trigger UI update to show new visible events
-            objectWillChange.send()
+            
+            print("⏩ [LiveMatch] After jump - visible events: \(timeline.visibleEvents.count)")
+            
+            // FORCE UI update
+            DispatchQueue.main.async {
+                self.objectWillChange.send()
+            }
         }
     }
     
