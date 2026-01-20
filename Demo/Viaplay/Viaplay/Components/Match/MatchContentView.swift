@@ -119,17 +119,81 @@ struct MatchContentView: View {
 // MARK: - Live Scores List (Placeholder)
 
 struct LiveScoresListView: View {
+    // Sample matches with highlights
+    private let sampleMatches: [LiveMatchData] = [
+        LiveMatchData(
+            id: "1",
+            homeTeam: "Barcelona",
+            awayTeam: "Real Madrid",
+            homeScore: 3,
+            awayScore: 2,
+            minute: 87,
+            isLive: true,
+            competition: "Champions League",
+            highlights: [
+                MatchHighlightData(title: "MÅL: Lewandowski", minute: 23, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66"),
+                MatchHighlightData(title: "Stor sjanse!", minute: 45, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/2.MP4?alt=media&token=9011a94a-1085-4b69-bd41-3b1432ca577a"),
+                MatchHighlightData(title: "Gult kort: Ramos", minute: 67, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/3.MP4?alt=media&token=f28dadf8-05df-4544-a21f-a4c45836793f")
+            ]
+        ),
+        LiveMatchData(
+            id: "2",
+            homeTeam: "Manchester City",
+            awayTeam: "Liverpool",
+            homeScore: 1,
+            awayScore: 1,
+            minute: 72,
+            isLive: true,
+            competition: "Premier League",
+            highlights: [
+                MatchHighlightData(title: "MÅL: Haaland", minute: 34, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66"),
+                MatchHighlightData(title: "MÅL: Salah", minute: 56, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/2.MP4?alt=media&token=9011a94a-1085-4b69-bd41-3b1432ca577a")
+            ]
+        ),
+        LiveMatchData(
+            id: "3",
+            homeTeam: "Bayern Munich",
+            awayTeam: "PSG",
+            homeScore: 2,
+            awayScore: 0,
+            minute: 90,
+            isLive: false,
+            competition: "Champions League",
+            highlights: [
+                MatchHighlightData(title: "MÅL: Müller", minute: 12, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66"),
+                MatchHighlightData(title: "MÅL: Sané", minute: 38, videoURL: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/3.MP4?alt=media&token=f28dadf8-05df-4544-a21f-a4c45836793f")
+            ]
+        )
+    ]
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                Text("Live Scores")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 16)
+                // Header
+                HStack {
+                    Text("Live Resultater")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    Spacer()
+                    
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 8, height: 8)
+                        
+                        Text("\(sampleMatches.filter { $0.isLive }.count) LIVE")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.7))
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
                 
-                ForEach(0..<5) { index in
-                    LiveScoreItem(index: index)
+                // Match cards
+                ForEach(sampleMatches) { match in
+                    ExpandableLiveScoreCard(match: match)
+                        .padding(.horizontal, 16)
                 }
             }
             .padding(.vertical, 12)
