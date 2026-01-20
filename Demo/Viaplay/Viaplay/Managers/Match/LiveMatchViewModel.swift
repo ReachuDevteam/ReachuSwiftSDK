@@ -191,21 +191,28 @@ class LiveMatchViewModel: ObservableObject {
     }
     
     func jumpToMinute(_ minute: Int) {
+        let oldSelectedMinute = selectedMinute
         selectedMinute = minute
         
         if useTimelineSync {
             let newTime = TimeInterval(minute * 60)
-            print("⏩ [LiveMatch] Jumping to minute \(minute) (time: \(newTime)s)")
+            let oldCount = timeline.visibleEvents.count
+            
+            print("⏩ [LiveMatch] Jumping from \(oldSelectedMinute ?? -1)' to \(minute)' (time: \(newTime)s)")
             
             // Update user's position in timeline
             timeline.updateVideoTime(newTime)
+            
+            // Force reload messages
             chatManager.loadMessagesFromTimeline()
             
-            print("⏩ [LiveMatch] After jump - visible events: \(timeline.visibleEvents.count)")
+            let newCount = timeline.visibleEvents.count
+            print("⏩ [LiveMatch] Visible events changed: \(oldCount) → \(newCount)")
             
-            // FORCE UI update
+            // CRITICAL: Force UI update on MAIN thread
             DispatchQueue.main.async {
                 self.objectWillChange.send()
+                print("⏩ [LiveMatch] UI update triggered")
             }
         }
     }
