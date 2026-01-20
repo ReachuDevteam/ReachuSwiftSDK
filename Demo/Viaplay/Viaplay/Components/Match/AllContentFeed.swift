@@ -104,6 +104,16 @@ struct AllContentFeed: View {
             }
         }
         .background(Color(hex: "1B1B25"))
+        .gesture(
+            DragGesture(minimumDistance: 20)
+                .onEnded { value in
+                    // Swipe down to dismiss keyboard
+                    if value.translation.height > 50 {
+                        isInputFocused = false
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    }
+                }
+        )
         .onAppear {
             setupKeyboardObservers()
         }
