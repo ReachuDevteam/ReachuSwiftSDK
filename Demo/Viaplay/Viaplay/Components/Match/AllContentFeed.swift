@@ -286,8 +286,10 @@ struct AllContentFeed: View {
                         ContestCard(
                             title: announcement.title.replacingOccurrences(of: "🏆 ", with: ""),
                             prize: announcement.metadata?["prize"] ?? "Premie",
+                            question: announcement.metadata?["question"],
+                            drawTime: announcement.metadata?["drawTime"],
                             onParticipate: {
-                                print("🏆 Usuario participa!")
+                                print("🏆 Usuario participa en concurso!")
                             }
                         )
                         .transition(.asymmetric(

@@ -651,6 +651,23 @@ extension TimelineDataGenerator {
             metadata: ["type": "halftime", "phase": "halftime"]
         )))
         
+        // Halftime contest
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "halftime-contest",
+            videoTimestamp: 2710,
+            title: "Vinn drakten til ditt favorittlag!",
+            message: "Svar på spørsmålet for å delta i trekningen",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Delta",
+            metadata: [
+                "type": "contest",
+                "prize": "Fotballdrakt",
+                "question": "Ville du reist til Champions League-finalen hvis laget ditt kvalifiserte seg?",
+                "drawTime": "Etter kampen"
+            ]
+        )))
+        
         // Halftime stats event
         events.append(AnyTimelineEvent(AnnouncementEvent(
             id: "halftime-stats",
@@ -992,16 +1009,28 @@ extension TimelineDataGenerator {
             metadata: ["type": "highlights-summary"]
         )))
         
-        // 96' - Contest Winners
+        // 96' - Contest Winner Announcement
         events.append(AnyTimelineEvent(AnnouncementEvent(
-            id: "post-contest-winners",
+            id: "post-contest-winner",
             videoTimestamp: 5760,
-            title: "Konkurranse Vinnere",
-            message: "Gratulerer til vinnerne av dagens konkurranse!",
+            title: "Vinner av konkurransen!",
+            message: "Gratulerer til Ole Hansen som vant fotballdrakten!",
             imageUrl: nil,
             actionUrl: nil,
             actionText: nil,
-            metadata: ["type": "contest-results"]
+            metadata: ["type": "contest-winner", "winner": "Ole Hansen"]
+        )))
+        
+        // 96'10" - User did not win message
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "post-contest-user-loss",
+            videoTimestamp: 5770,
+            title: "Denne gangen ble det ikke deg",
+            message: "Dessverre vant du ikke denne gangen, men fortsett å delta i våre konkurranser de neste kampene!",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: "Se neste konkurranse",
+            metadata: ["type": "contest-user-result", "won": "false"]
         )))
         
         // 98' - Thank You

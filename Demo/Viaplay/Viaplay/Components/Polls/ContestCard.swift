@@ -10,6 +10,8 @@ import SwiftUI
 struct ContestCard: View {
     let title: String
     let prize: String
+    let question: String?
+    let drawTime: String?
     let hasParticipated: Bool
     let onParticipate: () -> Void
     
@@ -19,11 +21,15 @@ struct ContestCard: View {
     init(
         title: String = "Vinn en drakt fra ditt favorittlag!",
         prize: String = "Fotballdrakt",
+        question: String? = nil,
+        drawTime: String? = "Etter kampen",
         hasParticipated: Bool = false,
         onParticipate: @escaping () -> Void = {}
     ) {
         self.title = title
         self.prize = prize
+        self.question = question
+        self.drawTime = drawTime
         self.hasParticipated = hasParticipated
         self.onParticipate = onParticipate
         _participated = State(initialValue: hasParticipated)
@@ -94,6 +100,20 @@ struct ContestCard: View {
                 .foregroundColor(.white)
                 .lineSpacing(1)
             
+            // Question (if provided)
+            if let question = question {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Spørsmål:")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Text(question)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.95))
+                        .lineSpacing(2)
+                }
+            }
+            
             // Prize
             HStack(spacing: 8) {
                 Image(systemName: "gift.fill")
@@ -103,6 +123,25 @@ struct ContestCard: View {
                 Text("Premie: \(prize)")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.9))
+            }
+            
+            // Draw time countdown
+            if let drawTime = drawTime {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.orange)
+                    
+                    Text("Trekning: \(drawTime)")
+                        .font(.system(size: 12))
+                        .foregroundColor(.white.opacity(0.8))
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.orange.opacity(0.2))
+                )
             }
             
             // Participate button
