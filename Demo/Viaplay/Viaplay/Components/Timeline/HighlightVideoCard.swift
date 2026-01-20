@@ -40,26 +40,6 @@ struct HighlightVideoCard: View {
         ])
     }
     
-    // Reactions (same as tweets)
-    @State private var reactionCounts: [String: Int] = [:]
-    @State private var userReactions: Set<String> = []
-    @State private var animatingReaction: String?
-    @State private var countUpdateTimer: Timer?
-    
-    init(highlight: HighlightTimelineEvent) {
-        self.highlight = highlight
-        
-        // Initialize reaction counts (start with some base numbers)
-        let baseCount = 500
-        _reactionCounts = State(initialValue: [
-            "🔥": baseCount + Int.random(in: 50...200),
-            "❤️": baseCount + Int.random(in: 30...150),
-            "⚽": baseCount + Int.random(in: 100...300),
-            "🏆": baseCount + Int.random(in: 20...100),
-            "👍": baseCount + Int.random(in: 40...180),
-            "🎯": baseCount + Int.random(in: 10...80)
-        ])
-    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
