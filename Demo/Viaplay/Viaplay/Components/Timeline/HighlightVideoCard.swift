@@ -13,6 +13,7 @@ import Combine
 struct HighlightVideoCard: View {
     let highlight: HighlightTimelineEvent
     @State private var showFullscreenPlayer = false
+    @State private var showShareModal = false
     @State private var isPlaying = false
     @StateObject private var playerViewModel = InlineVideoPlayerViewModel()
     
@@ -115,6 +116,9 @@ struct HighlightVideoCard: View {
                     playerViewModel: playerViewModel,
                     onTapFullscreen: {
                         showFullscreenPlayer = true
+                    },
+                    onTapShare: {
+                        showShareModal = true
                     }
                 )
             }
@@ -160,6 +164,20 @@ struct HighlightVideoCard: View {
                 }
             }
         }
+        .overlay(
+            Group {
+                if showShareModal, let clipUrl = highlight.clipUrl, let url = URL(string: clipUrl) {
+                    ShareHighlightModal(
+                        highlightTitle: highlight.title,
+                        videoURL: url,
+                        onDismiss: {
+                            showShareModal = false
+                        }
+                    )
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                }
+            }
+        )
         .onAppear {
             startReactionSimulation()
         }
@@ -235,6 +253,7 @@ struct InlineVideoPlayer: View {
     let videoURL: URL
     @ObservedObject var playerViewModel: InlineVideoPlayerViewModel
     let onTapFullscreen: () -> Void
+    let onTapShare: () -> Void
     
     var body: some View {
         GeometryReader { geometry in
@@ -244,13 +263,16 @@ struct InlineVideoPlayer: View {
                     VideoPlayer(player: player)
                         .frame(height: 200)
                         .disabled(true)  // Disable native controls
+                        .onTapGesture {
+                            playerViewModel.togglePlayPause()
+                        }
                 } else {
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.gray.opacity(0.3))
                         .frame(height: 200)
                 }
                 
-                // Play overlay
+                // Play/Pause overlay
                 if !playerViewModel.isPlaying {
                     Button(action: {
                         playerViewModel.togglePlayPause()
@@ -267,20 +289,31 @@ struct InlineVideoPlayer: View {
                     }
                 }
                 
-                // Fullscreen button
+                // Video controls overlay
                 VStack {
                     HStack {
                         Spacer()
                         
+                        // Share button
+                        Button(action: onTapShare) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Circle().fill(Color.black.opacity(0.6)))
+                        }
+                        
+                        // Fullscreen button
                         Button(action: onTapFullscreen) {
                             Image(systemName: "arrow.up.left.and.arrow.down.right")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white)
                                 .padding(8)
-                                .background(Circle().fill(Color.black.opacity(0.5)))
+                                .background(Circle().fill(Color.black.opacity(0.6)))
                         }
-                        .padding(8)
                     }
+                    .padding(8)
+                    
                     Spacer()
                 }
             }
