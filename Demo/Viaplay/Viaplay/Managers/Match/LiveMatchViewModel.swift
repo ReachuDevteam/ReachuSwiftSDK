@@ -299,9 +299,9 @@ enum MatchTab: String, CaseIterable {
     case all = "All"
     case chat = "Chat"
     case highlights = "Highlights"
-    case liveScores = "Live Scores"
-    case polls = "Polls"
     case statistics = "Statistics"
+    case polls = "Interaktivt"  // Polls & Contests
+    case liveScores = "Live Scores"
     
     var icon: String {
         switch self {
@@ -309,7 +309,7 @@ enum MatchTab: String, CaseIterable {
         case .chat: return "message"
         case .highlights: return "play.rectangle"
         case .liveScores: return "trophy"
-        case .polls: return "clock"
+        case .polls: return "hand.raised.fill"
         case .statistics: return "chart.bar"
         }
     }
