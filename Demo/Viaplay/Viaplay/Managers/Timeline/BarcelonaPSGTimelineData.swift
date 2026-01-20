@@ -1027,6 +1027,13 @@ extension TimelineDataGenerator {
         let sorted = events.sorted { $0.videoTimestamp < $1.videoTimestamp }
         print("🎬 [BarcelonaPSG] Returning \(sorted.count) sorted events")
         
+        // Show first 30 events with timestamps
+        print("🎬 [BarcelonaPSG] First 30 events:")
+        for (index, event) in sorted.prefix(30).enumerated() {
+            let minute = Int(event.videoTimestamp / 60)
+            print("  \(index+1). \(event.eventType.rawValue) at \(event.videoTimestamp)s (\(minute)')")
+        }
+        
         // Count by type for debugging
         let tweets = sorted.filter { $0.eventType == .tweet }.count
         let chats = sorted.filter { $0.eventType == .chatMessage }.count
