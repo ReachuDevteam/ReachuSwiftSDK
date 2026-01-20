@@ -53,6 +53,10 @@ class UnifiedTimelineManager: ObservableObject {
         print("📺 [Timeline] Total events: \(allEvents.count)")
         print("📺 [Timeline] Visible events: \(filtered.count)")
         
+        // Show sample of filtered events
+        let sample = filtered.prefix(3).map { "\($0.eventType.rawValue) at \(Int($0.videoTimestamp/60))'" }
+        print("📺 [Timeline] Sample events: \(sample)")
+        
         return filtered.sorted { event1, event2 in
             if event1.videoTimestamp == event2.videoTimestamp {
                 return event1.displayPriority > event2.displayPriority
