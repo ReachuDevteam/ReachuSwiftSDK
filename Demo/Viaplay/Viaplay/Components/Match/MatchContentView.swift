@@ -250,6 +250,107 @@ private struct LiveScoreItem: View {
     }
 }
 
+// MARK: - Live Match Models
+
+struct LiveMatchData: Identifiable {
+    let id: String
+    let homeTeam: String
+    let awayTeam: String
+    let homeScore: Int
+    let awayScore: Int
+    let minute: Int
+    let isLive: Bool
+    let competition: String
+    let highlights: [MatchHighlightData]
+}
+
+struct MatchHighlightData: Identifiable {
+    let id = UUID()
+    let title: String
+    let minute: Int
+    let videoURL: String
+}
+
+// MARK: - Expandable Card
+
+private struct ExpandableLiveScoreCard: View {
+    let match: LiveMatchData
+    @State private var isExpanded = false
+    @State private var showVideoPlayer = false
+    @State private var selectedHighlight: MatchHighlightData?
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            Button(action: {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    isExpanded.toggle()
+                }
+            }) {
+                VStack(spacing: 10) {
+                    HStack {
+                        Text(match.homeTeam).font(.system(size: 14, weight: .medium)).foregroundColor(.white)
+                        Spacer()
+                        HStack(spacing: 8) {
+                            Text("\(match.homeScore)").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                            Circle().fill(Color.white.opacity(0.3)).frame(width: 6, height: 6)
+                            Text("\(match.awayScore)").font(.system(size: 18, weight: .bold)).foregroundColor(.white)
+                        }
+                        Spacer()
+                        Text(match.awayTeam).font(.system(size: 14, weight: .medium)).foregroundColor(.white)
+                    }
+                    HStack {
+                        Text(match.competition).font(.system(size: 12)).foregroundColor(.white.opacity(0.6))
+                        Spacer()
+                        if match.isLive {
+                            HStack(spacing: 4) {
+                                Circle().fill(Color.red).frame(width: 6, height: 6)
+                                Text("LIVE • \(match.minute)'").font(.system(size: 12, weight: .medium)).foregroundColor(.red)
+                            }
+                        } else {
+                            Text("Fulltid").font(.system(size: 12)).foregroundColor(.white.opacity(0.6))
+                        }
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down").font(.system(size: 10)).foregroundColor(.white.opacity(0.6))
+                    }
+                }
+                .padding(14)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
+            }
+            if isExpanded {
+                VStack(spacing: 8) {
+                    ForEach(match.highlights) { h in
+                        Button(action: { selectedHighlight = h; showVideoPlayer = true }) {
+                            HStack(spacing: 10) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.3)).frame(width: 60, height: 40)
+                                    Image(systemName: "play.fill").font(.system(size: 14)).foregroundColor(.white)
+                                }
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(h.title).font(.system(size: 13, weight: .semibold)).foregroundColor(.white)
+                                    Text("\(h.minute)'").font(.system(size: 11)).foregroundColor(.white.opacity(0.6))
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right").font(.system(size: 10)).foregroundColor(.white.opacity(0.3))
+                            }
+                            .padding(10)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.05)))
+                        }
+                    }
+                }
+                .padding(12)
+                .background(Color.white.opacity(0.03))
+                .cornerRadius(12)
+                .padding(.top, 4)
+                .transition(.move(edge: .top).combined(with: .opacity))
+            }
+        }
+        .fullScreenCover(isPresented: $showVideoPlayer) {
+            if let h = selectedHighlight, let url = URL(string: h.videoURL) {
+                HighlightVideoPlayerView(videoURL: url, title: h.title) { showVideoPlayer = false }
+            }
+        }
+    }
+}
+
 #Preview {
     MatchContentView_PreviewWrapper()
 }
