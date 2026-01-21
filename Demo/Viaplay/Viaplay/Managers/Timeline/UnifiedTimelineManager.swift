@@ -22,11 +22,16 @@ class UnifiedTimelineManager: ObservableObject {
     // MARK: - Computed Properties
     
     var currentMinute: Int {
-        Int(currentVideoTime / 60)
+        Int(currentVideoTime / 60)  // Can be negative for pre-match
     }
     
     var liveMinute: Int {
-        Int(liveVideoTime / 60)
+        Int(liveVideoTime / 60)  // Can be negative for pre-match
+    }
+    
+    var displayMinute: String {
+        let min = currentMinute
+        return min < 0 ? "\(min)'" : "\(min)'"
     }
     
     /// Is user watching LIVE (at real-time position)?
@@ -45,24 +50,15 @@ class UnifiedTimelineManager: ObservableObject {
         return String(format: "%d:%02d", minutes, seconds)
     }
     
-    /// All events visible at current video time (user's position, not live)
     var visibleEvents: [AnyTimelineEvent] {
-        let filtered = allEvents.filter { $0.videoTimestamp <= currentVideoTime }
-        
-        print("📺 [Timeline] currentVideoTime: \(currentVideoTime)s (\(currentMinute)')")
-        print("📺 [Timeline] Total events: \(allEvents.count)")
-        print("📺 [Timeline] Visible events: \(filtered.count)")
-        
-        // Show sample of filtered events
-        let sample = filtered.prefix(3).map { "\($0.eventType.rawValue) at \(Int($0.videoTimestamp/60))'" }
-        print("📺 [Timeline] Sample events: \(sample)")
-        
-        return filtered.sorted { event1, event2 in
-            if event1.videoTimestamp == event2.videoTimestamp {
-                return event1.displayPriority > event2.displayPriority
+        allEvents
+            .filter { $0.videoTimestamp <= currentVideoTime }
+            .sorted { event1, event2 in
+                if event1.videoTimestamp == event2.videoTimestamp {
+                    return event1.displayPriority > event2.displayPriority
+                }
+                return event1.videoTimestamp > event2.videoTimestamp
             }
-            return event1.videoTimestamp > event2.videoTimestamp  // Most recent first
-        }
     }
     
     // MARK: - Public Methods

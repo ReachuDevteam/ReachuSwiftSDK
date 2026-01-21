@@ -21,7 +21,7 @@ struct VideoTimelineControl: View {
     let onGoToLive: () -> Void  // NEW: Called when tapping LIVE
     let onSeek: ((Int) -> Void)?
     
-    @State private var isExpanded: Bool = false
+    @State private var isExpanded: Bool = true  // DEMO: Start expanded
     
     init(
         currentMinute: Int,

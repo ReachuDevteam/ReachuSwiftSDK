@@ -306,7 +306,6 @@ struct AllContentFeed: View {
                         // Render lineup card with proper positions
                         if let team = announcement.metadata?["team"],
                            let formation = announcement.metadata?["formation"] {
-                            // Use default lineups with correct positions
                             let players = getDefaultLineup(team: team, formation: formation)
                             
                             LineupCard(
@@ -383,13 +382,10 @@ struct AllContentFeed: View {
                             showShareModal = true
                         }
                     )
-                    .transition(.asymmetric(
-                        insertion: .scale(scale: 0.95).combined(with: .opacity),
-                        removal: .opacity
-                    ))
-                } else {
-                    Text("DEBUG: Highlight event but cast failed")
-                        .foregroundColor(.red)
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.95).combined(with: .opacity),
+                            removal: .opacity
+                        ))
                 }
                 
             // Other types - add as needed
