@@ -559,7 +559,7 @@ struct CustomVideoPlayerView: UIViewControllerRepresentable {
 @MainActor
 class VideoPlayerViewModel: ObservableObject {
     @Published var player: AVPlayer?
-    @Published var isPlaying = false
+    @Published var isPlaying = false  // DEMO: Starts paused
     @Published var showControls = true
     @Published var progress: Double = 0
     @Published var currentTimeText = "00:00"
