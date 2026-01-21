@@ -64,9 +64,12 @@ struct AllContentFeed: View {
                     .padding(.bottom, canChat ? (80 + keyboardHeight) : 12)
                 }
                 .onAppear {
-                    // Scroll to bottom on first appear
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                    // DEMO: Scroll to top on first appear (start at pre-match)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        // Scroll to top to show pre-match content first
+                        if let firstEvent = timelineEvents.sorted(by: { $0.videoTimestamp < $1.videoTimestamp }).first {
+                            proxy.scrollTo(firstEvent.id, anchor: .top)
+                        }
                     }
                 }
                 .onAppear {

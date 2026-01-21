@@ -93,9 +93,11 @@ struct ChatListView: View {
                     .padding(.bottom, canChat && isLive ? (80 + keyboardHeight) : 12)
                 }
                 .onAppear {
-                    // Scroll to bottom on first appear
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
+                    // DEMO: Scroll to top on first appear (start of timeline)
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        if let firstMessage = messages.first {
+                            proxy.scrollTo(firstMessage.id, anchor: .top)
+                        }
                     }
                 }
                 .onChange(of: messages.count) { _ in
