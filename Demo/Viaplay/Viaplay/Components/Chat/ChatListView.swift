@@ -101,12 +101,8 @@ struct ChatListView: View {
                     }
                 }
                 .onChange(of: messages.count) { _ in
-                    // Auto-scroll to bottom when count changes
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                        withAnimation(.easeOut(duration: 0.3)) {
-                            proxy.scrollTo("bottom", anchor: .bottom)
-                        }
-                    }
+                    // DEMO: Don't auto-scroll, let user control scroll position
+                    // For presentation, stay where user is
                 }
                 .onChange(of: keyboardHeight) { _ in
                     // Scroll when keyboard appears
