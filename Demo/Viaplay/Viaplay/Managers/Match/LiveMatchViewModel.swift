@@ -76,13 +76,19 @@ class LiveMatchViewModel: ObservableObject {
         playerViewModel.setupPlayer()
         
         if useTimelineSync {
+            // DEMO: Set timeline to -15' (pre-match) PAUSED
+            timeline.liveVideoTime = -900  // -15 minutes
+            timeline.currentVideoTime = -900  // User also at -15'
+            
+            print("🎬 [DEMO] Timeline set to -15' (-900s)")
+            print("🎬 [DEMO] Video PAUSED - Press Play to start")
+            
             // Timeline mode: events come from pre-loaded timeline
             chatManager.startSimulation(withTimeline: true)
-            // Match simulation still runs to update currentMinute
             matchSimulation.startSimulation()
             
-            // Start timeline playback
-            startTimelinePlayback()
+            // DON'T auto-start for demo
+            // startTimelinePlayback()
         } else {
             // Old mode: random simulation
             chatManager.startSimulation(withTimeline: false)
