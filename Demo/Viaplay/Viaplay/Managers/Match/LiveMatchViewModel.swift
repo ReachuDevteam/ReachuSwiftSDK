@@ -64,10 +64,7 @@ class LiveMatchViewModel: ObservableObject {
         self.matchSimulation = MatchSimulationManager(timeline: timeline)
         self.playerViewModel = VideoPlayerViewModel()
         
-        // Pre-load timeline with demo data
-        if useTimelineSync {
-            loadTimelineData()
-        }
+        // Don't load here
     }
     
     // MARK: - Lifecycle Methods
@@ -76,8 +73,12 @@ class LiveMatchViewModel: ObservableObject {
         playerViewModel.setupPlayer()
         
         if useTimelineSync {
+            // CRITICAL: Set times FIRST, then load data
             timeline.liveVideoTime = -900  // -15'
             timeline.currentVideoTime = -900  // -15'
+            
+            // THEN load timeline data
+            loadTimelineData()
             
             chatManager.startSimulation(withTimeline: true)
             matchSimulation.startSimulation()
