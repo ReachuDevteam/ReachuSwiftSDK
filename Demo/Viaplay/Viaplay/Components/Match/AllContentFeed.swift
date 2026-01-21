@@ -21,6 +21,7 @@ struct AllContentFeed: View {
     @State private var showShareModal = false
     @State private var shareVideoTitle = ""
     @State private var shareVideoURL: URL?
+    @State private var scrolledToTop = false
     
     init(
         timelineEvents: [AnyTimelineEvent],
