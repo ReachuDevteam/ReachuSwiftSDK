@@ -232,8 +232,8 @@ struct ContestCard: View {
 
 #Preview {
     VStack(spacing: 16) {
-        ContestCard()
-        ContestCard(hasParticipated: true)
+        ContestCard(contestId: "preview-1")
+        ContestCard(contestId: "preview-2", onParticipate: {})
     }
     .padding()
     .background(Color.black)
