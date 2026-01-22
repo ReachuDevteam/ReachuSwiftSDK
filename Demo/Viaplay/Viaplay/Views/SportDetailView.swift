@@ -143,14 +143,19 @@ struct SportDetailView: View {
                                 .cornerRadius(10)
                             }
                             
-                            // Live Match View button (with chat and interactives)
+                            // Casting Demo button
                             Button(action: { showLiveMatchView = true }) {
-                                Text("Interaktiv Demo")
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white)
-                                    .frame(width: geometry.size.width - 32)
-                                    .frame(height: 44)
-                                    .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                                HStack(spacing: 8) {
+                                    Image(systemName: "tv.and.mediabox")
+                                        .font(.system(size: 16))
+                                    
+                                    Text("Casting Demo")
+                                        .font(.system(size: 15, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(width: geometry.size.width - 32)
+                                .frame(height: 44)
+                                .background(Color(red: 0.96, green: 0.08, blue: 0.42))
                                     .cornerRadius(10)
                             }
                             

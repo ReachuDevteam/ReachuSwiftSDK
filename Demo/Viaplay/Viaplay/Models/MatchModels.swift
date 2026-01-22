@@ -82,8 +82,8 @@ extension Match {
             logo: "psg_logo"
         ),
         title: "Barcelona - PSG",
-        subtitle: "UEFA Champions League • Fotball",
-        competition: "UEFA Champions League",
+        subtitle: "UEFA Champions League",
+        competition: "Champions League",
         venue: "Camp Nou",
         commentator: "Magnus Drivenes",
         isLive: true,
