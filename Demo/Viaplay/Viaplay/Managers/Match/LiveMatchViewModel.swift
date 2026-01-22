@@ -227,17 +227,22 @@ class LiveMatchViewModel: ObservableObject {
             .filter { $0.eventType == .matchGoal }
             .compactMap { $0.event as? MatchGoalEvent }
         
-        // Count home goals
+        print("⚽ Found \(allGoals.count) goals in visible events")
+        
         var home = 0
         var away = 0
         
         for goal in allGoals {
+            print("⚽ Goal: \(goal.player) - Team: \(goal.team.rawValue) - OwnGoal: \(goal.isOwnGoal)")
+            
             if goal.team == .home && !goal.isOwnGoal {
                 home += 1
             } else if goal.team == .away && !goal.isOwnGoal {
                 away += 1
             }
         }
+        
+        print("⚽ SCORES: Home=\(home) Away=\(away)")
         
         currentHomeScore = home
         currentAwayScore = away
