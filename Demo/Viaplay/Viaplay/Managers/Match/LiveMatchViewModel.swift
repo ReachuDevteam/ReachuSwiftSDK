@@ -84,6 +84,9 @@ class LiveMatchViewModel: ObservableObject {
             // THEN load timeline data
             loadTimelineData()
             
+            // Update scores after loading data
+            updateScoresFromTimeline()
+            
             chatManager.startSimulation(withTimeline: true)
             matchSimulation.startSimulation()
         } else {
