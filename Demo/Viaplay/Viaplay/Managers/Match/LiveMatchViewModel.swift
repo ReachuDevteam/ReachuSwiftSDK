@@ -223,11 +223,15 @@ class LiveMatchViewModel: ObservableObject {
     // MARK: - Score Tracking
     
     private func updateScoresFromTimeline() {
-        let visibleGoals = timeline.visibleEvents
+        let goals = timeline.visibleEvents
+            .filter { $0.eventType == .matchGoal }
             .compactMap { $0.event as? MatchGoalEvent }
         
-        currentHomeScore = visibleGoals.filter { $0.team == .home && !$0.isOwnGoal }.count
-        currentAwayScore = visibleGoals.filter { $0.team == .away && !$0.isOwnGoal }.count
+        let homeGoals = goals.filter { $0.team == .home && !$0.isOwnGoal }
+        let awayGoals = goals.filter { $0.team == .away && !$0.isOwnGoal }
+        
+        currentHomeScore = homeGoals.count
+        currentAwayScore = awayGoals.count
     }
     
     func selectTab(_ tab: MatchTab) {
