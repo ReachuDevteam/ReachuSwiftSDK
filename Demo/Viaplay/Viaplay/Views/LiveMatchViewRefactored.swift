@@ -26,12 +26,12 @@ struct LiveMatchViewRefactored: View {
                 Color(hex: "1B1B25").ignoresSafeArea()
                 
                 VStack(spacing: 0) {
-                    // Header with teams and score (now includes sponsor)
+                    // Header with teams and score (dynamic from timeline)
                     MatchHeaderView(
                         match: match,
-                        homeScore: viewModel.matchSimulation.homeScore,
-                        awayScore: viewModel.matchSimulation.awayScore,
-                        currentMinute: viewModel.matchSimulation.currentMinute,
+                        homeScore: viewModel.currentHomeScore,
+                        awayScore: viewModel.currentAwayScore,
+                        currentMinute: viewModel.timeline.currentMinute,
                         onDismiss: onDismiss
                     )
                     .padding(.top, -8)

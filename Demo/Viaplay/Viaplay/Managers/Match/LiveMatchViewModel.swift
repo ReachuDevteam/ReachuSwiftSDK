@@ -16,7 +16,11 @@ class LiveMatchViewModel: ObservableObject {
     
     @Published var selectedTab: MatchTab = .all
     @Published var selectedMinute: Int? = nil
-    @Published var useTimelineSync: Bool = true  // Toggle for timeline synchronization
+    @Published var useTimelineSync: Bool = true
+    
+    // Dynamic scores
+    @Published var currentHomeScore = 0
+    @Published var currentAwayScore = 0
     
     // MARK: - Timeline (NEW - Central source of truth)
     
@@ -110,9 +114,10 @@ class LiveMatchViewModel: ObservableObject {
             // Always advance LIVE time (real-time broadcast position)
             self.timeline.updateLiveTime(self.timeline.liveVideoTime + 1)
             
-            // ONLY reload chat when minute changes (reduce updates)
+            // Reload and update when minute changes
             if self.timeline.liveMinute != previousMinute {
                 self.chatManager.loadMessagesFromTimeline()
+                self.updateScoresFromTimeline()
             }
             
             // Stop at 105 minutes

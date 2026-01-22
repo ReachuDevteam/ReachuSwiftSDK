@@ -377,6 +377,18 @@ extension TimelineDataGenerator {
             metadata: ["score": "1-0", "player": "A. Diallo"]
         )))
         
+        // 13'03" - Goal Replay (3 seconds after)
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "replay-goal-13",
+            videoTimestamp: 783,
+            title: "Her er målet: A. Diallo!",
+            description: "Se reprisen av Barcelona sitt første mål",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66",
+            highlightType: .goal,
+            metadata: ["replay": "true", "originalGoal": "goal-13"]
+        )))
+        
         // 13'05" - Celebration chats
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 785,
@@ -582,6 +594,18 @@ extension TimelineDataGenerator {
             metadata: nil
         )))
         
+        // 32'03" - Goal Replay
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "replay-goal-32",
+            videoTimestamp: 1923,
+            title: "Her er målet: B. Mbeumo!",
+            description: "Se reprisen av Barcelona sitt andre mål",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/2.MP4?alt=media&token=9011a94a-1085-4b69-bd41-3b1432ca577a",
+            highlightType: .goal,
+            metadata: ["replay": "true"]
+        )))
+        
         // 32'10" - Celebration
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 1930,
@@ -738,6 +762,18 @@ extension TimelineDataGenerator {
             metadata: nil
         )))
         
+        // 47'03" - Goal Replay
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "replay-goal-47",
+            videoTimestamp: 2823,
+            title: "Her er målet: J. Kluivert!",
+            description: "Se reprisen av PSG sitt mål",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/3.MP4?alt=media&token=f28dadf8-05df-4544-a21f-a4c45836793f",
+            highlightType: .goal,
+            metadata: ["replay": "true"]
+        )))
+        
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 2825,
             username: "PSGFan",
@@ -853,6 +889,18 @@ extension TimelineDataGenerator {
             commentaryType: .goal,
             isHighlighted: true,
             metadata: nil
+        )))
+        
+        // 72'03" - Goal Replay
+        events.append(AnyTimelineEvent(HighlightTimelineEvent(
+            id: "replay-goal-72",
+            videoTimestamp: 4323,
+            title: "Her er målet: Matheus Cunha!",
+            description: "Se reprisen av Barcelona sitt tredje mål",
+            thumbnailUrl: nil,
+            clipUrl: "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/1.MP4?alt=media&token=898b7836-5e27-492d-82bb-9d7bb50f9d66",
+            highlightType: .goal,
+            metadata: ["replay": "true"]
         )))
         
         events.append(AnyTimelineEvent(ChatMessageEvent(
