@@ -36,10 +36,11 @@ struct TeamLogoView: View {
             .frame(width: size, height: size)
             
             Text(team.name)
-                .font(.system(size: size * 0.217, weight: .medium))
+                .font(.system(size: 11, weight: .medium))  // Fixed size instead of relative
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
