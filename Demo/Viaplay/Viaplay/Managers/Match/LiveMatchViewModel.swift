@@ -196,16 +196,16 @@ class LiveMatchViewModel: ObservableObject {
             
             print("⏩ [SCRUB] Jumped to \(minute)' (\(newTime)s)")
             
-            // CRITICAL: Update currentVideoTime (not liveTime)
-            // This controls what events are visible
+            // Update currentVideoTime
             timeline.currentVideoTime = newTime
             
-            // Reload chat for this position
+            // Update scores based on new position
+            updateScoresFromTimeline()
+            
+            // Reload chat
             chatManager.loadMessagesFromTimeline()
             
-            print("⏩ [SCRUB] Now showing \(timeline.visibleEvents.count) events")
-            
-            // Force complete UI refresh
+            // Force UI refresh
             self.objectWillChange.send()
         }
     }
