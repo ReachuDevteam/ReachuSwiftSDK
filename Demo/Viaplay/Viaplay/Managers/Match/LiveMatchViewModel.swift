@@ -211,10 +211,20 @@ class LiveMatchViewModel: ObservableObject {
         selectedMinute = nil
         
         if useTimelineSync {
-            timeline.goToLive()  // Jump to live position
+            timeline.goToLive()
+            updateScoresFromTimeline()
             chatManager.loadMessagesFromTimeline()
-            // Playback already running, just sync position
         }
+    }
+    
+    // MARK: - Score Tracking
+    
+    private func updateScoresFromTimeline() {
+        let visibleGoals = timeline.visibleEvents
+            .compactMap { $0.event as? MatchGoalEvent }
+        
+        currentHomeScore = visibleGoals.filter { $0.team == .home && !$0.isOwnGoal }.count
+        currentAwayScore = visibleGoals.filter { $0.team == .away && !$0.isOwnGoal }.count
     }
     
     func selectTab(_ tab: MatchTab) {
