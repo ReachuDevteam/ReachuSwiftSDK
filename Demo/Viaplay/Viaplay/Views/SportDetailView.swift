@@ -281,9 +281,11 @@ struct SportDetailView: View {
                             }
                             .padding(.horizontal, 16)
                             
-                            RProductSlider(
-                                title: nil,
-                                layout: .cards
+                            RProductCarousel(
+                                componentId: "product-carousel-template",
+                                layout: "compact",
+                                showSponsor: true,
+                                sponsorPosition: "topRight"
                             )
                         }
                         .padding(.top, 24)

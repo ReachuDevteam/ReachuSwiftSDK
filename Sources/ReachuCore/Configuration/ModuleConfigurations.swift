@@ -489,13 +489,19 @@ public struct LiveShowConfiguration {
 public struct CampaignConfiguration {
     public let webSocketBaseURL: String  // WebSocket endpoint for campaigns (e.g., "https://dev-campaing.reachu.io")
     public let restAPIBaseURL: String    // REST API endpoint for campaigns (same as WebSocket base URL)
+    /// API key for campaign admin endpoints (different from SDK API key)
+    /// Used for endpoints like GET /v1/sdk/config and GET /v1/offers
+    /// Configured in reachu-config.json under "campaigns.campaignAdminApiKey"
+    public let campaignAdminApiKey: String
     
     public init(
         webSocketBaseURL: String = "https://dev-campaing.reachu.io",
-        restAPIBaseURL: String = "https://dev-campaing.reachu.io"
+        restAPIBaseURL: String = "https://dev-campaing.reachu.io",
+        campaignAdminApiKey: String = ""
     ) {
         self.webSocketBaseURL = webSocketBaseURL
         self.restAPIBaseURL = restAPIBaseURL
+        self.campaignAdminApiKey = campaignAdminApiKey
     }
     
     public static let `default` = CampaignConfiguration()

@@ -110,7 +110,7 @@
     "flag": "https://flagcdn.com/w320/no.png"
   },
   "liveShow": {
-    "campaignId": 3,
+    "campaignId": 26,
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
@@ -132,6 +132,11 @@
     "trackProductEvents": true,
     "autocapture": false,
     "recordSessionsPercent": 0
+  },
+  "campaigns": {
+    "webSocketBaseURL": "https://dev-campaing.reachu.io",
+    "restAPIBaseURL": "https://dev-campaing.reachu.io",
+    "campaignAdminApiKey": "xxl_api_key_507d4014243d8360"
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",

@@ -121,15 +121,43 @@ public struct RProductCarousel: View {
     /// Default: false (button hidden)
     private let showAddToCartButton: Bool
     
+    /// Whether to show sponsor badge
+    /// Default: false (badge hidden)
+    /// If true, badge will be shown if campaignLogo is available from campaign
+    private let showSponsor: Bool
+    
+    /// Position of the sponsor badge
+    /// Whether to show sponsor badge above/below carousel
+    /// Badge displays campaign logo with "Sponset av" text
+    /// Logo is fetched from campaign configuration (campaignLogo field)
+    private let showSponsor: Bool
+    
+    /// Sponsor badge position: "topRight", "topLeft", "bottomRight", "bottomLeft"
+    /// Badge is displayed in a separate container (like a div) above or below the carousel
+    /// Default: "topRight"
+    private let sponsorPosition: String
+    
+    /// Background color for product images
+    /// Useful for PNG images without background to avoid transparency issues
+    /// Default: .white
+    private let imageBackgroundColor: Color
+    
     // MARK: - Initializer
     
-    public init(componentId: String? = nil, layout: String? = nil, showAddToCartButton: Bool = false) {
+    public init(componentId: String? = nil, layout: String? = nil, showAddToCartButton: Bool = false, showSponsor: Bool = false, sponsorPosition: String? = nil, imageBackgroundColor: Color? = nil) {
         // Optional component ID to identify a specific component
         self.componentId = componentId
         // Optional layout override for demo/testing (e.g., "full", "compact", "horizontal")
         // If nil, uses layout from backend config
         self.layout = layout
         self.showAddToCartButton = showAddToCartButton
+        self.showSponsor = showSponsor
+        // Default to "topRight" if not specified
+        self.sponsorPosition = sponsorPosition ?? "topRight"
+        // Default to white if not specified
+        self.imageBackgroundColor = imageBackgroundColor ?? .white
+        // Default to white if not specified
+        self.imageBackgroundColor = imageBackgroundColor ?? .white
     }
     
     // MARK: - Computed Properties
@@ -227,6 +255,19 @@ public struct RProductCarousel: View {
         viewModel.isMarketUnavailable
     }
     
+    /// Get campaign logo URL from current campaign
+    private var campaignLogoUrl: String? {
+        campaignManager.currentCampaign?.campaignLogo
+    }
+    
+    
+    /// Should show sponsor badge
+    private var shouldShowSponsorBadge: Bool {
+        guard showSponsor else { return false }
+        guard let logo = campaignLogoUrl, !logo.isEmpty else { return false }
+        return true
+    }
+    
     // MARK: - Body
     
     /// Get effective config, calculating if needed
@@ -235,80 +276,144 @@ public struct RProductCarousel: View {
         return config
     }
     
-    public var body: some View {
+    /// Content view without modifiers
+    private var contentView: some View {
         Group {
             if !shouldShow {
                 EmptyView()
             } else if shouldHide {
                 EmptyView()
             } else if effectiveConfig != nil {
-                ZStack {
-                    // Skeleton - fades out when content is ready
-                    skeletonView
-                        .opacity(shouldShowLoading || products.isEmpty ? 1.0 : 0.0)
-                        .animation(.easeInOut(duration: 0.3), value: shouldShowLoading || products.isEmpty)
-                    
-                    // Content - fades in when ready
-                    carouselContent
-                        .opacity(shouldShowLoading || products.isEmpty ? 0.0 : 1.0)
-                        .animation(.easeInOut(duration: 0.3), value: shouldShowLoading || products.isEmpty)
-                }
+                mainContentView
             } else {
                 // Show skeleton loader while waiting for config
                 skeletonView
             }
         }
-        .onChange(of: campaignManager.isCampaignActive) { _ in
-            handleCampaignStateChange()
-        }
-        .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
-            handleCampaignStateChange()
-        }
-        .onChange(of: campaignManager.activeComponents.count) { _ in
-            // React immediately when components are loaded/updated
-            handleComponentChange()
-        }
-        .onChange(of: activeComponent?.id) { _ in
-            handleComponentChange()
-        }
-        .onChange(of: configProductIdsId) { _ in
-            // React to productIds changes from backend (even if component ID doesn't change)
-            handleComponentChange()
-        }
-        .onAppear {
-            // Initialize on appear
-            handleComponentChange()
+    }
+    
+    /// Main content view with skeleton, carousel, and sponsor badge
+    private var mainContentView: some View {
+        let currentLogoUrl = campaignLogoUrl
+        let shouldShowBadge = shouldShowSponsorBadge
+        let isLoading = shouldShowLoading || products.isEmpty
+        let position = sponsorPosition.isEmpty ? "topRight" : sponsorPosition
+        
+        // Determine if badge should be above or below carousel
+        let isTopPosition = position == "topRight" || position == "topLeft"
+        let isRightPosition = position == "topRight" || position == "bottomRight"
+        
+        return ZStack {
+            // Skeleton - fades out when content is ready
+            skeletonView
+                .opacity(isLoading ? 1.0 : 0.0)
+                .animation(.easeInOut(duration: 0.3), value: isLoading)
             
-            // Track component view
-            if let component = activeComponent, let config = cachedConfig {
-                AnalyticsManager.shared.trackComponentView(
-                    componentId: component.id,
-                    componentType: "product_carousel",
-                    componentName: component.name,
-                    campaignId: campaignManager.currentCampaign?.id,
-                    metadata: [
-                        "layout": config.layout,
-                        "product_count": products.count,
-                        "has_product_ids": !config.productIds.isEmpty,
-                        "auto_play": config.shouldAutoPlay
-                    ]
-                )
+            // Content with badge container
+            VStack(spacing: 0) {
+                // Badge container above carousel (if top position)
+                if shouldShowBadge, let logoUrl = currentLogoUrl, isTopPosition {
+                    sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+                        .opacity(isLoading ? 0.0 : 1.0)
+                        .animation(.easeInOut(duration: 0.3), value: isLoading)
+                }
+                
+                // Carousel content
+                carouselContent
+                    .opacity(isLoading ? 0.0 : 1.0)
+                    .animation(.easeInOut(duration: 0.3), value: isLoading)
+                
+                // Badge container below carousel (if bottom position)
+                if shouldShowBadge, let logoUrl = currentLogoUrl, !isTopPosition {
+                    sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+                        .opacity(isLoading ? 0.0 : 1.0)
+                        .animation(.easeInOut(duration: 0.3), value: isLoading)
+                }
             }
         }
-        .task {
-            // Also try to update after a small delay to catch async updates
-            try? await Task.sleep(nanoseconds: 100_000_000) // 100ms delay
-            handleComponentChange()
+    }
+    
+    /// Sponsor badge container (like a div) positioned above or below carousel
+    /// Badge is displayed in its own container to avoid overlapping with product cards
+    /// Positioned horizontally (left/right) within the container based on sponsorPosition parameter
+    /// - Parameters:
+    ///   - logoUrl: URL of the campaign sponsor logo
+    ///   - isRightPosition: Whether badge should be aligned to the right (true) or left (false)
+    private func sponsorBadgeContainer(logoUrl: String, isRightPosition: Bool) -> some View {
+        HStack {
+            if isRightPosition {
+                Spacer()
+            }
+            
+            RSponsorBadge(logoUrl: logoUrl)
+                .padding(.horizontal, ReachuSpacing.xs)
+                .padding(.vertical, ReachuSpacing.xs)
+            
+            if !isRightPosition {
+                Spacer()
+            }
         }
-        .onDisappear {
-            stopAutoScroll()
-        }
-        .sheet(item: $showingProductDetail) { product in
-            RProductDetailOverlay(
-                product: product,
-                onDismiss: {
-                    showingProductDetail = nil
-                }
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
+    }
+    
+    public var body: some View {
+        contentView
+            .onChange(of: campaignManager.isCampaignActive) { _ in
+                handleCampaignStateChange()
+            }
+            .onChange(of: campaignManager.currentCampaign?.isPaused) { _ in
+                handleCampaignStateChange()
+            }
+            .onChange(of: campaignManager.currentCampaign) { campaign in
+                handleCampaignChange(campaign)
+            }
+            .onChange(of: campaignManager.activeComponents.count) { _ in
+                handleComponentChange()
+            }
+            .onChange(of: activeComponent?.id) { _ in
+                handleComponentChange()
+            }
+            .onChange(of: configProductIdsId) { _ in
+                handleComponentChange()
+            }
+            .onAppear {
+                handleOnAppear()
+            }
+            .task {
+                try? await Task.sleep(nanoseconds: 100_000_000)
+                handleComponentChange()
+            }
+            .onDisappear {
+                stopAutoScroll()
+            }
+            .sheet(item: $showingProductDetail) { product in
+                RProductDetailOverlay(
+                    product: product,
+                    onDismiss: {
+                        showingProductDetail = nil
+                    }
+                )
+            }
+    }
+    
+    /// Handle onAppear logic separately to avoid type-checking issues
+    private func handleOnAppear() {
+        handleComponentChange()
+        
+        // Track component view
+        if let component = activeComponent, let config = cachedConfig {
+            AnalyticsManager.shared.trackComponentView(
+                componentId: component.id,
+                componentType: "product_carousel",
+                componentName: component.name,
+                campaignId: campaignManager.currentCampaign?.id,
+                metadata: [
+                    "layout": config.layout,
+                    "product_count": products.count,
+                    "has_product_ids": !config.productIds.isEmpty,
+                    "auto_play": config.shouldAutoPlay
+                ]
             )
         }
     }
@@ -519,9 +624,10 @@ public struct RProductCarousel: View {
             return AnyView(fullLayoutProductCardView(product: product))
         } else {
             // For compact and horizontal layouts, use grid variant without extra padding
-            return AnyView(RProductCard(product: product, variant: .grid))
+            return AnyView(RProductCard(product: product, variant: .grid, imageBackgroundColor: imageBackgroundColor))
         }
     }
+    
     
     /// Custom full layout product card with balanced sizing
     @ViewBuilder
@@ -561,23 +667,29 @@ public struct RProductCarousel: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Product Image
                 if let imageUrl = primaryImageUrl, let url = URL(string: imageUrl) {
-                    LoadedImage(
-                        url: url,
-                        placeholder: AnyView(Rectangle()
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .overlay { RCustomLoader(style: .rotate, size: 30) }),
-                        errorView: AnyView(Rectangle()
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundColor(adaptiveColors.textSecondary)
-                            })
-                    )
-                    .aspectRatio(contentMode: .fit)
+                    ZStack {
+                        // Background color for PNG images without background
+                        Rectangle()
+                            .fill(imageBackgroundColor)
+                        
+                        LoadedImage(
+                            url: url,
+                            placeholder: AnyView(Rectangle()
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .overlay { RCustomLoader(style: .rotate, size: 30) }),
+                            errorView: AnyView(Rectangle()
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(adaptiveColors.textSecondary)
+                                })
+                        )
+                        .aspectRatio(contentMode: .fit)
+                    }
                     .frame(maxWidth: .infinity) // Use full width, let height adjust naturally
                 } else {
                     Rectangle()
-                        .fill(adaptiveColors.surfaceSecondary)
+                        .fill(imageBackgroundColor)
                         .frame(height: 200)
                         .overlay {
                             Image(systemName: "photo")
@@ -673,27 +785,34 @@ public struct RProductCarousel: View {
             HStack(spacing: ReachuSpacing.sm) { // Reduced spacing
                 // Image on the left (smaller)
                 if let imageUrl = product.images.first?.url, let url = URL(string: imageUrl) {
-                    LoadedImage(
-                        url: url,
-                        placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(adaptiveColors.surfaceSecondary)
+                    ZStack {
+                        // Background color for PNG images without background
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                            .fill(imageBackgroundColor)
                             .frame(width: 90, height: 90)
-                            .overlay { RCustomLoader(style: .rotate, size: 24) }),
-                        errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                            .fill(adaptiveColors.surfaceSecondary)
-                            .frame(width: 90, height: 90)
-                            .overlay {
-                                Image(systemName: "photo")
-                                    .foregroundColor(adaptiveColors.textSecondary)
-                            })
-                    )
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 90, height: 90)
+                        
+                        LoadedImage(
+                            url: url,
+                            placeholder: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .frame(width: 90, height: 90)
+                                .overlay { RCustomLoader(style: .rotate, size: 24) }),
+                            errorView: AnyView(RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(adaptiveColors.surfaceSecondary)
+                                .frame(width: 90, height: 90)
+                                .overlay {
+                                    Image(systemName: "photo")
+                                        .foregroundColor(adaptiveColors.textSecondary)
+                                })
+                        )
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 90, height: 90)
+                    }
                     .clipped()
                     .cornerRadius(ReachuBorderRadius.medium)
                 } else {
                     RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
-                        .fill(adaptiveColors.surfaceSecondary)
+                        .fill(imageBackgroundColor)
                         .frame(width: 90, height: 90) // Reduced image size
                 }
                 
@@ -1030,6 +1149,11 @@ public struct RProductCarousel: View {
     
     // MARK: - Helper Methods
     
+    /// Handle campaign change
+    private func handleCampaignChange(_ campaign: Campaign?) {
+        handleCampaignStateChange()
+    }
+    
     private func handleCampaignStateChange() {
         // Update cached config first
         updateCachedConfigIfNeeded()
@@ -1209,6 +1333,8 @@ class RProductCarouselViewModel: ObservableObject {
         isLoading = false
     }
 }
+
+// MARK: - Scroll Offset Preference Key
 
 // MARK: - Scroll Offset Preference Key
 

@@ -65,6 +65,13 @@ public struct RProductSpotlight: View {
     /// Default: true. Button only shows if product has no variants.
     private let showAddToCartButton: Bool
     
+    /// Whether to show sponsor badge
+    private let showSponsor: Bool
+    
+    /// Sponsor badge position: "topRight", "topLeft", "bottomRight", "bottomLeft"
+    /// Default: "topRight"
+    private let sponsorPosition: String
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
     @StateObject private var viewModel = RProductSpotlightViewModel()
     
@@ -85,10 +92,12 @@ public struct RProductSpotlight: View {
     
     // MARK: - Initializer
     
-    public init(componentId: String? = nil, variant: RProductCard.Variant? = nil, showAddToCartButton: Bool = true) {
+    public init(componentId: String? = nil, variant: RProductCard.Variant? = nil, showAddToCartButton: Bool = true, showSponsor: Bool = false, sponsorPosition: String? = nil) {
         self.componentId = componentId
         self.variant = variant
         self.showAddToCartButton = showAddToCartButton
+        self.showSponsor = showSponsor
+        self.sponsorPosition = sponsorPosition ?? "topRight"
     }
     
     // MARK: - Computed Properties
@@ -172,6 +181,18 @@ public struct RProductSpotlight: View {
         viewModel.isMarketUnavailable
     }
     
+    /// Get campaign logo URL from current campaign
+    private var campaignLogoUrl: String? {
+        campaignManager.currentCampaign?.campaignLogo
+    }
+    
+    /// Should show sponsor badge
+    private var shouldShowSponsorBadge: Bool {
+        guard showSponsor else { return false }
+        guard let logo = campaignLogoUrl, !logo.isEmpty else { return false }
+        return true
+    }
+    
     // MARK: - Body
     
     public var body: some View {
@@ -230,37 +251,76 @@ public struct RProductSpotlight: View {
     
     /// Main spotlight content view with product card and highlight badge
     private func spotlightContentView(product: Product, highlightText: String?) -> some View {
-        VStack(spacing: ReachuSpacing.md) {
-            // Highlight badge (if provided) - only show for hero variant
-            if let highlightText = highlightText, !highlightText.isEmpty, variant == nil || variant == .hero {
-                Text(highlightText)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(adaptiveColors.surface)
-                    .padding(.horizontal, ReachuSpacing.md)
-                    .padding(.vertical, ReachuSpacing.xs)
-                    .background(
-                        Capsule()
-                            .fill(adaptiveColors.primary)
-                    )
-                    .padding(.horizontal, ReachuSpacing.md)
+        let currentLogoUrl = campaignLogoUrl
+        let shouldShowBadge = shouldShowSponsorBadge
+        let position = sponsorPosition.isEmpty ? "topRight" : sponsorPosition
+        
+        // Determine if badge should be above or below content
+        let isTopPosition = position == "topRight" || position == "topLeft"
+        let isRightPosition = position == "topRight" || position == "bottomRight"
+        
+        return VStack(spacing: 0) {
+            // Badge container above content (if top position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
             }
             
-            // Use custom hero layout if hero variant, otherwise use RProductCard
-            if variant == nil || variant == .hero {
-                customHeroLayout(product: product)
+            VStack(spacing: ReachuSpacing.md) {
+                // Highlight badge (if provided) - only show for hero variant
+                if let highlightText = highlightText, !highlightText.isEmpty, variant == nil || variant == .hero {
+                    Text(highlightText)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(adaptiveColors.surface)
+                        .padding(.horizontal, ReachuSpacing.md)
+                        .padding(.vertical, ReachuSpacing.xs)
+                        .background(
+                            Capsule()
+                                .fill(adaptiveColors.primary)
+                        )
+                        .padding(.horizontal, ReachuSpacing.md)
+                }
+                
+                // Use custom hero layout if hero variant, otherwise use RProductCard
+                if variant == nil || variant == .hero {
+                    customHeroLayout(product: product)
+                        .padding(.horizontal, ReachuSpacing.md)
+                } else {
+                    // For other variants, use RProductCard directly
+                    RProductCard(
+                        product: product,
+                        variant: variant!,
+                        showBrand: ReachuConfiguration.shared.uiConfiguration.showProductBrands,
+                        showDescription: ReachuConfiguration.shared.uiConfiguration.showProductDescriptions,
+                        showProductDetail: true
+                    )
                     .padding(.horizontal, ReachuSpacing.md)
-            } else {
-                // For other variants, use RProductCard directly
-                RProductCard(
-                    product: product,
-                    variant: variant!,
-                    showBrand: ReachuConfiguration.shared.uiConfiguration.showProductBrands,
-                    showDescription: ReachuConfiguration.shared.uiConfiguration.showProductDescriptions,
-                    showProductDetail: true
-                )
-                .padding(.horizontal, ReachuSpacing.md)
+                }
+            }
+            
+            // Badge container below content (if bottom position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, !isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
             }
         }
+    }
+    
+    /// Sponsor badge container (like a div) positioned above or below content
+    private func sponsorBadgeContainer(logoUrl: String, isRightPosition: Bool) -> some View {
+        HStack {
+            if isRightPosition {
+                Spacer()
+            }
+            
+            RSponsorBadge(logoUrl: logoUrl)
+                .padding(.horizontal, ReachuSpacing.xs)
+                .padding(.vertical, ReachuSpacing.xs)
+            
+            if !isRightPosition {
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
     }
     
     /// Custom hero layout with smaller fonts and conditional Add to Cart button

@@ -10,17 +10,19 @@ public enum CampaignState: String, Codable {
 }
 
 /// Campaign model
-public struct Campaign: Codable, Identifiable {
+public struct Campaign: Codable, Identifiable, Equatable {
     public let id: Int
     public let startDate: String?  // ISO 8601 timestamp
     public let endDate: String?    // ISO 8601 timestamp
     public let isPaused: Bool?     // Campaign paused state (independent of dates)
+    public let campaignLogo: String?  // Sponsor logo URL from campaign
     
-    public init(id: Int, startDate: String? = nil, endDate: String? = nil, isPaused: Bool? = nil) {
+    public init(id: Int, startDate: String? = nil, endDate: String? = nil, isPaused: Bool? = nil, campaignLogo: String? = nil) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
         self.isPaused = isPaused
+        self.campaignLogo = campaignLogo
     }
     
     // Custom decoder to handle isPaused as both String and Bool
@@ -30,6 +32,7 @@ public struct Campaign: Codable, Identifiable {
         id = try container.decode(Int.self, forKey: .id)
         startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+        campaignLogo = try container.decodeIfPresent(String.self, forKey: .campaignLogo)
         
         // Handle isPaused as either String or Bool
         if let boolValue = try? container.decodeIfPresent(Bool.self, forKey: .isPaused) {
@@ -47,6 +50,7 @@ public struct Campaign: Codable, Identifiable {
         case startDate
         case endDate
         case isPaused
+        case campaignLogo
     }
     
     /// Determine current state based on dates
@@ -93,9 +97,68 @@ public struct Campaign: Codable, Identifiable {
         // Fallback: Default to active
         return .active
     }
+    
+    // MARK: - Equatable
+    
+    public static func == (lhs: Campaign, rhs: Campaign) -> Bool {
+        return lhs.id == rhs.id &&
+               lhs.startDate == rhs.startDate &&
+               lhs.endDate == rhs.endDate &&
+               lhs.isPaused == rhs.isPaused &&
+               lhs.campaignLogo == rhs.campaignLogo
+    }
 }
 
-/// Backend response wrapper for GET /api/campaigns/:campaignId/components
+/// SDK Config Response from GET /v1/sdk/config
+internal struct SDKConfigResponse: Codable {
+    let campaignId: Int
+    let campaignName: String?
+    let campaignLogo: String?
+    let channelId: Int?
+    let channelName: String?
+    let environment: String?
+    let campaigns: CampaignsConfig?
+    let marketFallback: MarketFallbackConfig?
+    let features: FeaturesConfig?
+    
+    struct CampaignsConfig: Codable {
+        let webSocketBaseURL: String?
+        let restAPIBaseURL: String?
+    }
+    
+    struct MarketFallbackConfig: Codable {
+        let countryCode: String?
+        let currencyCode: String?
+        let currencySymbol: String?
+        let phoneCode: String?
+    }
+    
+    struct FeaturesConfig: Codable {
+        let enableWebSocket: Bool?
+        let enableGuestCheckout: Bool?
+    }
+}
+
+/// Offers Response from GET /v1/offers
+internal struct OffersResponse: Codable {
+    let campaignId: Int
+    let campaignName: String?
+    let campaignLogo: String?
+    let channelId: Int?
+    let channelName: String?
+    let offers: [OfferResponse]
+}
+
+/// Individual offer/component from offers response
+internal struct OfferResponse: Codable {
+    let id: String
+    let type: String
+    let name: String
+    let config: [String: AnyCodable]
+    let placement: String?
+}
+
+/// Backend response wrapper for GET /api/campaigns/:campaignId/components (Legacy)
 /// Backend sends: { "components": [...] }
 internal struct ComponentsResponseWrapper: Codable {
     let components: [ComponentResponse]

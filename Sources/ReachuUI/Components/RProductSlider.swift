@@ -88,6 +88,8 @@ public struct RProductSlider: View {
     private let onSeeAllTap: (() -> Void)?
     private let preferredCurrency: String?
     private let preferredCountry: String?
+    private let showSponsor: Bool
+    private let sponsorPosition: String
     
     // ViewModel for automatic product loading
     @StateObject private var viewModel = RProductSliderViewModel()
@@ -114,7 +116,9 @@ public struct RProductSlider: View {
         onAddToCart: ((Product) -> Void)? = nil,
         onSeeAllTap: (() -> Void)? = nil,
         currency: String? = nil,
-        country: String? = nil
+        country: String? = nil,
+        showSponsor: Bool = false,
+        sponsorPosition: String? = nil
     ) {
         self.title = title
         self.manualProducts = products
@@ -127,6 +131,8 @@ public struct RProductSlider: View {
         self.onSeeAllTap = onSeeAllTap
         self.preferredCurrency = currency
         self.preferredCountry = country
+        self.showSponsor = showSponsor
+        self.sponsorPosition = sponsorPosition ?? "topRight"
     }
     
     // MARK: - Computed Properties
@@ -216,6 +222,18 @@ public struct RProductSlider: View {
         return true
     }
     
+    /// Get campaign logo URL from current campaign
+    private var campaignLogoUrl: String? {
+        campaignManager.currentCampaign?.campaignLogo
+    }
+    
+    /// Should show sponsor badge
+    private var shouldShowSponsorBadge: Bool {
+        guard showSponsor else { return false }
+        guard let logo = campaignLogoUrl, !logo.isEmpty else { return false }
+        return true
+    }
+    
     // MARK: - Body
     public var body: some View {
         Group {
@@ -273,24 +291,63 @@ public struct RProductSlider: View {
     // MARK: - Content Views
     
     private var productSliderContent: some View {
-        VStack(alignment: .leading, spacing: ReachuSpacing.md) {
-            // Header with title and see all button
-            if let title = title {
-                headerView(title: title)
+        let currentLogoUrl = campaignLogoUrl
+        let shouldShowBadge = shouldShowSponsorBadge
+        let position = sponsorPosition.isEmpty ? "topRight" : sponsorPosition
+        
+        // Determine if badge should be above or below slider
+        let isTopPosition = position == "topRight" || position == "topLeft"
+        let isRightPosition = position == "topRight" || position == "bottomRight"
+        
+        return VStack(alignment: .leading, spacing: 0) {
+            // Badge container above slider (if top position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
             }
             
-            // Products slider
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: layout.spacing) {
-                    ForEach(displayedProducts) { product in
-                        productCardView(product: product)
-                    }
+            VStack(alignment: .leading, spacing: ReachuSpacing.md) {
+                // Header with title and see all button
+                if let title = title {
+                    headerView(title: title)
                 }
-                .padding(.horizontal, ReachuSpacing.md)
+                
+                // Products slider
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: layout.spacing) {
+                        ForEach(displayedProducts) { product in
+                            productCardView(product: product)
+                        }
+                    }
+                    .padding(.horizontal, ReachuSpacing.md)
+                }
+                .scaleEffect(sliderScale)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
             }
-            .scaleEffect(sliderScale)
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: sliderScale)
+            
+            // Badge container below slider (if bottom position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, !isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+            }
         }
+    }
+    
+    /// Sponsor badge container (like a div) positioned above or below slider
+    private func sponsorBadgeContainer(logoUrl: String, isRightPosition: Bool) -> some View {
+        HStack {
+            if isRightPosition {
+                Spacer()
+            }
+            
+            RSponsorBadge(logoUrl: logoUrl)
+                .padding(.horizontal, ReachuSpacing.xs)
+                .padding(.vertical, ReachuSpacing.xs)
+            
+            if !isRightPosition {
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
     }
     
     private var loadingView: some View {

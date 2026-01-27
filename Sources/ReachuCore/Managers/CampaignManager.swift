@@ -200,31 +200,39 @@ public class CampaignManager: ObservableObject {
         }
     }
     
-    /// Fetch campaign information from API
+    /// Fetch campaign information from API using new v1 endpoint
+    /// Always uses campaignId from configuration file (reachu-config.json)
     private func fetchCampaignInfo(campaignId: Int) async {
-        let urlString = "\(campaignRestAPIBaseURL)/api/campaigns/\(campaignId)"
+        let config = ReachuConfiguration.shared
+        
+        // Use campaign admin API key (different from SDK API key)
+        let campaignAdminApiKey = config.campaignConfiguration.campaignAdminApiKey.isEmpty 
+            ? (config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey)  // Fallback to SDK API key if not configured
+            : config.campaignConfiguration.campaignAdminApiKey
+        
+        // Always use campaignId from configuration file (reachu-config.json)
+        let configuredCampaignId = config.liveShowConfiguration.campaignId
+        guard configuredCampaignId > 0 else {
+            ReachuLogger.warning("No campaignId configured in liveShow.campaignId - skipping campaign info fetch", component: "CampaignManager")
+            return
+        }
+        
+        let urlString = "\(campaignRestAPIBaseURL)/v1/sdk/config?apiKey=\(campaignAdminApiKey)&campaignId=\(configuredCampaignId)"
+        
         guard let url = URL(string: urlString) else {
             ReachuLogger.error("Invalid campaign API URL: \(urlString)", component: "CampaignManager")
             return
         }
-        
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        // Add API Key authentication
-        let config = ReachuConfiguration.shared
-        if !config.apiKey.isEmpty {
-            request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
-        }
-        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             
             if let httpResponse = response as? HTTPURLResponse {
-                
                 if httpResponse.statusCode == 404 {
                     ReachuLogger.warning("Campaign \(campaignId) not found - SDK works normally", component: "CampaignManager")
                     // Campaign not found - allow normal SDK behavior
@@ -235,7 +243,8 @@ public class CampaignManager: ObservableObject {
                 
                 guard (200...299).contains(httpResponse.statusCode) else {
                     let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
-                    ReachuLogger.error("Campaign info request failed with status \(httpResponse.statusCode)", component: "CampaignManager")
+                    print("🎯 [CampaignManager] ❌ HTTP Error \(httpResponse.statusCode): \(responseString)")
+                    ReachuLogger.error("Campaign info request failed with status \(httpResponse.statusCode): \(responseString)", component: "CampaignManager")
                     // On error, allow normal SDK behavior
                     self.isCampaignActive = true
                     self.campaignState = .active
@@ -252,8 +261,35 @@ public class CampaignManager: ObservableObject {
                 return
             }
             
-            let campaign = try JSONDecoder().decode(Campaign.self, from: data)
+            // Log raw JSON response for debugging
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("🎯 [CampaignManager] Raw SDK Config JSON response: \(responseString)")
+            }
+            
+            // Decode new SDK config response
+            let sdkConfig = try JSONDecoder().decode(SDKConfigResponse.self, from: data)
+            print("🎯 [CampaignManager] SDK Config decoded - Campaign ID: \(sdkConfig.campaignId)")
+            print("🎯 [CampaignManager] SDK Config - campaignLogo from response: \(sdkConfig.campaignLogo ?? "nil")")
+            print("🎯 [CampaignManager] SDK Config - campaignLogo isEmpty: \(sdkConfig.campaignLogo?.isEmpty ?? true)")
+            
+            // Create Campaign model from SDK config response
+            // Note: The new endpoint doesn't return startDate/endDate/isPaused, so we preserve existing values
+            let existingCampaign = self.currentCampaign
+            print("🎯 [CampaignManager] Existing campaign before update: ID=\(existingCampaign?.id ?? -1), logo=\(existingCampaign?.campaignLogo ?? "nil")")
+            
+            let campaign = Campaign(
+                id: sdkConfig.campaignId,
+                startDate: existingCampaign?.startDate,
+                endDate: existingCampaign?.endDate,
+                isPaused: existingCampaign?.isPaused,
+                campaignLogo: sdkConfig.campaignLogo
+            )
+            
+            print("🎯 [CampaignManager] New Campaign created - ID: \(campaign.id), campaignLogo: \(campaign.campaignLogo ?? "nil")")
+            
             self.currentCampaign = campaign
+            print("🎯 [CampaignManager] currentCampaign updated - ID: \(self.currentCampaign?.id ?? -1), campaignLogo: \(self.currentCampaign?.campaignLogo ?? "nil")")
+            
             self.campaignState = campaign.currentState
             
             // Check if campaign is paused first (takes priority over date-based state)
@@ -286,13 +322,11 @@ public class CampaignManager: ObservableObject {
             
         } catch let decodingError as DecodingError {
             ReachuLogger.error("Failed to decode campaign info: \(decodingError)", component: "CampaignManager")
-            if let data = try? await URLSession.shared.data(for: request).0,
-               let responseString = String(data: data, encoding: .utf8) {
-            }
             // On error, allow normal SDK behavior
             self.isCampaignActive = true
             self.campaignState = .active
         } catch {
+            print("🎯 [CampaignManager] ❌ Network/Other Error: \(error.localizedDescription)")
             ReachuLogger.warning("Failed to fetch campaign info: \(error)", component: "CampaignManager")
             // On error, allow normal SDK behavior
             self.isCampaignActive = true
@@ -300,42 +334,57 @@ public class CampaignManager: ObservableObject {
         }
     }
     
-    /// Fetch active components from API
+    /// Fetch active components from API using new v1 endpoint
+    /// Always uses campaignId from configuration file (reachu-config.json)
     private func fetchActiveComponents(campaignId: Int) async {
-        let urlString = "\(campaignRestAPIBaseURL)/api/campaigns/\(campaignId)/components"
-        guard let url = URL(string: urlString) else {
-            ReachuLogger.error("Invalid components API URL", component: "CampaignManager")
+        let config = ReachuConfiguration.shared
+        
+        // Use campaign admin API key (different from SDK API key)
+        let campaignAdminApiKey = config.campaignConfiguration.campaignAdminApiKey.isEmpty 
+            ? (config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey)  // Fallback to SDK API key if not configured
+            : config.campaignConfiguration.campaignAdminApiKey
+        
+        let countryCode = config.marketConfiguration.countryCode
+        
+        // Always use campaignId from configuration file (reachu-config.json)
+        let configuredCampaignId = config.liveShowConfiguration.campaignId
+        guard configuredCampaignId > 0 else {
+            ReachuLogger.warning("No campaignId configured in liveShow.campaignId - skipping components fetch", component: "CampaignManager")
             return
         }
         
+        // Build URL with query parameters
+        var urlComponents = URLComponents(string: "\(campaignRestAPIBaseURL)/v1/offers")
+        urlComponents?.queryItems = [
+            URLQueryItem(name: "apiKey", value: campaignAdminApiKey),
+            URLQueryItem(name: "campaignId", value: "\(configuredCampaignId)")
+        ]
+        
+        // Add optional userCountry if available
+        if !countryCode.isEmpty {
+            urlComponents?.queryItems?.append(URLQueryItem(name: "userCountry", value: countryCode))
+        }
+        
+        guard let url = urlComponents?.url else {
+            ReachuLogger.error("Invalid offers API URL", component: "CampaignManager")
+            return
+        }
         
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         
-        // Add API Key authentication
-        let config = ReachuConfiguration.shared
-        if !config.apiKey.isEmpty {
-            request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
-        }
-        
-        var responseData: Data?
-        var responseString: String?
-        
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
-            responseData = data
-            responseString = String(data: data, encoding: .utf8)
             
             // Validate HTTP response before decoding
             if let httpResponse = response as? HTTPURLResponse {
-                
                 guard (200...299).contains(httpResponse.statusCode) else {
                     let responseString = String(data: data, encoding: .utf8) ?? "Unable to decode"
-                    ReachuLogger.error("Components request failed with status \(httpResponse.statusCode)", component: "CampaignManager")
+                    ReachuLogger.error("Offers request failed with status \(httpResponse.statusCode): \(responseString)", component: "CampaignManager")
                     
-                    // If 404, campaign might not have components configured - this is OK
+                    // If 404, campaign might not have offers configured - this is OK
                     if httpResponse.statusCode == 404 {
                         self.activeComponents = []
                         return
@@ -345,58 +394,44 @@ public class CampaignManager: ObservableObject {
             }
             
             // Validate that we received JSON, not HTML
-            if let responseString = responseString, responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
-                ReachuLogger.error("Received HTML instead of JSON from components endpoint", component: "CampaignManager")
+            if let responseString = String(data: data, encoding: .utf8), responseString.trimmingCharacters(in: .whitespaces).hasPrefix("<") {
+                ReachuLogger.error("Received HTML instead of JSON from offers endpoint", component: "CampaignManager")
                 return
             }
             
-            // Log raw JSON response for debugging
-            if let responseString = responseString {
+            // Decode new offers response
+            let offersResponse = try JSONDecoder().decode(OffersResponse.self, from: data)
+            
+            // Update campaign logo if available from offers response
+            if let logo = offersResponse.campaignLogo, !logo.isEmpty {
+                let existingCampaign = self.currentCampaign
+                
+                self.currentCampaign = Campaign(
+                    id: existingCampaign?.id ?? offersResponse.campaignId,
+                    startDate: existingCampaign?.startDate,
+                    endDate: existingCampaign?.endDate,
+                    isPaused: existingCampaign?.isPaused,
+                    campaignLogo: logo
+                )
             }
             
-            guard let data = responseData else {
-                ReachuLogger.error("No data received", component: "CampaignManager")
-                return
+            // Convert offers to components
+            let components = try offersResponse.offers.map { offer -> Component in
+                // Convert OfferResponse config to ComponentConfig
+                let jsonData = try JSONSerialization.data(withJSONObject: offer.config.mapValues { $0.value })
+                let componentConfig = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+                
+                return Component(
+                    id: offer.id,
+                    type: offer.type,
+                    name: offer.name,
+                    config: componentConfig,
+                    status: "active" // All offers from /v1/offers are active
+                )
             }
             
-            // Decode backend response format
-            // Backend sends: { "components": [...] }
-            // Try wrapped format first, then fallback to direct array
-            let responses: [ComponentResponse]
-            do {
-                let wrapper = try JSONDecoder().decode(ComponentsResponseWrapper.self, from: data)
-                responses = wrapper.components
-            } catch {
-                // Fallback: try direct array format
-                responses = try JSONDecoder().decode([ComponentResponse].self, from: data)
-            }
-            
-            for (index, response) in responses.enumerated() {
-                
-                if let customConfig = response.customConfig {
-                }
-                
-                if let component = response.component {
-                }
-            }
-            
-            // Convert to Component model
-            let components = try responses.map { response -> Component in
-                
-                let component = try Component(from: response)
-                
-                // Log which config was used
-                if let customConfig = response.customConfig, !customConfig.isEmpty {
-                } else if response.component != nil {
-                }
-                
-                
-                return component
-            }
-            
-            
-            // Filter to only active components
-            self.activeComponents = components.filter { $0.isActive }
+            // All offers are active by default
+            self.activeComponents = components
             
             // Components loaded
             if !self.activeComponents.isEmpty {
@@ -407,7 +442,7 @@ public class CampaignManager: ObservableObject {
             CacheManager.shared.saveComponents(self.activeComponents)
             
         } catch let decodingError as DecodingError {
-            ReachuLogger.error("Failed to decode components: \(decodingError)", component: "CampaignManager")
+            ReachuLogger.error("Failed to decode offers: \(decodingError)", component: "CampaignManager")
             
             // Log detailed decoding error information
             switch decodingError {
@@ -422,29 +457,30 @@ public class CampaignManager: ObservableObject {
             @unknown default:
                 ReachuLogger.error("Unknown decoding error", component: "CampaignManager")
             }
-            
-            // Log raw response for debugging
-            if let responseString = responseString {
-                ReachuLogger.debug("Raw response: \(responseString.prefix(1000))", component: "CampaignManager")
-            }
         } catch {
             ReachuLogger.warning("Failed to fetch active components: \(error)", component: "CampaignManager")
-            
-            // Log raw response for debugging
-            if let responseString = responseString {
-                ReachuLogger.debug("Raw response: \(responseString.prefix(1000))", component: "CampaignManager")
-            }
         }
     }
     
     /// Connect to campaign WebSocket
+    /// Always uses campaignId from configuration file (reachu-config.json)
     /// According to backend behavior:
     /// - If campaign is Ended: Backend sends campaign_ended immediately
     /// - If campaign is Upcoming: No event sent, waits for campaign_started
     /// - If campaign is Active: No event sent, can fetch components
     private func connectWebSocket(campaignId: Int) async {
+        // Always use campaignId from configuration file (reachu-config.json)
+        let config = ReachuConfiguration.shared
+        let configuredCampaignId = config.liveShowConfiguration.campaignId
+        guard configuredCampaignId > 0 else {
+            ReachuLogger.warning("No campaignId configured in liveShow.campaignId - skipping WebSocket connection", component: "CampaignManager")
+            return
+        }
+        
+        print("🎯 [CampaignManager] connectWebSocket - Using campaignId from config file: \(configuredCampaignId)")
+        
         // Use the campaign WebSocket endpoint, not the GraphQL endpoint
-        webSocketManager = CampaignWebSocketManager(campaignId: campaignId, baseURL: campaignWebSocketBaseURL)
+        webSocketManager = CampaignWebSocketManager(campaignId: configuredCampaignId, baseURL: campaignWebSocketBaseURL)
         
         // Setup event handlers
         webSocketManager?.onCampaignStarted = { [weak self] event in
@@ -506,12 +542,15 @@ public class CampaignManager: ObservableObject {
         isCampaignActive = true
         campaignState = .active
         
-        // Update campaign with new dates
+        // Update campaign with new dates, preserve existing campaignLogo if available
+        let existingLogo = currentCampaign?.campaignLogo
+        print("🎯 [CampaignManager] Campaign started - ID: \(event.campaignId), preserving campaignLogo: \(existingLogo ?? "nil")")
         currentCampaign = Campaign(
             id: event.campaignId,
             startDate: event.startDate,
             endDate: event.endDate,
-            isPaused: false
+            isPaused: false,
+            campaignLogo: existingLogo
         )
         
         // Save to cache
@@ -542,13 +581,14 @@ public class CampaignManager: ObservableObject {
         // Immediately hide ALL components
         activeComponents.removeAll()
         
-        // Update campaign with end date
+        // Update campaign with end date, preserve existing campaignLogo if available
         if let campaign = currentCampaign {
             currentCampaign = Campaign(
                 id: campaign.id,
                 startDate: campaign.startDate,
                 endDate: event.endDate,
-                isPaused: campaign.isPaused
+                isPaused: campaign.isPaused,
+                campaignLogo: campaign.campaignLogo
             )
         } else {
             // If campaign wasn't loaded yet, create it with end date
@@ -556,7 +596,8 @@ public class CampaignManager: ObservableObject {
                 id: event.campaignId,
                 startDate: nil,
                 endDate: event.endDate,
-                isPaused: nil
+                isPaused: nil,
+                campaignLogo: nil
             )
         }
         
@@ -621,13 +662,14 @@ public class CampaignManager: ObservableObject {
         
         isCampaignActive = true
         
-        // Update campaign with resumed state
+        // Update campaign with resumed state, preserve existing campaignLogo if available
         if let campaign = currentCampaign {
             currentCampaign = Campaign(
                 id: campaign.id,
                 startDate: campaign.startDate,
                 endDate: campaign.endDate,
-                isPaused: false
+                isPaused: false,
+                campaignLogo: campaign.campaignLogo
             )
         }
         

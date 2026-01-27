@@ -46,6 +46,7 @@ public struct RProductCard: View {
     private let showProductDetail: Bool
     private let onTap: (() -> Void)?
     private let onAddToCart: (() -> Void)?
+    private let imageBackgroundColor: Color?
     
     // Environment for adaptive colors
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
@@ -70,7 +71,8 @@ public struct RProductCard: View {
         showDescription: Bool = ReachuConfiguration.shared.uiConfiguration.showProductDescriptions,
         showProductDetail: Bool = true,
         onTap: (() -> Void)? = nil,
-        onAddToCart: (() -> Void)? = nil
+        onAddToCart: (() -> Void)? = nil,
+        imageBackgroundColor: Color? = nil  // Optional background color for product images (default: nil)
     ) {
         self.product = product
         self.variant = variant
@@ -79,6 +81,7 @@ public struct RProductCard: View {
         self.showProductDetail = showProductDetail
         self.onTap = onTap
         self.onAddToCart = onAddToCart
+        self.imageBackgroundColor = imageBackgroundColor
     }
     
     // MARK: - Body
@@ -301,7 +304,7 @@ public struct RProductCard: View {
         let urlString = imageUrl ?? primaryImageUrl
         let imageURL = URL(string: urlString ?? "")
         
-        return LoadedImage(
+        let imageView = LoadedImage(
             url: imageURL,
             placeholder: AnyView(placeholderView(systemImage: "photo", color: adaptiveColors.textSecondary)),
             errorView: AnyView(placeholderView(systemImage: "exclamationmark.triangle", color: adaptiveColors.error))
@@ -309,7 +312,22 @@ public struct RProductCard: View {
         .aspectRatio(contentMode: .fill)
         .frame(width: width, height: height)
         .clipped()
-        .cornerRadius(ReachuBorderRadius.medium)
+        
+        // Wrap with background color if specified
+        if let backgroundColor = imageBackgroundColor {
+            return AnyView(
+                ZStack {
+                    Rectangle()
+                        .fill(backgroundColor)
+                        .frame(width: width, height: height)
+                    
+                    imageView
+                }
+                .cornerRadius(ReachuBorderRadius.medium)
+            )
+        } else {
+            return AnyView(imageView.cornerRadius(ReachuBorderRadius.medium))
+        }
     }
     
     /// Placeholder view for loading/error states
