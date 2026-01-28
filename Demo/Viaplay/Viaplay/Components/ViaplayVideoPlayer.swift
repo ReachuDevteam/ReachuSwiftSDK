@@ -17,6 +17,8 @@ import ReachuUI
 struct ViaplayVideoPlayer: View {
     let match: Match
     let onDismiss: () -> Void
+    let onNavigateToNextPowerContest: (() -> Void)?
+    let onNavigateToPreviousPowerContest: (() -> Void)?
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
     @StateObject private var webSocketManager = WebSocketManager()
@@ -30,6 +32,18 @@ struct ViaplayVideoPlayer: View {
     @State private var showContest = false
     @State private var showCheckout = false
     @State private var isLoadingVideo = true
+    
+    init(
+        match: Match,
+        onDismiss: @escaping () -> Void,
+        onNavigateToNextPowerContest: (() -> Void)? = nil,
+        onNavigateToPreviousPowerContest: (() -> Void)? = nil
+    ) {
+        self.match = match
+        self.onDismiss = onDismiss
+        self.onNavigateToNextPowerContest = onNavigateToNextPowerContest
+        self.onNavigateToPreviousPowerContest = onNavigateToPreviousPowerContest
+    }
     
     // SDK Client para fetch de productos
     private var sdkClient: SdkClient {
@@ -354,7 +368,14 @@ struct ViaplayVideoPlayer: View {
                         .foregroundColor(.white)
                 }
                 
-                Button(action: { playerViewModel.seekBackward() }) {
+                Button(action: {
+                    // Demo: Navigate to previous Power contest, fallback to seek backward
+                    if let onPrevious = onNavigateToPreviousPowerContest {
+                        onPrevious()
+                    } else {
+                        playerViewModel.seekBackward()
+                    }
+                }) {
                     Image(systemName: "gobackward.10")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white)
@@ -366,7 +387,14 @@ struct ViaplayVideoPlayer: View {
                         .foregroundColor(.white)
                 }
                 
-                Button(action: { playerViewModel.seekForward() }) {
+                Button(action: {
+                    // Demo: Navigate to next Power contest, fallback to seek forward
+                    if let onNext = onNavigateToNextPowerContest {
+                        onNext()
+                    } else {
+                        playerViewModel.seekForward()
+                    }
+                }) {
                     Image(systemName: "goforward.10")
                         .font(.system(size: 20, weight: .medium))
                         .foregroundColor(.white)

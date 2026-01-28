@@ -20,6 +20,8 @@ struct VideoTimelineControl: View {
     let onToggleMute: () -> Void
     let onGoToLive: () -> Void  // NEW: Called when tapping LIVE
     let onSeek: ((Int) -> Void)?
+    let onNavigateToNextPowerContest: (() -> Void)?  // Demo: Navigate to next Power contest
+    let onNavigateToPreviousPowerContest: (() -> Void)?  // Demo: Navigate to previous Power contest
     
     @State private var isExpanded: Bool = true  // DEMO: Start expanded
     
@@ -35,7 +37,9 @@ struct VideoTimelineControl: View {
         onPlayPause: @escaping () -> Void = {},
         onToggleMute: @escaping () -> Void = {},
         onGoToLive: @escaping () -> Void = {},
-        onSeek: ((Int) -> Void)? = nil
+        onSeek: ((Int) -> Void)? = nil,
+        onNavigateToNextPowerContest: (() -> Void)? = nil,
+        onNavigateToPreviousPowerContest: (() -> Void)? = nil
     ) {
         self.currentMinute = currentMinute
         self.liveMinute = liveMinute
@@ -49,6 +53,8 @@ struct VideoTimelineControl: View {
         self.onToggleMute = onToggleMute
         self.onGoToLive = onGoToLive
         self.onSeek = onSeek
+        self.onNavigateToNextPowerContest = onNavigateToNextPowerContest
+        self.onNavigateToPreviousPowerContest = onNavigateToPreviousPowerContest
     }
     
     var body: some View {
@@ -72,7 +78,7 @@ struct VideoTimelineControl: View {
                 // Controls
                 if isExpanded {
                     // Full controls when expanded
-                    HStack(spacing: 20) {
+                    HStack(spacing: 12) {
                         // Time indicator / Toggle button
                         Button(action: {
                             withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -96,8 +102,19 @@ struct VideoTimelineControl: View {
                             .padding(.vertical, 6)
                             .background(Capsule().fill(Color.white.opacity(0.1)))
                         }
+                        .fixedSize()
                         
-                        Spacer()
+                        // Backward button (Demo: Navigate to previous Power contest)
+                        if onNavigateToPreviousPowerContest != nil {
+                            Button(action: {
+                                onNavigateToPreviousPowerContest?()
+                            }) {
+                                Image(systemName: "gobackward.10")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                            }
+                        }
                         
                         // Play/Pause - Centered
                         Button(action: onPlayPause) {
@@ -108,6 +125,18 @@ struct VideoTimelineControl: View {
                                 .contentShape(Circle())
                         }
                         .frame(maxWidth: .infinity)
+                        
+                        // Forward button (Demo: Navigate to next Power contest)
+                        if onNavigateToNextPowerContest != nil {
+                            Button(action: {
+                                onNavigateToNextPowerContest?()
+                            }) {
+                                Image(systemName: "goforward.10")
+                                    .font(.system(size: 18))
+                                    .foregroundColor(.white)
+                                    .frame(width: 44, height: 44)
+                            }
+                        }
                         
                         Spacer()
                         
@@ -355,7 +384,9 @@ private struct VideoTimelineControl_PreviewWrapper: View {
                 MatchEvent(minute: 13, type: .goal, player: "A. Diallo", team: .home, description: nil, score: "1-0"),
                 MatchEvent(minute: 18, type: .yellowCard, player: "Casemiro", team: .home, description: nil, score: nil)
             ],
-            isPlaying: true
+            isPlaying: true,
+            onNavigateToNextPowerContest: nil,
+            onNavigateToPreviousPowerContest: nil
         )
         .background(Color(hex: "1B1B25"))
     }

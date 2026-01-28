@@ -14,6 +14,8 @@ struct AllContentFeed: View {
     let onPollVote: (String, String) -> Void
     let onSelectTab: (MatchTab) -> Void
     let onSendMessage: ((String) -> Void)?
+    let onNavigateToTimestamp: ((TimeInterval) -> Void)?
+    @Binding var lastNavigatedTimestamp: TimeInterval
     
     @State private var messageText = ""
     @FocusState private var isInputFocused: Bool
@@ -29,7 +31,9 @@ struct AllContentFeed: View {
         canChat: Bool = true,
         onPollVote: @escaping (String, String) -> Void,
         onSelectTab: @escaping (MatchTab) -> Void,
-        onSendMessage: ((String) -> Void)? = nil
+        onSendMessage: ((String) -> Void)? = nil,
+        onNavigateToTimestamp: ((TimeInterval) -> Void)? = nil,
+        lastNavigatedTimestamp: Binding<TimeInterval> = .constant(0)
     ) {
         self.timelineEvents = timelineEvents
         self.statistics = statistics
@@ -37,6 +41,8 @@ struct AllContentFeed: View {
         self.onPollVote = onPollVote
         self.onSelectTab = onSelectTab
         self.onSendMessage = onSendMessage
+        self.onNavigateToTimestamp = onNavigateToTimestamp
+        self._lastNavigatedTimestamp = lastNavigatedTimestamp
     }
     
     var body: some View {
@@ -53,6 +59,16 @@ struct AllContentFeed: View {
                                     insertion: .move(edge: .bottom).combined(with: .opacity),
                                     removal: .opacity
                                 ))
+                        }
+                        .onAppear {
+                            // Debug: Log Power contest events
+                            let powerContests = timelineEvents.filter { $0.eventType == .powerContest }
+                            if !powerContests.isEmpty {
+                                print("🎯 [AllContentFeed] Power contest events found: \(powerContests.count)")
+                                for event in powerContests {
+                                    print("  - ID: \(event.id), timestamp: \(event.videoTimestamp)s")
+                                }
+                            }
                         }
                         
                         // Invisible anchor at bottom
@@ -93,6 +109,10 @@ struct AllContentFeed: View {
                             proxy.scrollTo("bottom", anchor: .bottom)
                         }
                     }
+                }
+                .onChange(of: lastNavigatedTimestamp) { newTimestamp in
+                    // When navigating to a timestamp, check if we need to scroll to a Power contest
+                    handlePowerContestScroll(proxy: proxy, timestamp: newTimestamp)
                 }
             }
             
@@ -170,6 +190,24 @@ struct AllContentFeed: View {
     private func removeKeyboardObservers() {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
+    }
+    
+    private func handlePowerContestScroll(proxy: ScrollViewProxy, timestamp: TimeInterval) {
+        // Find Power contest events near the navigated timestamp
+        let powerContestEvents = timelineEvents
+            .filter({ $0.eventType == .powerContest })
+            .sorted(by: { $0.videoTimestamp < $1.videoTimestamp })
+        
+        // Check if any Power contest is within 5 seconds of the navigated timestamp
+        if let targetEvent = powerContestEvents.first(where: { 
+            abs($0.videoTimestamp - timestamp) <= 5 
+        }) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    proxy.scrollTo(targetEvent.id, anchor: .top)
+                }
+            }
+        }
     }
     
     // MARK: - Default Lineups
@@ -273,6 +311,36 @@ struct AllContentFeed: View {
                         poll: pollEvent,
                         onVote: { optionId in
                             print("📊 Usuario votó: \(optionId) en poll: \(pollEvent.id)")
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+                }
+                
+            // Power Contests
+            case .powerContest:
+                if let contestEvent = wrappedEvent.event as? PowerContestEvent {
+                    PowerContestCard(
+                        contest: contestEvent,
+                        onParticipate: {
+                            print("🏆 Usuario participa en Power contest: \(contestEvent.id)")
+                        }
+                    )
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.95).combined(with: .opacity),
+                        removal: .opacity
+                    ))
+                }
+                
+            // Power Products
+            case .powerProduct:
+                if let productEvent = wrappedEvent.event as? PowerProductEvent {
+                    PowerProductCard(
+                        productEvent: productEvent,
+                        onViewProduct: {
+                            print("🛒 Usuario ve Power product: \(productEvent.id)")
                         }
                     )
                     .transition(.asymmetric(
@@ -402,7 +470,9 @@ struct AllContentFeed: View {
         timelineEvents: [],
         statistics: MatchStatistics.mock(for: Match.barcelonaPSG),
         onPollVote: { _, _ in },
-        onSelectTab: { _ in }
+        onSelectTab: { _ in },
+        onNavigateToTimestamp: nil,
+        lastNavigatedTimestamp: .constant(0)
     )
 }
 

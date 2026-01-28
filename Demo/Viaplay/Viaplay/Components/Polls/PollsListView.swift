@@ -10,7 +10,23 @@ import SwiftUI
 struct PollsListView: View {
     let timelinePolls: [PollTimelineEvent]
     let contests: [AnnouncementEvent]  // Contests from announcements
+    let powerContests: [PowerContestEvent]  // Power contest events
     @ObservedObject var timeline: UnifiedTimelineManager
+    let onNavigateToTimestamp: ((TimeInterval) -> Void)?
+    
+    init(
+        timelinePolls: [PollTimelineEvent],
+        contests: [AnnouncementEvent],
+        powerContests: [PowerContestEvent],
+        timeline: UnifiedTimelineManager,
+        onNavigateToTimestamp: ((TimeInterval) -> Void)? = nil
+    ) {
+        self.timelinePolls = timelinePolls
+        self.contests = contests
+        self.powerContests = powerContests
+        self.timeline = timeline
+        self.onNavigateToTimestamp = onNavigateToTimestamp
+    }
     
     private var visiblePolls: [PollTimelineEvent] {
         timelinePolls.filter { $0.videoTimestamp <= timeline.currentVideoTime }
@@ -19,6 +35,15 @@ struct PollsListView: View {
     
     private var visibleContests: [AnnouncementEvent] {
         contests.filter { $0.videoTimestamp <= timeline.currentVideoTime }
+    }
+    
+    private var visiblePowerContests: [PowerContestEvent] {
+        powerContests.filter { $0.videoTimestamp <= timeline.currentVideoTime }
+            .sorted { $0.videoTimestamp > $1.videoTimestamp }  // Newest first
+    }
+    
+    private var totalVisibleCount: Int {
+        visiblePolls.count + visibleContests.count + visiblePowerContests.count
     }
     
     var body: some View {
@@ -33,7 +58,7 @@ struct PollsListView: View {
                         
                         Spacer()
                         
-                        Text("\(visiblePolls.count + visibleContests.count)")
+                        Text("\(totalVisibleCount)")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.6))
                             .padding(.horizontal, 10)
@@ -42,6 +67,18 @@ struct PollsListView: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
+                    
+                    // Power Contests
+                    ForEach(visiblePowerContests, id: \.id) { contest in
+                        PowerContestCard(
+                            contest: contest,
+                            onParticipate: {
+                                print("🏆 Usuario participa en Power contest: \(contest.id)")
+                            }
+                        )
+                        .padding(.horizontal, 16)
+                        .id(contest.id)
+                    }
                     
                     // Contests (same style)
                     ForEach(visibleContests, id: \.id) { contest in
@@ -69,7 +106,7 @@ struct PollsListView: View {
                     }
                     
                     // Empty state
-                    if visiblePolls.isEmpty && visibleContests.isEmpty {
+                    if visiblePolls.isEmpty && visibleContests.isEmpty && visiblePowerContests.isEmpty {
                         VStack(spacing: 16) {
                             Image(systemName: "chart.bar")
                                 .font(.system(size: 48))
@@ -118,7 +155,9 @@ struct PollsListView: View {
             )
         ],
         contests: [],
-        timeline: UnifiedTimelineManager()
+        powerContests: [],
+        timeline: UnifiedTimelineManager(),
+        onNavigateToTimestamp: nil
     )
 }
 

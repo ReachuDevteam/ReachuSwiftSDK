@@ -362,6 +362,53 @@ struct StatisticsUpdateEvent: TimelineEvent {
     var displayPriority: Int { 2 }
 }
 
+// MARK: - Power Contest Event
+
+struct PowerContestEvent: TimelineEvent {
+    let id: String
+    let videoTimestamp: TimeInterval
+    let title: String
+    let description: String
+    let prize: String
+    let contestType: ContestType
+    let metadata: [String: String]?
+    
+    var eventType: TimelineEventType { .powerContest }
+    var displayPriority: Int { 8 }
+    
+    enum ContestType: String, Codable {
+        case quiz = "quiz"
+        case giveaway = "giveaway"
+    }
+}
+
+// MARK: - Power Product Event
+
+struct PowerProductEvent: TimelineEvent, Identifiable {
+    let id: String
+    let videoTimestamp: TimeInterval
+    let productId: String  // ID del producto en Reachu (primary)
+    let productIds: [String]?  // IDs adicionales de productos (para mostrar múltiples)
+    let title: String
+    let description: String
+    let powerProductUrl: String?  // URL del producto en Power
+    let powerCheckoutUrl: String?  // URL del checkout en Power
+    let imageAsset: String?  // Asset name para imagen del producto
+    let metadata: [String: String]?
+    
+    var eventType: TimelineEventType { .powerProduct }
+    var displayPriority: Int { 7 }
+    
+    // Helper to get all product IDs
+    var allProductIds: [String] {
+        var ids = [productId]
+        if let additionalIds = productIds {
+            ids.append(contentsOf: additionalIds)
+        }
+        return ids
+    }
+}
+
 // MARK: - Helper Extensions
 
 extension TimelineEvent {

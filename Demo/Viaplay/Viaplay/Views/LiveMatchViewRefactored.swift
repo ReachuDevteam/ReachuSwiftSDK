@@ -61,6 +61,12 @@ struct LiveMatchViewRefactored: View {
                         onGoToLive: viewModel.goToLive,
                         onSeek: { minute in
                             viewModel.jumpToMinute(minute)
+                        },
+                        onNavigateToNextPowerContest: {
+                            viewModel.navigateToNextPowerContest()
+                        },
+                        onNavigateToPreviousPowerContest: {
+                            viewModel.navigateToPreviousPowerContest()
                         }
                     )
                 }

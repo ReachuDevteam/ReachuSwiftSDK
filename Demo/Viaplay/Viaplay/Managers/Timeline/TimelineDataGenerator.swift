@@ -145,6 +145,101 @@ struct TimelineDataGenerator {
             metadata: ["type": "halftime"]
         )))
         
+        // MARK: - Power Events (during halftime break)
+        
+        // Power Contest 1: Quiz with gift card prize
+        events.append(AnyTimelineEvent(PowerContestEvent(
+            id: "power-contest-quiz",
+            videoTimestamp: 2720,
+            title: "Power Konkurranse",
+            description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
+            prize: "Gavekort på 5000kr",
+            contestType: .quiz,
+            metadata: ["imageAsset": "gavekortpower"]
+        )))
+        
+        // Chat between Power events
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2725,
+            username: "PowerFan",
+            text: "Dette er en fantastisk mulighet! 🎁",
+            usernameColor: .orange,
+            likes: 12
+        )))
+        
+        // Tweet between Power events
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-halftime-1",
+            videoTimestamp: 2730,
+            authorName: "Power Norge",
+            authorHandle: "@PowerNorge",
+            authorAvatar: nil,
+            tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽",
+            isVerified: true,
+            likes: 234,
+            retweets: 89,
+            metadata: nil
+        )))
+        
+        // Power Contest 2: Giveaway with Champions League tickets
+        events.append(AnyTimelineEvent(PowerContestEvent(
+            id: "power-contest-giveaway",
+            videoTimestamp: 2750,
+            title: "Power Konkurranse",
+            description: "Delta og vinn to billetter til Champions League",
+            prize: "To billetter til Champions League",
+            contestType: .giveaway,
+            metadata: ["imageAsset": "billeter_power"]
+        )))
+        
+        // Chat between Power events
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2755,
+            username: "ChampionsFan",
+            text: "Billetter til Champions League?! Jeg må delta! 🎫",
+            usernameColor: .purple,
+            likes: 18
+        )))
+        
+        // Tweet between Power events
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-halftime-2",
+            videoTimestamp: 2760,
+            authorName: "Viaplay Sport",
+            authorHandle: "@ViaplaySport",
+            authorAvatar: nil,
+            tweetText: "Spennende konkurranser under pausen! Delta nå! 🏆",
+            isVerified: true,
+            likes: 456,
+            retweets: 123,
+            metadata: nil
+        )))
+        
+        // Power Product: Combined product event with both TV and Soundbar
+        events.append(AnyTimelineEvent(PowerProductEvent(
+            id: "power-product-combo",
+            videoTimestamp: 2770,  // During halftime
+            productId: "408895",  // Primary product: Samsung TV
+            productIds: ["408896"],  // Additional product: Samsung Soundbar
+            title: "Spesialtilbud på TV og Lyd",
+            description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
+            powerProductUrl: "https://www.power.no/tv-og-lyd/tv/samsung-75-qn85f-neo-qled-4k-mini-led-smart-tv-2025/p-4019980/",
+            powerCheckoutUrl: "https://www.power.no/tv-og-lyd/tv/samsung-75-qn85f-neo-qled-4k-mini-led-smart-tv-2025/p-4019980/",
+            imageAsset: nil,
+            metadata: nil
+        )))
+        
+        // Chat after Power product
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2775,
+            username: "TechLover",
+            text: "25% rabatt?! Dette må jeg sjekke ut! 📺",
+            usernameColor: .cyan,
+            likes: 9
+        )))
+        
+        // MARK: - Power Products (moved to halftime)
+        
         // MARK: - Chat Messages (Sincronizados con eventos)
         
         // MARK: - Pre-Match & Commentary
@@ -339,6 +434,491 @@ struct TimelineDataGenerator {
             text: "Vinicius Junior (Real Madrid) sends a pass into the penalty area, but the opponent manages to cut it out. Real Madrid will have a chance to score from a corner.",
             commentaryType: .corner,
             isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 48' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-48",
+            videoTimestamp: 2880,  // 48 * 60
+            minute: 48,
+            text: "Robert Lewandowski (Barcelona) finds himself in a good position inside the box and shoots, but his effort goes just wide of the left post.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 48'30" - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2910,
+            username: "StrikerKing",
+            text: "Så nærme! Nesten 3-0!",
+            usernameColor: .pink,
+            likes: 5
+        )))
+        
+        // 50' - Foul
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-50",
+            videoTimestamp: 3000,  // 50 * 60
+            minute: 50,
+            text: "Aurelien Tchouameni (Real Madrid) commits a foul and the referee stops play.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 50' - Yellow Card
+        events.append(AnyTimelineEvent(MatchCardEvent(
+            id: "card-50",
+            videoTimestamp: 3005,
+            player: "Aurelien Tchouameni",
+            team: .away,
+            cardType: .yellow,
+            reason: "Foul",
+            metadata: nil
+        )))
+        
+        // 52' - Substitution
+        events.append(AnyTimelineEvent(MatchSubstitutionEvent(
+            id: "sub-52",
+            videoTimestamp: 3120,  // 52 * 60
+            playerIn: "Rodrygo",
+            playerOut: "Vinicius Junior",
+            team: .away,
+            metadata: nil
+        )))
+        
+        // 52'30" - Chat after substitution
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 3150,
+            username: "TacticsGuru",
+            text: "Interessant bytte fra PSG",
+            usernameColor: .teal,
+            likes: 3
+        )))
+        
+        // 54' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-54",
+            videoTimestamp: 3240,  // 54 * 60
+            minute: 54,
+            text: "Pedri (Barcelona) tries his luck from distance, but his shot is blocked by one of the defenders.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 55' - Tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-55",
+            videoTimestamp: 3300,  // 55 * 60
+            authorName: "Barcelona",
+            authorHandle: "@FCBarcelona",
+            authorAvatar: nil,
+            tweetText: "Fortsetter å presse på! 💪🔵🔴",
+            isVerified: true,
+            likes: 3456,
+            retweets: 1234,
+            metadata: nil
+        )))
+        
+        // 56' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-56",
+            videoTimestamp: 3360,  // 56 * 60
+            minute: 56,
+            text: "Barcelona win a corner. Pedri will take it.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 57' - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 3420,
+            username: "MatchMaster",
+            text: "Barcelona kontrollerer kampen nå",
+            usernameColor: .orange,
+            likes: 7
+        )))
+        
+        // 58' - Save
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-58",
+            videoTimestamp: 3480,  // 58 * 60
+            minute: 58,
+            text: "Fantastic save! Ter Stegen (Barcelona) makes an incredible stop to deny Rodrygo (Real Madrid) from close range.",
+            commentaryType: .save,
+            isHighlighted: true,
+            metadata: nil
+        )))
+        
+        // 58'15" - Chat after save
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 3495,
+            username: "GoalKeeper",
+            text: "FOR EN REDNING!!! 🧤",
+            usernameColor: .green,
+            likes: 23
+        )))
+        
+        // 60' - Stats update
+        events.append(AnyTimelineEvent(StatisticsUpdateEvent(
+            id: "stats-60",
+            videoTimestamp: 3600,  // 60 * 60
+            statName: "Skudd totalt",
+            homeValue: 12,
+            awayValue: 6,
+            metadata: nil
+        )))
+        
+        // 60' - Tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-60",
+            videoTimestamp: 3605,
+            authorName: "PSG",
+            authorHandle: "@PSG_inside",
+            authorAvatar: nil,
+            tweetText: "Vi må score snart! Allez Paris! 🔴🔵",
+            isVerified: true,
+            likes: 2345,
+            retweets: 987,
+            metadata: nil
+        )))
+        
+        // 62' - Foul
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-62",
+            videoTimestamp: 3720,  // 62 * 60
+            minute: 62,
+            text: "Foul by Frenkie de Jong (Barcelona). Real Madrid have a free kick in a dangerous position.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 63' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-63",
+            videoTimestamp: 3780,  // 63 * 60
+            minute: 63,
+            text: "The free kick is taken and the ball finds its way to Marquinhos (Real Madrid), but his header goes over the crossbar.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 64' - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 3840,
+            username: "DefenderPro",
+            text: "Nesten! Så nærme mål",
+            usernameColor: .blue,
+            likes: 4
+        )))
+        
+        // 65' - Substitution
+        events.append(AnyTimelineEvent(MatchSubstitutionEvent(
+            id: "sub-65",
+            videoTimestamp: 3900,  // 65 * 60
+            playerIn: "Gavi",
+            playerOut: "Pedri",
+            team: .home,
+            metadata: nil
+        )))
+        
+        // 66' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-66",
+            videoTimestamp: 3960,  // 66 * 60
+            minute: 66,
+            text: "Corner kick for Barcelona. Gavi will take it.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 67' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-67",
+            videoTimestamp: 4020,  // 67 * 60
+            minute: 67,
+            text: "The corner is cleared, but Barcelona regain possession and create another chance. The shot goes wide.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 68' - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 4080,
+            username: "CoachView",
+            text: "Barcelona har mange sjanser",
+            usernameColor: .indigo,
+            likes: 6
+        )))
+        
+        // 70' - Stats update
+        events.append(AnyTimelineEvent(StatisticsUpdateEvent(
+            id: "stats-70",
+            videoTimestamp: 4200,  // 70 * 60
+            statName: "Ball i besittelse",
+            homeValue: 62.3,
+            awayValue: 37.7,
+            metadata: nil
+        )))
+        
+        // 70' - Tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-70",
+            videoTimestamp: 4205,
+            authorName: "ESPN FC",
+            authorHandle: "@ESPNFC",
+            authorAvatar: nil,
+            tweetText: "Barcelona dominating possession in the second half. Can PSG find a way back? ⚽",
+            isVerified: true,
+            likes: 5678,
+            retweets: 2345,
+            metadata: nil
+        )))
+        
+        // 72' - Yellow Card
+        events.append(AnyTimelineEvent(MatchCardEvent(
+            id: "card-72",
+            videoTimestamp: 4320,  // 72 * 60
+            player: "Gavi",
+            team: .home,
+            cardType: .yellow,
+            reason: "Foul",
+            metadata: nil
+        )))
+        
+        // 72'30" - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 4350,
+            username: "FutbolLoco",
+            text: "Gavi fikk gult kort",
+            usernameColor: .yellow,
+            likes: 2
+        )))
+        
+        // 74' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-74",
+            videoTimestamp: 4440,  // 74 * 60
+            minute: 74,
+            text: "Robert Lewandowski (Barcelona) receives the ball inside the box and shoots, but the goalkeeper makes a comfortable save.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 75' - Admin comment
+        events.append(AnyTimelineEvent(AdminCommentEvent(
+            id: "admin-75",
+            videoTimestamp: 4500,  // 75 * 60
+            adminName: "Magnus Drivenes",
+            comment: "15 minutter igjen. PSG må score snart hvis de skal ha håp om å snu kampen.",
+            isPinned: false,
+            metadata: nil
+        )))
+        
+        // 76' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-76",
+            videoTimestamp: 4560,  // 76 * 60
+            minute: 76,
+            text: "Another corner for Barcelona. They're really pushing for a third goal.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 77' - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 4620,
+            username: "UltrasGroup",
+            text: "Vi trenger enda et mål!",
+            usernameColor: .red,
+            likes: 11
+        )))
+        
+        // 78' - Substitution
+        events.append(AnyTimelineEvent(MatchSubstitutionEvent(
+            id: "sub-78",
+            videoTimestamp: 4680,  // 78 * 60
+            playerIn: "Raphinha",
+            playerOut: "B. Mbeumo",
+            team: .home,
+            metadata: nil
+        )))
+        
+        // 79' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-79",
+            videoTimestamp: 4740,  // 79 * 60
+            minute: 79,
+            text: "Raphinha (Barcelona) makes a great run down the wing and sends in a cross, but no one can get on the end of it.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 80' - Tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-80",
+            videoTimestamp: 4800,  // 80 * 60
+            authorName: "UEFA Champions League",
+            authorHandle: "@ChampionsLeague",
+            authorAvatar: nil,
+            tweetText: "10 minutes remaining! Can PSG mount a comeback? 🏆⚽",
+            isVerified: true,
+            likes: 8912,
+            retweets: 3456,
+            metadata: nil
+        )))
+        
+        // 81' - Foul
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-81",
+            videoTimestamp: 4860,  // 81 * 60
+            minute: 81,
+            text: "Foul by Marquinhos (Real Madrid). Barcelona have a free kick in a good position.",
+            commentaryType: .foul,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 82' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-82",
+            videoTimestamp: 4920,  // 82 * 60
+            minute: 82,
+            text: "The free kick is taken and the ball finds its way to Araújo (Barcelona), but his header is saved by the goalkeeper.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 82'30" - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 4950,
+            username: "TeamCaptain",
+            text: "Så nærme igjen!",
+            usernameColor: .red,
+            likes: 8
+        )))
+        
+        // 84' - Yellow Card
+        events.append(AnyTimelineEvent(MatchCardEvent(
+            id: "card-84",
+            videoTimestamp: 5040,  // 84 * 60
+            player: "Marquinhos",
+            team: .away,
+            cardType: .yellow,
+            reason: "Foul",
+            metadata: nil
+        )))
+        
+        // 85' - Stats update
+        events.append(AnyTimelineEvent(StatisticsUpdateEvent(
+            id: "stats-85",
+            videoTimestamp: 5100,  // 85 * 60
+            statName: "Skudd på mål",
+            homeValue: 8,
+            awayValue: 4,
+            metadata: nil
+        )))
+        
+        // 86' - Corner
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-86",
+            videoTimestamp: 5160,  // 86 * 60
+            minute: 86,
+            text: "Corner kick for Real Madrid. This could be their last chance.",
+            commentaryType: .corner,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 87' - Chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 5220,
+            username: "FanZone",
+            text: "Kun 3 minutter igjen!",
+            usernameColor: .orange,
+            likes: 5
+        )))
+        
+        // 88' - Chance
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-88",
+            videoTimestamp: 5280,  // 88 * 60
+            minute: 88,
+            text: "Rodrygo (Real Madrid) gets a chance from inside the box, but his shot is blocked by the defense.",
+            commentaryType: .chance,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        // 89' - Tweet
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-89",
+            videoTimestamp: 5340,  // 89 * 60
+            authorName: "Fabrizio Romano",
+            authorHandle: "@FabrizioRomano",
+            authorAvatar: nil,
+            tweetText: "Barcelona looking comfortable with this lead. PSG running out of time! ⏱️",
+            isVerified: true,
+            likes: 4567,
+            retweets: 1890,
+            metadata: nil
+        )))
+        
+        // 90' - Full Time announcement
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "fulltime",
+            videoTimestamp: 5400,  // 90 * 60
+            title: "Fulltid",
+            message: "Kampen er ferdig! Barcelona vinner 2-0",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "fulltime"]
+        )))
+        
+        // 90+2' - Commentary
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-90-2",
+            videoTimestamp: 5520,  // 90*60 + 2*60
+            minute: 90,
+            text: "The referee blows the final whistle. Barcelona win 2-0!",
+            commentaryType: .general,
+            isHighlighted: true,
+            metadata: nil
+        )))
+        
+        // 90+2' - Chat after match
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 5525,
+            username: "SportsFan23",
+            text: "Fantastisk kamp! Barcelona fortjente seieren! 🏆",
+            usernameColor: .cyan,
+            likes: 34
+        )))
+        
+        // 90+2' - Tweet after match
+        events.append(AnyTimelineEvent(TweetEvent(
+            id: "tweet-fulltime",
+            videoTimestamp: 5530,
+            authorName: "Barcelona",
+            authorHandle: "@FCBarcelona",
+            authorAvatar: nil,
+            tweetText: "FULLTID! Vi vinner 2-0! Takk til alle fans! 🔵🔴🏆",
+            isVerified: true,
+            likes: 12345,
+            retweets: 5678,
             metadata: nil
         )))
         

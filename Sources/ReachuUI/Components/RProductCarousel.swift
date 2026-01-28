@@ -121,15 +121,11 @@ public struct RProductCarousel: View {
     /// Default: false (button hidden)
     private let showAddToCartButton: Bool
     
-    /// Whether to show sponsor badge
-    /// Default: false (badge hidden)
-    /// If true, badge will be shown if campaignLogo is available from campaign
-    private let showSponsor: Bool
-    
-    /// Position of the sponsor badge
     /// Whether to show sponsor badge above/below carousel
     /// Badge displays campaign logo with "Sponset av" text
     /// Logo is fetched from campaign configuration (campaignLogo field)
+    /// Default: false (badge hidden)
+    /// If true, badge will be shown if campaignLogo is available from campaign
     private let showSponsor: Bool
     
     /// Sponsor badge position: "topRight", "topLeft", "bottomRight", "bottomLeft"
@@ -154,8 +150,6 @@ public struct RProductCarousel: View {
         self.showSponsor = showSponsor
         // Default to "topRight" if not specified
         self.sponsorPosition = sponsorPosition ?? "topRight"
-        // Default to white if not specified
-        self.imageBackgroundColor = imageBackgroundColor ?? .white
         // Default to white if not specified
         self.imageBackgroundColor = imageBackgroundColor ?? .white
     }

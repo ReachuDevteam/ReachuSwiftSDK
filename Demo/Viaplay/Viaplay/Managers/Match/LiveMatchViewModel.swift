@@ -17,6 +17,7 @@ class LiveMatchViewModel: ObservableObject {
     @Published var selectedTab: MatchTab = .all
     @Published var selectedMinute: Int? = nil
     @Published var useTimelineSync: Bool = true
+    @Published var lastNavigatedTimestamp: TimeInterval = 0
     
     // Dynamic scores
     @Published var currentHomeScore = 0
@@ -139,7 +140,7 @@ class LiveMatchViewModel: ObservableObject {
     
     private func loadTimelineData() {
         // Load rich Barcelona vs PSG timeline
-        let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGRichTimeline()
+        let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
         
         print("📊 [LiveMatchViewModel] Loading rich timeline data...")
         print("📊 [LiveMatchViewModel] Total events generated: \(generatedEvents.count)")
@@ -151,6 +152,7 @@ class LiveMatchViewModel: ObservableObject {
         let pollCount = generatedEvents.filter { $0.eventType == .poll }.count
         let commentaryCount = generatedEvents.filter { $0.eventType == .adminComment }.count
         let announcementCount = generatedEvents.filter { $0.eventType == .announcement }.count
+        let powerContestCount = generatedEvents.filter { $0.eventType == .powerContest }.count
         
         print("📊 [LiveMatchViewModel] Highlights: \(highlightCount)")
         print("📊 [LiveMatchViewModel] Chats: \(chatCount)")
@@ -158,6 +160,7 @@ class LiveMatchViewModel: ObservableObject {
         print("📊 [LiveMatchViewModel] Polls: \(pollCount)")
         print("📊 [LiveMatchViewModel] Commentary: \(commentaryCount)")
         print("📊 [LiveMatchViewModel] Announcements: \(announcementCount)")
+        print("📊 [LiveMatchViewModel] Power Contests: \(powerContestCount)")
         
         // Show timestamp distribution
         let timestamps = generatedEvents.map { Int($0.videoTimestamp) }.sorted()
@@ -307,6 +310,77 @@ class LiveMatchViewModel: ObservableObject {
     
     func filteredEvents() -> [MatchEvent] {
         matchTimeline.events.filter { $0.minute <= currentFilterMinute }
+    }
+    
+    // MARK: - Timeline Navigation
+    
+    func navigateToTimestamp(_ timestamp: TimeInterval) {
+        guard useTimelineSync else { return }
+        
+        print("⏩ [NAVIGATE] Jumped to timestamp: \(timestamp)s (\(Int(timestamp / 60))')")
+        
+        // Update last navigated timestamp for scroll detection
+        lastNavigatedTimestamp = timestamp
+        
+        // Update currentVideoTime
+        timeline.currentVideoTime = timestamp
+        
+        // Update scores based on new position
+        updateScoresFromTimeline()
+        
+        // Reload chat
+        chatManager.loadMessagesFromTimeline()
+        
+        // Force UI refresh to trigger scroll if needed
+        self.objectWillChange.send()
+    }
+    
+    // MARK: - Power Contest Navigation (Demo only)
+    
+    func navigateToNextPowerContest() {
+        guard useTimelineSync else { return }
+        
+        let powerContestEvents = timeline.allEvents
+            .filter { $0.eventType == .powerContest }
+            .sorted { $0.videoTimestamp < $1.videoTimestamp }
+        
+        guard !powerContestEvents.isEmpty else { return }
+        
+        // Find the next event after current time
+        if let nextEvent = powerContestEvents.first(where: { $0.videoTimestamp > timeline.currentVideoTime }) {
+            // Navigate slightly before the event to show the start of the card
+            let adjustedTimestamp = max(0, nextEvent.videoTimestamp - 2)
+            navigateToTimestamp(adjustedTimestamp)
+        } else {
+            // If no next event, go to the first one
+            if let firstEvent = powerContestEvents.first {
+                let adjustedTimestamp = max(0, firstEvent.videoTimestamp - 2)
+                navigateToTimestamp(adjustedTimestamp)
+            }
+        }
+    }
+    
+    func navigateToPreviousPowerContest() {
+        guard useTimelineSync else { return }
+        
+        let powerContestEvents = timeline.allEvents
+            .filter { $0.eventType == .powerContest }
+            .sorted { $0.videoTimestamp < $1.videoTimestamp }
+        
+        guard !powerContestEvents.isEmpty else { return }
+        
+        // Find the previous event before current time
+        if let previousEvent = powerContestEvents.last(where: { $0.videoTimestamp < timeline.currentVideoTime }) {
+            // Navigate slightly before the event to show the start of the card
+            let adjustedTimestamp = max(0, previousEvent.videoTimestamp - 2)
+            navigateToTimestamp(adjustedTimestamp)
+        } else {
+            // If no previous event, go to the last one
+            if let lastEvent = powerContestEvents.last {
+                let adjustedTimestamp = max(0, lastEvent.videoTimestamp - 2)
+                navigateToTimestamp(adjustedTimestamp)
+            }
+        }
     }
     
     // MARK: - Timeline-Specific Getters

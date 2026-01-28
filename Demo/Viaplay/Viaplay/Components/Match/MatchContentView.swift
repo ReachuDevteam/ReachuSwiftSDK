@@ -25,7 +25,11 @@ struct MatchContentView: View {
                             onSelectTab: viewModel.selectTab,
                             onSendMessage: { text in
                                 viewModel.sendChatMessage(text)
-                            }
+                            },
+                            onNavigateToTimestamp: { timestamp in
+                                viewModel.navigateToTimestamp(timestamp)
+                            },
+                            lastNavigatedTimestamp: $viewModel.lastNavigatedTimestamp
                         )
                     } else {
                         AllContentFeed(
@@ -36,7 +40,9 @@ struct MatchContentView: View {
                             onSelectTab: viewModel.selectTab,
                             onSendMessage: { text in
                                 viewModel.sendChatMessage(text)
-                            }
+                            },
+                            onNavigateToTimestamp: nil,
+                            lastNavigatedTimestamp: .constant(0)
                         )
                     }
                     
@@ -89,7 +95,11 @@ struct MatchContentView: View {
                         canChat: false,
                         onPollVote: viewModel.handlePollVote,
                         onSelectTab: viewModel.selectTab,
-                        onSendMessage: nil
+                        onSendMessage: nil,
+                        onNavigateToTimestamp: viewModel.useTimelineSync ? { timestamp in
+                            viewModel.navigateToTimestamp(timestamp)
+                        } : nil,
+                        lastNavigatedTimestamp: viewModel.useTimelineSync ? $viewModel.lastNavigatedTimestamp : .constant(0)
                     )
                     
                 case .liveScores:
@@ -104,7 +114,13 @@ struct MatchContentView: View {
                             .filter { $0.eventType == .announcement }
                             .compactMap { $0.event as? AnnouncementEvent }
                             .filter { $0.metadata?["type"] == "contest" },
-                        timeline: viewModel.timeline
+                        powerContests: viewModel.timeline.allEvents
+                            .filter { $0.eventType == .powerContest }
+                            .compactMap { $0.event as? PowerContestEvent },
+                        timeline: viewModel.timeline,
+                        onNavigateToTimestamp: viewModel.useTimelineSync ? { timestamp in
+                            viewModel.navigateToTimestamp(timestamp)
+                        } : nil
                     )
                     
                 case .statistics:

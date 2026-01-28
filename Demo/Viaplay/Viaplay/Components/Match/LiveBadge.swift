@@ -50,6 +50,8 @@ struct LiveBadge: View {
             Text("LIVE")
                 .font(.system(size: size.fontSize, weight: .bold))
                 .foregroundColor(isLive ? .white : .white.opacity(0.6))
+                .lineLimit(1)
+                .fixedSize()
         }
     }
 }
