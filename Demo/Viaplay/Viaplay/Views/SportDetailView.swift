@@ -17,6 +17,7 @@ struct SportDetailView: View {
     let subtitle: String
     let imageUrl: String
     @State private var showVideoPlayer = false
+    @State private var showLiveMatchView = false
     @StateObject private var castingManager = CastingManager.shared
     @State private var showCastDeviceSelection = false
     @State private var showCastingView = false
@@ -142,6 +143,22 @@ struct SportDetailView: View {
                                 .cornerRadius(10)
                             }
                             
+                            // Casting Demo button
+                            Button(action: { showLiveMatchView = true }) {
+                                HStack(spacing: 8) {
+                                    Image(systemName: "tv.and.mediabox")
+                                        .font(.system(size: 16))
+                                    
+                                    Text("Casting Demo")
+                                        .font(.system(size: 15, weight: .semibold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(width: geometry.size.width - 32)
+                                .frame(height: 44)
+                                .background(Color(red: 0.96, green: 0.08, blue: 0.42))
+                                    .cornerRadius(10)
+                            }
+                            
                             HStack(spacing: 10) {
                                 // Previous button
                                 Button(action: {}) {
@@ -264,9 +281,11 @@ struct SportDetailView: View {
                             }
                             .padding(.horizontal, 16)
                             
-                            RProductSlider(
-                                title: nil,
-                                layout: .cards
+                            RProductCarousel(
+                                componentId: "product-carousel-template",
+                                layout: "compact",
+                                showSponsor: true,
+                                sponsorPosition: "topRight"
                             )
                         }
                         .padding(.top, 24)
@@ -303,6 +322,11 @@ struct SportDetailView: View {
             ViaplayCastingActiveView(match: createMatchFromDetail())
                 .environmentObject(cartManager)
         }
+        .fullScreenCover(isPresented: $showLiveMatchView) {
+            LiveMatchViewRefactored(match: createMatchFromDetail()) {
+                showLiveMatchView = false
+            }
+        }
         .onChange(of: castingManager.isCasting) { isCasting in
             if !isCasting {
                 showCastingView = false
@@ -312,6 +336,11 @@ struct SportDetailView: View {
     
     // Helper para crear un Match desde los datos del SportDetailView
     private func createMatchFromDetail() -> Match {
+        // Si el título contiene Barcelona y PSG, usar esos equipos
+        if title.contains("Barcelona") && title.contains("PSG") {
+            return Match.barcelonaPSG
+        }
+        
         return Match(
             homeTeam: Team(name: "Team A", shortName: "TA", logo: "img1"),
             awayTeam: Team(name: "Team B", shortName: "TB", logo: "img1"),

@@ -46,6 +46,13 @@ public struct RProductStore: View {
     /// If nil, uses the first matching component from the campaign
     private let componentId: String?
     
+    /// Whether to show sponsor badge
+    private let showSponsor: Bool
+    
+    /// Sponsor badge position: "topRight", "topLeft", "bottomRight", "bottomLeft"
+    /// Default: "topRight"
+    private let sponsorPosition: String
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
     @StateObject private var viewModel = RProductStoreViewModel()
     
@@ -57,8 +64,10 @@ public struct RProductStore: View {
     
     // MARK: - Initializer
     
-    public init(componentId: String? = nil) {
+    public init(componentId: String? = nil, showSponsor: Bool = false, sponsorPosition: String? = nil) {
         self.componentId = componentId
+        self.showSponsor = showSponsor
+        self.sponsorPosition = sponsorPosition ?? "topRight"
     }
     
     // MARK: - Computed Properties
@@ -145,6 +154,18 @@ public struct RProductStore: View {
         viewModel.isMarketUnavailable
     }
     
+    /// Get campaign logo URL from current campaign
+    private var campaignLogoUrl: String? {
+        campaignManager.currentCampaign?.campaignLogo
+    }
+    
+    /// Should show sponsor badge
+    private var shouldShowSponsorBadge: Bool {
+        guard showSponsor else { return false }
+        guard let logo = campaignLogoUrl, !logo.isEmpty else { return false }
+        return true
+    }
+    
     // MARK: - Body
     
     public var body: some View {
@@ -205,15 +226,54 @@ public struct RProductStore: View {
     // MARK: - Content Views
     
     private var storeContent: some View {
-        Group {
-            if let cachedConfig = cachedConfig {
-                if cachedConfig.displayType == "grid" {
-                    gridView(columns: cachedConfig.gridItems)
-                } else {
-                    listView
+        let currentLogoUrl = campaignLogoUrl
+        let shouldShowBadge = shouldShowSponsorBadge
+        let position = sponsorPosition.isEmpty ? "topRight" : sponsorPosition
+        
+        // Determine if badge should be above or below content
+        let isTopPosition = position == "topRight" || position == "topLeft"
+        let isRightPosition = position == "topRight" || position == "bottomRight"
+        
+        return VStack(spacing: 0) {
+            // Badge container above content (if top position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+            }
+            
+            Group {
+                if let cachedConfig = cachedConfig {
+                    if cachedConfig.displayType == "grid" {
+                        gridView(columns: cachedConfig.gridItems)
+                    } else {
+                        listView
+                    }
                 }
             }
+            
+            // Badge container below content (if bottom position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, !isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+            }
         }
+    }
+    
+    /// Sponsor badge container (like a div) positioned above or below content
+    private func sponsorBadgeContainer(logoUrl: String, isRightPosition: Bool) -> some View {
+        HStack {
+            if isRightPosition {
+                Spacer()
+            }
+            
+            RSponsorBadge(logoUrl: logoUrl)
+                .padding(.horizontal, ReachuSpacing.xs)
+                .padding(.vertical, ReachuSpacing.xs)
+            
+            if !isRightPosition {
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
     }
     
     private func gridView(columns: [GridItem]) -> some View {

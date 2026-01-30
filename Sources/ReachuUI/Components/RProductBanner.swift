@@ -210,6 +210,13 @@ public struct RProductBanner: View {
     /// If nil, uses the first matching component from the campaign
     private let componentId: String?
     
+    /// Whether to show sponsor badge
+    private let showSponsor: Bool
+    
+    /// Sponsor badge position: "topRight", "topLeft", "bottomRight", "bottomLeft"
+    /// Default: "topRight"
+    private let sponsorPosition: String
+    
     @ObservedObject private var campaignManager = CampaignManager.shared
     
     @SwiftUI.Environment(\.colorScheme) private var colorScheme: SwiftUI.ColorScheme
@@ -225,8 +232,10 @@ public struct RProductBanner: View {
     
     // MARK: - Initializer
     
-    public init(componentId: String? = nil) {
+    public init(componentId: String? = nil, showSponsor: Bool = false, sponsorPosition: String? = nil) {
         self.componentId = componentId
+        self.showSponsor = showSponsor
+        self.sponsorPosition = sponsorPosition ?? "topRight"
     }
     
     // MARK: - Computed Properties
@@ -294,6 +303,18 @@ public struct RProductBanner: View {
         
         // Component must exist and be active
         return activeComponent?.isActive == true && config != nil
+    }
+    
+    /// Get campaign logo URL from current campaign
+    private var campaignLogoUrl: String? {
+        campaignManager.currentCampaign?.campaignLogo
+    }
+    
+    /// Should show sponsor badge
+    private var shouldShowSponsorBadge: Bool {
+        guard showSponsor else { return false }
+        guard let logo = campaignLogoUrl, !logo.isEmpty else { return false }
+        return true
     }
     
     // MARK: - Body
@@ -440,7 +461,21 @@ public struct RProductBanner: View {
     /// All colors, sizes, and URLs are pre-calculated and cached
     /// Uses GeometryReader for responsive sizing based on screen width
     private func bannerContent(config: ProductBannerConfig, styling: CachedStyling) -> some View {
-        GeometryReader { geometry in
+        let currentLogoUrl = campaignLogoUrl
+        let shouldShowBadge = shouldShowSponsorBadge
+        let position = sponsorPosition.isEmpty ? "topRight" : sponsorPosition
+        
+        // Determine if badge should be above or below banner
+        let isTopPosition = position == "topRight" || position == "topLeft"
+        let isRightPosition = position == "topRight" || position == "bottomRight"
+        
+        return VStack(spacing: 0) {
+            // Badge container above banner (if top position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+            }
+            
+            GeometryReader { geometry in
             let screenWidth = geometry.size.width
             let availableWidth = screenWidth - (ReachuSpacing.md * 2) // Subtract horizontal padding
             let bannerHeight: CGFloat = {
@@ -585,8 +620,33 @@ public struct RProductBanner: View {
                 // Tap anywhere on banner to show product detail
                 loadAndShowProduct(config: config)
             }
+            }
+            .frame(height: 200) // Default height, will be adjusted by GeometryReader
+            
+            // Badge container below banner (if bottom position)
+            if shouldShowBadge, let logoUrl = currentLogoUrl, !isTopPosition {
+                sponsorBadgeContainer(logoUrl: logoUrl, isRightPosition: isRightPosition)
+            }
         }
-        .frame(height: 200) // Default height, will be adjusted by GeometryReader
+    }
+    
+    /// Sponsor badge container (like a div) positioned above or below banner
+    private func sponsorBadgeContainer(logoUrl: String, isRightPosition: Bool) -> some View {
+        HStack {
+            if isRightPosition {
+                Spacer()
+            }
+            
+            RSponsorBadge(logoUrl: logoUrl)
+                .padding(.horizontal, ReachuSpacing.xs)
+                .padding(.vertical, ReachuSpacing.xs)
+            
+            if !isRightPosition {
+                Spacer()
+            }
+        }
+        .padding(.horizontal, ReachuSpacing.sm)
+        .padding(.vertical, ReachuSpacing.xs)
     }
     
     // MARK: - Helper Methods

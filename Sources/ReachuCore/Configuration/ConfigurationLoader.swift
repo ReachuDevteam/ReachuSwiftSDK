@@ -543,7 +543,8 @@ public class ConfigurationLoader {
         
         return CampaignConfiguration(
             webSocketBaseURL: config.webSocketBaseURL ?? CampaignConfiguration.default.webSocketBaseURL,
-            restAPIBaseURL: config.restAPIBaseURL ?? CampaignConfiguration.default.restAPIBaseURL
+            restAPIBaseURL: config.restAPIBaseURL ?? CampaignConfiguration.default.restAPIBaseURL,
+            campaignAdminApiKey: config.campaignAdminApiKey ?? CampaignConfiguration.default.campaignAdminApiKey
         )
     }
     
@@ -934,6 +935,7 @@ private struct JSONLocalizationConfiguration: Codable {
 private struct JSONCampaignConfiguration: Codable {
     let webSocketBaseURL: String?  // WebSocket endpoint (e.g., "https://dev-campaing.reachu.io")
     let restAPIBaseURL: String?    // REST API endpoint (e.g., "https://campaing.reachu.io")
+    let campaignAdminApiKey: String?  // API key for campaign admin endpoints (different from SDK API key)
 }
 
 private struct JSONAnalyticsConfiguration: Codable {

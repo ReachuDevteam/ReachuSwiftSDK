@@ -99,10 +99,10 @@ struct SportView: View {
                                 HStack(spacing: 12) {
                                     LiveSportCard(
                                         selectedTab: $selectedTab,
-                                        logo: "PREMIER PADEL",
+                                        logo: "UEFA",
                                         logoIcon: "star.fill",
                                         title: "Barcelona - PSG",
-                                        subtitle: "Premier Padel",
+                                        subtitle: "Champions League",
                                         time: "15:00",
                                         backgroundImage: "bg"
                                     )

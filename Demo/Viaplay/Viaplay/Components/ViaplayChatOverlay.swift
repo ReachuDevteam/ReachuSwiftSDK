@@ -2,6 +2,9 @@
 import SwiftUI
 import Combine
 
+// Import shared chat models
+import struct Viaplay.ChatMessage
+
 struct ViaplayChatOverlay: View {
     @StateObject private var chatManager = ChatManager()
     @State private var isExpanded = false
@@ -325,158 +328,11 @@ struct ViaplayChatOverlay: View {
     }
 }
 // MARK: - Chat Message Row
-struct ChatMessageRow: View {
-    let message: ChatMessage
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Circle()
-                .fill(message.usernameColor.opacity(0.3))
-                .frame(width: 28, height: 28)
-                .overlay(
-                    Text(String(message.username.prefix(1)))
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(message.usernameColor)
-                )
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 4) {
-                    Text(message.username)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(message.usernameColor)
-                    Text(timeAgo(from: message.timestamp))
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
-                }
-                Text(message.text)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.95))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer(minLength: 0)
-        }
-        .padding(.vertical, 4)
-    }
-    private func timeAgo(from date: Date) -> String {
-        let seconds = Int(Date().timeIntervalSince(date))
-        if seconds < 60 { return "\(seconds)s" }
-        let minutes = seconds / 60
-        if minutes < 60 { return "\(minutes)m" }
-        let hours = minutes / 60
-        return "\(hours)h"
-    }
-}
+// NOTE: Using ChatMessageRow from Components/Chat/ChatMessageRow.swift
 // MARK: - Chat Message Model
-struct ChatMessage: Identifiable {
-    let id = UUID()
-    let username: String
-    let text: String
-    let usernameColor: Color
-    let likes: Int
-    let timestamp: Date
-}
+// NOTE: Using ChatMessage from Models/Chat/ChatModels.swift
 // MARK: - Chat Manager
-@MainActor
-class ChatManager: ObservableObject {
-    @Published var messages: [ChatMessage] = []
-    @Published var viewerCount: Int = 0
-    private var timer: Timer?
-    private var viewerTimer: Timer?
-    private let maxMessages = 100
-    private let simulatedUsers: [(String, Color)] = [
-        ("SportsFan23", .cyan),
-        ("GoalKeeper", .green),
-        ("MatchMaster", .orange),
-        ("TeamCaptain", .red),
-        ("ElClásico", .purple),
-        ("FutbolLoco", .yellow),
-        ("DefenderPro", .blue),
-        ("StrikerKing", .pink),
-        ("MidFielder", .mint),
-        ("CoachView", .indigo),
-        ("TacticsGuru", .teal),
-        ("FanZone", .orange),
-        ("LiveScore", .green),
-        ("TeamSpirit", .purple),
-        ("UltrasGroup", .red),
-    ]
-    private let simulatedMessages: [String] = [
-        "Hvilket mål! 🔥",
-        "For en redning!",
-        "UTROLIG SPILL!!!",
-        "Forsvaret sover...",
-        "Dommeren er forferdelig",
-        "KOM IGJEN! 💪",
-        "Nydelig pasning",
-        "Det burde vært straffe",
-        "Keeperen er på et annet nivå",
-        "SKYT!",
-        "Hvorfor skjøt han ikke?",
-        "Perfekt posisjonering",
-        "Denne kampen er gal",
-        "Vi trenger mål nå",
-        "Taktikken fungerer",
-        "Kom igjen, våkn opp!",
-        "Nesten! Så nært!",
-        "Beste kampen denne sesongen",
-        "Dommeren så ingenting",
-        "FOR EN PASNING!",
-        "Utrolig ballkontroll",
-        "Det var offside!",
-        "Kom igjen da!",
-        "Perfekt timing",
-        "Dette blir episk",
-        "KJØR PÅ!!!",
-        "Hvilken spilling!",
-        "Fantastisk lagspill",
-        "Publikum er tent 🔥",
-        "NÅ SKJER DET!",
-    ]
-    func startSimulation() {
-        viewerCount = Int.random(in: 800...1500)
-        for _ in 0..<4 {
-            addSimulatedMessage()
-        }
-        scheduleNextMessage()
-        viewerTimer = Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { [weak self] _ in
-            guard let self = self else { return }
-            let change = Int.random(in: -10...20)
-            self.viewerCount = max(20, self.viewerCount + change)
-        }
-    }
-    func stopSimulation() {
-        timer?.invalidate()
-        viewerTimer?.invalidate()
-        timer = nil
-        viewerTimer = nil
-    }
-    func addMessage(_ message: ChatMessage) {
-        messages.append(message)
-        if messages.count > maxMessages {
-            messages.removeFirst()
-        }
-    }
-    private func scheduleNextMessage() {
-        let interval = Double.random(in: 3.0...6.0)
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: false) { [weak self] _ in
-            self?.addSimulatedMessage()
-            self?.scheduleNextMessage()
-        }
-    }
-    private func addSimulatedMessage() {
-        let user = simulatedUsers.randomElement()!
-        let messageText = simulatedMessages.randomElement()!
-        let message = ChatMessage(
-            username: user.0,
-            text: messageText,
-            usernameColor: user.1,
-            likes: Int.random(in: 0...12),
-            timestamp: Date()
-        )
-        messages.append(message)
-        if messages.count > maxMessages {
-            messages.removeFirst()
-        }
-    }
-}
+// NOTE: Using ChatManager from Managers/Chat/ChatManager.swift
 // MARK: - Floating Like View
 struct FloatingLikeView: View {
     @State private var yOffset: CGFloat = 0

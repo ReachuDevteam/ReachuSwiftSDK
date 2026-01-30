@@ -1,0 +1,94 @@
+//
+//  StatPreviewCard.swift
+//  Viaplay
+//
+//  Molecular component: Statistics preview card
+//
+
+import SwiftUI
+
+struct StatPreviewCard: View {
+    let statistics: MatchStatistics
+    let maxStats: Int
+    let onViewAll: () -> Void
+    
+    init(statistics: MatchStatistics, maxStats: Int = 3, onViewAll: @escaping () -> Void = {}) {
+        self.statistics = statistics
+        self.maxStats = maxStats
+        self.onViewAll = onViewAll
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Header with Viaplay branding and sponsor
+            HStack(spacing: 8) {
+                // Viaplay icon
+                Image("icon ")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+                    .clipShape(Circle())
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Viaplay Statistics")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundColor(.white)
+                    
+                    HStack(spacing: 4) {
+                        Text("Live Stats")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                        
+                        Text("•")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.4))
+                        
+                        Text("Oppdatert nå")
+                            .font(.system(size: 10))
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                }
+                
+                Spacer()
+                
+                // XXL Sports sponsor
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("Sponset av")
+                        .font(.system(size: 8, weight: .medium))
+                        .foregroundColor(.white.opacity(0.6))
+                    
+                    Image("logo1")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(maxWidth: 50, maxHeight: 16)
+                }
+            }
+            
+            VStack(spacing: 12) {
+                ForEach(Array(statistics.stats.prefix(maxStats))) { stat in
+                    StatBar(
+                        name: stat.name,
+                        homeValue: stat.homeValue,
+                        awayValue: stat.awayValue,
+                        unit: stat.unit
+                    )
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color.white.opacity(0.05))
+        )
+    }
+}
+
+#Preview {
+    StatPreviewCard(
+        statistics: MatchStatistics.mock(for: Match.barcelonaPSG)
+    )
+    .padding()
+    .background(Color(hex: "1B1B25"))
+}
+
+

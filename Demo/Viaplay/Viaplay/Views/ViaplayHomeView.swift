@@ -162,17 +162,14 @@ struct ViaplayHomeView: View {
                                 .padding(.horizontal, 16)
                                 .padding(.top, 24)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            
+                            RProductCarousel(
+                                componentId: "product-carousel-template",
+                                layout: "compact",
+                                showSponsor: true,
+                                sponsorPosition: "topRight"
+                            )
                             GeometryReader { scrollGeometry in
-                                RProductSlider(
-                                    title: nil,
-                                    products: nil,
-                                    categoryId: nil,
-                                    layout: .cards,
-                                    showSeeAll: false,
-                                    maxItems: 12
-                                )
-                                .padding(.horizontal, 16)
+                                
                             }
                             .frame(height: 180)
                         }
