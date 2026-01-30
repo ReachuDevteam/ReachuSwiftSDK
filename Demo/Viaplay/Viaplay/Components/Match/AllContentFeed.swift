@@ -51,6 +51,10 @@ struct AllContentFeed: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
+                        // Welcome message - shown immediately at the top
+                        welcomeMessage
+                            .id("welcome")
+                        
                         // Events oldest to newest (antiguos arriba, nuevos abajo)
                         ForEach(timelineEvents.sorted { $0.videoTimestamp < $1.videoTimestamp }, id: \.id) { wrappedEvent in
                             renderEvent(wrappedEvent)
@@ -81,18 +85,11 @@ struct AllContentFeed: View {
                     .padding(.bottom, canChat ? (80 + keyboardHeight) : 12)
                 }
                 .onAppear {
-                    // DEMO: Scroll to top on first appear (start at pre-match)
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        // Scroll to top to show pre-match content first
-                        if let firstEvent = timelineEvents.sorted(by: { $0.videoTimestamp < $1.videoTimestamp }).first {
-                            proxy.scrollTo(firstEvent.id, anchor: .top)
+                    // Scroll to welcome message on first appear
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        withAnimation(.easeOut(duration: 0.3)) {
+                            proxy.scrollTo("welcome", anchor: .top)
                         }
-                    }
-                }
-                .onAppear {
-                    // Scroll to bottom on first appear
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        proxy.scrollTo("bottom", anchor: .bottom)
                     }
                 }
                 .onChange(of: timelineEvents.count) { _ in
@@ -208,6 +205,53 @@ struct AllContentFeed: View {
                 }
             }
         }
+    }
+    
+    // MARK: - Welcome Message
+    
+    private var welcomeMessage: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.2))
+                        .frame(width: 40, height: 40)
+                    
+                    Image(systemName: "soccerball.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                        .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
+                }
+                
+                Text("Kampen starter snart")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                
+                Spacer()
+            }
+            
+            Text("Startoppstillingene kommer snart. Følg med her for å se alle hendelsene, kommentarer og høydepunkter fra kampen i sanntid.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.9))
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(
+                    LinearGradient(
+                        gradient: Gradient(colors: [
+                            Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.15),
+                            Color.white.opacity(0.05)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(red: 0.96, green: 0.08, blue: 0.42).opacity(0.3), lineWidth: 1)
+                )
+        )
     }
     
     // MARK: - Default Lineups

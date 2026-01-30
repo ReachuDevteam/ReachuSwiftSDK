@@ -15,6 +15,44 @@ struct TimelineDataGenerator {
     static func generateBarcelonaPSGTimeline() -> [AnyTimelineEvent] {
         var events: [AnyTimelineEvent] = []
         
+        // MARK: - Pre-Match Events (before kickoff)
+        
+        // -5' - Barcelona Lineup
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "lineup-barcelona",
+            videoTimestamp: -300,  // 5 minutes before kickoff
+            title: "Oppstilling Barcelona",
+            message: "Startoppstilling for Barcelona",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "lineup", "team": "home", "formation": "4-3-3"]
+        )))
+        
+        // -3' - PSG Lineup
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "lineup-psg",
+            videoTimestamp: -180,  // 3 minutes before kickoff
+            title: "Oppstilling PSG",
+            message: "Startoppstilling for PSG",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "lineup", "team": "away", "formation": "4-4-2"]
+        )))
+        
+        // -1' - Match Preview
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "match-preview",
+            videoTimestamp: -60,  // 1 minute before kickoff
+            title: "Kampen starter snart!",
+            message: "Barcelona mot PSG - Champions League",
+            imageUrl: nil,
+            actionUrl: nil,
+            actionText: nil,
+            metadata: ["type": "preview"]
+        )))
+        
         // MARK: - Match Events
         
         // 0' - Kick Off (Announcement style)
@@ -244,10 +282,10 @@ struct TimelineDataGenerator {
         
         // MARK: - Pre-Match & Commentary
         
-        // Pre-match
+        // -4' - Pre-match commentary
         events.append(AnyTimelineEvent(CommentaryEvent(
             id: "comm-prematch",
-            videoTimestamp: 10,
+            videoTimestamp: -240,  // 4 minutes before kickoff
             minute: 0,
             text: "Hello, welcome to our live play-by-play commentaries. You will be able to see a written form of all the interesting moments of the game, so you won't miss a thing. Sit back and have fun.",
             commentaryType: .general,
@@ -255,24 +293,33 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        events.append(AnyTimelineEvent(CommentaryEvent(
-            id: "comm-lineups",
-            videoTimestamp: 30,
-            minute: 0,
-            text: "Before the start of the game, you can see the starting lineups for today's clash.",
-            commentaryType: .general,
-            isHighlighted: false,
-            metadata: nil
+        // -2' - Pre-match chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: -120,
+            username: "SportsFan23",
+            text: "Snart starter kampen! 🔥",
+            usernameColor: .cyan,
+            likes: 5
         )))
         
+        // -1'30" - Pre-match commentary
         events.append(AnyTimelineEvent(CommentaryEvent(
             id: "comm-supervisor",
-            videoTimestamp: 50,
+            videoTimestamp: -90,
             minute: 0,
             text: "Jose Munuera will supervise the game today.",
             commentaryType: .general,
             isHighlighted: false,
             metadata: nil
+        )))
+        
+        // -30" - Pre-match chat
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: -30,
+            username: "MatchMaster",
+            text: "Dette blir en episk kamp!",
+            usernameColor: .orange,
+            likes: 8
         )))
         
         // 1' - Kickoff commentary
