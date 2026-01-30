@@ -6,10 +6,13 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 struct SponsorBanner: View {
     let logoName: String
     let text: String
+    
+    @StateObject private var campaignManager = CampaignManager.shared
     
     init(logoName: String = "logo1", text: String = "Sponset av") {
         self.logoName = logoName
@@ -22,10 +25,37 @@ struct SponsorBanner: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(.white.opacity(0.7))
             
-            Image(logoName)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(height: 20)
+            // Campaign logo from CampaignManager (preferred) or fallback to logoName
+            if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .empty:
+                        ProgressView()
+                            .frame(height: 20)
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 20)
+                    case .failure:
+                        Image(logoName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 20)
+                    @unknown default:
+                        Image(logoName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 20)
+                    }
+                }
+            } else {
+                // Fallback to hardcoded logo if no campaign logo
+                Image(logoName)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 20)
+            }
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)

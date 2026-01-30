@@ -1,4 +1,5 @@
 import SwiftUI
+import ReachuCore
 
 /// Componente de concurso con ruleta animada para Viaplay
 /// Copia EXACTA de TV2ContestOverlay con colores de Viaplay
@@ -8,6 +9,7 @@ struct ViaplayContestOverlay: View {
     let onJoin: () -> Void
     let onDismiss: () -> Void
     
+    @StateObject private var campaignManager = CampaignManager.shared
     @State private var hasJoined = false
     @State private var showWheel = false
     @State private var wheelRotation: Double = 0
@@ -138,16 +140,12 @@ struct ViaplayContestOverlay: View {
             
             // Sponsor badge arriba a la izquierda (SIEMPRE visible con logo1)
             HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Sponset av")
-                        .font(.system(size: 9, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                    
-                    Image("logo1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 80, maxHeight: 24)
-                }
+                // Campaign sponsor badge
+                CampaignSponsorBadge(
+                    maxWidth: 80,
+                    maxHeight: 24,
+                    alignment: .leading
+                )
                 Spacer()
             }
             .padding(.horizontal, 12)

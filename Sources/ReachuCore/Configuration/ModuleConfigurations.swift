@@ -492,16 +492,27 @@ public struct CampaignConfiguration {
     /// API key for campaign admin endpoints (different from SDK API key)
     /// Used for endpoints like GET /v1/sdk/config and GET /v1/offers
     /// Configured in reachu-config.json under "campaigns.campaignAdminApiKey"
+    /// Only needed if autoDiscover is false (legacy mode)
     public let campaignAdminApiKey: String
+    /// Enable auto-discovery of campaigns using only the Reachu SDK API key
+    /// When true, campaigns are discovered automatically via GET /v1/sdk/campaigns
+    /// When false, uses legacy mode with campaignId from configuration
+    public let autoDiscover: Bool
+    /// Optional channel ID to filter campaigns during auto-discovery
+    public let channelId: Int?
     
     public init(
         webSocketBaseURL: String = "https://dev-campaing.reachu.io",
         restAPIBaseURL: String = "https://dev-campaing.reachu.io",
-        campaignAdminApiKey: String = ""
+        campaignAdminApiKey: String = "",
+        autoDiscover: Bool = false,
+        channelId: Int? = nil
     ) {
         self.webSocketBaseURL = webSocketBaseURL
         self.restAPIBaseURL = restAPIBaseURL
         self.campaignAdminApiKey = campaignAdminApiKey
+        self.autoDiscover = autoDiscover
+        self.channelId = channelId
     }
     
     public static let `default` = CampaignConfiguration()

@@ -8,8 +8,8 @@
 import SwiftUI
 import ReachuUI
 import ReachuCore
-import ReachuLiveUI
-import ReachuLiveShow
+// import ReachuLiveUI
+// import ReachuLiveShow
 
 struct ContentView: View {
     @EnvironmentObject var cartManager: CartManager
@@ -73,16 +73,17 @@ struct ContentView: View {
 // MARK: - Live Stream Overlay
 
 struct LiveStreamGlobalOverlay: View {
-    @ObservedObject private var liveShowManager = LiveShowManager.shared
+    // @ObservedObject private var liveShowManager = LiveShowManager.shared
     @EnvironmentObject private var cartManager: CartManager
     
     var body: some View {
         ZStack {
             // Full screen LiveShow overlay
-            if liveShowManager.isLiveShowVisible {
-                RLiveShowFullScreenOverlay()
-                    .environmentObject(cartManager)
-            }
+            // TODO: Re-enable when ReachuLiveUI and ReachuLiveShow modules are properly configured
+            // if liveShowManager.isLiveShowVisible {
+            //     RLiveShowFullScreenOverlay()
+            //         .environmentObject(cartManager)
+            // }
         }
     }
 }

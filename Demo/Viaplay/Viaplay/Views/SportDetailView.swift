@@ -267,17 +267,12 @@ struct SportDetailView: View {
                                 
                                 Spacer()
                                 
-                                // Sponsor badge
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Sponset av")
-                                        .font(.system(size: 9, weight: .medium))
-                                        .foregroundColor(.white.opacity(0.8))
-                                    
-                                    Image("logo1")
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(maxWidth: 80, maxHeight: 24)
-                                }
+                                // Campaign sponsor badge
+                                CampaignSponsorBadge(
+                                    maxWidth: 80,
+                                    maxHeight: 24,
+                                    alignment: .leading
+                                )
                             }
                             .padding(.horizontal, 16)
                             

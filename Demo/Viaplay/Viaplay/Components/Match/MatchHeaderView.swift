@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 struct MatchHeaderView: View {
     let match: Match
@@ -14,20 +15,49 @@ struct MatchHeaderView: View {
     let currentMinute: Int
     let onDismiss: () -> Void
     
+    @StateObject private var campaignManager = CampaignManager.shared
+    
     var body: some View {
         VStack(spacing: 8) {
             // Sponsor and close button (same row)
             ZStack {
-                // Sponsor (absolutely centered)
+                // Sponsor (absolutely centered) - Campaign logo from CampaignManager
                 VStack(spacing: 2) {
                     Text("Sponset av")
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
                     
-                    Image("logo1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 18)
+                    // Campaign logo from CampaignManager
+                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(height: 18)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 18)
+                            case .failure:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 18)
+                            @unknown default:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(height: 18)
+                            }
+                        }
+                    } else {
+                        // Fallback to hardcoded logo if no campaign logo
+                        Image("logo1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 18)
+                    }
                 }
                 
                 // Close button (positioned right)

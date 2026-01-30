@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 struct LineupCard: View {
     let teamName: String
@@ -15,6 +16,7 @@ struct LineupCard: View {
     let teamColor: Color
     let isHome: Bool
     
+    @StateObject private var campaignManager = CampaignManager.shared
     @State private var showFieldView = true  // Default to field view
     @State private var reactionCounts: [String: Int]
     @State private var userReactions: Set<String> = []
@@ -98,16 +100,43 @@ struct LineupCard: View {
                 
                 Spacer()
                 
-                // XXL sponsor
+                // Sponsor - Campaign logo from CampaignManager
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("Sponset av")
                         .font(.system(size: 8, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
                     
-                    Image("logo1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 50, maxHeight: 16)
+                    // Campaign logo from CampaignManager
+                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(maxWidth: 50, maxHeight: 16)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 50, maxHeight: 16)
+                            case .failure:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 50, maxHeight: 16)
+                            @unknown default:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 50, maxHeight: 16)
+                            }
+                        }
+                    } else {
+                        // Fallback to hardcoded logo if no campaign logo
+                        Image("logo1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: 50, maxHeight: 16)
+                    }
                 }
             }
             

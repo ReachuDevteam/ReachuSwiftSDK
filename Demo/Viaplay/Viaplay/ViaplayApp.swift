@@ -36,6 +36,9 @@ struct ViaplayApp: App {
         print("🔧 [Reachu][Config] graphQLURL=\(cfg.environment.graphQLURL)")
         print("🔧 [Reachu][Config] apiKey=\(apiKeyMasked)")
         print("🔧 [Reachu][Market] country=\(cfg.marketConfiguration.countryCode) currency=\(cfg.marketConfiguration.currencyCode)")
+        
+        // Setup cache clearing listener for image cache
+        CacheHelper.setupCacheClearingListener()
     }
 
     var body: some Scene {

@@ -110,7 +110,7 @@
     "flag": "https://flagcdn.com/w320/no.png"
   },
   "liveShow": {
-    "campaignId": 26,
+    "campaignId": 28,
     "tipio": {
       "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
@@ -136,7 +136,11 @@
   "campaigns": {
     "webSocketBaseURL": "https://dev-campaing.reachu.io",
     "restAPIBaseURL": "https://dev-campaing.reachu.io",
-    "campaignAdminApiKey": "xxl_api_key_507d4014243d8360"
+    "campaignAdminApiKey": "xxl_api_key_507d4014243d8360",
+    "_comment": "autoDiscover: true = use auto-discovery endpoint (/v1/sdk/campaigns), false = use legacy single campaign mode (campaignId from liveShow.campaignId)",
+    "autoDiscover": true,
+    "_comment2": "channelId: Optional channel ID for match context. Can be null.",
+    "channelId": null
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",

@@ -2,6 +2,29 @@ import Foundation
 
 // MARK: - Campaign Models
 
+/// Match/Event context for associating campaigns and components to specific matches
+public struct MatchContext: Codable, Equatable {
+    public let matchId: String  // Required: Unique identifier for the match (e.g., "barcelona-psg-2025-01-23")
+    public let matchName: String?  // Optional: Human-readable match name (e.g., "Barcelona vs PSG")
+    public let startTime: String?  // Optional: ISO 8601 timestamp for match start time
+    public let channelId: Int?  // Optional: Channel/stream ID associated with the match
+    public let metadata: [String: String]?  // Optional: Additional metadata
+    
+    public init(
+        matchId: String,
+        matchName: String? = nil,
+        startTime: String? = nil,
+        channelId: Int? = nil,
+        metadata: [String: String]? = nil
+    ) {
+        self.matchId = matchId
+        self.matchName = matchName
+        self.startTime = startTime
+        self.channelId = channelId
+        self.metadata = metadata
+    }
+}
+
 /// Campaign lifecycle state
 public enum CampaignState: String, Codable {
     case upcoming  // Before startDate
@@ -16,16 +39,25 @@ public struct Campaign: Codable, Identifiable, Equatable {
     public let endDate: String?    // ISO 8601 timestamp
     public let isPaused: Bool?     // Campaign paused state (independent of dates)
     public let campaignLogo: String?  // Sponsor logo URL from campaign
+    public let matchContext: MatchContext?  // Optional: Match context for context-aware campaigns (backward compatible)
     
-    public init(id: Int, startDate: String? = nil, endDate: String? = nil, isPaused: Bool? = nil, campaignLogo: String? = nil) {
+    public init(
+        id: Int,
+        startDate: String? = nil,
+        endDate: String? = nil,
+        isPaused: Bool? = nil,
+        campaignLogo: String? = nil,
+        matchContext: MatchContext? = nil
+    ) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
         self.isPaused = isPaused
         self.campaignLogo = campaignLogo
+        self.matchContext = matchContext
     }
     
-    // Custom decoder to handle isPaused as both String and Bool
+    // Custom decoder to handle isPaused as both String and Bool, and matchContext
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
@@ -33,6 +65,7 @@ public struct Campaign: Codable, Identifiable, Equatable {
         startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
         campaignLogo = try container.decodeIfPresent(String.self, forKey: .campaignLogo)
+        matchContext = try container.decodeIfPresent(MatchContext.self, forKey: .matchContext)
         
         // Handle isPaused as either String or Bool
         if let boolValue = try? container.decodeIfPresent(Bool.self, forKey: .isPaused) {
@@ -51,6 +84,7 @@ public struct Campaign: Codable, Identifiable, Equatable {
         case endDate
         case isPaused
         case campaignLogo
+        case matchContext
     }
     
     /// Determine current state based on dates
@@ -105,7 +139,8 @@ public struct Campaign: Codable, Identifiable, Equatable {
                lhs.startDate == rhs.startDate &&
                lhs.endDate == rhs.endDate &&
                lhs.isPaused == rhs.isPaused &&
-               lhs.campaignLogo == rhs.campaignLogo
+               lhs.campaignLogo == rhs.campaignLogo &&
+               lhs.matchContext == rhs.matchContext
     }
 }
 
@@ -120,6 +155,7 @@ internal struct SDKConfigResponse: Codable {
     let campaigns: CampaignsConfig?
     let marketFallback: MarketFallbackConfig?
     let features: FeaturesConfig?
+    let matchContext: MatchContext?  // Optional: Match context for context-aware campaigns
     
     struct CampaignsConfig: Codable {
         let webSocketBaseURL: String?
@@ -136,6 +172,33 @@ internal struct SDKConfigResponse: Codable {
     struct FeaturesConfig: Codable {
         let enableWebSocket: Bool?
         let enableGuestCheckout: Bool?
+    }
+}
+
+/// Campaigns Discovery Response from GET /v1/sdk/campaigns
+/// Used for auto-discovery of campaigns using only the Reachu SDK API key
+internal struct CampaignsDiscoveryResponse: Codable {
+    let campaigns: [CampaignDiscoveryItem]
+    
+    struct CampaignDiscoveryItem: Codable {
+        let campaignId: Int
+        let campaignName: String?
+        let campaignLogo: String?
+        let matchContext: MatchContext?  // Match context for this campaign
+        let isActive: Bool
+        let startDate: String?
+        let endDate: String?
+        let isPaused: Bool?
+        let components: [ComponentDiscoveryItem]?
+        
+        struct ComponentDiscoveryItem: Codable {
+            let id: String
+            let type: String
+            let name: String
+            let matchContext: MatchContext?
+            let config: [String: AnyCodable]
+            let status: String?
+        }
     }
 }
 
@@ -173,6 +236,7 @@ internal struct ComponentResponse: Codable {
     let status: String
     internal let customConfig: [String: AnyCodable]?
     internal let component: ComponentData?
+    let matchContext: MatchContext?  // Optional: Match context for context-aware components
     
     struct ComponentData: Codable {
         let id: String
@@ -240,13 +304,22 @@ public struct Component: Codable, Identifiable {
     public let name: String
     public let config: ComponentConfig
     public let status: String?  // "active" or "inactive"
+    public let matchContext: MatchContext?  // Optional: Match context for context-aware components (backward compatible)
     
-    public init(id: String, type: String, name: String, config: ComponentConfig, status: String? = nil) {
+    public init(
+        id: String,
+        type: String,
+        name: String,
+        config: ComponentConfig,
+        status: String? = nil,
+        matchContext: MatchContext? = nil
+    ) {
         self.id = id
         self.type = type
         self.name = name
         self.config = config
         self.status = status
+        self.matchContext = matchContext
     }
     
     public var isActive: Bool {
@@ -281,6 +354,9 @@ public struct Component: Codable, Identifiable {
         // Convert [String: AnyCodable] to JSON Data and decode as ComponentConfig
         let jsonData = try JSONSerialization.data(withJSONObject: configToUse.mapValues { $0.value })
         self.config = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
+        
+        // Decode matchContext from response if available
+        self.matchContext = response.matchContext
     }
     
     /// Decode from JSON (for WebSocket events)
@@ -292,6 +368,7 @@ public struct Component: Codable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         config = try container.decode(ComponentConfig.self, forKey: .config)
         status = try container.decodeIfPresent(String.self, forKey: .status)
+        matchContext = try container.decodeIfPresent(MatchContext.self, forKey: .matchContext)
     }
     
     /// Encode to JSON (for WebSocket events)
@@ -303,6 +380,7 @@ public struct Component: Codable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encode(config, forKey: .config)
         try container.encodeIfPresent(status, forKey: .status)
+        try container.encodeIfPresent(matchContext, forKey: .matchContext)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -311,6 +389,7 @@ public struct Component: Codable, Identifiable {
         case name
         case config
         case status
+        case matchContext
         case component
     }
 }
@@ -334,12 +413,14 @@ public struct CampaignStartedEvent: Codable {
     public let campaignId: Int
     public let startDate: String?
     public let endDate: String?
+    public let matchId: String?  // Optional: Match context for context-aware campaigns
     
-    public init(type: String = "campaign_started", campaignId: Int, startDate: String? = nil, endDate: String? = nil) {
+    public init(type: String = "campaign_started", campaignId: Int, startDate: String? = nil, endDate: String? = nil, matchId: String? = nil) {
         self.type = type
         self.campaignId = campaignId
         self.startDate = startDate
         self.endDate = endDate
+        self.matchId = matchId
     }
 }
 
@@ -383,6 +464,7 @@ public struct CampaignResumedEvent: Codable {
 /// 1. New format: { "type": "component_status_changed", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "status": "active", "config": {...} } }
 /// 2. Legacy format: { "type": "component_status_changed", "campaignId": 14, "componentId": "product-banner-template", "status": "inactive", "component": {...} }
 public struct ComponentStatusChangedEvent: Codable {
+    let matchId: String?  // Optional: Match context for context-aware components
     public let type: String
     public let data: ComponentStatusData?
     
@@ -407,13 +489,14 @@ public struct ComponentStatusChangedEvent: Codable {
         public let config: [String: AnyCodable]
     }
     
-    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil) {
+    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil, matchId: String? = nil) {
         self.type = type
         self.data = data
         self.campaignId = campaignId
         self.componentId = componentId
         self.status = status
         self.component = component
+        self.matchId = matchId
     }
     
     /// Helper to convert to Component model

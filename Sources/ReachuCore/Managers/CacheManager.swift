@@ -16,7 +16,13 @@ public class CacheManager {
         static let campaignState = "reachu.cache.campaignState"
         static let isCampaignActive = "reachu.cache.isCampaignActive"
         static let lastUpdated = "reachu.cache.lastUpdated"
+        static let cacheConfigHash = "reachu.cache.configHash"
+        static let cacheVersion = "reachu.cache.version"
     }
+    
+    // MARK: - Cache Version
+    /// Current cache format version (increment when cache structure changes)
+    private static let currentCacheVersion = 2
     
     // MARK: - Cache Expiration
     /// Cache expiration time in seconds (default: 24 hours)
@@ -149,6 +155,67 @@ public class CacheManager {
         return isValid
     }
     
+    // MARK: - Configuration Cache Validation
+    
+    /// Calculate hash of campaign configuration for cache validation
+    /// Uses a combination of campaignId, API key, and base URL to detect configuration changes
+    private func calculateConfigHash(campaignId: Int, campaignAdminApiKey: String, baseURL: String) -> String {
+        let configString = "\(campaignId)|\(campaignAdminApiKey)|\(baseURL)"
+        // Use hashValue for simple hash, or could use SHA256 for more robust hashing
+        return String(configString.hashValue)
+    }
+    
+    /// Save configuration hash when caching campaign data
+    /// This allows us to detect when configuration changes and invalidate cache
+    public func saveCacheConfiguration(campaignId: Int, campaignAdminApiKey: String, baseURL: String) {
+        let hash = calculateConfigHash(campaignId: campaignId, campaignAdminApiKey: campaignAdminApiKey, baseURL: baseURL)
+        userDefaults.set(hash, forKey: CacheKeys.cacheConfigHash)
+        userDefaults.set(Self.currentCacheVersion, forKey: CacheKeys.cacheVersion)
+        ReachuLogger.debug("Cache configuration hash saved", component: "CacheManager")
+    }
+    
+    /// Verify if cached configuration matches current configuration
+    /// Returns: (isValid: Bool, shouldClearCache: Bool)
+    /// - isValid: true if cache is valid for current config
+    /// - shouldClearCache: true if cache should be cleared (config changed or version mismatch)
+    public func validateCacheConfiguration(
+        currentCampaignId: Int,
+        currentCampaignAdminApiKey: String,
+        currentBaseURL: String
+    ) -> (isValid: Bool, shouldClearCache: Bool) {
+        // Check cache version for backward compatibility
+        let cachedVersion = userDefaults.integer(forKey: CacheKeys.cacheVersion)
+        
+        // If no version or old version, cache is from old SDK version - invalidate
+        if cachedVersion == 0 || cachedVersion < Self.currentCacheVersion {
+            ReachuLogger.info("Cache version mismatch (\(cachedVersion) < \(Self.currentCacheVersion)) - invalidating cache", component: "CacheManager")
+            return (false, true)
+        }
+        
+        // Get cached hash
+        guard let cachedHash = userDefaults.string(forKey: CacheKeys.cacheConfigHash) else {
+            // No cached hash means cache is from old version - invalidate
+            ReachuLogger.info("No cache configuration hash found - invalidating cache", component: "CacheManager")
+            return (false, true)
+        }
+        
+        // Calculate current hash
+        let currentHash = calculateConfigHash(
+            campaignId: currentCampaignId,
+            campaignAdminApiKey: currentCampaignAdminApiKey,
+            baseURL: currentBaseURL
+        )
+        
+        // Compare hashes
+        let isValid = cachedHash == currentHash
+        
+        if !isValid {
+            ReachuLogger.info("Cache configuration hash mismatch - campaignId or API keys changed", component: "CacheManager")
+        }
+        
+        return (isValid, !isValid)
+    }
+    
     /// Clear all cached data
     public func clearCache() {
         userDefaults.removeObject(forKey: CacheKeys.campaign)
@@ -156,6 +223,12 @@ public class CacheManager {
         userDefaults.removeObject(forKey: CacheKeys.campaignState)
         userDefaults.removeObject(forKey: CacheKeys.isCampaignActive)
         userDefaults.removeObject(forKey: CacheKeys.lastUpdated)
+        userDefaults.removeObject(forKey: CacheKeys.cacheConfigHash)
+        userDefaults.removeObject(forKey: CacheKeys.cacheVersion)
+        
+        // Post notification so demo can clear image cache
+        NotificationCenter.default.post(name: NSNotification.Name("ReachuCacheCleared"), object: nil)
+        
         ReachuLogger.info("Cache cleared", component: "CacheManager")
     }
     

@@ -1,4 +1,5 @@
 import SwiftUI
+import ReachuCore
 
 /// Contest card para casting en Viaplay
 /// Adaptado de tv2demo con colores de Viaplay
@@ -7,6 +8,7 @@ struct ViaplayCastingContestCardView: View {
     let onJoin: () -> Void
     let onDismiss: () -> Void
     
+    @StateObject private var campaignManager = CampaignManager.shared
     @State private var hasJoined = false
     @State private var showWheel = false
     @State private var wheelRotation: Double = 0
@@ -74,17 +76,44 @@ struct ViaplayCastingContestCardView: View {
                 .fill(Color.white.opacity(0.3))
                 .frame(width: 32, height: 4)
             
-            // Sponsor badge - logo1 en esquina superior izquierda
+            // Sponsor badge - Campaign logo from CampaignManager
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Sponset av")
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white.opacity(0.8))
                     
-                    Image("logo1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 80, maxHeight: 24)
+                    // Campaign logo from CampaignManager (preferred) or from contestEvent (fallback)
+                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo ?? contest.campaignLogo, let url = URL(string: logoUrl) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            case .failure:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            @unknown default:
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 80, maxHeight: 24)
+                            }
+                        }
+                    } else {
+                        // Fallback to hardcoded logo if no campaign logo
+                        Image("logo1")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(maxWidth: 80, maxHeight: 24)
+                    }
                 }
                 Spacer()
             }

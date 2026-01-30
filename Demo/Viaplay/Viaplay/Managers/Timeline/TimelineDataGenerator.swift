@@ -193,7 +193,8 @@ struct TimelineDataGenerator {
             description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
             prize: "Gavekort på 5000kr",
             contestType: .quiz,
-            metadata: ["imageAsset": "gavekortpower"]
+            metadata: ["imageAsset": "gavekortpower"],
+            matchContext: nil
         )))
         
         // Chat between Power events
@@ -227,7 +228,8 @@ struct TimelineDataGenerator {
             description: "Delta og vinn to billetter til Champions League",
             prize: "To billetter til Champions League",
             contestType: .giveaway,
-            metadata: ["imageAsset": "billeter_power"]
+            metadata: ["imageAsset": "billeter_power"],
+            matchContext: nil
         )))
         
         // Chat between Power events
@@ -1053,7 +1055,8 @@ struct TimelineDataGenerator {
             ],
             duration: 600,
             endTimestamp: 1200,
-            metadata: nil
+            metadata: nil,
+            matchContext: nil
         )))
         
         // 20' - Poll sobre neste mål
@@ -1068,7 +1071,8 @@ struct TimelineDataGenerator {
             ],
             duration: 900,
             endTimestamp: 2100,
-            metadata: nil
+            metadata: nil,
+            matchContext: nil
         )))
         
         // 35' - Poll sobre beste spiller
@@ -1083,7 +1087,8 @@ struct TimelineDataGenerator {
             ],
             duration: 600,
             endTimestamp: 2700,
-            metadata: nil
+            metadata: nil,
+            matchContext: nil
         )))
         
         // MARK: - Tweets (en momentos clave)

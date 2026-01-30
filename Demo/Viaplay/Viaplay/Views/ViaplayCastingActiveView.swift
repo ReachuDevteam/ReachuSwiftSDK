@@ -9,6 +9,7 @@ struct ViaplayCastingActiveView: View {
     @StateObject private var castingManager = CastingManager.shared
     @StateObject private var webSocketManager = WebSocketManager()
     @StateObject private var chatManager = ChatManager()
+    @StateObject private var campaignManager = CampaignManager.shared
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     
@@ -127,6 +128,10 @@ struct ViaplayCastingActiveView: View {
             .zIndex(1000)
         }
         .navigationBarHidden(true)
+        .task {
+            // Set match context for auto-discovery and context-aware campaigns
+            await setupMatchContext()
+        }
         .onAppear {
             webSocketManager.connect()
             chatManager.startSimulation()
@@ -279,10 +284,37 @@ struct ViaplayCastingActiveView: View {
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                             
-                            Image("logo1")
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(maxWidth: 70, maxHeight: 24)
+                            // Campaign logo from CampaignManager
+                            if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                                AsyncImage(url: url) { phase in
+                                    switch phase {
+                                    case .empty:
+                                        ProgressView()
+                                            .frame(maxWidth: 70, maxHeight: 24)
+                                    case .success(let image):
+                                        image
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(maxWidth: 70, maxHeight: 24)
+                                    case .failure:
+                                        Image("logo1")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(maxWidth: 70, maxHeight: 24)
+                                    @unknown default:
+                                        Image("logo1")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fit)
+                                            .frame(maxWidth: 70, maxHeight: 24)
+                                    }
+                                }
+                            } else {
+                                // Fallback to hardcoded logo if no campaign logo
+                                Image("logo1")
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(maxWidth: 70, maxHeight: 24)
+                            }
                         }
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
@@ -459,6 +491,34 @@ struct ViaplayCastingActiveView: View {
         
         withAnimation {
             floatingLikes.append(like)
+        }
+    }
+    
+    // MARK: - Match Context Setup
+    
+    /// Sets up match context for auto-discovery and context-aware campaigns
+    private func setupMatchContext() async {
+        let config = ReachuConfiguration.shared
+        let autoDiscover = config.campaignConfiguration.autoDiscover
+        
+        // Create match context from Match model
+        let matchContext = match.toMatchContext(
+            channelId: config.campaignConfiguration.channelId
+        )
+        
+        print("🎯 [ViaplayCastingActiveView] Setting up match context: \(matchContext.matchId)")
+        
+        if autoDiscover {
+            // Use auto-discovery mode
+            print("🎯 [ViaplayCastingActiveView] Auto-discovery enabled, discovering campaigns for match: \(matchContext.matchId)")
+            await campaignManager.discoverCampaigns(matchId: matchContext.matchId)
+            
+            // Set match context to filter components
+            await campaignManager.setMatchContext(matchContext)
+        } else {
+            // Legacy mode: just set match context if campaign is already loaded
+            print("🎯 [ViaplayCastingActiveView] Legacy mode, setting match context")
+            await campaignManager.setMatchContext(matchContext)
         }
     }
 }

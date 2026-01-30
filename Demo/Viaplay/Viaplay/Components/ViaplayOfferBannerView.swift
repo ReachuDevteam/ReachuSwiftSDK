@@ -6,12 +6,15 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 /// Offer Banner View - Static version
 /// Banner promocional con imagen de fondo para ofertas especiales
 struct ViaplayOfferBannerView: View {
     let title: String
     let subtitle: String?
+    
+    @StateObject private var campaignManager = CampaignManager.shared
     
     init(
         title: String = "Ukens tilbud",
@@ -30,11 +33,37 @@ struct ViaplayOfferBannerView: View {
             HStack(alignment: .center, spacing: 16) {
                 // Left column: Logo, title, subtitle, countdown
                 VStack(alignment: .leading, spacing: 4) {
-                    // Logo
-                    Image("logo1")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 16)
+                    // Campaign logo from CampaignManager
+                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .empty:
+                                ProgressView()
+                                    .frame(height: 16)
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 16)
+                            case .failure:
+                                Image("logo1")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 16)
+                            @unknown default:
+                                Image("logo1")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 16)
+                            }
+                        }
+                    } else {
+                        // Fallback to hardcoded logo if no campaign logo
+                        Image("logo1")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 16)
+                    }
                     
                     // Title
                     Text(title)

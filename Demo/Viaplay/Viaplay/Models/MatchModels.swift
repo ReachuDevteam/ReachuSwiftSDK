@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import ReachuCore
 
 // MARK: - Match Model
 struct Match: Identifiable {
@@ -66,6 +67,52 @@ struct RelatedTeam: Identifiable {
     let id = UUID()
     let team: Team
     let description: String?
+}
+
+// MARK: - MatchContext Helper
+extension Match {
+    /// Creates a MatchContext from Match for SDK integration
+    func toMatchContext(channelId: Int? = nil) -> MatchContext {
+        // Generate a unique matchId from match data
+        let matchId = generateMatchId()
+        
+        return MatchContext(
+            matchId: matchId,
+            matchName: title,
+            startTime: nil, // Can be added if Match has start time
+            channelId: channelId,
+            metadata: [
+                "competition": competition,
+                "venue": venue,
+                "homeTeam": homeTeam.name,
+                "awayTeam": awayTeam.name
+            ]
+        )
+    }
+    
+    /// Generates a unique matchId from match data
+    private func generateMatchId() -> String {
+        // Create a stable ID from match data
+        let homeTeamSlug = homeTeam.name.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "fc", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        let awayTeamSlug = awayTeam.name.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .replacingOccurrences(of: "fc", with: "")
+            .trimmingCharacters(in: .whitespaces)
+        
+        // Use competition and teams to create ID
+        let competitionSlug = competition.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+        
+        // For Barcelona-PSG, use a specific ID that matches backend
+        if title.contains("Barcelona") && title.contains("PSG") {
+            return "barcelona-psg-2025-01-23"
+        }
+        
+        return "\(homeTeamSlug)-\(awayTeamSlug)-\(competitionSlug)".lowercased()
+    }
 }
 
 // MARK: - Mock Data

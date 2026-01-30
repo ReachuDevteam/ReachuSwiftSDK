@@ -8,6 +8,7 @@
 
 import Foundation
 import SwiftUI
+import ReachuCore
 
 // MARK: - Chat Message Event
 
@@ -237,6 +238,7 @@ struct PollTimelineEvent: TimelineEvent {
     let duration: TimeInterval?  // How long poll is active
     let endTimestamp: TimeInterval?  // When poll closes
     let metadata: [String: String]?
+    let matchContext: MatchContext?  // Optional: Match context for context-aware polls (backward compatible)
     
     var eventType: TimelineEventType { .poll }
     var displayPriority: Int { 7 }
@@ -372,6 +374,7 @@ struct PowerContestEvent: TimelineEvent {
     let prize: String
     let contestType: ContestType
     let metadata: [String: String]?
+    let matchContext: MatchContext?  // Optional: Match context for context-aware contests (backward compatible)
     
     var eventType: TimelineEventType { .powerContest }
     var displayPriority: Int { 8 }

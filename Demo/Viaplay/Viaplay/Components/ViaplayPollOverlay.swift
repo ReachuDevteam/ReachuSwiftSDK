@@ -122,18 +122,13 @@ struct ViaplayPollOverlay: View {
                     .frame(width: 32, height: 4)
                     .padding(.top, 8)
                 
-                // Sponsor badge arriba a la izquierda (SIEMPRE visible con logo1)
+                // Sponsor badge arriba a la izquierda - Campaign logo from CampaignManager
                 HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Sponset av")
-                            .font(.system(size: 9, weight: .medium))
-                            .foregroundColor(.white.opacity(0.8))
-                        
-                        Image("logo1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: 80, maxHeight: 24)
-                    }
+                    CampaignSponsorBadge(
+                        maxWidth: 80,
+                        maxHeight: 24,
+                        alignment: .leading
+                    )
                     Spacer()
                 }
                 .padding(.horizontal, 12)

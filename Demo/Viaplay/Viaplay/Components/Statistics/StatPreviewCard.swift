@@ -51,17 +51,12 @@ struct StatPreviewCard: View {
                 
                 Spacer()
                 
-                // XXL Sports sponsor
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Sponset av")
-                        .font(.system(size: 8, weight: .medium))
-                        .foregroundColor(.white.opacity(0.6))
-                    
-                    Image("logo1")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(maxWidth: 50, maxHeight: 16)
-                }
+                // Campaign sponsor badge
+                CampaignSponsorBadge(
+                    maxWidth: 50,
+                    maxHeight: 16,
+                    alignment: .trailing
+                )
             }
             
             VStack(spacing: 12) {

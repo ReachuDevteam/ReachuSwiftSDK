@@ -544,7 +544,9 @@ public class ConfigurationLoader {
         return CampaignConfiguration(
             webSocketBaseURL: config.webSocketBaseURL ?? CampaignConfiguration.default.webSocketBaseURL,
             restAPIBaseURL: config.restAPIBaseURL ?? CampaignConfiguration.default.restAPIBaseURL,
-            campaignAdminApiKey: config.campaignAdminApiKey ?? CampaignConfiguration.default.campaignAdminApiKey
+            campaignAdminApiKey: config.campaignAdminApiKey ?? CampaignConfiguration.default.campaignAdminApiKey,
+            autoDiscover: config.autoDiscover ?? CampaignConfiguration.default.autoDiscover,
+            channelId: config.channelId
         )
     }
     
@@ -935,7 +937,9 @@ private struct JSONLocalizationConfiguration: Codable {
 private struct JSONCampaignConfiguration: Codable {
     let webSocketBaseURL: String?  // WebSocket endpoint (e.g., "https://dev-campaing.reachu.io")
     let restAPIBaseURL: String?    // REST API endpoint (e.g., "https://campaing.reachu.io")
-    let campaignAdminApiKey: String?  // API key for campaign admin endpoints (different from SDK API key)
+    let campaignAdminApiKey: String?  // API key for campaign admin endpoints (different from SDK API key) - Only needed if autoDiscover is false
+    let autoDiscover: Bool?  // Enable auto-discovery of campaigns using only SDK API key
+    let channelId: Int?  // Optional channel ID to filter campaigns during auto-discovery
 }
 
 private struct JSONAnalyticsConfiguration: Codable {

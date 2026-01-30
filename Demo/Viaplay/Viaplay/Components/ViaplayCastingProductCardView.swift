@@ -13,6 +13,7 @@ struct ViaplayCastingProductCardView: View {
     let onDismiss: () -> Void
     
     @StateObject private var viewModel: ProductFetchViewModel
+    @StateObject private var campaignManager = CampaignManager.shared
     @State private var showCheckmark = false
     @State private var showProductDetail = false
     @State private var dragOffset: CGFloat = 0
@@ -133,17 +134,44 @@ struct ViaplayCastingProductCardView: View {
                     .padding(.vertical, 4)
                 }
                 
-                // Sponsor badge - logo1 en esquina superior izquierda
+                // Sponsor badge - Campaign logo from CampaignManager or fallback
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Sponset av")
                             .font(.system(size: 9, weight: .medium))
                             .foregroundColor(.white.opacity(0.8))
                         
-                        Image("logo1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(maxWidth: 80, maxHeight: 24)
+                        // Campaign logo from CampaignManager (preferred) or from productEvent (fallback)
+                        if let logoUrl = campaignManager.currentCampaign?.campaignLogo ?? productEvent.campaignLogo, let url = URL(string: logoUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .empty:
+                                    ProgressView()
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                case .failure:
+                                    Image("logo1")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                @unknown default:
+                                    Image("logo1")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(maxWidth: 80, maxHeight: 24)
+                                }
+                            }
+                        } else {
+                            // Fallback to hardcoded logo if no campaign logo
+                            Image("logo1")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxWidth: 80, maxHeight: 24)
+                        }
                     }
                     Spacer()
                 }
