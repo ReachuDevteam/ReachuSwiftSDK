@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuEngagementUI
 
 struct AllContentFeed: View {
     let timelineEvents: [AnyTimelineEvent]
@@ -65,10 +66,10 @@ struct AllContentFeed: View {
                                 ))
                         }
                         .onAppear {
-                            // Debug: Log Power contest events
+                            // Debug: Log Elkjøp contest events
                             let powerContests = timelineEvents.filter { $0.eventType == .powerContest }
                             if !powerContests.isEmpty {
-                                print("🎯 [AllContentFeed] Power contest events found: \(powerContests.count)")
+                                print("🎯 [AllContentFeed] Elkjøp contest events found: \(powerContests.count)")
                                 for event in powerContests {
                                     print("  - ID: \(event.id), timestamp: \(event.videoTimestamp)s")
                                 }
@@ -108,7 +109,7 @@ struct AllContentFeed: View {
                     }
                 }
                 .onChange(of: lastNavigatedTimestamp) { newTimestamp in
-                    // When navigating to a timestamp, check if we need to scroll to a Power contest
+                    // When navigating to a timestamp, check if we need to scroll to an Elkjøp contest
                     handlePowerContestScroll(proxy: proxy, timestamp: newTimestamp)
                 }
             }
@@ -190,12 +191,12 @@ struct AllContentFeed: View {
     }
     
     private func handlePowerContestScroll(proxy: ScrollViewProxy, timestamp: TimeInterval) {
-        // Find Power contest events near the navigated timestamp
+        // Find Elkjøp contest events near the navigated timestamp
         let powerContestEvents = timelineEvents
             .filter({ $0.eventType == .powerContest })
             .sorted(by: { $0.videoTimestamp < $1.videoTimestamp })
         
-        // Check if any Power contest is within 5 seconds of the navigated timestamp
+        // Check if any Elkjøp contest is within 5 seconds of the navigated timestamp
         if let targetEvent = powerContestEvents.first(where: { 
             abs($0.videoTimestamp - timestamp) <= 5 
         }) {
@@ -363,13 +364,13 @@ struct AllContentFeed: View {
                     ))
                 }
                 
-            // Power Contests
-            case .powerContest:
-                if let contestEvent = wrappedEvent.event as? PowerContestEvent {
-                    PowerContestCard(
-                        contest: contestEvent,
-                        onParticipate: {
-                            print("🏆 Usuario participa en Power contest: \(contestEvent.id)")
+            // Power Products
+            case .powerProduct:
+                if let productEvent = wrappedEvent.event as? PowerProductEvent {
+                    PowerProductCardWrapper(
+                        productEvent: productEvent,
+                        onViewProduct: {
+                            print("🛒 Usuario ve Elkjøp product: \(productEvent.id)")
                         }
                     )
                     .transition(.asymmetric(
@@ -377,14 +378,14 @@ struct AllContentFeed: View {
                         removal: .opacity
                     ))
                 }
-                
-            // Power Products
-            case .powerProduct:
-                if let productEvent = wrappedEvent.event as? PowerProductEvent {
-                    PowerProductCard(
-                        productEvent: productEvent,
-                        onViewProduct: {
-                            print("🛒 Usuario ve Power product: \(productEvent.id)")
+            
+            // Elkjøp Contests
+            case .powerContest:
+                if let contest = wrappedEvent.event as? PowerContestEvent {
+                    PowerContestCardWrapper(
+                        contest: contest,
+                        onParticipate: {
+                            print("🏆 Usuario participa en Elkjøp contest: \(contest.id)")
                         }
                     )
                     .transition(.asymmetric(

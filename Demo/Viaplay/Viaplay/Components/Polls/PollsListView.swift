@@ -73,7 +73,7 @@ struct PollsListView: View {
                         PowerContestCard(
                             contest: contest,
                             onParticipate: {
-                                print("🏆 Usuario participa en Power contest: \(contest.id)")
+                                print("🏆 Usuario participa en Elkjøp contest: \(contest.id)")
                             }
                         )
                         .padding(.horizontal, 16)

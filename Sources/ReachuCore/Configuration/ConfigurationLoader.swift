@@ -197,6 +197,7 @@ public class ConfigurationLoader {
         let localizationConfig = createLocalizationConfiguration(from: config.localization, bundle: bundle)
         let campaignConfig = createCampaignConfiguration(from: config.campaigns)
         let analyticsConfig = createAnalyticsConfiguration(from: config.analytics)
+        let brandConfig = createBrandConfiguration(from: config.brand)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -570,6 +571,15 @@ public class ConfigurationLoader {
         )
     }
     
+    private static func createBrandConfiguration(from brandConfig: JSONBrandConfiguration?) -> BrandConfiguration {
+        guard let config = brandConfig else { return .default }
+        
+        return BrandConfiguration(
+            name: config.name ?? BrandConfiguration.default.name,
+            iconAsset: config.iconAsset ?? BrandConfiguration.default.iconAsset
+        )
+    }
+    
     private static func createMarketConfiguration(from marketConfig: JSONMarketFallbackConfiguration?) -> MarketConfiguration {
         guard let config = marketConfig else { return .default }
 
@@ -787,6 +797,7 @@ private struct JSONConfiguration: Codable {
     let localization: JSONLocalizationConfiguration?
     let campaigns: JSONCampaignConfiguration?
     let analytics: JSONAnalyticsConfiguration?
+    let brand: JSONBrandConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -953,6 +964,11 @@ private struct JSONAnalyticsConfiguration: Codable {
     let trackProductEvents: Bool?
     let autocapture: Bool?
     let recordSessionsPercent: Int?
+}
+
+private struct JSONBrandConfiguration: Codable {
+    let name: String?
+    let iconAsset: String?
 }
 
 private struct JSONTipioConfiguration: Codable {

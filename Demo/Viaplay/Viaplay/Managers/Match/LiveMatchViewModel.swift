@@ -160,7 +160,7 @@ class LiveMatchViewModel: ObservableObject {
         print("📊 [LiveMatchViewModel] Polls: \(pollCount)")
         print("📊 [LiveMatchViewModel] Commentary: \(commentaryCount)")
         print("📊 [LiveMatchViewModel] Announcements: \(announcementCount)")
-        print("📊 [LiveMatchViewModel] Power Contests: \(powerContestCount)")
+        print("📊 [LiveMatchViewModel] Elkjøp Contests: \(powerContestCount)")
         
         // Show timestamp distribution
         let timestamps = generatedEvents.map { Int($0.videoTimestamp) }.sorted()

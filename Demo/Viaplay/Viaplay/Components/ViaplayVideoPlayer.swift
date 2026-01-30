@@ -11,6 +11,7 @@ import AVFoundation
 import Combine
 import ReachuCore
 import ReachuUI
+import ReachuEngagementUI
 
 /// Viaplay Video Player with casting support
 /// Simulates a live streaming experience with AirPlay/Chromecast capability
@@ -23,6 +24,7 @@ struct ViaplayVideoPlayer: View {
     @StateObject private var playerViewModel = VideoPlayerViewModel()
     @StateObject private var webSocketManager = WebSocketManager()
     @StateObject private var campaignManager = CampaignManager.shared
+    @StateObject private var productFetchViewModel: ProductFetchViewModel
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -33,6 +35,7 @@ struct ViaplayVideoPlayer: View {
     @State private var showContest = false
     @State private var showCheckout = false
     @State private var isLoadingVideo = true
+    @State private var showProductDetail = false
     
     init(
         match: Match,
@@ -44,6 +47,16 @@ struct ViaplayVideoPlayer: View {
         self.onDismiss = onDismiss
         self.onNavigateToNextPowerContest = onNavigateToNextPowerContest
         self.onNavigateToPreviousPowerContest = onNavigateToPreviousPowerContest
+        
+        // Initialize ProductFetchViewModel
+        let config = ReachuConfiguration.shared
+        let baseURL = URL(string: config.environment.graphQLURL)!
+        let sdk = SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
+        _productFetchViewModel = StateObject(wrappedValue: ProductFetchViewModel(
+            sdk: sdk,
+            currency: "USD", // Will be updated from cartManager
+            country: "US" // Will be updated from cartManager
+        ))
     }
     
     // SDK Client para fetch de productos
@@ -139,8 +152,17 @@ struct ViaplayVideoPlayer: View {
             
             // Poll Overlay (alineado con TV2: respeta estado del chat y onVote)
             if let poll = webSocketManager.currentPoll, showPoll {
-                ViaplayPollOverlay(
-                    poll: poll,
+                REngagementPollOverlay(
+                    question: poll.question,
+                    subtitle: nil,
+                    options: poll.options.map { option in
+                        REngagementPollOverlayOption(
+                            id: option.id.uuidString,
+                            text: option.text,
+                            avatarUrl: option.avatarUrl
+                        )
+                    },
+                    duration: poll.duration,
                     isChatExpanded: isChatExpanded,
                     onVote: { option in
                         print("📊 [Poll] Votado: \(option)")
@@ -156,24 +178,34 @@ struct ViaplayVideoPlayer: View {
             
             // Product Overlay (sobre el chat y poll)
             if let productEvent = webSocketManager.currentProduct, showProduct {
-                ViaplayProductOverlay(
-                    productEvent: productEvent,
+                REngagementProductOverlay(
+                    product: REngagementProductData(
+                        productId: productEvent.productId,
+                        name: productFetchViewModel.product?.title ?? productEvent.name,
+                        description: productFetchViewModel.product?.description ?? productEvent.description,
+                        price: productFetchViewModel.product != nil 
+                            ? formatProductPrice(productFetchViewModel.product!.price)
+                            : productEvent.price,
+                        imageUrl: productFetchViewModel.product?.images.first?.url ?? productEvent.imageUrl,
+                        discountPercentage: calculateDiscountPercentage(productFetchViewModel.product)
+                    ),
                     isChatExpanded: isChatExpanded,
-                    sdk: sdkClient,
-                    currency: cartManager.currency,
-                    country: cartManager.country,
-                    onAddToCart: { productDto in
-                        if let apiProduct = productDto {
+                    isLoading: productFetchViewModel.isLoading,
+                    onAddToCart: {
+                        if let apiProduct = productFetchViewModel.product {
                             print("🛍️ [Product] Agregando producto de la API al carrito: \(apiProduct.title)")
-                            // Convertir ProductDto a Product para el CartManager
                             let product = convertDtoToProduct(apiProduct)
                             Task {
                                 await cartManager.addProduct(product, quantity: 1)
                                 print("✅ [Product] Producto agregado al carrito")
                             }
                         } else {
-                            print("⚠️ [Product] Producto de la API aún no disponible, usando fallback: \(productEvent.name)")
-                            // El producto de la API aún no ha cargado, no hacer nada o usar fallback
+                            print("⚠️ [Product] Producto de la API aún no disponible")
+                        }
+                    },
+                    onShowDetail: {
+                        if productFetchViewModel.product != nil {
+                            showProductDetail = true
                         }
                     },
                     onDismiss: {
@@ -182,12 +214,35 @@ struct ViaplayVideoPlayer: View {
                         }
                     }
                 )
+                .task(id: productEvent.productId) {
+                    productFetchViewModel.currency = cartManager.currency
+                    productFetchViewModel.country = cartManager.country
+                    await productFetchViewModel.fetchProduct(productId: productEvent.productId)
+                }
+                .sheet(isPresented: $showProductDetail) {
+                    if let apiProduct = productFetchViewModel.product {
+                        RProductDetailOverlay(
+                            product: convertDtoToProduct(apiProduct),
+                            onDismiss: {
+                                showProductDetail = false
+                            },
+                            onAddToCart: { product in
+                                showProductDetail = false
+                            }
+                        )
+                        .environmentObject(cartManager)
+                    }
+                }
             }
             
             // Contest Overlay
             if let contest = webSocketManager.currentContest, showContest {
-                ViaplayContestOverlay(
-                    contest: contest,
+                REngagementContestOverlay(
+                    name: contest.name,
+                    prize: contest.prize,
+                    deadline: contest.deadline,
+                    maxParticipants: contest.maxParticipants,
+                    prizes: nil,
                     isChatExpanded: isChatExpanded,
                     onJoin: {
                         print("🎁 [Contest] Usuario se unió: \(contest.name)")
@@ -374,7 +429,7 @@ struct ViaplayVideoPlayer: View {
                 }
                 
                 Button(action: {
-                    // Demo: Navigate to previous Power contest, fallback to seek backward
+                    // Demo: Navigate to previous Elkjøp contest, fallback to seek backward
                     if let onPrevious = onNavigateToPreviousPowerContest {
                         onPrevious()
                     } else {
@@ -393,7 +448,7 @@ struct ViaplayVideoPlayer: View {
                 }
                 
                 Button(action: {
-                    // Demo: Navigate to next Power contest, fallback to seek forward
+                    // Demo: Navigate to next Elkjøp contest, fallback to seek forward
                     if let onNext = onNavigateToNextPowerContest {
                         onNext()
                     } else {
@@ -479,6 +534,27 @@ struct ViaplayVideoPlayer: View {
                 images: convertImages(variantDto.images)
             )
         }
+    }
+    
+    /// Formatea el precio de un ProductDto para display
+    private func formatProductPrice(_ price: PriceDto) -> String {
+        let priceToShow = price.amountInclTaxes ?? price.amount
+        return "\(price.currencyCode) \(String(format: "%.2f", priceToShow))"
+    }
+    
+    /// Calcula el porcentaje de descuento de un ProductDto
+    private func calculateDiscountPercentage(_ product: ProductDto?) -> Int? {
+        guard let product = product else { return nil }
+        
+        let currentPrice = product.price.amountInclTaxes ?? product.price.amount
+        let originalPrice = product.price.compareAtInclTaxes ?? product.price.compareAt
+        
+        guard let compareAt = originalPrice, compareAt > currentPrice else {
+            return nil
+        }
+        
+        let discount = ((compareAt - currentPrice) / compareAt) * 100
+        return Int(discount.rounded())
     }
     
     /// Convierte ProductDto a Product para el CartManager

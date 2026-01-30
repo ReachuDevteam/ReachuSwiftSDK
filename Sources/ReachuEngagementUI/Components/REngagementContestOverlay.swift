@@ -1,40 +1,50 @@
+//
+//  REngagementContestOverlay.swift
+//  ReachuEngagementUI
+//
+//  Contest overlay component for engagement system
+//  Uses SDK colors from configuration instead of hardcoded values
+//
+
 import SwiftUI
 import ReachuCore
+import ReachuDesignSystem
 
-/// Componente de concurso con ruleta animada para Viaplay
-/// Copia EXACTA de TV2ContestOverlay con colores de Viaplay
-struct ViaplayContestOverlay: View {
-    let contest: ContestEventData
+/// Contest overlay component for engagement system
+public struct REngagementContestOverlay: View {
+    let name: String
+    let prize: String
+    let deadline: String?
+    let maxParticipants: Int?
+    let prizes: [String]?
     let isChatExpanded: Bool
     let onJoin: () -> Void
     let onDismiss: () -> Void
     
-    @StateObject private var campaignManager = CampaignManager.shared
     @State private var hasJoined = false
     @State private var showWheel = false
     @State private var wheelRotation: Double = 0
     @State private var finalPrize: String = ""
     @State private var isSpinning = false
-    @State private var countdown: Int = 10 // Countdown en segundos
+    @State private var countdown: Int = 10
     @State private var dragOffset: CGFloat = 0
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
+    @Environment(\.colorScheme) private var colorScheme
     
     private var isLandscape: Bool {
         verticalSizeClass == .compact
     }
     
-    // Ajustar bottom padding basado en si el chat está expandido
     private var bottomPadding: CGFloat {
         if isLandscape {
-            return isChatExpanded ? 250 : 156 // En landscape, espacio para el chat con 2 mensajes (140 + 16)
+            return isChatExpanded ? 250 : 156
         } else {
-            return isChatExpanded ? 250 : 80 // Más espacio cuando el chat está expandido
+            return isChatExpanded ? 250 : 80
         }
     }
     
-    // Premios de la ruleta
-    private let prizes = [
+    private let defaultPrizes = [
         "🎁 Premio Principal",
         "💰 50% Descuento",
         "🎉 Premio Sorpresa",
@@ -43,25 +53,45 @@ struct ViaplayContestOverlay: View {
         "🎊 Descuento 30%"
     ]
     
-    var body: some View {
+    public init(
+        name: String,
+        prize: String,
+        deadline: String? = nil,
+        maxParticipants: Int? = nil,
+        prizes: [String]? = nil,
+        isChatExpanded: Bool,
+        onJoin: @escaping () -> Void,
+        onDismiss: @escaping () -> Void
+    ) {
+        self.name = name
+        self.prize = prize
+        self.deadline = deadline
+        self.maxParticipants = maxParticipants
+        self.prizes = prizes
+        self.isChatExpanded = isChatExpanded
+        self.onJoin = onJoin
+        self.onDismiss = onDismiss
+    }
+    
+    public var body: some View {
+        let colors = ReachuColors.adaptive(for: colorScheme)
+        
         VStack(spacing: 0) {
             if isLandscape {
-                // Horizontal: lado derecho
                 Spacer()
                 HStack(spacing: 0) {
                     Spacer()
-                    contestCard
+                    contestCard(colors: colors)
                         .frame(width: 320)
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
+                        .padding(.trailing, ReachuSpacing.md)
+                        .padding(.bottom, ReachuSpacing.md)
                         .offset(x: dragOffset)
                         .gesture(dragGesture)
                 }
             } else {
-                // Vertical: sobre el chat
                 Spacer()
-                contestCard
-                    .padding(.horizontal, 16)
+                contestCard(colors: colors)
+                    .padding(.horizontal, ReachuSpacing.md)
                     .padding(.bottom, bottomPadding)
                     .offset(y: dragOffset)
                     .gesture(dragGesture)
@@ -107,21 +137,21 @@ struct ViaplayContestOverlay: View {
             }
     }
     
-    private var contestCard: some View {
+    private func contestCard(colors: AdaptiveColors) -> some View {
         VStack(spacing: 0) {
             VStack(spacing: 0) {
                 if showWheel {
-                    wheelView
+                    wheelView(colors: colors)
                 } else {
-                    contestInfoView
+                    contestInfoView(colors: colors)
                 }
             }
-            .padding(16)
+            .padding(ReachuSpacing.md)
             .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color.black.opacity(0.4))
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
+                    .fill(colors.surface.opacity(0.4))
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
+                        RoundedRectangle(cornerRadius: ReachuBorderRadius.large)
                             .fill(.ultraThinMaterial)
                     )
             )
@@ -129,91 +159,82 @@ struct ViaplayContestOverlay: View {
         }
     }
     
-    // MARK: - Contest Info View
-    
-    private var contestInfoView: some View {
-        VStack(spacing: 12) {
-            // Drag indicator
-            Capsule()
-                .fill(Color.white.opacity(0.3))
-                .frame(width: 32, height: 4)
+    private func contestInfoView(colors: AdaptiveColors) -> some View {
+        VStack(spacing: ReachuSpacing.md) {
+            REngagementDragIndicator()
             
-            // Sponsor badge arriba a la izquierda (SIEMPRE visible con logo1)
             HStack {
-                // Campaign sponsor badge
-                CampaignSponsorBadge(
-                    maxWidth: 80,
-                    maxHeight: 24,
-                    alignment: .leading
-                )
+                REngagementSponsorBadge()
                 Spacer()
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, ReachuSpacing.sm)
             .padding(.top, 4)
             
-            // Contest name
-            Text(contest.name)
+            Text(name)
                 .font(.system(size: isLandscape ? 16 : 18, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(colors.textPrimary)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
             
-            // Prize
             VStack(spacing: 6) {
                 Text("PREMIER")
                     .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundColor(colors.textSecondary)
                 
-                Text(contest.prize)
+                Text(prize)
                     .font(.system(size: isLandscape ? 13 : 14, weight: .semibold))
-                    .foregroundColor(ViaplayTheme.Colors.pink)
+                    .foregroundColor(colors.primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(3)
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, ReachuSpacing.xs)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.05))
+                RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                    .fill(colors.surfaceSecondary.opacity(0.5))
             )
             
-            // Info
-            VStack(spacing: 8) {
-                HStack {
-                    Text("Frist: \(contest.deadline)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.8))
-                    Spacer()
-                }
-                
-                HStack {
-                    Text("Maks deltakere: \(contest.maxParticipants)")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.8))
-                    Spacer()
+            if deadline != nil || maxParticipants != nil {
+                VStack(spacing: ReachuSpacing.xs) {
+                    if let deadline = deadline {
+                        HStack {
+                            Text("Frist: \(deadline)")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.textSecondary)
+                            Spacer()
+                        }
+                    }
+                    
+                    if let maxParticipants = maxParticipants {
+                        HStack {
+                            Text("Maks deltakere: \(maxParticipants)")
+                                .font(.system(size: 12))
+                                .foregroundColor(colors.textSecondary)
+                            Spacer()
+                        }
+                    }
                 }
             }
             
-            // Countdown or button
             if hasJoined {
-                VStack(spacing: 8) {
+                VStack(spacing: ReachuSpacing.xs) {
                     Text("Du er med!")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(Color.green)
+                        .foregroundColor(colors.success)
                     
                     if countdown > 0 {
-                        HStack(spacing: 8) {
+                        HStack(spacing: ReachuSpacing.xs) {
                             ProgressView()
-                                .progressViewStyle(CircularProgressViewStyle(tint: ViaplayTheme.Colors.pink))
+                                .progressViewStyle(CircularProgressViewStyle(tint: colors.primary))
                                 .scaleEffect(0.8)
                             
                             Text("Trekking om \(countdown)s...")
                                 .font(.system(size: 12))
-                                .foregroundColor(.white.opacity(0.7))
+                                .foregroundColor(colors.textSecondary)
                         }
                     }
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, ReachuSpacing.sm)
             } else {
                 Button(action: {
                     hasJoined = true
@@ -221,64 +242,58 @@ struct ViaplayContestOverlay: View {
                 }) {
                     Text("Bli med!")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.textOnPrimary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
+                        .padding(.vertical, ReachuSpacing.sm)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(ViaplayTheme.Colors.pink.opacity(0.8))
+                            RoundedRectangle(cornerRadius: ReachuBorderRadius.medium)
+                                .fill(colors.primary.opacity(0.8))
                         )
                 }
             }
         }
     }
     
-    // MARK: - Wheel View
-    
-    private var wheelView: some View {
-        VStack(spacing: 20) {
-            // Header
+    private func wheelView(colors: AdaptiveColors) -> some View {
+        let wheelPrizes = prizes ?? defaultPrizes
+        
+        return VStack(spacing: 20) {
             Text(isSpinning ? "Snurrer..." : "Gratulerer!")
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundColor(colors.textPrimary)
             
-            // Wheel
             ZStack {
-                // Pointer at top
                 Triangle()
-                    .fill(ViaplayTheme.Colors.pink)
+                    .fill(colors.primary)
                     .frame(width: 24, height: 30)
                     .offset(y: -125)
                     .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
                     .zIndex(10)
                 
-                // Wheel circle
                 Circle()
-                    .fill(Color.white.opacity(0.05))
+                    .fill(colors.surfaceSecondary.opacity(0.5))
                     .frame(width: 260, height: 260)
                     .overlay(
                         Circle()
-                            .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            .stroke(colors.textPrimary.opacity(0.1), lineWidth: 1)
                     )
                 
-                // Wheel segments
                 ZStack {
-                    ForEach(0..<prizes.count, id: \.self) { index in
-                        wheelSegment(index: index)
+                    ForEach(0..<wheelPrizes.count, id: \.self) { index in
+                        wheelSegment(index: index, colors: colors)
                     }
                 }
                 .rotationEffect(.degrees(wheelRotation))
                 .frame(width: 250, height: 250)
                 
-                // Center circle
                 Circle()
-                    .fill(Color(hex: "120019"))
+                    .fill(colors.background)
                     .frame(width: 60, height: 60)
                     .overlay(
                         Circle()
                             .stroke(
                                 LinearGradient(
-                                    colors: [ViaplayTheme.Colors.pink, ViaplayTheme.Colors.pink.opacity(0.6)],
+                                    colors: [colors.primary, colors.primary.opacity(0.6)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 ),
@@ -291,21 +306,21 @@ struct ViaplayContestOverlay: View {
         }
     }
     
-    private func wheelSegment(index: Int) -> some View {
-        let angle = 360.0 / Double(prizes.count)
-        let startAngle = angle * Double(index) - 90 // Start from top
+    private func wheelSegment(index: Int, colors: AdaptiveColors) -> some View {
+        let wheelPrizes = prizes ?? defaultPrizes
+        let angle = 360.0 / Double(wheelPrizes.count)
+        let startAngle = angle * Double(index) - 90
         
         return WheelSegmentShape(startAngle: startAngle, angle: angle)
-            .fill(segmentColor(index: index))
+            .fill(segmentColor(index: index, colors: colors))
             .overlay(
                 WheelSegmentShape(startAngle: startAngle, angle: angle)
                     .stroke(Color.black.opacity(0.3), lineWidth: 1)
             )
             .overlay(
-                // Premio text
-                Text(prizes[index])
+                Text(wheelPrizes[index])
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.textPrimary)
                     .shadow(color: .black.opacity(0.5), radius: 2, x: 0, y: 1)
                     .rotationEffect(.degrees(startAngle + angle / 2 + 90))
                     .offset(y: -95)
@@ -314,44 +329,10 @@ struct ViaplayContestOverlay: View {
             .rotationEffect(.degrees(startAngle + angle / 2 + 90))
     }
     
-    // Custom wheel segment shape
-    struct WheelSegmentShape: Shape {
-        let startAngle: Double
-        let angle: Double
-        
-        func path(in rect: CGRect) -> Path {
-            var path = Path()
-            let center = CGPoint(x: rect.midX, y: rect.midY)
-            let radius = min(rect.width, rect.height) / 2
-            
-            path.move(to: center)
-            path.addArc(
-                center: center,
-                radius: radius,
-                startAngle: .degrees(startAngle),
-                endAngle: .degrees(startAngle + angle),
-                clockwise: false
-            )
-            path.closeSubpath()
-            
-            return path
-        }
+    private func segmentColor(index: Int, colors: AdaptiveColors) -> Color {
+        let opacities: [Double] = [0.9, 0.7, 0.8, 0.6, 0.85, 0.75]
+        return colors.primary.opacity(opacities[index % opacities.count])
     }
-    
-    private func segmentColor(index: Int) -> Color {
-        // Colores de Viaplay (tonos de rosa)
-        let colors: [Color] = [
-            ViaplayTheme.Colors.pink.opacity(0.9),
-            ViaplayTheme.Colors.pink.opacity(0.7),
-            ViaplayTheme.Colors.pink.opacity(0.8),
-            ViaplayTheme.Colors.pink.opacity(0.6),
-            ViaplayTheme.Colors.pink.opacity(0.85),
-            ViaplayTheme.Colors.pink.opacity(0.75)
-        ]
-        return colors[index % colors.count]
-    }
-    
-    // MARK: - Helpers
     
     private func startCountdown() {
         Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -371,7 +352,6 @@ struct ViaplayContestOverlay: View {
             showWheel = true
         }
         
-        // Wait a bit then spin
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
             spinWheel()
         }
@@ -379,8 +359,7 @@ struct ViaplayContestOverlay: View {
     
     private func spinWheel() {
         isSpinning = true
-        
-        // Random final position (3-5 full rotations + random angle)
+        let wheelPrizes = prizes ?? defaultPrizes
         let rotations = Double.random(in: 3...5)
         let finalAngle = Double.random(in: 0...360)
         let totalRotation = (rotations * 360) + finalAngle
@@ -389,15 +368,12 @@ struct ViaplayContestOverlay: View {
             wheelRotation = totalRotation
         }
         
-        // Show result after animation
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.0) {
             isSpinning = false
-            
-            // Calculate which prize based on final angle
             let normalizedAngle = finalAngle.truncatingRemainder(dividingBy: 360)
-            let segmentAngle = 360.0 / Double(prizes.count)
-            let prizeIndex = Int((360 - normalizedAngle) / segmentAngle) % prizes.count
-            finalPrize = prizes[prizeIndex]
+            let segmentAngle = 360.0 / Double(wheelPrizes.count)
+            let prizeIndex = Int((360 - normalizedAngle) / segmentAngle) % wheelPrizes.count
+            finalPrize = wheelPrizes[prizeIndex]
         }
     }
 }
@@ -415,29 +391,27 @@ struct Triangle: Shape {
     }
 }
 
-// MARK: - Preview
+// MARK: - Wheel Segment Shape
 
-#Preview {
-    ZStack {
-        Color.black.ignoresSafeArea()
+struct WheelSegmentShape: Shape {
+    let startAngle: Double
+    let angle: Double
+    
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let center = CGPoint(x: rect.midX, y: rect.midY)
+        let radius = min(rect.width, rect.height) / 2
         
-        ViaplayContestOverlay(
-            contest: ContestEventData(
-                id: "contest_123",
-                name: "Gran Sorteo Tech 2024",
-                prize: "Gana un MacBook Pro M3, AirPods Pro y más",
-                deadline: "2024-12-31",
-                maxParticipants: 1000,
-                campaignLogo: nil
-            ),
-            isChatExpanded: false,
-            onJoin: {
-                print("Usuario se unió")
-            },
-            onDismiss: {
-                print("Cerrado")
-            }
+        path.move(to: center)
+        path.addArc(
+            center: center,
+            radius: radius,
+            startAngle: .degrees(startAngle),
+            endAngle: .degrees(startAngle + angle),
+            clockwise: false
         )
+        path.closeSubpath()
+        
+        return path
     }
 }
-

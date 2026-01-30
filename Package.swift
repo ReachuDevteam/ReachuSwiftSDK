@@ -34,6 +34,18 @@ let package = Package(
             targets: ["ReachuDesignSystem"]
         ),
 
+        // Engagement System - engagement logic and models (FASE 4)
+        .library(
+            name: "ReachuEngagementSystem",
+            targets: ["ReachuEngagementSystem"]
+        ),
+
+        // Engagement UI - engagement UI components (FASE 4)
+        .library(
+            name: "ReachuEngagementUI",
+            targets: ["ReachuEngagementSystem", "ReachuEngagementUI"]
+        ),
+
         // LiveShow - optional target (FASE 3)
         // .library(
         //     name: "ReachuLiveShow",
@@ -65,7 +77,9 @@ let package = Package(
                 "ReachuCore",
                 "ReachuNetwork",
                 "ReachuDesignSystem",
-                "ReachuUI"
+                "ReachuUI",
+                "ReachuEngagementSystem",
+                "ReachuEngagementUI"
             ]
         ),        
     ],
@@ -187,6 +201,26 @@ let package = Package(
                 "ReachuDesignSystem",
             ],
             path: "Sources/ReachuLiveUI"
+        ),
+
+        // MARK: - FASE 4: Engagement System Target (Optional)
+        .target(
+            name: "ReachuEngagementSystem",
+            dependencies: [
+                "ReachuCore",
+            ],
+            path: "Sources/ReachuEngagementSystem"
+        ),
+
+        // MARK: - FASE 4: Engagement UI Target (Optional)
+        .target(
+            name: "ReachuEngagementUI",
+            dependencies: [
+                "ReachuCore",
+                "ReachuEngagementSystem",
+                "ReachuDesignSystem",
+            ],
+            path: "Sources/ReachuEngagementUI"
         ),
 
         // MARK: - INTERNAL: Testing Utilities Target

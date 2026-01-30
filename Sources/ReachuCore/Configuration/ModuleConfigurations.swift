@@ -812,6 +812,39 @@ public struct AccessibilityConfiguration {
     public static let `default` = AccessibilityConfiguration()
 }
 
+// MARK: - Brand Configuration
+
+/// Configuration for brand name and icon used in engagement components
+public struct BrandConfiguration {
+    /// Brand name displayed in engagement components (e.g., "Power", "Elkjøp")
+    public let name: String
+    
+    /// Brand icon asset name (e.g., "avatar_power", "avatar_elkjop")
+    public let iconAsset: String
+    
+    public init(
+        name: String = "Elkjøp",
+        iconAsset: String = "avatar_el"
+    ) {
+        self.name = name
+        self.iconAsset = iconAsset
+    }
+    
+    public static let `default` = BrandConfiguration()
+    
+    /// Legacy Power brand configuration (preserved for reference)
+    public static let power = BrandConfiguration(
+        name: "Power",
+        iconAsset: "avatar_power"
+    )
+    
+    /// Elkjøp brand configuration
+    public static let elkjøp = BrandConfiguration(
+        name: "Elkjøp",
+        iconAsset: "avatar_elkjop"
+    )
+}
+
 // MARK: - Supporting Enums
 
 public enum TextAlignment: String, CaseIterable {

@@ -4,10 +4,22 @@
   "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
   "environment": "development",
   "theme": {
-    "name": "Viaplay Theme",
+    "name": "Elkjøp Theme",
     "mode": "dark",
+    "_brandColors": {
+      "_comment": "Brand color references for documentation",
+      "elkjøp": {
+        "primary": "#69A333",
+        "description": "Elkjøp green - used as primary color"
+      },
+      "power": {
+        "primary": "#FF9500",
+        "secondary": "#007AFF",
+        "description": "Power orange and blue - legacy colors, now replaced by theme colors"
+      }
+    },
     "lightColors": {
-      "primary": "#FF3366",
+      "primary": "#69A333",
       "secondary": "#9933FF",
       "background": "#FFFFFF",
       "surface": "#F5F5F5",
@@ -21,10 +33,11 @@
       "textTertiary": "#9E9E9E",
       "textOnPrimary": "#FFFFFF",
       "border": "#E0E0E0",
-      "borderSecondary": "#BDBDBD"
+      "borderSecondary": "#BDBDBD",
+      "priceColor": "#69A333"
     },
     "darkColors": {
-      "primary": "#FF3366",
+      "primary": "#69A333",
       "secondary": "#9933FF",
       "background": "#1B1B25",
       "surface": "#161B22",
@@ -38,7 +51,8 @@
       "textTertiary": "#808080",
       "textOnPrimary": "#FFFFFF",
       "border": "#21262D",
-      "borderSecondary": "#4A4A4A"
+      "borderSecondary": "#4A4A4A",
+      "priceColor": "#69A333"
     }
   },
   "typography": {
@@ -141,6 +155,11 @@
     "autoDiscover": true,
     "_comment2": "channelId: Optional channel ID for match context. Can be null.",
     "channelId": null
+  },
+  "brand": {
+    "name": "Elkjøp",
+    "iconAsset": "avatar_el",
+    "_comment": "Brand configuration for engagement components. Legacy Power values: name='Power', iconAsset='avatar_power'"
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",

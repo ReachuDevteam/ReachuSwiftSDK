@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import ReachuCore
 
 /// Engagement Manager for handling polls and contests with match context
 /// Manages engagement data organized by matchId for context-aware filtering
@@ -28,7 +29,7 @@ public class EngagementManager: ObservableObject {
     
     /// Load engagement data (polls and contests) for a specific match context
     public func loadEngagement(for context: MatchContext) async {
-        print("🎯 [EngagementManager] loadEngagement - Loading for matchId: \(context.matchId)")
+        ReachuLogger.debug("Loading engagement for matchId: \(context.matchId)", component: "EngagementManager")
         
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
@@ -129,7 +130,7 @@ public class EngagementManager: ObservableObject {
     /// Update poll results from WebSocket event
     public func updatePollResults(pollId: String, results: PollResults) {
         pollResults[pollId] = results
-        print("🎯 [EngagementManager] updatePollResults - Updated results for poll: \(pollId)")
+        ReachuLogger.debug("Updated results for poll: \(pollId)", component: "EngagementManager")
     }
     
     // MARK: - Private Methods
@@ -195,7 +196,7 @@ public class EngagementManager: ObservableObject {
             // Store polls by matchId
             pollsByMatch[context.matchId] = polls
             
-            print("🎯 [EngagementManager] loadPolls - Loaded \(polls.count) polls for matchId: \(context.matchId)")
+            ReachuLogger.debug("Loaded \(polls.count) polls for matchId: \(context.matchId)", component: "EngagementManager")
             
         } catch {
             ReachuLogger.error("Failed to load polls: \(error)", component: "EngagementManager")
@@ -259,7 +260,7 @@ public class EngagementManager: ObservableObject {
             // Store contests by matchId
             contestsByMatch[context.matchId] = contests
             
-            print("🎯 [EngagementManager] loadContests - Loaded \(contests.count) contests for matchId: \(context.matchId)")
+            ReachuLogger.debug("Loaded \(contests.count) contests for matchId: \(context.matchId)", component: "EngagementManager")
             
         } catch {
             ReachuLogger.error("Failed to load contests: \(error)", component: "EngagementManager")

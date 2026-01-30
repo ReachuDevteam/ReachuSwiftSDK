@@ -1,4 +1,5 @@
 import Foundation
+import ReachuCore
 
 // MARK: - Engagement Models
 

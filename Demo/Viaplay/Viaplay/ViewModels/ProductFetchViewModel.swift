@@ -13,8 +13,8 @@ class ProductFetchViewModel: ObservableObject {
     @Published var errorMessage: String?
     
     private let sdk: SdkClient
-    private let currency: String
-    private let country: String
+    var currency: String
+    var country: String
     
     init(sdk: SdkClient, currency: String, country: String) {
         self.sdk = sdk

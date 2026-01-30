@@ -1,6 +1,8 @@
 import SwiftUI
 import ReachuUI
 import ReachuCore
+import ReachuEngagementUI
+import ReachuDesignSystem
 
 /// Vista que se muestra cuando el casting está activo en Viaplay
 /// Permite controlar el video y ver los overlays mientras se castea
@@ -12,6 +14,7 @@ struct ViaplayCastingActiveView: View {
     @StateObject private var campaignManager = CampaignManager.shared
     @EnvironmentObject private var cartManager: CartManager
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     
     @State private var isPlaying = true
     @State private var isChatExpanded = false
@@ -61,39 +64,57 @@ struct ViaplayCastingActiveView: View {
                 
                 // Eventos interactivos
                 if let poll = webSocketManager.currentPoll {
-                    ViaplayCastingPollCardView(
-                        poll: poll,
-                        onVote: { option in
-                            print("📊 [Poll] Votado: \(option)")
+                    REngagementPollCard(
+                        question: poll.question,
+                        subtitle: nil,
+                        options: poll.options.map { option in
+                            REngagementPollOption(
+                                id: option.id.uuidString,
+                                text: option.text,
+                                avatarUrl: option.avatarUrl
+                            )
+                        },
+                        duration: poll.duration,
+                        onVote: { optionId in
+                            print("📊 [Poll] Votado: \(optionId)")
                         },
                         onDismiss: {
                             webSocketManager.currentPoll = nil
                         }
                     )
                 } else if let productEvent = webSocketManager.currentProduct {
-                    ViaplayCastingProductCardView(
-                        productEvent: productEvent,
-                        sdk: sdkClient,
-                        currency: cartManager.currency,
-                        country: cartManager.country,
-                        onAddToCart: { productDto in
-                            if let apiProduct = productDto {
-                                print("🛍️ Producto de API: \(apiProduct.title)")
-                                // El componente ya agrega al cart internamente
-                            }
+                    REngagementProductCard(
+                        product: REngagementProductData(
+                            productId: productEvent.productId,
+                            name: productEvent.name,
+                            description: productEvent.description,
+                            price: "\(productEvent.currency) \(productEvent.price)",
+                            imageUrl: productEvent.imageUrl,
+                            discountPercentage: nil
+                        ),
+                        onAddToCart: {
+                            print("🛍️ Producto agregado al carrito")
                         },
                         onDismiss: {
                             webSocketManager.currentProduct = nil
-                        }
+                        },
+                        onShowDetail: nil
                     )
                     .environmentObject(cartManager)
                 } else if let contest = webSocketManager.currentContest {
-                    ViaplayCastingContestCardView(
-                        contest: contest,
-                        onJoin: {
+                    let brandConfig = ReachuConfiguration.shared.brandConfiguration
+                    
+                    REngagementContestCard(
+                        title: contest.name,
+                        description: "Konkurranse med premie: \(contest.prize)",
+                        prize: contest.prize,
+                        contestType: nil,
+                        imageAsset: nil,
+                        brandName: brandConfig.name,
+                        brandIcon: brandConfig.iconAsset,
+                        displayTime: contest.deadline,
+                        onParticipate: {
                             print("🎁 [Contest] Usuario se unió")
-                        },
-                        onDismiss: {
                             webSocketManager.currentContest = nil
                         }
                     )
@@ -144,13 +165,15 @@ struct ViaplayCastingActiveView: View {
     
     // MARK: - Components
     
+    @ViewBuilder
     private var castingHeader: some View {
+        let colors = ReachuColors.adaptive(for: colorScheme)
         HStack(alignment: .top) {
             // Back button
             Button(action: { dismiss() }) {
                 Image(systemName: "chevron.down")
                     .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.textPrimary)
                     .frame(width: 44, height: 44)
             }
             
@@ -158,11 +181,11 @@ struct ViaplayCastingActiveView: View {
             VStack(spacing: 4) {
                 Text(match.title)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.textPrimary)
                 
                 Text(match.subtitle)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundColor(colors.textSecondary)
             }
             .padding(.top, 8)
             
@@ -177,12 +200,12 @@ struct ViaplayCastingActiveView: View {
                     Text("Stop")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(colors.textOnPrimary)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(Color.red.opacity(0.8))
+                        .fill(colors.error.opacity(0.8))
                 )
             }
         }
@@ -190,65 +213,71 @@ struct ViaplayCastingActiveView: View {
         .padding(.top, 50)
     }
     
+    @ViewBuilder
     private var matchInfo: some View {
+        let colors = ReachuColors.adaptive(for: colorScheme)
         VStack(spacing: 20) {
             // Mensaje de "Casting to..."
             Text("Casting to \(castingManager.selectedDevice?.name ?? "Living TV")")
                 .font(.system(size: 17))
-                .foregroundColor(.white)
+                .foregroundColor(colors.textPrimary)
             
-            // Progreso/tiempo
+                // Progreso/tiempo
             VStack(spacing: 16) {
                 // Barra de progreso
+                let colors = ReachuColors.adaptive(for: colorScheme)
                 ZStack(alignment: .leading) {
                     // Background
                     Capsule()
-                        .fill(Color.white.opacity(0.3))
+                        .fill(colors.textPrimary.opacity(0.3))
                         .frame(height: 4)
                     
                     // Progress (simulado al 50%)
                     Capsule()
-                        .fill(ViaplayTheme.Colors.pink)
+                        .fill(colors.primary)
                         .frame(width: (UIScreen.main.bounds.width * 0.6) * 0.5, height: 4)
                 }
                 .frame(width: UIScreen.main.bounds.width * 0.6, height: 4)
                 
                 // Tiempo
+                let colors2 = ReachuColors.adaptive(for: colorScheme)
                 HStack {
                     Text("3:24:39")
                         .font(.system(size: 15))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors2.textPrimary)
                     
                     Spacer()
                     
                     Text("LIVE")
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(ViaplayTheme.Colors.pink)
+                        .foregroundColor(colors2.primary)
                 }
                 .frame(width: UIScreen.main.bounds.width * 0.6)
             }
         }
     }
     
+    @ViewBuilder
     private var playbackControls: some View {
+        let colors = ReachuColors.adaptive(for: colorScheme)
         HStack(spacing: 40) {
             // Rewind
             Button(action: {}) {
                 Image(systemName: "gobackward.30")
                     .font(.system(size: 32))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.textPrimary)
             }
             
             // Play/Pause
             Button(action: { isPlaying.toggle() }) {
                 ZStack {
                     Circle()
-                        .fill(ViaplayTheme.Colors.pink)
+                        .fill(colors.primary)
                         .frame(width: 70, height: 70)
                     
                     Image(systemName: isPlaying ? "pause.fill" : "play.fill")
                         .font(.system(size: 28))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors.textOnPrimary)
                 }
             }
             
@@ -256,7 +285,7 @@ struct ViaplayCastingActiveView: View {
             Button(action: {}) {
                 Image(systemName: "goforward.30")
                     .font(.system(size: 32))
-                    .foregroundColor(.white)
+                    .foregroundColor(colors.textPrimary)
             }
         }
     }
@@ -266,9 +295,10 @@ struct ViaplayCastingActiveView: View {
     private var simpleChatPanel: some View {
         VStack(spacing: 0) {
             // Drag indicator + Header
+            let colors = ReachuColors.adaptive(for: colorScheme)
             VStack(spacing: 4) {
                 RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.white.opacity(0.3))
+                    .fill(colors.textPrimary.opacity(0.3))
                     .frame(width: 32, height: 4)
                     .padding(.top, 6)
                 
@@ -279,61 +309,31 @@ struct ViaplayCastingActiveView: View {
                 } label: {
                     HStack(spacing: 8) {
                         // Sponsor badge
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Sponset av")
-                                .font(.system(size: 10, weight: .medium))
-                                .foregroundColor(.white.opacity(0.8))
-                            
-                            // Campaign logo from CampaignManager
-                            if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
-                                AsyncImage(url: url) { phase in
-                                    switch phase {
-                                    case .empty:
-                                        ProgressView()
-                                            .frame(maxWidth: 70, maxHeight: 24)
-                                    case .success(let image):
-                                        image
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(maxWidth: 70, maxHeight: 24)
-                                    case .failure:
-                                        Image("logo1")
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(maxWidth: 70, maxHeight: 24)
-                                    @unknown default:
-                                        Image("logo1")
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fit)
-                                            .frame(maxWidth: 70, maxHeight: 24)
-                                    }
-                                }
-                            } else {
-                                // Fallback to hardcoded logo if no campaign logo
-                                Image("logo1")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(maxWidth: 70, maxHeight: 24)
-                            }
-                        }
+                        CampaignSponsorBadge(
+                            text: "Sponset av",
+                            maxWidth: 70,
+                            maxHeight: 24,
+                            alignment: .leading
+                        )
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
                         .background(
                             RoundedRectangle(cornerRadius: 6)
-                                .fill(Color.black.opacity(0.3))
+                                .fill(ReachuColors.adaptive(for: colorScheme).surface.opacity(0.3))
                         )
                         
                         Spacer(minLength: 0)
                         
                         // Live Chat indicator
+                        let colors2 = ReachuColors.adaptive(for: colorScheme)
                         HStack(spacing: 4) {
                             Text("LIVE CHAT")
                                 .font(.system(size: 13, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundColor(colors2.textPrimary)
                             
                             Image(systemName: isChatExpanded ? "chevron.down" : "chevron.up")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.6))
+                                .foregroundColor(colors2.textSecondary)
                         }
                         .padding(.horizontal, 8)
                         .padding(.vertical, 6)
@@ -373,12 +373,12 @@ struct ViaplayCastingActiveView: View {
                                             
                                             Text(timeAgo(from: message.timestamp))
                                                 .font(.system(size: 10))
-                                                .foregroundColor(.white.opacity(0.4))
+                                                .foregroundColor(ReachuColors.adaptive(for: colorScheme).textTertiary)
                                         }
                                         
                                         Text(message.text)
                                             .font(.system(size: 14))
-                                            .foregroundColor(.white.opacity(0.95))
+                                            .foregroundColor(ReachuColors.adaptive(for: colorScheme).textPrimary)
                                             .fixedSize(horizontal: false, vertical: true)
                                     }
                                     
@@ -402,30 +402,32 @@ struct ViaplayCastingActiveView: View {
                 }
                 
                 Divider()
-                    .background(Color.white.opacity(0.2))
+                    .background(ReachuColors.adaptive(for: colorScheme).border)
                 
                 // Input bar
+                let colors3 = ReachuColors.adaptive(for: colorScheme)
                 HStack(spacing: 10) {
                     TextField("Send a message...", text: $chatMessage)
                         .font(.system(size: 14))
-                        .foregroundColor(.white)
+                        .foregroundColor(colors3.textPrimary)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .background(
                             RoundedRectangle(cornerRadius: 20)
-                                .fill(Color.white.opacity(0.15))
+                                .fill(colors3.surfaceSecondary.opacity(0.5))
                         )
                     
                     Button {
                         sendChatMessage()
                     } label: {
+                        let colors = ReachuColors.adaptive(for: colorScheme)
                         Image(systemName: "paperplane.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(chatMessage.isEmpty ? .white.opacity(0.3) : ViaplayTheme.Colors.pink)
+                            .foregroundColor(chatMessage.isEmpty ? colors.textSecondary : colors.primary)
                             .padding(8)
                             .background(
                                 Circle()
-                                    .fill(chatMessage.isEmpty ? Color.white.opacity(0.1) : ViaplayTheme.Colors.pink.opacity(0.2))
+                                    .fill(chatMessage.isEmpty ? colors.surfaceSecondary : colors.primary.opacity(0.2))
                             )
                     }
                     .disabled(chatMessage.isEmpty)
@@ -433,28 +435,29 @@ struct ViaplayCastingActiveView: View {
                     Button(action: {
                         sendFloatingLike()
                     }) {
+                        let colors = ReachuColors.adaptive(for: colorScheme)
                         Image(systemName: "hand.thumbsup.fill")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(ViaplayTheme.Colors.pink)
+                            .foregroundColor(colors.primary)
                             .padding(8)
                             .background(
                                 Circle()
-                                    .fill(ViaplayTheme.Colors.pink.opacity(0.2))
+                                    .fill(colors.primary.opacity(0.2))
                             )
                     }
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                .background(ViaplayTheme.Colors.black)
+                .background(ReachuColors.adaptive(for: colorScheme).background)
             }
         }
         .frame(width: isChatExpanded ? 400 : UIScreen.main.bounds.width, height: isChatExpanded ? 280 : 60)
         .background(
-            RoundedRectangle(cornerRadius: isChatExpanded ? 20 : 0)
-                .fill(Color.black.opacity(0.4))
+            RoundedRectangle(cornerRadius: isChatExpanded ? ReachuBorderRadius.large : 0)
+                .fill(ReachuColors.adaptive(for: colorScheme).surface.opacity(0.4))
                 .background(
-                    RoundedRectangle(cornerRadius: isChatExpanded ? 20 : 0)
+                    RoundedRectangle(cornerRadius: isChatExpanded ? ReachuBorderRadius.large : 0)
                         .fill(.ultraThinMaterial)
                 )
         )
@@ -464,10 +467,11 @@ struct ViaplayCastingActiveView: View {
     private func sendChatMessage() {
         guard !chatMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         
+        let colors = ReachuColors.adaptive(for: colorScheme)
         let message = ChatMessage(
             username: "Angelo",
             text: chatMessage,
-            usernameColor: ViaplayTheme.Colors.pink,
+            usernameColor: colors.primary,
             likes: 0,
             timestamp: Date()
         )

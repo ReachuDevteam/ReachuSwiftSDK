@@ -7,52 +7,60 @@
 //
 
 import SwiftUI
+import ReachuCore
+import ReachuDesignSystem
 
 struct PowerContestCard: View {
     let contest: PowerContestEvent
     let onParticipate: () -> Void
     
     @State private var showModal = false
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let brandConfig = ReachuConfiguration.shared.brandConfiguration
+        let colors = ReachuColors.adaptive(for: colorScheme)
+        
+        return VStack(alignment: .leading, spacing: 10) {
             // Header (similar to HighlightVideoCard)
             HStack(spacing: 8) {
-                // Power avatar
-                Image("avatar_power")
+                // Brand avatar - hardcoded: siempre usar avatar_el
+                Image("avatar_el")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .clipShape(Circle())
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text("Power")
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(brandConfig.name)
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(.blue)
+                        HStack(spacing: 4) {
+                            Image(systemName: "trophy.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(.orange)
+                            
+                            Text(contest.contestType == .quiz ? "Quiz" : "Konkurranse")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.6))
+                            
+                            Text("•")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.4))
+                            
+                            Text(contest.displayTime)
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
                     }
                     
-                    HStack(spacing: 4) {
-                        Image(systemName: "trophy.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(.orange)
-                        
-                        Text(contest.contestType == .quiz ? "Quiz" : "Konkurranse")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                        
-                        Text("•")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.4))
-                        
-                        Text(contest.displayTime)
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
+                    // Badge alineado a la derecha del nombre
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.info)
+                        .padding(.leading, 4)
                 }
                 
                 Spacer()

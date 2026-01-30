@@ -24,3 +24,8 @@ public typealias ReachuToastNotification = RToastNotification
 public typealias ReachuToastOverlay = RToastOverlay
 public typealias ReachuToastManager = ToastManager
 public typealias ReachuCustomLoader = RCustomLoader
+
+// Export image components
+public typealias ReachuCachedAsyncImage = CachedAsyncImage
+public typealias ReachuImageLoader = ImageLoader
+public typealias ReachuCampaignSponsorBadge = CampaignSponsorBadge

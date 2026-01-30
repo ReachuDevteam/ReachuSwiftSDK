@@ -9,6 +9,7 @@
 import SwiftUI
 import ReachuCore
 import ReachuUI
+import ReachuDesignSystem
 
 struct PowerProductCard: View {
     let productEvent: PowerProductEvent
@@ -21,50 +22,52 @@ struct PowerProductCard: View {
     
     // Get currency and country from CartManager
     @EnvironmentObject private var cartManager: CartManager
-    
-    // Power colors
-    private let powerOrange = Color.orange
-    private let powerBlue = Color.blue
+    @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let brandConfig = ReachuConfiguration.shared.brandConfiguration
+        let colors = ReachuColors.adaptive(for: colorScheme)
+        
+        return VStack(alignment: .leading, spacing: 12) {
             // Header (similar to PowerContestCard)
             HStack(spacing: 8) {
-                // Power avatar
-                Image("avatar_power")
+                // Brand avatar - hardcoded: siempre usar avatar_el
+                Image("avatar_el")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .clipShape(Circle())
                 
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 4) {
-                        Text("Power")
+                HStack(spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(brandConfig.name)
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(powerBlue)
+                        HStack(spacing: 4) {
+                            Image(systemName: "cart.fill")
+                                .font(.system(size: 9))
+                                .foregroundColor(colors.primary)
+                            
+                            Text("Produkt")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.6))
+                            
+                            Text("•")
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.4))
+                            
+                            Text(productEvent.displayTime)
+                                .font(.system(size: 10))
+                                .foregroundColor(.white.opacity(0.6))
+                        }
                     }
                     
-                    HStack(spacing: 4) {
-                        Image(systemName: "cart.fill")
-                            .font(.system(size: 9))
-                            .foregroundColor(powerOrange)
-                        
-                        Text("Produkt")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                        
-                        Text("•")
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.4))
-                        
-                        Text(productEvent.displayTime)
-                            .font(.system(size: 10))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
+                    // Badge alineado a la derecha del nombre
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 11))
+                        .foregroundColor(colors.info)
+                        .padding(.leading, 4)
                 }
                 
                 Spacer()
@@ -113,7 +116,7 @@ struct PowerProductCard: View {
             } else if !products.isEmpty {
                 HStack(spacing: 12) {
                     ForEach(products.prefix(2), id: \.id) { product in
-                        individualProductCard(product: product)
+                        individualProductCard(product: product, colors: colors)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -129,8 +132,8 @@ struct PowerProductCard: View {
                         .stroke(
                             LinearGradient(
                                 colors: [
-                                    powerOrange.opacity(0.4),
-                                    powerOrange.opacity(0.1)
+                                    colors.primary.opacity(0.4),
+                                    colors.primary.opacity(0.1)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
@@ -153,7 +156,7 @@ struct PowerProductCard: View {
     // MARK: - Individual Product Card View (with its own button)
     
     @ViewBuilder
-    private func individualProductCard(product: Product) -> some View {
+    private func individualProductCard(product: Product, colors: AdaptiveColors) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             // Ensure card doesn't overflow
             // Image container with fixed height for consistency
@@ -194,7 +197,7 @@ struct PowerProductCard: View {
                 }
                 
                 // Discount badge (25%)
-                discountBadge(text: "-25%")
+                discountBadge(text: "-25%", colors: colors)
             }
             .frame(height: 140)
             .frame(maxWidth: .infinity)
@@ -213,7 +216,7 @@ struct PowerProductCard: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(product.price.displayAmount)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(powerOrange)
+                    .foregroundColor(colors.primary)
                 
                 if let compareAtAmount = product.price.displayCompareAtAmount {
                     Text(compareAtAmount)
@@ -256,8 +259,8 @@ struct PowerProductCard: View {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    powerOrange,
-                                    powerOrange.opacity(0.8)
+                                    colors.primary,
+                                    colors.primary.opacity(0.8)
                                 ],
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -274,19 +277,21 @@ struct PowerProductCard: View {
     // MARK: - Helper to get product URL
     
     private func getProductUrl(for product: Product) -> String? {
-        // Map product IDs to their Power URLs
+        // Map product IDs to their Elkjøp URLs
         let productIdString = String(product.id)
         if productIdString == "408895" {
-            return "https://www.power.no/tv-og-lyd/tv/samsung-75-qn85f-neo-qled-4k-mini-led-smart-tv-2025/p-4019980/"
+            // Samsung 75" QN85F Neo QLED 4K MiniLED Smart TV (2025)
+            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
         } else if productIdString == "408896" {
-            return "https://www.power.no/tv-og-lyd/lydplanker/samsung-hw-q61mf-lydplanke-med-subwoofer-2025/p-4053176/store/1185/"
+            // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
+            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
         }
         return productEvent.powerProductUrl
     }
     
     // MARK: - Discount Badge
     
-    private func discountBadge(text: String) -> some View {
+    private func discountBadge(text: String, colors: AdaptiveColors) -> some View {
         Text(text)
             .font(.system(size: 11, weight: .bold))
             .foregroundColor(.white)
@@ -294,7 +299,7 @@ struct PowerProductCard: View {
             .padding(.vertical, 3)
             .background(
                 Capsule()
-                    .fill(powerOrange)
+                    .fill(colors.primary)
             )
             .padding(6)
     }

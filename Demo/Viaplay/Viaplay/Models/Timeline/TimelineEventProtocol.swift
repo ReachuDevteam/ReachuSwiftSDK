@@ -82,8 +82,8 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .trivia: return "Trivia"
         case .prediction: return "Spådom"
         case .voting: return "Avstemning"
-        case .powerContest: return "Power Konkurranse"
-        case .powerProduct: return "Power Produkt"
+        case .powerContest: return "Elkjøp Konkurranse"
+        case .powerProduct: return "Elkjøp Produkt"
         
         // Commerce events
         case .productHighlight: return "Produkt"

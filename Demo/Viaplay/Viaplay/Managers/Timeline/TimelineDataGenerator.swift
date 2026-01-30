@@ -189,11 +189,13 @@ struct TimelineDataGenerator {
         events.append(AnyTimelineEvent(PowerContestEvent(
             id: "power-contest-quiz",
             videoTimestamp: 2720,
-            title: "Power Konkurranse",
+            title: "Elkjøp Konkurranse",
             description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
             prize: "Gavekort på 5000kr",
             contestType: .quiz,
-            metadata: ["imageAsset": "gavekortpower"],
+            // Asset mapping: gavekortpower (Power) -> elkjop_konk (Elkjøp)
+            // Legacy Power asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
+            metadata: ["imageAsset": "elkjop_konk"],
             matchContext: nil
         )))
         
@@ -224,7 +226,7 @@ struct TimelineDataGenerator {
         events.append(AnyTimelineEvent(PowerContestEvent(
             id: "power-contest-giveaway",
             videoTimestamp: 2750,
-            title: "Power Konkurranse",
+            title: "Elkjøp Konkurranse",
             description: "Delta og vinn to billetter til Champions League",
             prize: "To billetter til Champions League",
             contestType: .giveaway,
@@ -263,8 +265,8 @@ struct TimelineDataGenerator {
             productIds: ["408896"],  // Additional product: Samsung Soundbar
             title: "Spesialtilbud på TV og Lyd",
             description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
-            powerProductUrl: "https://www.power.no/tv-og-lyd/tv/samsung-75-qn85f-neo-qled-4k-mini-led-smart-tv-2025/p-4019980/",
-            powerCheckoutUrl: "https://www.power.no/tv-og-lyd/tv/samsung-75-qn85f-neo-qled-4k-mini-led-smart-tv-2025/p-4019980/",
+            powerProductUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+            powerCheckoutUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
             imageAsset: nil,
             metadata: nil
         )))
