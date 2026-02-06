@@ -344,8 +344,16 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         let pollsResponse: PollsResponse
         do {
             pollsResponse = try JSONDecoder().decode(PollsResponse.self, from: data)
+        } catch let decodingError as DecodingError {
+            throw EngagementError.decodingError(decodingError)
         } catch {
-            throw EngagementError.decodingError(error)
+            // If it's not a DecodingError, wrap it
+            throw EngagementError.decodingError(DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: [],
+                    debugDescription: error.localizedDescription
+                )
+            ))
         }
         
         // Set broadcastStartTime in VideoSyncManager if available
@@ -458,8 +466,16 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         let contestsResponse: ContestsResponse
         do {
             contestsResponse = try JSONDecoder().decode(ContestsResponse.self, from: data)
+        } catch let decodingError as DecodingError {
+            throw EngagementError.decodingError(decodingError)
         } catch {
-            throw EngagementError.decodingError(error)
+            // If it's not a DecodingError, wrap it
+            throw EngagementError.decodingError(DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: [],
+                    debugDescription: error.localizedDescription
+                )
+            ))
         }
         
         // Set broadcastStartTime in VideoSyncManager if available
