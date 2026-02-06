@@ -3,164 +3,155 @@ import ReachuCore
 
 /// Backend implementation of EngagementRepositoryProtocol
 /// Uses REST API to fetch polls and contests from the backend
+/// Implements retry logic, caching, and improved error handling
 struct BackendEngagementRepository: EngagementRepositoryProtocol {
+    
+    // MARK: - Dependencies
+    
+    private let networkClient: NetworkClient
+    private let cache: EngagementCache
+    private let retryHandler: RequestRetryHandler
+    
+    // MARK: - Configuration
     
     private var campaignRestAPIBaseURL: String {
         ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
     }
     
+    // MARK: - Initialization
+    
+    init(
+        networkClient: NetworkClient = URLSession.shared,
+        cache: EngagementCache = EngagementCache(),
+        retryHandler: RequestRetryHandler = RequestRetryHandler()
+    ) {
+        self.networkClient = networkClient
+        self.cache = cache
+        self.retryHandler = retryHandler
+    }
+    
+    // MARK: - EngagementRepositoryProtocol Implementation
+    
     func loadPolls(for context: BroadcastContext) async -> [Poll] {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
+        let startTime = Date()
+        var retryCount = 0
         
-        guard !apiKey.isEmpty else {
-            ReachuLogger.error("Cannot load polls: API key is empty", component: "BackendEngagementRepository")
-            return []
+        // Check cache first
+        if let cachedPolls = await cache.getCachedPolls(for: context.broadcastId) {
+            ReachuLogger.debug(
+                "Returning cached polls for broadcastId: \(context.broadcastId)",
+                component: "BackendEngagementRepository"
+            )
+            return cachedPolls
         }
-        
-        var urlString = "\(campaignRestAPIBaseURL)/v1/engagement/polls?apiKey=\(apiKey)&broadcastId=\(context.broadcastId)"
-        // Also include matchId for backward compatibility with backend
-        urlString += "&matchId=\(context.broadcastId)"
-        
-        guard let url = URL(string: urlString) else {
-            ReachuLogger.error("Invalid polls URL: \(urlString)", component: "BackendEngagementRepository")
-            return []
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 10.0
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    ReachuLogger.error("Failed to load polls: HTTP \(httpResponse.statusCode)", component: "BackendEngagementRepository")
-                    return []
+            let polls = try await retryHandler.execute(
+                operation: {
+                    retryCount += 1
+                    return try await self.fetchPollsFromBackend(for: context)
+                },
+                shouldRetry: { error, attempt in
+                    self.shouldRetry(error: error, attempt: attempt)
                 }
-            }
+            )
             
-            // Decode polls response
-            let pollsResponse = try JSONDecoder().decode(PollsResponse.self, from: data)
+            // Cache successful response
+            await cache.setCachedPolls(polls, for: context.broadcastId)
             
-            // Set broadcastStartTime in VideoSyncManager if available at root level
-            if let broadcastStartTime = pollsResponse.broadcastStartTime ?? pollsResponse.matchStartTime {
-                await VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
-            }
+            // Log metrics
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/polls",
+                broadcastId: context.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: 200,
+                error: nil,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
             
-            // Convert to Poll models
-            var polls: [Poll] = []
-            for pollData in pollsResponse.polls {
-                // Use broadcastStartTime from poll data if available, otherwise from root level
-                let pollBroadcastStartTime = pollData.broadcastStartTime ?? pollData.matchStartTime ?? pollsResponse.broadcastStartTime ?? pollsResponse.matchStartTime
-                
-                let poll = Poll(
-                    id: pollData.id,
-                    broadcastId: pollData.broadcastId ?? pollData.matchId,
-                    question: pollData.question,
-                    options: pollData.options.map { option in
-                        Poll.PollOption(
-                            id: option.id,
-                            text: option.text,
-                            voteCount: option.voteCount,
-                            percentage: option.percentage
-                        )
-                    },
-                    startTime: pollData.startTime,
-                    endTime: pollData.endTime,
-                    videoStartTime: pollData.videoStartTime,
-                    videoEndTime: pollData.videoEndTime,
-                    broadcastStartTime: pollBroadcastStartTime,
-                    isActive: pollData.isActive,
-                    totalVotes: pollData.totalVotes,
-                    broadcastContext: context
-                )
-                polls.append(poll)
-            }
-            
-            ReachuLogger.debug("Loaded \(polls.count) polls for broadcastId: \(context.broadcastId)", component: "BackendEngagementRepository")
             return polls
             
         } catch {
-            ReachuLogger.error("Failed to load polls: \(error)", component: "BackendEngagementRepository")
+            // Log metrics with error
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/polls",
+                broadcastId: context.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: nil,
+                error: error,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+            ReachuLogger.error(
+                "Failed to load polls after \(retryCount) attempts: \(error)",
+                component: "BackendEngagementRepository"
+            )
             return []
         }
     }
     
     func loadContests(for context: BroadcastContext) async -> [Contest] {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
+        let startTime = Date()
+        var retryCount = 0
         
-        guard !apiKey.isEmpty else {
-            ReachuLogger.error("Cannot load contests: API key is empty", component: "BackendEngagementRepository")
-            return []
+        // Check cache first
+        if let cachedContests = await cache.getCachedContests(for: context.broadcastId) {
+            ReachuLogger.debug(
+                "Returning cached contests for broadcastId: \(context.broadcastId)",
+                component: "BackendEngagementRepository"
+            )
+            return cachedContests
         }
-        
-        var urlString = "\(campaignRestAPIBaseURL)/v1/engagement/contests?apiKey=\(apiKey)&broadcastId=\(context.broadcastId)"
-        // Also include matchId for backward compatibility with backend
-        urlString += "&matchId=\(context.broadcastId)"
-        
-        guard let url = URL(string: urlString) else {
-            ReachuLogger.error("Invalid contests URL: \(urlString)", component: "BackendEngagementRepository")
-            return []
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 10.0
         
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    ReachuLogger.error("Failed to load contests: HTTP \(httpResponse.statusCode)", component: "BackendEngagementRepository")
-                    return []
+            let contests = try await retryHandler.execute(
+                operation: {
+                    retryCount += 1
+                    return try await self.fetchContestsFromBackend(for: context)
+                },
+                shouldRetry: { error, attempt in
+                    self.shouldRetry(error: error, attempt: attempt)
                 }
-            }
+            )
             
-            // Decode contests response
-            let contestsResponse = try JSONDecoder().decode(ContestsResponse.self, from: data)
+            // Cache successful response
+            await cache.setCachedContests(contests, for: context.broadcastId)
             
-            // Set broadcastStartTime in VideoSyncManager if available at root level
-            if let broadcastStartTime = contestsResponse.broadcastStartTime ?? contestsResponse.matchStartTime {
-                await VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
-            }
+            // Log metrics
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/contests",
+                broadcastId: context.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: 200,
+                error: nil,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
             
-            // Convert to Contest models
-            var contests: [Contest] = []
-            for contestData in contestsResponse.contests {
-                let contestType: Contest.ContestType = contestData.contestType == "quiz" ? .quiz : .giveaway
-                
-                // Use broadcastStartTime from contest data if available, otherwise from root level
-                let contestBroadcastStartTime = contestData.broadcastStartTime ?? contestData.matchStartTime ?? contestsResponse.broadcastStartTime ?? contestsResponse.matchStartTime
-                
-                let contest = Contest(
-                    id: contestData.id,
-                    broadcastId: contestData.broadcastId ?? contestData.matchId,
-                    title: contestData.title,
-                    description: contestData.description,
-                    prize: contestData.prize,
-                    contestType: contestType,
-                    startTime: contestData.startTime,
-                    endTime: contestData.endTime,
-                    videoStartTime: contestData.videoStartTime,
-                    videoEndTime: contestData.videoEndTime,
-                    broadcastStartTime: contestBroadcastStartTime,
-                    isActive: contestData.isActive,
-                    broadcastContext: context
-                )
-                contests.append(contest)
-            }
-            
-            ReachuLogger.debug("Loaded \(contests.count) contests for broadcastId: \(context.broadcastId)", component: "BackendEngagementRepository")
             return contests
             
         } catch {
-            ReachuLogger.error("Failed to load contests: \(error)", component: "BackendEngagementRepository")
+            // Log metrics with error
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/contests",
+                broadcastId: context.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: nil,
+                error: error,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+            ReachuLogger.error(
+                "Failed to load contests after \(retryCount) attempts: \(error)",
+                component: "BackendEngagementRepository"
+            )
             return []
         }
     }
@@ -170,33 +161,64 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         optionId: String,
         broadcastContext: BroadcastContext
     ) async throws {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
+        let startTime = Date()
+        var retryCount = 0
         
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/polls/\(pollId)/vote"
-        guard let url = URL(string: urlString) else {
-            throw EngagementError.invalidURL
+        // Invalidate cache for this broadcast after voting
+        defer {
+            Task {
+                await cache.invalidateCache(for: broadcastContext.broadcastId)
+            }
         }
         
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        var body: [String: Any] = [
-            "apiKey": apiKey,
-            "broadcastId": broadcastContext.broadcastId,
-            "optionId": optionId
-        ]
-        // Also include matchId for backward compatibility with backend
-        body["matchId"] = broadcastContext.broadcastId
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw EngagementError.voteFailed
+        do {
+            try await retryHandler.execute(
+                operation: {
+                    retryCount += 1
+                    return try await self.submitVoteToBackend(
+                        pollId: pollId,
+                        optionId: optionId,
+                        broadcastContext: broadcastContext
+                    )
+                },
+                shouldRetry: { error, attempt in
+                    self.shouldRetry(error: error, attempt: attempt)
+                }
+            )
+            
+            // Log metrics
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/polls/\(pollId)/vote",
+                broadcastId: broadcastContext.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: 200,
+                error: nil,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+        } catch {
+            // Log metrics with error
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/polls/\(pollId)/vote",
+                broadcastId: broadcastContext.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: nil,
+                error: error,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+            // Convert to EngagementError
+            if let httpError = error as? EngagementError {
+                throw httpError
+            } else if let urlError = error as? URLError {
+                throw EngagementError.networkError(urlError)
+            } else {
+                throw EngagementError.voteFailed(statusCode: -1, message: error.localizedDescription)
+            }
         }
     }
     
@@ -205,24 +227,389 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         broadcastContext: BroadcastContext,
         answers: [String: String]?
     ) async throws {
+        let startTime = Date()
+        var retryCount = 0
+        
+        // Invalidate cache for this broadcast after participation
+        defer {
+            Task {
+                await cache.invalidateCache(for: broadcastContext.broadcastId)
+            }
+        }
+        
+        do {
+            try await retryHandler.execute(
+                operation: {
+                    retryCount += 1
+                    return try await self.submitContestParticipationToBackend(
+                        contestId: contestId,
+                        broadcastContext: broadcastContext,
+                        answers: answers
+                    )
+                },
+                shouldRetry: { error, attempt in
+                    self.shouldRetry(error: error, attempt: attempt)
+                }
+            )
+            
+            // Log metrics
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/contests/\(contestId)/participate",
+                broadcastId: broadcastContext.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: 200,
+                error: nil,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+        } catch {
+            // Log metrics with error
+            let metrics = EngagementRequestMetrics(
+                endpoint: "/v1/engagement/contests/\(contestId)/participate",
+                broadcastId: broadcastContext.broadcastId,
+                duration: Date().timeIntervalSince(startTime),
+                statusCode: nil,
+                error: error,
+                responseSize: nil,
+                retryCount: retryCount
+            )
+            metrics.log()
+            
+            // Convert to EngagementError
+            if let httpError = error as? EngagementError {
+                throw httpError
+            } else if let urlError = error as? URLError {
+                throw EngagementError.networkError(urlError)
+            } else {
+                throw EngagementError.participationFailed(statusCode: -1, message: error.localizedDescription)
+            }
+        }
+    }
+    
+    // MARK: - Private Methods
+    
+    /// Fetch polls from backend
+    private func fetchPollsFromBackend(for context: BroadcastContext) async throws -> [Poll] {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
         
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/contests/\(contestId)/participate"
-        guard let url = URL(string: urlString) else {
+        guard !apiKey.isEmpty else {
+            throw EngagementError.invalidData(["API key is empty"])
+        }
+        
+        // Build URL using URLComponents for safety
+        guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
             throw EngagementError.invalidURL
         }
         
+        components.path = "/v1/engagement/polls"
+        components.queryItems = [
+            URLQueryItem(name: "broadcastId", value: context.broadcastId),
+            URLQueryItem(name: "matchId", value: context.broadcastId) // backward compatibility
+        ]
+        
+        guard let url = components.url else {
+            throw EngagementError.invalidURL
+        }
+        
+        // Build request with API key in header
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.timeoutInterval = 10.0
+        
+        // Perform request
+        let (data, response) = try await networkClient.data(for: request)
+        
+        // Validate HTTP response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw EngagementError.httpError(statusCode: -1, message: "Invalid response type")
+        }
+        
+        // Check for rate limiting
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8)
+            throw EngagementError.httpError(statusCode: httpResponse.statusCode, message: errorMessage)
+        }
+        
+        // Decode response
+        let pollsResponse: PollsResponse
+        do {
+            pollsResponse = try JSONDecoder().decode(PollsResponse.self, from: data)
+        } catch {
+            throw EngagementError.decodingError(error)
+        }
+        
+        // Set broadcastStartTime in VideoSyncManager if available
+        if let broadcastStartTime = pollsResponse.broadcastStartTime ?? pollsResponse.matchStartTime {
+            await VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
+        }
+        
+        // Validate and convert to Poll models
+        var polls: [Poll] = []
+        var validationErrors: [String] = []
+        
+        for pollData in pollsResponse.polls {
+            // Validate data
+            let validation = EngagementDataValidator.validate(pollData)
+            if !validation.isValid {
+                validationErrors.append("Poll \(pollData.id): \(validation.errors.joined(separator: ", "))")
+                continue
+            }
+            
+            // Use broadcastStartTime from poll data if available, otherwise from root level
+            let pollBroadcastStartTime = pollData.broadcastStartTime ?? pollData.matchStartTime ?? pollsResponse.broadcastStartTime ?? pollsResponse.matchStartTime
+            
+            let poll = Poll(
+                id: pollData.id,
+                broadcastId: pollData.broadcastId ?? pollData.matchId,
+                question: pollData.question,
+                options: pollData.options.map { option in
+                    Poll.PollOption(
+                        id: option.id,
+                        text: option.text,
+                        voteCount: option.voteCount,
+                        percentage: option.percentage
+                    )
+                },
+                startTime: pollData.startTime,
+                endTime: pollData.endTime,
+                videoStartTime: pollData.videoStartTime,
+                videoEndTime: pollData.videoEndTime,
+                broadcastStartTime: pollBroadcastStartTime,
+                isActive: pollData.isActive,
+                totalVotes: pollData.totalVotes,
+                broadcastContext: context
+            )
+            polls.append(poll)
+        }
+        
+        // Log validation warnings if any
+        if !validationErrors.isEmpty {
+            ReachuLogger.warning(
+                "Some polls failed validation: \(validationErrors.joined(separator: "; "))",
+                component: "BackendEngagementRepository"
+            )
+        }
+        
+        ReachuLogger.debug("Loaded \(polls.count) polls for broadcastId: \(context.broadcastId)", component: "BackendEngagementRepository")
+        return polls
+    }
+    
+    /// Fetch contests from backend
+    private func fetchContestsFromBackend(for context: BroadcastContext) async throws -> [Contest] {
+        let config = ReachuConfiguration.shared
+        let apiKey = config.apiKey
+        
+        guard !apiKey.isEmpty else {
+            throw EngagementError.invalidData(["API key is empty"])
+        }
+        
+        // Build URL using URLComponents for safety
+        guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
+            throw EngagementError.invalidURL
+        }
+        
+        components.path = "/v1/engagement/contests"
+        components.queryItems = [
+            URLQueryItem(name: "broadcastId", value: context.broadcastId),
+            URLQueryItem(name: "matchId", value: context.broadcastId) // backward compatibility
+        ]
+        
+        guard let url = components.url else {
+            throw EngagementError.invalidURL
+        }
+        
+        // Build request with API key in header
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.timeoutInterval = 10.0
+        
+        // Perform request
+        let (data, response) = try await networkClient.data(for: request)
+        
+        // Validate HTTP response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw EngagementError.httpError(statusCode: -1, message: "Invalid response type")
+        }
+        
+        // Check for rate limiting
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8)
+            throw EngagementError.httpError(statusCode: httpResponse.statusCode, message: errorMessage)
+        }
+        
+        // Decode response
+        let contestsResponse: ContestsResponse
+        do {
+            contestsResponse = try JSONDecoder().decode(ContestsResponse.self, from: data)
+        } catch {
+            throw EngagementError.decodingError(error)
+        }
+        
+        // Set broadcastStartTime in VideoSyncManager if available
+        if let broadcastStartTime = contestsResponse.broadcastStartTime ?? contestsResponse.matchStartTime {
+            await VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
+        }
+        
+        // Validate and convert to Contest models
+        var contests: [Contest] = []
+        var validationErrors: [String] = []
+        
+        for contestData in contestsResponse.contests {
+            // Validate data
+            let validation = EngagementDataValidator.validate(contestData)
+            if !validation.isValid {
+                validationErrors.append("Contest \(contestData.id): \(validation.errors.joined(separator: ", "))")
+                continue
+            }
+            
+            let contestType: Contest.ContestType = contestData.contestType == "quiz" ? .quiz : .giveaway
+            
+            // Use broadcastStartTime from contest data if available, otherwise from root level
+            let contestBroadcastStartTime = contestData.broadcastStartTime ?? contestData.matchStartTime ?? contestsResponse.broadcastStartTime ?? contestsResponse.matchStartTime
+            
+            let contest = Contest(
+                id: contestData.id,
+                broadcastId: contestData.broadcastId ?? contestData.matchId,
+                title: contestData.title,
+                description: contestData.description,
+                prize: contestData.prize,
+                contestType: contestType,
+                startTime: contestData.startTime,
+                endTime: contestData.endTime,
+                videoStartTime: contestData.videoStartTime,
+                videoEndTime: contestData.videoEndTime,
+                broadcastStartTime: contestBroadcastStartTime,
+                isActive: contestData.isActive,
+                broadcastContext: context
+            )
+            contests.append(contest)
+        }
+        
+        // Log validation warnings if any
+        if !validationErrors.isEmpty {
+            ReachuLogger.warning(
+                "Some contests failed validation: \(validationErrors.joined(separator: "; "))",
+                component: "BackendEngagementRepository"
+            )
+        }
+        
+        ReachuLogger.debug("Loaded \(contests.count) contests for broadcastId: \(context.broadcastId)", component: "BackendEngagementRepository")
+        return contests
+    }
+    
+    /// Submit vote to backend
+    private func submitVoteToBackend(
+        pollId: String,
+        optionId: String,
+        broadcastContext: BroadcastContext
+    ) async throws {
+        let config = ReachuConfiguration.shared
+        let apiKey = config.apiKey
+        
+        guard !apiKey.isEmpty else {
+            throw EngagementError.invalidData(["API key is empty"])
+        }
+        
+        // Build URL using URLComponents for safety
+        guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
+            throw EngagementError.invalidURL
+        }
+        
+        components.path = "/v1/engagement/polls/\(pollId)/vote"
+        
+        guard let url = components.url else {
+            throw EngagementError.invalidURL
+        }
+        
+        // Build request with API key in header
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.timeoutInterval = 10.0
         
-        var body: [String: Any] = [
-            "apiKey": apiKey,
-            "broadcastId": broadcastContext.broadcastId
+        // Build request body (API key removed from body, now in header)
+        let body: [String: Any] = [
+            "broadcastId": broadcastContext.broadcastId,
+            "matchId": broadcastContext.broadcastId, // backward compatibility
+            "optionId": optionId
         ]
-        // Also include matchId for backward compatibility with backend
-        body["matchId"] = broadcastContext.broadcastId
+        
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        
+        // Perform request
+        let (data, response) = try await networkClient.data(for: request)
+        
+        // Validate HTTP response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw EngagementError.httpError(statusCode: -1, message: "Invalid response type")
+        }
+        
+        // Check for rate limiting
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8)
+            throw EngagementError.voteFailed(statusCode: httpResponse.statusCode, message: errorMessage)
+        }
+    }
+    
+    /// Submit contest participation to backend
+    private func submitContestParticipationToBackend(
+        contestId: String,
+        broadcastContext: BroadcastContext,
+        answers: [String: String]?
+    ) async throws {
+        let config = ReachuConfiguration.shared
+        let apiKey = config.apiKey
+        
+        guard !apiKey.isEmpty else {
+            throw EngagementError.invalidData(["API key is empty"])
+        }
+        
+        // Build URL using URLComponents for safety
+        guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
+            throw EngagementError.invalidURL
+        }
+        
+        components.path = "/v1/engagement/contests/\(contestId)/participate"
+        
+        guard let url = components.url else {
+            throw EngagementError.invalidURL
+        }
+        
+        // Build request with API key in header
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
+        request.timeoutInterval = 10.0
+        
+        // Build request body (API key removed from body, now in header)
+        var body: [String: Any] = [
+            "broadcastId": broadcastContext.broadcastId,
+            "matchId": broadcastContext.broadcastId // backward compatibility
+        ]
         
         if let answers = answers {
             body["answers"] = answers
@@ -230,65 +617,52 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
         
-        let (_, response) = try await URLSession.shared.data(for: request)
+        // Perform request
+        let (data, response) = try await networkClient.data(for: request)
         
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw EngagementError.participationFailed
+        // Validate HTTP response
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw EngagementError.httpError(statusCode: -1, message: "Invalid response type")
+        }
+        
+        // Check for rate limiting
+        if httpResponse.statusCode == 429 {
+            let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
+            throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        guard (200...299).contains(httpResponse.statusCode) else {
+            let errorMessage = String(data: data, encoding: .utf8)
+            throw EngagementError.participationFailed(statusCode: httpResponse.statusCode, message: errorMessage)
         }
     }
-}
-
-// MARK: - Response Models
-
-private struct PollsResponse: Codable {
-    let polls: [PollData]
-    let broadcastStartTime: Date? // Broadcast start time at root level
-    let matchStartTime: Date? // Match start time at root level (backward compatibility)
     
-    struct PollData: Codable {
-        let id: String
-        let broadcastId: String? // New field
-        let matchId: String // Backward compatibility
-        let question: String
-        let options: [PollOptionData]
-        let startTime: Date?
-        let endTime: Date?
-        let videoStartTime: Int? // Time in seconds relative to broadcast start
-        let videoEndTime: Int? // Time in seconds relative to broadcast start
-        let broadcastStartTime: Date? // Broadcast start time per poll (optional, can use root level)
-        let matchStartTime: Date? // Match start time per poll (backward compatibility)
-        let isActive: Bool
-        let totalVotes: Int
-        
-        struct PollOptionData: Codable {
-            let id: String
-            let text: String
-            let voteCount: Int
-            let percentage: Double
+    /// Determine if an error should trigger a retry
+    private func shouldRetry(error: Error, attempt: Int) -> Bool {
+        // Don't retry on client errors (4xx) except 408 and 429
+        if let httpError = error as? EngagementError {
+            switch httpError {
+            case .httpError(let statusCode, _):
+                return RequestRetryHandler.shouldRetryHTTPStatus(statusCode)
+            case .rateLimited:
+                return true // Retry rate limit errors
+            case .networkError(let urlError):
+                return RequestRetryHandler.isRetryableURLError(urlError)
+            case .decodingError, .invalidData, .invalidURL, .pollNotFound, .contestNotFound, .pollClosed, .alreadyVoted:
+                return false // Don't retry these
+            case .voteFailed, .participationFailed:
+                return false // These are already final errors
+            }
         }
+        
+        // Check URL errors
+        if let urlError = error as? URLError {
+            return RequestRetryHandler.isRetryableURLError(urlError)
+        }
+        
+        // Default: don't retry unknown errors
+        return false
     }
 }
 
-private struct ContestsResponse: Codable {
-    let contests: [ContestData]
-    let broadcastStartTime: Date? // Broadcast start time at root level
-    let matchStartTime: Date? // Match start time at root level (backward compatibility)
-    
-    struct ContestData: Codable {
-        let id: String
-        let broadcastId: String? // New field
-        let matchId: String // Backward compatibility
-        let title: String
-        let description: String
-        let prize: String
-        let contestType: String
-        let startTime: Date?
-        let endTime: Date?
-        let videoStartTime: Int? // Time in seconds relative to broadcast start
-        let videoEndTime: Int? // Time in seconds relative to broadcast start
-        let broadcastStartTime: Date? // Broadcast start time per contest (optional, can use root level)
-        let matchStartTime: Date? // Match start time per contest (backward compatibility)
-        let isActive: Bool
-    }
-}
+// Response models are now in EngagementResponseModels.swift

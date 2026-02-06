@@ -283,26 +283,41 @@ public enum EngagementError: LocalizedError {
     case contestNotFound
     case pollClosed
     case alreadyVoted
-    case voteFailed
-    case participationFailed
+    case voteFailed(statusCode: Int, message: String?)
+    case participationFailed(statusCode: Int, message: String?)
+    case networkError(URLError)
+    case decodingError(DecodingError)
     case invalidURL
+    case rateLimited(retryAfter: Int?)
+    case httpError(statusCode: Int, message: String?)
+    case invalidData([String])
     
     public var errorDescription: String? {
         switch self {
         case .pollNotFound:
-            return "Poll not found for this match"
+            return "Poll not found for this broadcast"
         case .contestNotFound:
-            return "Contest not found for this match"
+            return "Contest not found for this broadcast"
         case .pollClosed:
             return "Poll is no longer active"
         case .alreadyVoted:
             return "You have already voted in this poll"
-        case .voteFailed:
-            return "Failed to submit vote"
-        case .participationFailed:
-            return "Failed to participate in contest"
+        case .voteFailed(let statusCode, let message):
+            return "Failed to submit vote (HTTP \(statusCode)): \(message ?? "Unknown error")"
+        case .participationFailed(let statusCode, let message):
+            return "Failed to participate in contest (HTTP \(statusCode)): \(message ?? "Unknown error")"
+        case .networkError(let urlError):
+            return "Network error: \(urlError.localizedDescription)"
+        case .decodingError(let decodingError):
+            return "Failed to decode response: \(decodingError.localizedDescription)"
         case .invalidURL:
             return "Invalid URL"
+        case .rateLimited(let retryAfter):
+            return "Rate limited. Retry after \(retryAfter ?? 60) seconds"
+        case .httpError(let statusCode, let message):
+            return "HTTP error \(statusCode): \(message ?? "Unknown error")"
+        case .invalidData(let errors):
+            return "Invalid data: \(errors.joined(separator: ", "))"
         }
     }
 }
