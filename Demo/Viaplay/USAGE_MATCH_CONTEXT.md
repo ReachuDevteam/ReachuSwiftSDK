@@ -1,20 +1,20 @@
-# Uso de Match Context y Auto-Discovery en el Demo
+# Uso de Broadcast Context y Auto-Discovery en el Demo
 
 ## ✅ Integración Completada
 
-El demo ahora está integrado con las nuevas funcionalidades de Match Context y Auto-Discovery del backend.
+El demo ahora está integrado con las nuevas funcionalidades de Broadcast Context y Auto-Discovery del backend.
 
 ## Cómo Funciona
 
-### 1. Match Context Automático
+### 1. Broadcast Context Automático
 
 Cuando se abre el video player (`ViaplayVideoPlayer`), automáticamente:
 
-1. **Crea un MatchContext** desde el modelo `Match` usando `match.toMatchContext()`
-2. **Genera un matchId único** basado en los equipos y competencia
-3. **Llama a `setupMatchContext()`** que:
-   - Si `autoDiscover: true`: Usa `discoverCampaigns()` para encontrar campañas activas para ese match
-   - Si `autoDiscover: false`: Solo establece el match context para filtrar componentes existentes
+1. **Crea un BroadcastContext** desde el modelo `Match` usando `match.toBroadcastContext()`
+2. **Genera un broadcastId único** basado en los equipos y competencia
+3. **Llama a `setupBroadcastContext()`** que:
+   - Si `autoDiscover: true`: Usa `discoverCampaigns()` para encontrar campañas activas para ese broadcast
+   - Si `autoDiscover: false`: Solo establece el broadcast context para filtrar componentes existentes
 
 ### 2. Configuración
 
@@ -24,7 +24,7 @@ En `reachu-config.json`:
 {
   "campaigns": {
     "autoDiscover": false,  // true = auto-discovery, false = legacy mode
-    "channelId": null       // Opcional: ID del canal para match context
+    "channelId": null       // Opcional: ID del canal para broadcast context
   },
   "liveShow": {
     "campaignId": 28        // Solo usado si autoDiscover: false
@@ -44,42 +44,42 @@ En `reachu-config.json`:
 **Ejemplo de uso:**
 ```swift
 // En ViaplayVideoPlayer, automáticamente:
-let matchContext = match.toMatchContext()
-await campaignManager.discoverCampaigns(matchId: matchContext.matchId)
-await campaignManager.setMatchContext(matchContext)
+let broadcastContext = match.toBroadcastContext()
+await campaignManager.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
+await campaignManager.setBroadcastContext(broadcastContext)
 ```
 
 #### Modo Legacy (`autoDiscover: false`)
 
 - ✅ Usa `campaignId` de `liveShow.campaignId`
 - ✅ Carga una sola campaña específica
-- ✅ Establece match context para filtrar componentes
+- ✅ Establece broadcast context para filtrar componentes
 
 **Ejemplo de uso:**
 ```swift
 // En ViaplayVideoPlayer, automáticamente:
-let matchContext = match.toMatchContext()
-await campaignManager.setMatchContext(matchContext)
+let broadcastContext = match.toBroadcastContext()
+await campaignManager.setBroadcastContext(broadcastContext)
 ```
 
-## Generación de Match ID
+## Generación de Broadcast ID
 
-El helper `match.toMatchContext()` genera un `matchId` único:
+El helper `match.toBroadcastContext()` genera un `broadcastId` único:
 
 - **Barcelona vs PSG**: `"barcelona-psg-2025-01-23"` (hardcoded para coincidir con backend)
 - **Otros matches**: `"{homeTeam}-{awayTeam}-{competition}"` (normalizado a slug)
 
 Ejemplo:
 - Match: "Manchester City - Real Madrid" en "UEFA Champions League"
-- MatchId: `"manchester-city-real-madrid-uefa-champions-league"`
+- BroadcastId: `"manchester-city-real-madrid-uefa-champions-league"`
 
-## Componentes Filtrados por Match Context
+## Componentes Filtrados por Broadcast Context
 
-Una vez establecido el match context:
+Una vez establecido el broadcast context:
 
-- ✅ Los componentes (`activeComponents`) se filtran automáticamente por `matchContext`
-- ✅ Solo se muestran componentes que coinciden con el `matchId` actual
-- ✅ Los componentes sin `matchContext` se muestran para todos los matches (comportamiento legacy)
+- ✅ Los componentes (`activeComponents`) se filtran automáticamente por `broadcastContext`
+- ✅ Solo se muestran componentes que coinciden con el `broadcastId` actual
+- ✅ Los componentes sin `broadcastContext` se muestran para todos los broadcasts (comportamiento legacy)
 
 ## Próximos Pasos
 
@@ -87,21 +87,21 @@ Una vez establecido el match context:
 
 1. Cambiar `autoDiscover: true` en `reachu-config.json`
 2. Asegurarse de que `apiKey` esté configurado correctamente
-3. El backend debe tener campañas con `matchId` correspondiente
+3. El backend debe tener campañas con `broadcastId` correspondiente
 
-### Para Usar Match Context en Otros Lugares
+### Para Usar Broadcast Context en Otros Lugares
 
 ```swift
 import ReachuCore
 
-// Crear match context desde Match
-let matchContext = match.toMatchContext(channelId: 1)
+// Crear broadcast context desde Match
+let broadcastContext = match.toBroadcastContext(channelId: 1)
 
 // Establecer en CampaignManager
-await CampaignManager.shared.setMatchContext(matchContext)
+await CampaignManager.shared.setBroadcastContext(broadcastContext)
 
-// O descubrir campañas para un match específico
-await CampaignManager.shared.discoverCampaigns(matchId: matchContext.matchId)
+// O descubrir campañas para un broadcast específico
+await CampaignManager.shared.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
 ```
 
 ## Verificación
@@ -111,15 +111,15 @@ Para verificar que funciona:
 1. Abrir el video player con un match (ej: Barcelona vs PSG)
 2. Revisar logs en consola:
    ```
-   🎯 [ViaplayVideoPlayer] Setting up match context: barcelona-psg-2025-01-23
+   🎯 [ViaplayVideoPlayer] Setting up broadcast context: barcelona-psg-2025-01-23
    🎯 [ViaplayVideoPlayer] Auto-discovery enabled, discovering campaigns...
    ```
 3. Verificar que `CampaignManager.shared.activeCampaigns` contiene las campañas correctas
-4. Verificar que `CampaignManager.shared.activeComponents` está filtrado por match context
+4. Verificar que `CampaignManager.shared.activeComponents` está filtrado por broadcast context
 
 ## Notas
 
-- El match context se establece automáticamente cuando se abre el video player
-- Si cambias de match, el match context se actualiza automáticamente
-- Los componentes se filtran en tiempo real según el match context actual
-- Backward compatible: funciona con campañas sin match context (legacy)
+- El broadcast context se establece automáticamente cuando se abre el video player
+- Si cambias de broadcast, el broadcast context se actualiza automáticamente
+- Los componentes se filtran en tiempo real según el broadcast context actual
+- Backward compatible: funciona con campañas sin broadcast context (legacy)

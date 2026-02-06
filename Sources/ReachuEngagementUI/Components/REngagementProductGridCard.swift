@@ -94,11 +94,15 @@ public struct REngagementProductGridCard: View {
     // MARK: - Header View
     
     private func headerView(colors: AdaptiveColors) -> some View {
-        HStack(spacing: ReachuSpacing.xs) {
-            // Brand icon - hardcoded para Elkjøp: siempre usar avatar_el
-            if brandIcon != nil {
-                // Hardcoded: usar avatar_el directamente para eventos de Elkjøp
-                Image("avatar_el")
+        // Get effective brand config (dynamic takes precedence)
+        let effectiveBrand = ReachuConfiguration.shared.effectiveBrandConfiguration
+        let displayBrandName: String? = brandName ?? effectiveBrand.name
+        let displayBrandIcon: String? = brandIcon ?? effectiveBrand.iconAsset
+        
+        return HStack(spacing: ReachuSpacing.xs) {
+            // Brand icon - use dynamic config if available
+            if let iconAsset = displayBrandIcon {
+                Image(iconAsset)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
@@ -107,7 +111,7 @@ public struct REngagementProductGridCard: View {
             
             HStack(spacing: ReachuSpacing.xs) {
                 VStack(alignment: .leading, spacing: 2) {
-                    if let brandName = brandName {
+                    if let brandName = displayBrandName {
                         Text(brandName)
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(colors.textPrimary)
@@ -135,7 +139,7 @@ public struct REngagementProductGridCard: View {
                 }
                 
                 // Badge alineado a la derecha del nombre
-                if brandName != nil {
+                if displayBrandName != nil {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 11))
                         .foregroundColor(colors.info)
@@ -146,16 +150,31 @@ public struct REngagementProductGridCard: View {
             Spacer()
             
             // Campaign sponsor badge - alineado a la derecha
+            // Use dynamic sponsor badge text if available
             HStack {
                 Spacer()
+                let sponsorText = getSponsorBadgeText()
                 CampaignSponsorBadge(
-                    text: "Sponset av",
+                    text: sponsorText,
                     maxWidth: 80,
                     maxHeight: 24,
                     alignment: .trailing
                 )
             }
         }
+    }
+    
+    private func getSponsorBadgeText() -> String {
+        // Try dynamic config first
+        if let dynamicBrand = ReachuConfiguration.shared.dynamicBrandConfig,
+           let sponsorTexts = dynamicBrand.sponsorBadgeText {
+            let currentLanguage = ReachuLocalization.shared.language
+            if let text = sponsorTexts[currentLanguage] {
+                return text
+            }
+        }
+        // Fallback to default
+        return "Sponset av"
     }
     
     // MARK: - Loading Skeleton

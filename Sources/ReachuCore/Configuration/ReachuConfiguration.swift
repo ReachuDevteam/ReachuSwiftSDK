@@ -38,6 +38,12 @@ public class ReachuConfiguration: ObservableObject {
     @Published public private(set) var campaignConfiguration: CampaignConfiguration = .default
     @Published public private(set) var analyticsConfiguration: AnalyticsConfiguration = .default
     @Published public private(set) var brandConfiguration: BrandConfiguration = .default
+    @Published public private(set) var engagementConfiguration: EngagementConfiguration = .default
+    
+    // MARK: - Dynamic Configuration Properties
+    @Published public private(set) var dynamicBrandConfig: DynamicBrandConfig?
+    @Published public private(set) var dynamicEngagementConfig: DynamicEngagementConfig?
+    @Published public private(set) var dynamicLocalizationConfig: DynamicLocalizationConfig?
     
     @Published public private(set) var isConfigured: Bool = false
     @Published public private(set) var isMarketAvailable: Bool = true  // If false, SDK should not be used
@@ -62,7 +68,8 @@ public class ReachuConfiguration: ObservableObject {
         localizationConfig: LocalizationConfiguration? = nil,
         campaignConfig: CampaignConfiguration? = nil,
         analyticsConfig: AnalyticsConfiguration? = nil,
-        brandConfig: BrandConfiguration? = nil
+        brandConfig: BrandConfiguration? = nil,
+        engagementConfig: EngagementConfiguration? = nil
     ) {
         let instance = ReachuConfiguration.shared
         
@@ -79,6 +86,7 @@ public class ReachuConfiguration: ObservableObject {
         instance.campaignConfiguration = campaignConfig ?? .default
         instance.analyticsConfiguration = analyticsConfig ?? .default
         instance.brandConfiguration = brandConfig ?? .default
+        instance.engagementConfiguration = engagementConfig ?? .default
         
         // Configure localization system
         ReachuLocalization.shared.configure(instance.localizationConfiguration)
@@ -217,6 +225,97 @@ public class ReachuConfiguration: ObservableObject {
     
     public static func updateCartConfiguration(_ config: CartConfiguration) {
         shared.cartConfiguration = config
+    }
+    
+    // MARK: - Dynamic Configuration Methods
+    
+    /// Update dynamic brand configuration from backend
+    public func updateDynamicBrandConfig(_ config: DynamicBrandConfig?) {
+        self.dynamicBrandConfig = config
+        
+        // Merge with static config if dynamic config has values
+        if let dynamic = config {
+            var mergedBrand = self.brandConfiguration
+            
+            if let name = dynamic.name {
+                mergedBrand = BrandConfiguration(
+                    name: name,
+                    iconAsset: dynamic.iconAsset ?? mergedBrand.iconAsset
+                )
+            } else if let iconAsset = dynamic.iconAsset {
+                mergedBrand = BrandConfiguration(
+                    name: mergedBrand.name,
+                    iconAsset: iconAsset
+                )
+            }
+            
+            self.brandConfiguration = mergedBrand
+        }
+    }
+    
+    /// Update dynamic engagement configuration from backend
+    public func updateDynamicEngagementConfig(_ config: DynamicEngagementConfig?) {
+        self.dynamicEngagementConfig = config
+        
+        // Merge with static config if dynamic config has values
+        if let dynamic = config {
+            var mergedEngagement = self.engagementConfiguration
+            
+            if let demoMode = dynamic.demoMode {
+                mergedEngagement = EngagementConfiguration(demoMode: demoMode)
+            }
+            
+            self.engagementConfiguration = mergedEngagement
+        }
+    }
+    
+    /// Update dynamic localization configuration from backend
+    public func updateDynamicLocalizationConfig(_ config: DynamicLocalizationConfig?) {
+        self.dynamicLocalizationConfig = config
+        
+        // Merge translations with existing localization config
+        if let dynamic = config {
+            var translations = self.localizationConfiguration.translations
+            
+            // Merge dynamic translations
+            for (key, value) in dynamic.translations {
+                if translations[dynamic.language] == nil {
+                    translations[dynamic.language] = [:]
+                }
+                translations[dynamic.language]?[key] = value
+            }
+            
+            // Update localization configuration
+            let updatedConfig = LocalizationConfiguration(
+                defaultLanguage: self.localizationConfiguration.defaultLanguage,
+                translations: translations,
+                fallbackLanguage: self.localizationConfiguration.fallbackLanguage
+            )
+            
+            self.localizationConfiguration = updatedConfig
+            ReachuLocalization.shared.configure(updatedConfig)
+        }
+    }
+    
+    /// Get effective brand configuration (dynamic takes precedence over static)
+    public var effectiveBrandConfiguration: BrandConfiguration {
+        if let dynamic = dynamicBrandConfig {
+            return BrandConfiguration(
+                name: dynamic.name ?? brandConfiguration.name,
+                iconAsset: dynamic.iconAsset ?? brandConfiguration.iconAsset
+            )
+        }
+        return brandConfiguration
+    }
+    
+    /// Get effective engagement configuration (dynamic takes precedence over static)
+    public var effectiveEngagementConfiguration: EngagementConfiguration {
+        if let dynamic = dynamicEngagementConfig {
+            return EngagementConfiguration(
+                demoMode: dynamic.demoMode ?? engagementConfiguration.demoMode
+            )
+        }
+        return engagementConfiguration
     }
     
     // MARK: - Validation

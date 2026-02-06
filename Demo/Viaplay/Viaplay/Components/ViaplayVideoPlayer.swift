@@ -276,8 +276,8 @@ struct ViaplayVideoPlayer: View {
         }
         .ignoresSafeArea() // Full screen
         .task {
-            // Set match context for auto-discovery and context-aware campaigns
-            await setupMatchContext()
+            // Set broadcast context for auto-discovery and context-aware campaigns
+            await setupBroadcastContext()
         }
         .onAppear {
             playerViewModel.setupPlayer()
@@ -646,31 +646,31 @@ struct ViaplayVideoPlayer: View {
         )
     }
     
-    // MARK: - Match Context Setup
+    // MARK: - Broadcast Context Setup
     
-    /// Sets up match context for auto-discovery and context-aware campaigns
-    private func setupMatchContext() async {
+    /// Sets up broadcast context for auto-discovery and context-aware campaigns
+    private func setupBroadcastContext() async {
         let config = ReachuConfiguration.shared
         let autoDiscover = config.campaignConfiguration.autoDiscover
         
-        // Create match context from Match model
-        let matchContext = match.toMatchContext(
+        // Create broadcast context from Match model
+        let broadcastContext = match.toBroadcastContext(
             channelId: config.campaignConfiguration.channelId
         )
         
-        print("🎯 [ViaplayVideoPlayer] Setting up match context: \(matchContext.matchId)")
+        print("🎯 [ViaplayVideoPlayer] Setting up broadcast context: \(broadcastContext.broadcastId)")
         
         if autoDiscover {
             // Use auto-discovery mode
-            print("🎯 [ViaplayVideoPlayer] Auto-discovery enabled, discovering campaigns for match: \(matchContext.matchId)")
-            await campaignManager.discoverCampaigns(matchId: matchContext.matchId)
+            print("🎯 [ViaplayVideoPlayer] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
+            await campaignManager.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
             
-            // Set match context to filter components
-            await campaignManager.setMatchContext(matchContext)
+            // Set broadcast context to filter components
+            await campaignManager.setBroadcastContext(broadcastContext)
         } else {
-            // Legacy mode: just set match context if campaign is already loaded
-            print("🎯 [ViaplayVideoPlayer] Legacy mode, setting match context")
-            await campaignManager.setMatchContext(matchContext)
+            // Legacy mode: just set broadcast context if campaign is already loaded
+            print("🎯 [ViaplayVideoPlayer] Legacy mode, setting broadcast context")
+            await campaignManager.setBroadcastContext(broadcastContext)
         }
     }
 }

@@ -198,6 +198,7 @@ public class ConfigurationLoader {
         let campaignConfig = createCampaignConfiguration(from: config.campaigns)
         let analyticsConfig = createAnalyticsConfiguration(from: config.analytics)
         let brandConfig = createBrandConfiguration(from: config.brand)
+        let engagementConfig = createEngagementConfiguration(from: config.engagement)
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
@@ -580,6 +581,15 @@ public class ConfigurationLoader {
         )
     }
     
+    private static func createEngagementConfiguration(from engagementConfig: JSONEngagementConfiguration?) -> EngagementConfiguration {
+        guard let config = engagementConfig else { return .default }
+        
+        return EngagementConfiguration(
+            demoMode: config.demoMode ?? EngagementConfiguration.default.demoMode,
+            useDynamicConfig: config.useDynamicConfig ?? EngagementConfiguration.default.useDynamicConfig
+        )
+    }
+    
     private static func createMarketConfiguration(from marketConfig: JSONMarketFallbackConfiguration?) -> MarketConfiguration {
         guard let config = marketConfig else { return .default }
 
@@ -798,6 +808,7 @@ private struct JSONConfiguration: Codable {
     let campaigns: JSONCampaignConfiguration?
     let analytics: JSONAnalyticsConfiguration?
     let brand: JSONBrandConfiguration?
+    let engagement: JSONEngagementConfiguration?
 }
 
 private struct JSONThemeConfiguration: Codable {
@@ -969,6 +980,11 @@ private struct JSONAnalyticsConfiguration: Codable {
 private struct JSONBrandConfiguration: Codable {
     let name: String?
     let iconAsset: String?
+}
+
+private struct JSONEngagementConfiguration: Codable {
+    let demoMode: Bool?
+    let useDynamicConfig: Bool?
 }
 
 private struct JSONTipioConfiguration: Codable {

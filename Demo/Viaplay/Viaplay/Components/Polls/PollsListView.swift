@@ -152,7 +152,7 @@ struct PollsListView: View {
                 duration: 600,
                 endTimestamp: 1200,
                 metadata: nil,
-                matchContext: nil
+                broadcastContext: nil
             )
         ],
         contests: [],

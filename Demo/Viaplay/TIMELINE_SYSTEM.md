@@ -254,7 +254,7 @@ Todos los eventos son `Codable`, listos para JSON:
 ### API Endpoints (Futuros)
 
 ```
-GET  /api/v1/timeline/match/{matchId}/events
+GET  /api/v1/timeline/broadcast/{broadcastId}/events
      → Devuelve todos los eventos del partido
 
 POST /api/v1/timeline/chat/message
@@ -263,7 +263,7 @@ POST /api/v1/timeline/chat/message
 GET  /api/v1/timeline/events?videoTime=780
      → Devuelve solo eventos visibles hasta ese momento
 
-WebSocket: wss://api/timeline/match/{matchId}
+WebSocket: wss://api/timeline/broadcast/{broadcastId}
      → Eventos en tiempo real mientras el partido está LIVE
 ```
 
@@ -454,8 +454,8 @@ let socialEvents = timeline.visibleEvents(ofCategory: .social)
 
 ```swift
 // En UnifiedTimelineManager
-func loadFromBackend(matchId: String) async throws {
-    let url = URL(string: "https://api.reachu.io/timeline/match/\(matchId)/events")!
+func loadFromBackend(broadcastId: String) async throws {
+    let url = URL(string: "https://api.reachu.io/timeline/broadcast/\((broadcastId))/events")!
     let (data, _) = try await URLSession.shared.data(from: url)
     
     let decoder = JSONDecoder()
@@ -513,8 +513,8 @@ func sendChatMessage(text: String) async throws {
 
 ```swift
 class TimelineWebSocketManager {
-    func connect(matchId: String) {
-        let url = URL(string: "wss://api.reachu.io/timeline/match/\(matchId)")!
+    func connect(broadcastId: String) {
+        let url = URL(string: "wss://api.reachu.io/timeline/broadcast/\((broadcastId))")!
         webSocket = URLSession.shared.webSocketTask(with: url)
         webSocket?.resume()
         receiveMessage()

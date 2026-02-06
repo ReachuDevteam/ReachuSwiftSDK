@@ -2,8 +2,8 @@ import Foundation
 import Combine
 import ReachuCore
 
-/// Engagement Manager for handling polls and contests with match context
-/// Manages engagement data organized by matchId for context-aware filtering
+/// Engagement Manager for handling polls and contests with broadcast context
+/// Manages engagement data organized by broadcastId for context-aware filtering
 @MainActor
 public class EngagementManager: ObservableObject {
     
@@ -11,25 +11,87 @@ public class EngagementManager: ObservableObject {
     public static let shared = EngagementManager()
     
     // MARK: - Published Properties
-    @Published public private(set) var pollsByMatch: [String: [Poll]] = [:]
-    @Published public private(set) var contestsByMatch: [String: [Contest]] = [:]
+    @Published public private(set) var pollsByBroadcast: [String: [Poll]] = [:]
+    @Published public private(set) var contestsByBroadcast: [String: [Contest]] = [:]
     @Published public private(set) var pollResults: [String: PollResults] = [:]
+    
+    // Backward compatibility properties
+    @available(*, deprecated, renamed: "pollsByBroadcast")
+    public var pollsByMatch: [String: [Poll]] {
+        get { pollsByBroadcast }
+        set { pollsByBroadcast = newValue }
+    }
+    
+    @available(*, deprecated, renamed: "contestsByBroadcast")
+    public var contestsByMatch: [String: [Contest]] {
+        get { contestsByBroadcast }
+        set { contestsByBroadcast = newValue }
+    }
     
     // MARK: - Private Properties
     private var participationRecord: Set<String> = []  // Track poll votes locally
     private var contestParticipation: Set<String> = []  // Track contest participation
-    private var campaignRestAPIBaseURL: String {
-        ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
-    }
+    private var repository: EngagementRepositoryProtocol
     
     // MARK: - Initialization
-    private init() {}
+    private init() {
+        // Initialize repository based on demo mode configuration
+        // Check dynamic config first, then fallback to static config
+        let config = ReachuConfiguration.shared
+        let effectiveConfig = config.effectiveEngagementConfiguration
+        
+        if effectiveConfig.demoMode {
+            self.repository = DemoEngagementRepository()
+        } else {
+            self.repository = BackendEngagementRepository()
+        }
+    }
+    
+    /// Reload repository if configuration changed (e.g., dynamic config updated)
+    private func reloadRepositoryIfNeeded() {
+        let config = ReachuConfiguration.shared
+        let effectiveConfig = config.effectiveEngagementConfiguration
+        
+        // Check if we need to switch repositories
+        let shouldUseDemo = effectiveConfig.demoMode
+        let currentlyUsingDemo = repository is DemoEngagementRepository
+        
+        if shouldUseDemo != currentlyUsingDemo {
+            if shouldUseDemo {
+                self.repository = DemoEngagementRepository()
+            } else {
+                self.repository = BackendEngagementRepository()
+            }
+            ReachuLogger.debug("Switched engagement repository based on config change", component: "EngagementManager")
+        }
+    }
     
     // MARK: - Public Methods
     
-    /// Load engagement data (polls and contests) for a specific match context
-    public func loadEngagement(for context: MatchContext) async {
-        ReachuLogger.debug("Loading engagement for matchId: \(context.matchId)", component: "EngagementManager")
+    /// Load engagement data (polls and contests) for a specific broadcast context
+    public func loadEngagement(for context: BroadcastContext) async {
+        ReachuLogger.debug("Loading engagement for broadcastId: \(context.broadcastId)", component: "EngagementManager")
+        
+        // Set broadcast start time in VideoSyncManager if available in BroadcastContext
+        if let startTimeString = context.startTime {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let broadcastStartTime = formatter.date(from: startTimeString) {
+                VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
+            } else {
+                // Try without fractional seconds
+                let simpleFormatter = ISO8601DateFormatter()
+                if let broadcastStartTime = simpleFormatter.date(from: startTimeString) {
+                    VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
+                }
+            }
+        }
+        
+        // Try to load dynamic engagement config for this broadcast
+        if let engagementConfig = await DynamicConfigurationManager.shared.loadEngagementConfig(broadcastId: context.broadcastId) {
+            ReachuConfiguration.shared.updateDynamicEngagementConfig(engagementConfig)
+            reloadRepositoryIfNeeded()
+        }
         
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
@@ -41,24 +103,21 @@ public class EngagementManager: ObservableObject {
         }
     }
     
-    /// Get active polls for a specific match context
-    public func getActivePolls(for context: MatchContext) -> [Poll] {
-        let polls = pollsByMatch[context.matchId] ?? []
-        let now = Date().timeIntervalSince1970
-        
-        return polls.filter { poll in
-            // Filter by time - only show polls that are currently active
-            if let endTime = poll.endTime {
-                return now < endTime.timeIntervalSince1970
-            }
-            return poll.isActive
-        }
+    /// Get active polls for a specific broadcast context
+    /// Uses VideoSyncManager to filter polls based on video playback time
+    public func getActivePolls(for context: BroadcastContext) -> [Poll] {
+        let polls = pollsByBroadcast[context.broadcastId] ?? []
+        return VideoSyncManager.shared.getActivePolls(polls, videoTime: nil)
     }
     
-    /// Get active contests for a specific match context
-    public func getActiveContests(for context: MatchContext) -> [Contest] {
-        return contestsByMatch[context.matchId] ?? []
+    /// Get active contests for a specific broadcast context
+    /// Uses VideoSyncManager to filter contests based on video playback time
+    public func getActiveContests(for context: BroadcastContext) -> [Contest] {
+        let contests = contestsByBroadcast[context.broadcastId] ?? []
+        return VideoSyncManager.shared.getActiveContests(contests, videoTime: nil)
     }
+    
+    // Note: MatchContext is a typealias of BroadcastContext, so the methods above automatically work for MatchContext
     
     /// Check if user has voted in a poll
     public func hasVotedInPoll(_ pollId: String) -> Bool {
@@ -74,19 +133,15 @@ public class EngagementManager: ObservableObject {
     public func voteInPoll(
         pollId: String,
         optionId: String,
-        matchContext: MatchContext
+        broadcastContext: BroadcastContext
     ) async throws {
         // Verify that the poll belongs to the correct context
-        guard let poll = pollsByMatch[matchContext.matchId]?.first(where: { $0.id == pollId }) else {
+        guard let poll = pollsByBroadcast[broadcastContext.broadcastId]?.first(where: { $0.id == pollId }) else {
             throw EngagementError.pollNotFound
         }
         
-        // Verify that the poll is still active
-        let now = Date()
-        if let endTime = poll.endTime, now >= endTime {
-            throw EngagementError.pollClosed
-        }
-        if !poll.isActive {
+        // Verify that the poll is still active using VideoSyncManager
+        if !VideoSyncManager.shared.isPollActive(poll, videoTime: nil) {
             throw EngagementError.pollClosed
         }
         
@@ -95,8 +150,8 @@ public class EngagementManager: ObservableObject {
             throw EngagementError.alreadyVoted
         }
         
-        // Send vote to backend
-        try await sendVoteToBackend(pollId: pollId, optionId: optionId, matchContext: matchContext)
+        // Send vote via repository (backend or demo)
+        try await repository.voteInPoll(pollId: pollId, optionId: optionId, broadcastContext: broadcastContext)
         
         // Register participation locally
         participationRecord.insert(pollId)
@@ -108,24 +163,26 @@ public class EngagementManager: ObservableObject {
     /// Participate in a contest (with context validation)
     public func participateInContest(
         contestId: String,
-        matchContext: MatchContext,
+        broadcastContext: BroadcastContext,
         answers: [String: String]? = nil
     ) async throws {
         // Verify that the contest belongs to the correct context
-        guard let contest = contestsByMatch[matchContext.matchId]?.first(where: { $0.id == contestId }) else {
+        guard let contest = contestsByBroadcast[broadcastContext.broadcastId]?.first(where: { $0.id == contestId }) else {
             throw EngagementError.contestNotFound
         }
         
-        // Send participation to backend
-        try await sendContestParticipationToBackend(
+        // Send participation via repository (backend or demo)
+        try await repository.participateInContest(
             contestId: contestId,
-            matchContext: matchContext,
+            broadcastContext: broadcastContext,
             answers: answers
         )
         
         // Register participation locally
         contestParticipation.insert(contestId)
     }
+    
+    // Note: MatchContext is a typealias of BroadcastContext, so the methods above automatically work for MatchContext
     
     /// Update poll results from WebSocket event
     public func updatePollResults(pollId: String, results: PollResults) {
@@ -135,205 +192,30 @@ public class EngagementManager: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func loadPolls(for context: MatchContext) async {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
+    private func loadPolls(for context: BroadcastContext) async {
+        let polls = await repository.loadPolls(for: context)
+        pollsByBroadcast[context.broadcastId] = polls
         
-        guard !apiKey.isEmpty else {
-            ReachuLogger.error("Cannot load polls: API key is empty", component: "EngagementManager")
-            return
+        // Set broadcastStartTime in VideoSyncManager from polls if available
+        if let firstPoll = polls.first(where: { $0.broadcastStartTime != nil }),
+           let broadcastStartTime = firstPoll.broadcastStartTime {
+            VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
         }
         
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/polls?apiKey=\(apiKey)&matchId=\(context.matchId)"
-        
-        guard let url = URL(string: urlString) else {
-            ReachuLogger.error("Invalid polls URL: \(urlString)", component: "EngagementManager")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 10.0
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    ReachuLogger.error("Failed to load polls: HTTP \(httpResponse.statusCode)", component: "EngagementManager")
-                    return
-                }
-            }
-            
-            // Decode polls response
-            let pollsResponse = try JSONDecoder().decode(PollsResponse.self, from: data)
-            
-            // Convert to Poll models
-            var polls: [Poll] = []
-            for pollData in pollsResponse.polls {
-                let poll = Poll(
-                    id: pollData.id,
-                    matchId: pollData.matchId,
-                    question: pollData.question,
-                    options: pollData.options.map { option in
-                        Poll.PollOption(
-                            id: option.id,
-                            text: option.text,
-                            voteCount: option.voteCount,
-                            percentage: option.percentage
-                        )
-                    },
-                    startTime: pollData.startTime,
-                    endTime: pollData.endTime,
-                    isActive: pollData.isActive,
-                    totalVotes: pollData.totalVotes,
-                    matchContext: context
-                )
-                polls.append(poll)
-            }
-            
-            // Store polls by matchId
-            pollsByMatch[context.matchId] = polls
-            
-            ReachuLogger.debug("Loaded \(polls.count) polls for matchId: \(context.matchId)", component: "EngagementManager")
-            
-        } catch {
-            ReachuLogger.error("Failed to load polls: \(error)", component: "EngagementManager")
-        }
+        ReachuLogger.debug("Loaded \(polls.count) polls for broadcastId: \(context.broadcastId)", component: "EngagementManager")
     }
     
-    private func loadContests(for context: MatchContext) async {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
+    private func loadContests(for context: BroadcastContext) async {
+        let contests = await repository.loadContests(for: context)
+        contestsByBroadcast[context.broadcastId] = contests
         
-        guard !apiKey.isEmpty else {
-            ReachuLogger.error("Cannot load contests: API key is empty", component: "EngagementManager")
-            return
+        // Set broadcastStartTime in VideoSyncManager from contests if available
+        if let firstContest = contests.first(where: { $0.broadcastStartTime != nil }),
+           let broadcastStartTime = firstContest.broadcastStartTime {
+            VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: context.broadcastId)
         }
         
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/contests?apiKey=\(apiKey)&matchId=\(context.matchId)"
-        
-        guard let url = URL(string: urlString) else {
-            ReachuLogger.error("Invalid contests URL: \(urlString)", component: "EngagementManager")
-            return
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 10.0
-        
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard (200...299).contains(httpResponse.statusCode) else {
-                    ReachuLogger.error("Failed to load contests: HTTP \(httpResponse.statusCode)", component: "EngagementManager")
-                    return
-                }
-            }
-            
-            // Decode contests response
-            let contestsResponse = try JSONDecoder().decode(ContestsResponse.self, from: data)
-            
-            // Convert to Contest models
-            var contests: [Contest] = []
-            for contestData in contestsResponse.contests {
-                let contestType: Contest.ContestType = contestData.contestType == "quiz" ? .quiz : .giveaway
-                
-                let contest = Contest(
-                    id: contestData.id,
-                    matchId: contestData.matchId,
-                    title: contestData.title,
-                    description: contestData.description,
-                    prize: contestData.prize,
-                    contestType: contestType,
-                    startTime: contestData.startTime,
-                    endTime: contestData.endTime,
-                    isActive: contestData.isActive,
-                    matchContext: context
-                )
-                contests.append(contest)
-            }
-            
-            // Store contests by matchId
-            contestsByMatch[context.matchId] = contests
-            
-            ReachuLogger.debug("Loaded \(contests.count) contests for matchId: \(context.matchId)", component: "EngagementManager")
-            
-        } catch {
-            ReachuLogger.error("Failed to load contests: \(error)", component: "EngagementManager")
-        }
-    }
-    
-    private func sendVoteToBackend(
-        pollId: String,
-        optionId: String,
-        matchContext: MatchContext
-    ) async throws {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
-        
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/polls/\(pollId)/vote"
-        guard let url = URL(string: urlString) else {
-            throw EngagementError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        let body: [String: Any] = [
-            "apiKey": apiKey,
-            "matchId": matchContext.matchId,
-            "optionId": optionId
-        ]
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw EngagementError.voteFailed
-        }
-    }
-    
-    private func sendContestParticipationToBackend(
-        contestId: String,
-        matchContext: MatchContext,
-        answers: [String: String]?
-    ) async throws {
-        let config = ReachuConfiguration.shared
-        let apiKey = config.apiKey
-        
-        let urlString = "\(campaignRestAPIBaseURL)/v1/engagement/contests/\(contestId)/participate"
-        guard let url = URL(string: urlString) else {
-            throw EngagementError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
-        var body: [String: Any] = [
-            "apiKey": apiKey,
-            "matchId": matchContext.matchId
-        ]
-        
-        if let answers = answers {
-            body["answers"] = answers
-        }
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: body)
-        
-        let (_, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw EngagementError.participationFailed
-        }
+        ReachuLogger.debug("Loaded \(contests.count) contests for broadcastId: \(context.broadcastId)", component: "EngagementManager")
     }
     
     private func updatePollResultsOptimistically(pollId: String, optionId: String) {
@@ -377,46 +259,6 @@ public class EngagementManager: ObservableObject {
         )
         
         pollResults[pollId] = updatedResults
-    }
-}
-
-// MARK: - Response Models
-
-private struct PollsResponse: Codable {
-    let polls: [PollData]
-    
-    struct PollData: Codable {
-        let id: String
-        let matchId: String
-        let question: String
-        let options: [PollOptionData]
-        let startTime: Date?
-        let endTime: Date?
-        let isActive: Bool
-        let totalVotes: Int
-        
-        struct PollOptionData: Codable {
-            let id: String
-            let text: String
-            let voteCount: Int
-            let percentage: Double
-        }
-    }
-}
-
-private struct ContestsResponse: Codable {
-    let contests: [ContestData]
-    
-    struct ContestData: Codable {
-        let id: String
-        let matchId: String
-        let title: String
-        let description: String
-        let prize: String
-        let contestType: String
-        let startTime: Date?
-        let endTime: Date?
-        let isActive: Bool
     }
 }
 

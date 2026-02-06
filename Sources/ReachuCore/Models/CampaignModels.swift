@@ -2,28 +2,92 @@ import Foundation
 
 // MARK: - Campaign Models
 
-/// Match/Event context for associating campaigns and components to specific matches
-public struct MatchContext: Codable, Equatable {
-    public let matchId: String  // Required: Unique identifier for the match (e.g., "barcelona-psg-2025-01-23")
-    public let matchName: String?  // Optional: Human-readable match name (e.g., "Barcelona vs PSG")
-    public let startTime: String?  // Optional: ISO 8601 timestamp for match start time
-    public let channelId: Int?  // Optional: Channel/stream ID associated with the match
+/// Broadcast context for associating campaigns and components to specific broadcasts
+/// A broadcast can be a live sports match, TV show, stream, or any live event
+public struct BroadcastContext: Codable, Equatable {
+    public let broadcastId: String  // Required: Unique identifier for the broadcast (e.g., "barcelona-psg-2025-01-23")
+    public let broadcastName: String?  // Optional: Human-readable broadcast name (e.g., "Barcelona vs PSG")
+    public let startTime: String?  // Optional: ISO 8601 timestamp for broadcast start time
+    public let channelId: Int?  // Optional: Channel/stream ID associated with the broadcast
     public let metadata: [String: String]?  // Optional: Additional metadata
     
     public init(
-        matchId: String,
-        matchName: String? = nil,
+        broadcastId: String,
+        broadcastName: String? = nil,
         startTime: String? = nil,
         channelId: Int? = nil,
         metadata: [String: String]? = nil
     ) {
-        self.matchId = matchId
-        self.matchName = matchName
+        self.broadcastId = broadcastId
+        self.broadcastName = broadcastName
+        self.startTime = startTime
+        self.channelId = channelId
+        self.metadata = metadata
+    }
+    
+    // Backward compatibility: support decoding from matchId/matchName fields
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // Try broadcastId first, fallback to matchId
+        if let broadcastId = try? container.decode(String.self, forKey: .broadcastId) {
+            self.broadcastId = broadcastId
+        } else {
+            self.broadcastId = try container.decode(String.self, forKey: .matchId)
+        }
+        
+        // Try broadcastName first, fallback to matchName
+        if let broadcastName = try? container.decodeIfPresent(String.self, forKey: .broadcastName) {
+            self.broadcastName = broadcastName
+        } else {
+            self.broadcastName = try container.decodeIfPresent(String.self, forKey: .matchName)
+        }
+        
+        startTime = try container.decodeIfPresent(String.self, forKey: .startTime)
+        channelId = try container.decodeIfPresent(Int.self, forKey: .channelId)
+        metadata = try container.decodeIfPresent([String: String].self, forKey: .metadata)
+    }
+    
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(broadcastId, forKey: .broadcastId)
+        try container.encodeIfPresent(broadcastName, forKey: .broadcastName)
+        try container.encodeIfPresent(startTime, forKey: .startTime)
+        try container.encodeIfPresent(channelId, forKey: .channelId)
+        try container.encodeIfPresent(metadata, forKey: .metadata)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case broadcastId
+        case broadcastName
+        case matchId  // For backward compatibility
+        case matchName  // For backward compatibility
+        case startTime
+        case channelId
+        case metadata
+    }
+    
+    // Backward compatibility properties
+    @available(*, deprecated, renamed: "broadcastId")
+    public var matchId: String { broadcastId }
+    
+    @available(*, deprecated, renamed: "broadcastName")
+    public var matchName: String? { broadcastName }
+    
+    // Convenience initializer from MatchContext (for migration)
+    @available(*, deprecated, message: "Use BroadcastContext directly")
+    public init(matchId: String, matchName: String? = nil, startTime: String? = nil, channelId: Int? = nil, metadata: [String: String]? = nil) {
+        self.broadcastId = matchId
+        self.broadcastName = matchName
         self.startTime = startTime
         self.channelId = channelId
         self.metadata = metadata
     }
 }
+
+/// Deprecated: Use BroadcastContext instead
+@available(*, deprecated, renamed: "BroadcastContext")
+public typealias MatchContext = BroadcastContext
 
 /// Campaign lifecycle state
 public enum CampaignState: String, Codable {
@@ -39,7 +103,7 @@ public struct Campaign: Codable, Identifiable, Equatable {
     public let endDate: String?    // ISO 8601 timestamp
     public let isPaused: Bool?     // Campaign paused state (independent of dates)
     public let campaignLogo: String?  // Sponsor logo URL from campaign
-    public let matchContext: MatchContext?  // Optional: Match context for context-aware campaigns (backward compatible)
+    public let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware campaigns
     
     public init(
         id: Int,
@@ -47,17 +111,17 @@ public struct Campaign: Codable, Identifiable, Equatable {
         endDate: String? = nil,
         isPaused: Bool? = nil,
         campaignLogo: String? = nil,
-        matchContext: MatchContext? = nil
+        broadcastContext: BroadcastContext? = nil
     ) {
         self.id = id
         self.startDate = startDate
         self.endDate = endDate
         self.isPaused = isPaused
         self.campaignLogo = campaignLogo
-        self.matchContext = matchContext
+        self.broadcastContext = broadcastContext
     }
     
-    // Custom decoder to handle isPaused as both String and Bool, and matchContext
+    // Custom decoder to handle isPaused as both String and Bool, and broadcastContext/matchContext
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         
@@ -65,7 +129,14 @@ public struct Campaign: Codable, Identifiable, Equatable {
         startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
         endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
         campaignLogo = try container.decodeIfPresent(String.self, forKey: .campaignLogo)
-        matchContext = try container.decodeIfPresent(MatchContext.self, forKey: .matchContext)
+        
+        // Try broadcastContext first, fallback to matchContext for backward compatibility
+        if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+            self.broadcastContext = broadcastContext
+        } else {
+            // Try decoding as MatchContext (which is now BroadcastContext)
+            self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+        }
         
         // Handle isPaused as either String or Bool
         if let boolValue = try? container.decodeIfPresent(Bool.self, forKey: .isPaused) {
@@ -78,14 +149,29 @@ public struct Campaign: Codable, Identifiable, Equatable {
         }
     }
     
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encodeIfPresent(startDate, forKey: .startDate)
+        try container.encodeIfPresent(endDate, forKey: .endDate)
+        try container.encodeIfPresent(isPaused, forKey: .isPaused)
+        try container.encodeIfPresent(campaignLogo, forKey: .campaignLogo)
+        try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
+    }
+    
     private enum CodingKeys: String, CodingKey {
         case id
         case startDate
         case endDate
         case isPaused
         case campaignLogo
-        case matchContext
+        case broadcastContext
+        case matchContext  // For backward compatibility decoding
     }
+    
+    // Backward compatibility property
+    @available(*, deprecated, renamed: "broadcastContext")
+    public var matchContext: BroadcastContext? { broadcastContext }
     
     /// Determine current state based on dates
     /// Handles special cases:
@@ -140,7 +226,7 @@ public struct Campaign: Codable, Identifiable, Equatable {
                lhs.endDate == rhs.endDate &&
                lhs.isPaused == rhs.isPaused &&
                lhs.campaignLogo == rhs.campaignLogo &&
-               lhs.matchContext == rhs.matchContext
+               lhs.broadcastContext == rhs.broadcastContext
     }
 }
 
@@ -155,7 +241,57 @@ internal struct SDKConfigResponse: Codable {
     let campaigns: CampaignsConfig?
     let marketFallback: MarketFallbackConfig?
     let features: FeaturesConfig?
-    let matchContext: MatchContext?  // Optional: Match context for context-aware campaigns
+    let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware campaigns
+    @available(*, deprecated, renamed: "broadcastContext")
+    var matchContext: BroadcastContext? { broadcastContext }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        campaignId = try container.decode(Int.self, forKey: .campaignId)
+        campaignName = try container.decodeIfPresent(String.self, forKey: .campaignName)
+        campaignLogo = try container.decodeIfPresent(String.self, forKey: .campaignLogo)
+        channelId = try container.decodeIfPresent(Int.self, forKey: .channelId)
+        channelName = try container.decodeIfPresent(String.self, forKey: .channelName)
+        environment = try container.decodeIfPresent(String.self, forKey: .environment)
+        campaigns = try container.decodeIfPresent(CampaignsConfig.self, forKey: .campaigns)
+        marketFallback = try container.decodeIfPresent(MarketFallbackConfig.self, forKey: .marketFallback)
+        features = try container.decodeIfPresent(FeaturesConfig.self, forKey: .features)
+        
+        // Try broadcastContext first, fallback to matchContext for backward compatibility
+        if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+            self.broadcastContext = broadcastContext
+        } else {
+            self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(campaignId, forKey: .campaignId)
+        try container.encodeIfPresent(campaignName, forKey: .campaignName)
+        try container.encodeIfPresent(campaignLogo, forKey: .campaignLogo)
+        try container.encodeIfPresent(channelId, forKey: .channelId)
+        try container.encodeIfPresent(channelName, forKey: .channelName)
+        try container.encodeIfPresent(environment, forKey: .environment)
+        try container.encodeIfPresent(campaigns, forKey: .campaigns)
+        try container.encodeIfPresent(marketFallback, forKey: .marketFallback)
+        try container.encodeIfPresent(features, forKey: .features)
+        try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case campaignId
+        case campaignName
+        case campaignLogo
+        case channelId
+        case channelName
+        case environment
+        case campaigns
+        case marketFallback
+        case features
+        case broadcastContext
+        case matchContext  // For backward compatibility decoding
+    }
     
     struct CampaignsConfig: Codable {
         let webSocketBaseURL: String?
@@ -184,20 +320,105 @@ internal struct CampaignsDiscoveryResponse: Codable {
         let campaignId: Int
         let campaignName: String?
         let campaignLogo: String?
-        let matchContext: MatchContext?  // Match context for this campaign
+        let broadcastContext: BroadcastContext?  // Broadcast context for this campaign
+        @available(*, deprecated, renamed: "broadcastContext")
+        var matchContext: BroadcastContext? { broadcastContext }
         let isActive: Bool
         let startDate: String?
         let endDate: String?
         let isPaused: Bool?
         let components: [ComponentDiscoveryItem]?
         
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            campaignId = try container.decode(Int.self, forKey: .campaignId)
+            campaignName = try container.decodeIfPresent(String.self, forKey: .campaignName)
+            campaignLogo = try container.decodeIfPresent(String.self, forKey: .campaignLogo)
+            isActive = try container.decode(Bool.self, forKey: .isActive)
+            startDate = try container.decodeIfPresent(String.self, forKey: .startDate)
+            endDate = try container.decodeIfPresent(String.self, forKey: .endDate)
+            isPaused = try container.decodeIfPresent(Bool.self, forKey: .isPaused)
+            components = try container.decodeIfPresent([ComponentDiscoveryItem].self, forKey: .components)
+            
+            // Try broadcastContext first, fallback to matchContext for backward compatibility
+            if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+                self.broadcastContext = broadcastContext
+            } else {
+                self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+            }
+        }
+        
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(campaignId, forKey: .campaignId)
+            try container.encodeIfPresent(campaignName, forKey: .campaignName)
+            try container.encodeIfPresent(campaignLogo, forKey: .campaignLogo)
+            try container.encode(isActive, forKey: .isActive)
+            try container.encodeIfPresent(startDate, forKey: .startDate)
+            try container.encodeIfPresent(endDate, forKey: .endDate)
+            try container.encodeIfPresent(isPaused, forKey: .isPaused)
+            try container.encodeIfPresent(components, forKey: .components)
+            try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
+        }
+        
+        private enum CodingKeys: String, CodingKey {
+            case campaignId
+            case campaignName
+            case campaignLogo
+            case broadcastContext
+            case matchContext  // For backward compatibility decoding
+            case isActive
+            case startDate
+            case endDate
+            case isPaused
+            case components
+        }
+        
         struct ComponentDiscoveryItem: Codable {
             let id: String
             let type: String
             let name: String
-            let matchContext: MatchContext?
+            let broadcastContext: BroadcastContext?
+            @available(*, deprecated, renamed: "broadcastContext")
+            var matchContext: BroadcastContext? { broadcastContext }
             let config: [String: AnyCodable]
             let status: String?
+            
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(String.self, forKey: .id)
+                type = try container.decode(String.self, forKey: .type)
+                name = try container.decode(String.self, forKey: .name)
+                config = try container.decode([String: AnyCodable].self, forKey: .config)
+                status = try container.decodeIfPresent(String.self, forKey: .status)
+                
+                // Try broadcastContext first, fallback to matchContext for backward compatibility
+                if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+                    self.broadcastContext = broadcastContext
+                } else {
+                    self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+                }
+            }
+            
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(id, forKey: .id)
+                try container.encode(type, forKey: .type)
+                try container.encode(name, forKey: .name)
+                try container.encode(config, forKey: .config)
+                try container.encodeIfPresent(status, forKey: .status)
+                try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
+            }
+            
+            private enum CodingKeys: String, CodingKey {
+                case id
+                case type
+                case name
+                case broadcastContext
+                case matchContext  // For backward compatibility decoding
+                case config
+                case status
+            }
         }
     }
 }
@@ -236,7 +457,48 @@ internal struct ComponentResponse: Codable {
     let status: String
     internal let customConfig: [String: AnyCodable]?
     internal let component: ComponentData?
-    let matchContext: MatchContext?  // Optional: Match context for context-aware components
+    let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware components
+    @available(*, deprecated, renamed: "broadcastContext")
+    var matchContext: BroadcastContext? { broadcastContext }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(Int.self, forKey: .id)
+        campaignId = try container.decode(Int.self, forKey: .campaignId)
+        componentId = try container.decode(String.self, forKey: .componentId)
+        status = try container.decode(String.self, forKey: .status)
+        customConfig = try container.decodeIfPresent([String: AnyCodable].self, forKey: .customConfig)
+        component = try container.decodeIfPresent(ComponentData.self, forKey: .component)
+        
+        // Try broadcastContext first, fallback to matchContext for backward compatibility
+        if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+            self.broadcastContext = broadcastContext
+        } else {
+            self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+        }
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(campaignId, forKey: .campaignId)
+        try container.encode(componentId, forKey: .componentId)
+        try container.encode(status, forKey: .status)
+        try container.encodeIfPresent(customConfig, forKey: .customConfig)
+        try container.encodeIfPresent(component, forKey: .component)
+        try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
+    }
+    
+    private enum CodingKeys: String, CodingKey {
+        case id
+        case campaignId
+        case componentId
+        case status
+        case customConfig
+        case component
+        case broadcastContext
+        case matchContext  // For backward compatibility decoding
+    }
     
     struct ComponentData: Codable {
         let id: String
@@ -304,7 +566,7 @@ public struct Component: Codable, Identifiable {
     public let name: String
     public let config: ComponentConfig
     public let status: String?  // "active" or "inactive"
-    public let matchContext: MatchContext?  // Optional: Match context for context-aware components (backward compatible)
+    public let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware components
     
     public init(
         id: String,
@@ -312,15 +574,19 @@ public struct Component: Codable, Identifiable {
         name: String,
         config: ComponentConfig,
         status: String? = nil,
-        matchContext: MatchContext? = nil
+        broadcastContext: BroadcastContext? = nil
     ) {
         self.id = id
         self.type = type
         self.name = name
         self.config = config
         self.status = status
-        self.matchContext = matchContext
+        self.broadcastContext = broadcastContext
     }
+    
+    // Backward compatibility property
+    @available(*, deprecated, renamed: "broadcastContext")
+    public var matchContext: BroadcastContext? { broadcastContext }
     
     public var isActive: Bool {
         return status == "active"
@@ -355,8 +621,8 @@ public struct Component: Codable, Identifiable {
         let jsonData = try JSONSerialization.data(withJSONObject: configToUse.mapValues { $0.value })
         self.config = try JSONDecoder().decode(ComponentConfig.self, from: jsonData)
         
-        // Decode matchContext from response if available
-        self.matchContext = response.matchContext
+        // Decode broadcastContext from response if available
+        self.broadcastContext = response.broadcastContext
     }
     
     /// Decode from JSON (for WebSocket events)
@@ -368,7 +634,12 @@ public struct Component: Codable, Identifiable {
         name = try container.decode(String.self, forKey: .name)
         config = try container.decode(ComponentConfig.self, forKey: .config)
         status = try container.decodeIfPresent(String.self, forKey: .status)
-        matchContext = try container.decodeIfPresent(MatchContext.self, forKey: .matchContext)
+        // Try broadcastContext first, fallback to matchContext for backward compatibility
+        if let broadcastContext = try? container.decodeIfPresent(BroadcastContext.self, forKey: .broadcastContext) {
+            self.broadcastContext = broadcastContext
+        } else {
+            self.broadcastContext = try container.decodeIfPresent(BroadcastContext.self, forKey: .matchContext)
+        }
     }
     
     /// Encode to JSON (for WebSocket events)
@@ -380,7 +651,7 @@ public struct Component: Codable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encode(config, forKey: .config)
         try container.encodeIfPresent(status, forKey: .status)
-        try container.encodeIfPresent(matchContext, forKey: .matchContext)
+        try container.encodeIfPresent(broadcastContext, forKey: .broadcastContext)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -389,7 +660,8 @@ public struct Component: Codable, Identifiable {
         case name
         case config
         case status
-        case matchContext
+        case broadcastContext
+        case matchContext  // For backward compatibility decoding
         case component
     }
 }
@@ -413,14 +685,22 @@ public struct CampaignStartedEvent: Codable {
     public let campaignId: Int
     public let startDate: String?
     public let endDate: String?
-    public let matchId: String?  // Optional: Match context for context-aware campaigns
+    public let broadcastId: String?  // Optional: Broadcast context for context-aware campaigns
+    @available(*, deprecated, renamed: "broadcastId")
+    public var matchId: String? { broadcastId }
     
-    public init(type: String = "campaign_started", campaignId: Int, startDate: String? = nil, endDate: String? = nil, matchId: String? = nil) {
+    public init(type: String = "campaign_started", campaignId: Int, startDate: String? = nil, endDate: String? = nil, broadcastId: String? = nil) {
         self.type = type
         self.campaignId = campaignId
         self.startDate = startDate
         self.endDate = endDate
-        self.matchId = matchId
+        self.broadcastId = broadcastId
+    }
+    
+    // Backward compatibility initializer
+    @available(*, deprecated, message: "Use init with broadcastId instead")
+    public init(type: String = "campaign_started", campaignId: Int, startDate: String? = nil, endDate: String? = nil, matchId: String?) {
+        self.init(type: type, campaignId: campaignId, startDate: startDate, endDate: endDate, broadcastId: matchId)
     }
 }
 
@@ -464,7 +744,9 @@ public struct CampaignResumedEvent: Codable {
 /// 1. New format: { "type": "component_status_changed", "data": { "componentId": 8, "campaignComponentId": 15, "componentType": "product_banner", "status": "active", "config": {...} } }
 /// 2. Legacy format: { "type": "component_status_changed", "campaignId": 14, "componentId": "product-banner-template", "status": "inactive", "component": {...} }
 public struct ComponentStatusChangedEvent: Codable {
-    let matchId: String?  // Optional: Match context for context-aware components
+    let broadcastId: String?  // Optional: Broadcast context for context-aware components
+    @available(*, deprecated, renamed: "broadcastId")
+    var matchId: String? { broadcastId }
     public let type: String
     public let data: ComponentStatusData?
     
@@ -489,14 +771,20 @@ public struct ComponentStatusChangedEvent: Codable {
         public let config: [String: AnyCodable]
     }
     
-    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil, matchId: String? = nil) {
+    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil, broadcastId: String? = nil) {
         self.type = type
         self.data = data
         self.campaignId = campaignId
         self.componentId = componentId
         self.status = status
         self.component = component
-        self.matchId = matchId
+        self.broadcastId = broadcastId
+    }
+    
+    // Backward compatibility initializer
+    @available(*, deprecated, message: "Use init with broadcastId instead")
+    public init(type: String = "component_status_changed", data: ComponentStatusData? = nil, campaignId: Int? = nil, componentId: String? = nil, status: String? = nil, component: LegacyComponentData? = nil, matchId: String?) {
+        self.init(type: type, data: data, campaignId: campaignId, componentId: componentId, status: status, component: component, broadcastId: matchId)
     }
     
     /// Helper to convert to Component model

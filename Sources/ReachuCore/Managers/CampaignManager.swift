@@ -15,7 +15,14 @@ public class CampaignManager: ObservableObject {
     @Published public private(set) var activeComponents: [Component] = []
     @Published public private(set) var isConnected: Bool = false
     @Published public private(set) var currentCampaign: Campaign?
-    @Published public private(set) var currentMatchContext: MatchContext?  // Current match context for filtering
+    @Published public private(set) var currentBroadcastContext: BroadcastContext?  // Current broadcast context for filtering
+    
+    // Backward compatibility property
+    @available(*, deprecated, renamed: "currentBroadcastContext")
+    public var currentMatchContext: BroadcastContext? {
+        get { currentBroadcastContext }
+        set { currentBroadcastContext = newValue }
+    }
     @Published public private(set) var activeCampaigns: [Campaign] = []  // Multiple campaigns support
     
     // MARK: - Private Properties
@@ -53,8 +60,8 @@ public class CampaignManager: ObservableObject {
         // - If autoDiscover is false and campaignId > 0, use legacy single campaign mode
         // - If both are false/0, campaigns are disabled
         if autoDiscover {
-            // Auto-discovery mode - campaigns will be discovered when setMatchContext is called
-            print("🎯 [CampaignManager] init - Auto-discovery enabled, waiting for setMatchContext")
+            // Auto-discovery mode - campaigns will be discovered when setBroadcastContext is called
+            print("🎯 [CampaignManager] init - Auto-discovery enabled, waiting for setBroadcastContext")
             self.isCampaignActive = true
             self.campaignState = .active
         } else if configuredCampaignId > 0 {
@@ -131,7 +138,22 @@ public class CampaignManager: ObservableObject {
         
         print("🎯 [CampaignManager] initializeCampaign - Starting initialization for campaignId: \(campaignId)")
         
-        // 0. Load from cache first for instant UI update
+        // 0. Load dynamic configuration from backend
+        if let config = await DynamicConfigurationManager.shared.loadCampaignConfig(
+            campaignId: campaignId,
+            broadcastId: currentBroadcastContext?.broadcastId
+        ) {
+            // Update ReachuConfiguration with dynamic config
+            if let brandConfig = config.brand {
+                ReachuConfiguration.shared.updateDynamicBrandConfig(brandConfig)
+            }
+            if let engagementConfig = config.engagement {
+                ReachuConfiguration.shared.updateDynamicEngagementConfig(engagementConfig)
+            }
+            print("🎯 [CampaignManager] initializeCampaign - Loaded dynamic config for campaignId: \(campaignId)")
+        }
+        
+        // 0.5. Load from cache first for instant UI update
         loadFromCache()
         
         // 1. Fetch campaign info and determine initial state
@@ -153,29 +175,35 @@ public class CampaignManager: ObservableObject {
         }
     }
     
-    /// Set the current match context for filtering campaigns and components
-    /// This filters automatically to show only components for the specified match
-    public func setMatchContext(_ context: MatchContext) async {
-        print("🎯 [CampaignManager] setMatchContext - Setting context: \(context.matchId)")
+    /// Set the current broadcast context for filtering campaigns and components
+    /// This filters automatically to show only components for the specified broadcast
+    public func setBroadcastContext(_ context: BroadcastContext) async {
+        print("🎯 [CampaignManager] setBroadcastContext - Setting context: \(context.broadcastId)")
         
         // Clear components from previous context
         self.activeComponents.removeAll()
         
         // Set new context
-        self.currentMatchContext = context
+        self.currentBroadcastContext = context
+        
+        // Load engagement config for this broadcast
+        if let engagementConfig = await DynamicConfigurationManager.shared.loadEngagementConfig(broadcastId: context.broadcastId) {
+            ReachuConfiguration.shared.updateDynamicEngagementConfig(engagementConfig)
+            print("🎯 [CampaignManager] setBroadcastContext - Loaded engagement config for broadcastId: \(context.broadcastId)")
+        }
         
         // Reload campaigns and components for this context
         await refreshCampaignsForContext(context)
     }
     
-    /// Refresh campaigns and components for a specific match context
-    private func refreshCampaignsForContext(_ context: MatchContext) async {
+    /// Refresh campaigns and components for a specific broadcast context
+    private func refreshCampaignsForContext(_ context: BroadcastContext) async {
         let config = ReachuConfiguration.shared
         
         // Check if auto-discovery is enabled
         if config.campaignConfiguration.autoDiscover {
             // Use auto-discovery
-            await discoverCampaigns(matchId: context.matchId)
+            await discoverCampaigns(broadcastId: context.broadcastId)
         } else if let campaignId = campaignId, campaignId > 0 {
             // Use legacy single campaign mode
             await initializeCampaign()
@@ -185,31 +213,40 @@ public class CampaignManager: ObservableObject {
         filterComponentsByContext(context)
     }
     
-    /// Filter active components by match context
-    /// Components without matchContext are shown for all matches (backward compatibility)
-    private func filterComponentsByContext(_ context: MatchContext) {
+    /// Filter active components by broadcast context
+    /// Components without broadcastContext are shown for all broadcasts (backward compatibility)
+    private func filterComponentsByContext(_ context: BroadcastContext) {
         let allComponents = self.activeComponents
         self.activeComponents = allComponents.filter { component in
-            // Include components without matchContext (backward compatibility)
-            guard let componentMatchId = component.matchContext?.matchId else {
-                return true  // Show components without matchContext for all matches
+            // Include components without broadcastContext (backward compatibility)
+            guard let componentBroadcastId = component.broadcastContext?.broadcastId else {
+                return true  // Show components without broadcastContext for all broadcasts
             }
-            // Include components that match the current matchId
-            return componentMatchId == context.matchId
+            // Include components that match the current broadcastId
+            return componentBroadcastId == context.broadcastId
         }
-        print("🎯 [CampaignManager] filterComponentsByContext - Filtered to \(self.activeComponents.count) components for matchId: \(context.matchId)")
+        print("🎯 [CampaignManager] filterComponentsByContext - Filtered to \(self.activeComponents.count) components for broadcastId: \(context.broadcastId)")
     }
     
-    /// Get components for a specific match context
-    /// Components without matchContext are included for backward compatibility
-    public func getComponents(for context: MatchContext) -> [Component] {
+    /// Get components for a specific broadcast context
+    /// Components without broadcastContext are included for backward compatibility
+    public func getComponents(for context: BroadcastContext) -> [Component] {
         return activeComponents.filter { component in
-            // Include components without matchContext (backward compatibility)
-            guard let componentMatchId = component.matchContext?.matchId else {
-                return true  // Show components without matchContext for all matches
+            // Include components without broadcastContext (backward compatibility)
+            guard let componentBroadcastId = component.broadcastContext?.broadcastId else {
+                return true  // Show components without broadcastContext for all broadcasts
             }
-            return componentMatchId == context.matchId
+            return componentBroadcastId == context.broadcastId
         }
+    }
+    
+    // Backward compatibility methods
+    // Note: MatchContext is a typealias of BroadcastContext, so getComponents(for:) automatically works for both
+    // We only need to provide a deprecated method for setMatchContext to show the migration path
+    @available(*, deprecated, renamed: "setBroadcastContext(_:)")
+    public func setMatchContext(_ context: MatchContext) async {
+        // MatchContext is a typealias, so we can pass it directly
+        await setBroadcastContext(context)
     }
     
     /// Check if a component should be displayed based on campaign state and context
@@ -227,14 +264,14 @@ public class CampaignManager: ObservableObject {
         // Check if component type is active
         let component = activeComponents.first { $0.type == type }
         
-        // If we have a currentMatchContext, verify component belongs to it
-        if let context = currentMatchContext {
-            guard let componentMatchId = component?.matchContext?.matchId else {
-                // Component without matchContext should not be shown when context is active
+        // If we have a currentBroadcastContext, verify component belongs to it
+        if let context = currentBroadcastContext {
+            guard let componentBroadcastId = component?.broadcastContext?.broadcastId else {
+                // Component without broadcastContext should not be shown when context is active
                 return false
             }
-            guard componentMatchId == context.matchId else {
-                // Component belongs to different match
+            guard componentBroadcastId == context.broadcastId else {
+                // Component belongs to different broadcast
                 return false
             }
         }
@@ -323,14 +360,14 @@ public class CampaignManager: ObservableObject {
             if isCampaignActive {
                 let cachedComponents = CacheManager.shared.loadComponents()
                 
-                // Filter by matchContext if currentMatchContext is set
-                if let context = currentMatchContext {
+                // Filter by broadcastContext if currentBroadcastContext is set
+                if let context = currentBroadcastContext {
                     let filteredComponents = cachedComponents.filter { component in
-                        guard let componentMatchId = component.matchContext?.matchId else {
-                            // If component has no matchContext, don't show it when context is active (security)
+                        guard let componentBroadcastId = component.broadcastContext?.broadcastId else {
+                            // If component has no broadcastContext, don't show it when context is active (security)
                             return false
                         }
-                        return componentMatchId == context.matchId
+                        return componentBroadcastId == context.broadcastId
                     }
                     self.activeComponents = filteredComponents
                 } else {
@@ -452,7 +489,7 @@ public class CampaignManager: ObservableObject {
                 endDate: existingCampaign?.endDate,
                 isPaused: existingCampaign?.isPaused,
                 campaignLogo: sdkConfig.campaignLogo,
-                matchContext: sdkConfig.matchContext ?? existingCampaign?.matchContext
+                broadcastContext: sdkConfig.broadcastContext ?? existingCampaign?.broadcastContext
             )
             
             print("🎯 [CampaignManager] New Campaign created - ID: \(campaign.id), campaignLogo: \(campaign.campaignLogo ?? "nil")")
@@ -572,7 +609,7 @@ public class CampaignManager: ObservableObject {
     /// Discover campaigns using auto-discovery endpoint
     /// Uses only the Reachu SDK API key (no campaignAdminApiKey needed)
     /// - Parameter matchId: Optional matchId to filter campaigns for a specific match
-    public func discoverCampaigns(matchId: String? = nil) async {
+    public func discoverCampaigns(broadcastId: String? = nil) async {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
         
@@ -582,8 +619,10 @@ public class CampaignManager: ObservableObject {
         }
         
         var urlString = "\(campaignRestAPIBaseURL)/v1/sdk/campaigns?apiKey=\(apiKey)"
-        if let matchId = matchId {
-            urlString += "&matchId=\(matchId)"
+        if let broadcastId = broadcastId {
+            urlString += "&broadcastId=\(broadcastId)"
+            // Also include matchId for backward compatibility with backend
+            urlString += "&matchId=\(broadcastId)"
         }
         
         guard let url = URL(string: urlString) else {
@@ -623,7 +662,7 @@ public class CampaignManager: ObservableObject {
                     endDate: item.endDate,
                     isPaused: item.isPaused,
                     campaignLogo: item.campaignLogo,
-                    matchContext: item.matchContext
+                    broadcastContext: item.broadcastContext
                 )
                 discoveredCampaigns.append(campaign)
                 
@@ -642,7 +681,7 @@ public class CampaignManager: ObservableObject {
                                 name: componentItem.name,
                                 config: componentConfig,
                                 status: componentItem.status,
-                                matchContext: componentItem.matchContext
+                                broadcastContext: componentItem.broadcastContext
                             )
                             allComponents.append(component)
                         } catch {
@@ -655,16 +694,16 @@ public class CampaignManager: ObservableObject {
             // Update active campaigns
             self.activeCampaigns = discoveredCampaigns
             
-            // Filter components by currentMatchContext if set
-            // Components without matchContext are shown for all matches (backward compatibility)
-            if let context = currentMatchContext {
+            // Filter components by currentBroadcastContext if set
+            // Components without broadcastContext are shown for all broadcasts (backward compatibility)
+            if let context = currentBroadcastContext {
                 self.activeComponents = allComponents.filter { component in
-                    // Include components without matchContext (backward compatibility)
-                    guard let componentMatchId = component.matchContext?.matchId else {
-                        return true  // Show components without matchContext for all matches
+                    // Include components without broadcastContext (backward compatibility)
+                    guard let componentBroadcastId = component.broadcastContext?.broadcastId else {
+                        return true  // Show components without broadcastContext for all broadcasts
                     }
-                    // Include components that match the current matchId
-                    return componentMatchId == context.matchId
+                    // Include components that match the current broadcastId
+                    return componentBroadcastId == context.broadcastId
                 }
             } else {
                 self.activeComponents = allComponents
@@ -732,6 +771,12 @@ public class CampaignManager: ObservableObject {
         } catch {
             ReachuLogger.error("Failed to discover campaigns: \(error)", component: "CampaignManager")
         }
+    }
+    
+    // Backward compatibility method
+    @available(*, deprecated, renamed: "discoverCampaigns(broadcastId:)")
+    public func discoverCampaigns(matchId: String? = nil) async {
+        await discoverCampaigns(broadcastId: matchId)
     }
     
     /// Fetch active components from API using new v1 endpoint

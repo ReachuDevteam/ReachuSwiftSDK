@@ -108,10 +108,10 @@ When connecting to backend:
 
 ```swift
 // Fetch match data
-let match = try await api.getMatch(id: matchId)
+let match = try await api.getMatch(id: broadcastId)
 
 // Fetch timeline events
-let events = try await api.getTimelineEvents(matchId: matchId)
+let events = try await api.getTimelineEvents(broadcastId: broadcastId)
 timeline.addWrappedEvents(events)
 
 // WebSocket for live updates

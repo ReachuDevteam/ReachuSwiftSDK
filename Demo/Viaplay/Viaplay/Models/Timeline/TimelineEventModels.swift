@@ -238,10 +238,14 @@ struct PollTimelineEvent: TimelineEvent {
     let duration: TimeInterval?  // How long poll is active
     let endTimestamp: TimeInterval?  // When poll closes
     let metadata: [String: String]?
-    let matchContext: MatchContext?  // Optional: Match context for context-aware polls (backward compatible)
+    let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware polls
     
     var eventType: TimelineEventType { .poll }
     var displayPriority: Int { 7 }
+    
+    // Backward compatibility property
+    @available(*, deprecated, renamed: "broadcastContext")
+    var matchContext: BroadcastContext? { broadcastContext }
     
     struct PollOption: Codable, Identifiable {
         let id: String
@@ -374,10 +378,14 @@ struct PowerContestEvent: TimelineEvent {
     let prize: String
     let contestType: ContestType
     let metadata: [String: String]?
-    let matchContext: MatchContext?  // Optional: Match context for context-aware contests (backward compatible)
+    let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware contests
     
     var eventType: TimelineEventType { .powerContest }
     var displayPriority: Int { 8 }
+    
+    // Backward compatibility property
+    @available(*, deprecated, renamed: "broadcastContext")
+    var matchContext: BroadcastContext? { broadcastContext }
     
     enum ContestType: String, Codable {
         case quiz = "quiz"

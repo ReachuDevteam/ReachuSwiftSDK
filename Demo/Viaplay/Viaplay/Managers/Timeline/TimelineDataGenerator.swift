@@ -196,7 +196,7 @@ struct TimelineDataGenerator {
             // Asset mapping: gavekortpower (Power) -> elkjop_konk (Elkjøp)
             // Legacy Power asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
             metadata: ["imageAsset": "elkjop_konk"],
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // Chat between Power events
@@ -231,7 +231,7 @@ struct TimelineDataGenerator {
             prize: "To billetter til Champions League",
             contestType: .giveaway,
             metadata: ["imageAsset": "billeter_power"],
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // Chat between Power events
@@ -1058,7 +1058,7 @@ struct TimelineDataGenerator {
             duration: 600,
             endTimestamp: 1200,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // 20' - Poll sobre neste mål
@@ -1074,7 +1074,7 @@ struct TimelineDataGenerator {
             duration: 900,
             endTimestamp: 2100,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // 35' - Poll sobre beste spiller
@@ -1090,7 +1090,7 @@ struct TimelineDataGenerator {
             duration: 600,
             endTimestamp: 2700,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // MARK: - Tweets (en momentos clave)

@@ -211,7 +211,7 @@ private struct PollTimelineOptionButton: View {
             duration: 600,
             endTimestamp: 1200,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         ),
         onVote: { _ in }
     )

@@ -196,6 +196,23 @@ public class CampaignWebSocketManager: ObservableObject {
                 ReachuLogger.success("Decoded component_config_updated event", component: "CampaignWebSocket")
                 onComponentConfigUpdated?(event)
                 
+            case "config:updated":
+                // Handle config update event for dynamic configuration
+                if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let campaignId = json["campaignId"] as? Int,
+                   let sections = json["sections"] as? [String] {
+                    // Try broadcastId first, fallback to matchId for backward compatibility
+                    let broadcastId = json["broadcastId"] as? String ?? json["matchId"] as? String
+                    DynamicConfigurationManager.shared.handleConfigUpdateEvent(
+                        campaignId: campaignId,
+                        broadcastId: broadcastId,
+                        sections: sections
+                    )
+                    ReachuLogger.success("Handled config:updated event for campaignId: \(campaignId)", component: "CampaignWebSocket")
+                } else {
+                    ReachuLogger.warning("Invalid config:updated event format", component: "CampaignWebSocket")
+                }
+                
             default:
                 ReachuLogger.warning("Unknown event type: \(eventType)", component: "CampaignWebSocket")
             }

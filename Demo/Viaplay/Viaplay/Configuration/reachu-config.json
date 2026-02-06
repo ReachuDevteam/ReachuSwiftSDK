@@ -153,13 +153,18 @@
     "campaignAdminApiKey": "xxl_api_key_507d4014243d8360",
     "_comment": "autoDiscover: true = use auto-discovery endpoint (/v1/sdk/campaigns), false = use legacy single campaign mode (campaignId from liveShow.campaignId)",
     "autoDiscover": true,
-    "_comment2": "channelId: Optional channel ID for match context. Can be null.",
+    "_comment2": "channelId: Optional channel ID for broadcast context. Can be null.",
     "channelId": null
   },
   "brand": {
     "name": "Elkjøp",
     "iconAsset": "avatar_el",
     "_comment": "Brand configuration for engagement components. Legacy Power values: name='Power', iconAsset='avatar_power'"
+  },
+  "engagement": {
+    "demoMode": true,
+    "useDynamicConfig": true,
+    "_comment": "When demoMode is true, EngagementManager uses mock data from TimelineDataGenerator instead of backend API. When useDynamicConfig is true, DynamicConfigurationManager will fetch configs from backend."
   },
   "_cartOptions": {
     "_comment": "Available options for cart configuration",

@@ -518,6 +518,28 @@ public struct CampaignConfiguration {
     public static let `default` = CampaignConfiguration()
 }
 
+// MARK: - Engagement Configuration
+
+/// Configuration for Engagement System (polls, contests, products)
+public struct EngagementConfiguration {
+    /// Enable demo mode to use mock data from TimelineDataGenerator instead of backend
+    /// When true, EngagementManager will use DemoEngagementRepository
+    /// When false, EngagementManager will use BackendEngagementRepository
+    public let demoMode: Bool
+    
+    /// Enable dynamic configuration loading from backend
+    /// When true, DynamicConfigurationManager will fetch configs from backend
+    /// When false, only local JSON configuration will be used
+    public let useDynamicConfig: Bool
+    
+    public init(demoMode: Bool = false, useDynamicConfig: Bool = true) {
+        self.demoMode = demoMode
+        self.useDynamicConfig = useDynamicConfig
+    }
+    
+    public static let `default` = EngagementConfiguration()
+}
+
 public enum VideoQuality: String, CaseIterable {
     case low = "240p"
     case medium = "480p"

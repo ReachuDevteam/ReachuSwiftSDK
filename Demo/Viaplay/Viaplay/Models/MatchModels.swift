@@ -69,16 +69,16 @@ struct RelatedTeam: Identifiable {
     let description: String?
 }
 
-// MARK: - MatchContext Helper
+// MARK: - BroadcastContext Helper
 extension Match {
-    /// Creates a MatchContext from Match for SDK integration
-    func toMatchContext(channelId: Int? = nil) -> MatchContext {
-        // Generate a unique matchId from match data
-        let matchId = generateMatchId()
+    /// Creates a BroadcastContext from Match for SDK integration
+    func toBroadcastContext(channelId: Int? = nil) -> BroadcastContext {
+        // Generate a unique broadcastId from match data
+        let broadcastId = generateBroadcastId()
         
-        return MatchContext(
-            matchId: matchId,
-            matchName: title,
+        return BroadcastContext(
+            broadcastId: broadcastId,
+            broadcastName: title,
             startTime: nil, // Can be added if Match has start time
             channelId: channelId,
             metadata: [
@@ -90,8 +90,14 @@ extension Match {
         )
     }
     
-    /// Generates a unique matchId from match data
-    private func generateMatchId() -> String {
+    // Backward compatibility method
+    @available(*, deprecated, renamed: "toBroadcastContext(channelId:)")
+    func toMatchContext(channelId: Int? = nil) -> MatchContext {
+        return toBroadcastContext(channelId: channelId)
+    }
+    
+    /// Generates a unique broadcastId from match data
+    private func generateBroadcastId() -> String {
         // Create a stable ID from match data
         let homeTeamSlug = homeTeam.name.lowercased()
             .replacingOccurrences(of: " ", with: "-")
@@ -112,6 +118,12 @@ extension Match {
         }
         
         return "\(homeTeamSlug)-\(awayTeamSlug)-\(competitionSlug)".lowercased()
+    }
+    
+    /// Generates a unique matchId from match data (backward compatibility)
+    @available(*, deprecated, renamed: "generateBroadcastId()")
+    private func generateMatchId() -> String {
+        return generateBroadcastId()
     }
 }
 

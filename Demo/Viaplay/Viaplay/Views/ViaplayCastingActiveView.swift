@@ -2,7 +2,9 @@ import SwiftUI
 import ReachuUI
 import ReachuCore
 import ReachuEngagementUI
+import ReachuEngagementSystem
 import ReachuDesignSystem
+import Combine
 
 /// Vista que se muestra cuando el casting está activo en Viaplay
 /// Permite controlar el video y ver los overlays mientras se castea
@@ -20,6 +22,8 @@ struct ViaplayCastingActiveView: View {
     @State private var isChatExpanded = false
     @State private var chatMessage = ""
     @State private var floatingLikes: [FloatingLike] = []
+    @State private var videoTime: Int = 0 // Current video time in seconds
+    @State private var videoTimer: Timer?
     
     struct FloatingLike: Identifiable {
         let id = UUID()
@@ -150,16 +154,25 @@ struct ViaplayCastingActiveView: View {
         }
         .navigationBarHidden(true)
         .task {
-            // Set match context for auto-discovery and context-aware campaigns
-            await setupMatchContext()
+            // Set broadcast context for auto-discovery and context-aware campaigns
+            await setupBroadcastContext()
         }
         .onAppear {
             webSocketManager.connect()
             chatManager.startSimulation()
+            
+            // Set match start time in VideoSyncManager if available
+            setupVideoSync()
+            
+            // Start video time timer (simulates video playback)
+            startVideoTimeTimer()
         }
         .onDisappear {
             webSocketManager.disconnect()
             chatManager.stopSimulation()
+            
+            // Stop video time timer
+            stopVideoTimeTimer()
         }
     }
     
@@ -498,32 +511,91 @@ struct ViaplayCastingActiveView: View {
         }
     }
     
-    // MARK: - Match Context Setup
+    // MARK: - Broadcast Context Setup
     
-    /// Sets up match context for auto-discovery and context-aware campaigns
-    private func setupMatchContext() async {
+    /// Sets up broadcast context for auto-discovery and context-aware campaigns
+    private func setupBroadcastContext() async {
         let config = ReachuConfiguration.shared
         let autoDiscover = config.campaignConfiguration.autoDiscover
         
-        // Create match context from Match model
-        let matchContext = match.toMatchContext(
+        // Create broadcast context from Match model
+        let broadcastContext = match.toBroadcastContext(
             channelId: config.campaignConfiguration.channelId
         )
         
-        print("🎯 [ViaplayCastingActiveView] Setting up match context: \(matchContext.matchId)")
+        print("🎯 [ViaplayCastingActiveView] Setting up broadcast context: \(broadcastContext.broadcastId)")
         
         if autoDiscover {
             // Use auto-discovery mode
-            print("🎯 [ViaplayCastingActiveView] Auto-discovery enabled, discovering campaigns for match: \(matchContext.matchId)")
-            await campaignManager.discoverCampaigns(matchId: matchContext.matchId)
+            print("🎯 [ViaplayCastingActiveView] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
+            await campaignManager.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
             
-            // Set match context to filter components
-            await campaignManager.setMatchContext(matchContext)
+            // Set broadcast context to filter components
+            await campaignManager.setBroadcastContext(broadcastContext)
         } else {
-            // Legacy mode: just set match context if campaign is already loaded
-            print("🎯 [ViaplayCastingActiveView] Legacy mode, setting match context")
-            await campaignManager.setMatchContext(matchContext)
+            // Legacy mode: just set broadcast context if campaign is already loaded
+            print("🎯 [ViaplayCastingActiveView] Legacy mode, setting broadcast context")
+            await campaignManager.setBroadcastContext(broadcastContext)
         }
+        
+        // Load engagement data for this broadcast
+        await EngagementManager.shared.loadEngagement(for: broadcastContext)
+    }
+    
+    // MARK: - Video Sync Setup
+    
+    /// Sets up video synchronization with VideoSyncManager
+    private func setupVideoSync() {
+        let broadcastContext = match.toBroadcastContext()
+        
+        // Set broadcast start time if available in BroadcastContext
+        // For demo purposes, we'll use a default broadcast start time
+        // In production, this should come from the Match model or backend
+        if let startTimeString = broadcastContext.startTime {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let broadcastStartTime = formatter.date(from: startTimeString) {
+                VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: broadcastContext.broadcastId)
+            } else {
+                // Try without fractional seconds
+                let simpleFormatter = ISO8601DateFormatter()
+                if let broadcastStartTime = simpleFormatter.date(from: startTimeString) {
+                    VideoSyncManager.shared.setBroadcastStartTime(broadcastStartTime, for: broadcastContext.broadcastId)
+                }
+            }
+        } else {
+            // For demo: use current time as broadcast start time
+            // In production, this should come from the backend
+            let defaultBroadcastStartTime = Date()
+            VideoSyncManager.shared.setBroadcastStartTime(defaultBroadcastStartTime, for: broadcastContext.broadcastId)
+        }
+    }
+    
+    /// Starts a timer to update video time periodically
+    /// In a real implementation, this would get the time from the video player
+    private func startVideoTimeTimer() {
+        // Reset video time
+        videoTime = 0
+        VideoSyncManager.shared.updateVideoTime(0)
+        
+        // Create timer that updates every second
+        // Note: ViaplayCastingActiveView is a struct, so we can't use [weak self]
+        // We'll use a local counter and update VideoSyncManager
+        var timeCounter = 0
+        videoTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+            timeCounter += 1
+            
+            // Update VideoSyncManager with current video time
+            Task { @MainActor in
+                VideoSyncManager.shared.updateVideoTime(timeCounter)
+            }
+        }
+    }
+    
+    /// Stops the video time timer
+    private func stopVideoTimeTimer() {
+        videoTimer?.invalidate()
+        videoTimer = nil
     }
 }
 

@@ -69,7 +69,7 @@ extension TimelineDataGenerator {
             duration: nil,
             endTimestamp: 0,
             metadata: ["type": "lineup-opinion"],
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // -11' - PSG Lineup
@@ -112,7 +112,7 @@ extension TimelineDataGenerator {
             duration: nil,
             endTimestamp: 0,
             metadata: ["type": "lineup-opinion"],
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // -8' - Player Interview
@@ -144,7 +144,7 @@ extension TimelineDataGenerator {
             duration: nil,
             endTimestamp: 0,
             metadata: ["type": "prediction"],
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // -8' - Player Interview (Lamine Yamal)
@@ -341,7 +341,7 @@ extension TimelineDataGenerator {
             duration: 600,
             endTimestamp: 1200,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // 11' - Chance
@@ -506,7 +506,7 @@ extension TimelineDataGenerator {
             duration: 900,
             endTimestamp: 2100,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // 22' - Corner
@@ -643,7 +643,7 @@ extension TimelineDataGenerator {
             duration: 600,
             endTimestamp: 2700,
             metadata: nil,
-            matchContext: nil
+            broadcastContext: nil
         )))
         
         // 40' - Chance
