@@ -1,4 +1,5 @@
 import Foundation
+import ReachuCore
 
 /// Handler for retrying network requests with exponential backoff
 struct RequestRetryHandler {
