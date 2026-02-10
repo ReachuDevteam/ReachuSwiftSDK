@@ -45,8 +45,8 @@ enum TimelineEventType: String, Codable, CaseIterable {
     case trivia = "trivia"
     case prediction = "prediction"
     case voting = "voting"
-    case powerContest = "power_contest"
-    case powerProduct = "power_product"
+    case castingContest = "power_contest"
+    case castingProduct = "power_product"
     
     // Commerce events
     case productHighlight = "product_highlight"
@@ -82,8 +82,8 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .trivia: return "Trivia"
         case .prediction: return "Spådom"
         case .voting: return "Avstemning"
-        case .powerContest: return "Elkjøp Konkurranse"
-        case .powerProduct: return "Elkjøp Produkt"
+        case .castingContest: return "Elkjøp Konkurranse"
+        case .castingProduct: return "Elkjøp Produkt"
         
         // Commerce events
         case .productHighlight: return "Produkt"
@@ -113,8 +113,8 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .poll, .voting: return "chart.bar.fill"
         case .quiz, .trivia: return "questionmark.circle.fill"
         case .prediction: return "crystal.ball"
-        case .powerContest: return "trophy.fill"
-        case .powerProduct: return "cart.fill"
+        case .castingContest: return "trophy.fill"
+        case .castingProduct: return "cart.fill"
         case .productHighlight: return "cart.fill"
         case .offerBanner: return "tag.fill"
         case .highlight: return "play.circle.fill"
@@ -139,8 +139,8 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .poll, .voting: return "orange"
         case .quiz, .trivia: return "purple"
         case .prediction: return "pink"
-        case .powerContest: return "orange"
-        case .powerProduct: return "green"
+        case .castingContest: return "orange"
+        case .castingProduct: return "green"
         case .productHighlight: return "green"
         case .offerBanner: return "red"
         case .highlight: return "white"
@@ -184,7 +184,7 @@ extension TimelineEventType {
         case .chatMessage, .adminComment, .tweet, .socialPost:
             return .social
             
-        case .poll, .quiz, .trivia, .prediction, .voting, .powerContest, .powerProduct:
+        case .poll, .quiz, .trivia, .prediction, .voting, .castingContest, .castingProduct:
             return .interactive
             
         case .productHighlight, .offerBanner:

@@ -20,8 +20,8 @@ struct VideoTimelineControl: View {
     let onToggleMute: () -> Void
     let onGoToLive: () -> Void  // NEW: Called when tapping LIVE
     let onSeek: ((Int) -> Void)?
-    let onNavigateToNextPowerContest: (() -> Void)?  // Demo: Navigate to next Power contest
-    let onNavigateToPreviousPowerContest: (() -> Void)?  // Demo: Navigate to previous Power contest
+    let onNavigateToNextCastingContest: (() -> Void)?  // Demo: Navigate to next Casting contest
+    let onNavigateToPreviousCastingContest: (() -> Void)?  // Demo: Navigate to previous Casting contest
     
     @State private var isExpanded: Bool = true  // DEMO: Start expanded
     
@@ -38,8 +38,8 @@ struct VideoTimelineControl: View {
         onToggleMute: @escaping () -> Void = {},
         onGoToLive: @escaping () -> Void = {},
         onSeek: ((Int) -> Void)? = nil,
-        onNavigateToNextPowerContest: (() -> Void)? = nil,
-        onNavigateToPreviousPowerContest: (() -> Void)? = nil
+        onNavigateToNextCastingContest: (() -> Void)? = nil,
+        onNavigateToPreviousCastingContest: (() -> Void)? = nil
     ) {
         self.currentMinute = currentMinute
         self.liveMinute = liveMinute
@@ -53,8 +53,8 @@ struct VideoTimelineControl: View {
         self.onToggleMute = onToggleMute
         self.onGoToLive = onGoToLive
         self.onSeek = onSeek
-        self.onNavigateToNextPowerContest = onNavigateToNextPowerContest
-        self.onNavigateToPreviousPowerContest = onNavigateToPreviousPowerContest
+        self.onNavigateToNextCastingContest = onNavigateToNextCastingContest
+        self.onNavigateToPreviousCastingContest = onNavigateToPreviousCastingContest
     }
     
     var body: some View {
@@ -104,10 +104,10 @@ struct VideoTimelineControl: View {
                         }
                         .fixedSize()
                         
-                        // Backward button (Demo: Navigate to previous Power contest)
-                        if onNavigateToPreviousPowerContest != nil {
+                        // Backward button (Demo: Navigate to previous Casting contest)
+                        if onNavigateToPreviousCastingContest != nil {
                             Button(action: {
-                                onNavigateToPreviousPowerContest?()
+                                onNavigateToPreviousCastingContest?()
                             }) {
                                 Image(systemName: "gobackward.10")
                                     .font(.system(size: 18))
@@ -126,10 +126,10 @@ struct VideoTimelineControl: View {
                         }
                         .frame(maxWidth: .infinity)
                         
-                        // Forward button (Demo: Navigate to next Power contest)
-                        if onNavigateToNextPowerContest != nil {
+                        // Forward button (Demo: Navigate to next Casting contest)
+                        if onNavigateToNextCastingContest != nil {
                             Button(action: {
-                                onNavigateToNextPowerContest?()
+                                onNavigateToNextCastingContest?()
                             }) {
                                 Image(systemName: "goforward.10")
                                     .font(.system(size: 18))
@@ -385,8 +385,8 @@ private struct VideoTimelineControl_PreviewWrapper: View {
                 MatchEvent(minute: 18, type: .yellowCard, player: "Casemiro", team: .home, description: nil, score: nil)
             ],
             isPlaying: true,
-            onNavigateToNextPowerContest: nil,
-            onNavigateToPreviousPowerContest: nil
+            onNavigateToNextCastingContest: nil,
+            onNavigateToPreviousCastingContest: nil
         )
         .background(Color(hex: "1B1B25"))
     }

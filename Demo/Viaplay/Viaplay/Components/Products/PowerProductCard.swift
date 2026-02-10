@@ -1,8 +1,8 @@
 //
-//  PowerProductCard.swift
+//  CastingProductCard.swift
 //  Viaplay
 //
-//  Component for displaying Power product events in the timeline
+//  Component for displaying Casting product events in the timeline
 //  Shows multiple Reachu products with discount badge and Viaplay colors
 //
 
@@ -11,12 +11,12 @@ import ReachuCore
 import ReachuUI
 import ReachuDesignSystem
 
-struct PowerProductCard: View {
-    let productEvent: PowerProductEvent
+struct CastingProductCard: View {
+    let productEvent: CastingProductEvent
     let onViewProduct: () -> Void
     
     @State private var showModal = false
-    @State private var selectedProductEvent: PowerProductEvent?
+    @State private var selectedProductEvent: CastingProductEvent?
     @State private var products: [Product] = []
     @State private var isLoadingProducts = false
     
@@ -29,7 +29,7 @@ struct PowerProductCard: View {
         let colors = ReachuColors.adaptive(for: colorScheme)
         
         return VStack(alignment: .leading, spacing: 12) {
-            // Header (similar to PowerContestCard)
+            // Header (similar to CastingContestCard)
             HStack(spacing: 8) {
                 // Brand avatar - hardcoded: siempre usar avatar_el
                 Image("avatar_el")
@@ -143,7 +143,7 @@ struct PowerProductCard: View {
                 )
         )
         .fullScreenCover(item: $selectedProductEvent) { event in
-            PowerProductModal(productEvent: event) {
+            CastingProductModal(productEvent: event) {
                 selectedProductEvent = nil
                 showModal = false
             }
@@ -229,15 +229,15 @@ struct PowerProductCard: View {
             // Individual buy button for this product
             Button(action: {
                 // Create a temporary event for this specific product to open its checkout
-                let tempEvent = PowerProductEvent(
+                let tempEvent = CastingProductEvent(
                     id: productEvent.id + "-\(product.id)",
                     videoTimestamp: productEvent.videoTimestamp,
                     productId: String(product.id),
                     productIds: nil,
                     title: product.title,
                     description: productEvent.description,
-                    powerProductUrl: getProductUrl(for: product),
-                    powerCheckoutUrl: getProductUrl(for: product),
+                    castingProductUrl: getProductUrl(for: product),
+                    castingCheckoutUrl: getProductUrl(for: product),
                     imageAsset: nil,
                     metadata: nil
                 )
@@ -286,7 +286,7 @@ struct PowerProductCard: View {
             // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
             return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
         }
-        return productEvent.powerProductUrl
+        return productEvent.castingProductUrl
     }
     
     // MARK: - Discount Badge

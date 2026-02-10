@@ -1,0 +1,131 @@
+{
+  "_comment": "Static demo data configuration for Viaplay demo. This data can be replaced with backend data or moved to reachu-config.json in the future.",
+  "version": "1.0.0",
+  "assets": {
+    "_comment": "Image asset names used as fallbacks throughout the demo",
+    "defaultLogo": "logo1",
+    "defaultAvatar": "avatar_el",
+    "backgroundImages": {
+      "footballField": "football_field_bg",
+      "mainBackground": "bg-main",
+      "sportDetail": "bg",
+      "sportDetailImage": "img1"
+    },
+    "brandAssets": {
+      "icon": "icon ",
+      "logo": "logo"
+    },
+    "contestAssets": {
+      "giftCard": "elkjop_konk",
+      "championsLeagueTickets": "billeter_power"
+    }
+  },
+  "demoUsers": {
+    "_comment": "Demo usernames for chat and social features",
+    "defaultUsername": "Usuario",
+    "chatUsernames": [
+      {
+        "name": "Angelo",
+        "color": "#F5145A"
+      },
+      {
+        "name": "PowerFan",
+        "color": "#FF9500"
+      },
+      {
+        "name": "ChampionsFan",
+        "color": "#9933FF"
+      },
+      {
+        "name": "TechLover",
+        "color": "#00CED1"
+      }
+    ],
+    "socialAccounts": [
+      {
+        "name": "Power Norge",
+        "handle": "@PowerNorge",
+        "verified": true
+      },
+      {
+        "name": "Viaplay Sport",
+        "handle": "@ViaplaySport",
+        "verified": true
+      }
+    ]
+  },
+  "productMappings": {
+    "_comment": "Product ID to URL mappings. In production, these should come from Product objects or backend",
+    "408895": {
+      "name": "Samsung 75\" QN85F Neo QLED 4K MiniLED Smart TV (2025)",
+      "productUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+      "checkoutUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
+    },
+    "408896": {
+      "name": "Samsung 5.1.2ch HW-Q810F lydplanke (sort)",
+      "productUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694",
+      "checkoutUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
+    }
+  },
+  "eventIds": {
+    "_comment": "Event IDs used in timeline. Should be generated dynamically or come from backend",
+    "contestQuiz": "casting-contest-quiz",
+    "contestGiveaway": "casting-contest-giveaway",
+    "productCombo": "casting-product-combo",
+    "tweetHalftime1": "tweet-halftime-1",
+    "tweetHalftime2": "tweet-halftime-2"
+  },
+  "matchDefaults": {
+    "_comment": "Default match values. Should come from Match model or backend",
+    "broadcastIdMappings": {
+      "barcelona-psg": "barcelona-psg-2025-01-23"
+    },
+    "defaultScore": 3
+  },
+  "offerBanner": {
+    "_comment": "Offer banner countdown values. Should be calculated from campaign expiration date",
+    "countdown": {
+      "days": 2,
+      "hours": 1,
+      "minutes": 59,
+      "seconds": 47
+    },
+    "title": "Ukens tilbud",
+    "subtitle": "Se denne ukes beste tilbud",
+    "discountText": "Opp til 30%",
+    "buttonText": "Se alle tilbud"
+  },
+  "timelineEvents": {
+    "_comment": "Static timeline event data. In production, this should come from backend or be generated dynamically",
+    "castingContests": [
+      {
+        "id": "casting-contest-quiz",
+        "videoTimestamp": 2720,
+        "title": "Elkjøp Konkurranse",
+        "description": "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
+        "prize": "Gavekort på 5000kr",
+        "contestType": "quiz",
+        "imageAsset": "elkjop_konk"
+      },
+      {
+        "id": "casting-contest-giveaway",
+        "videoTimestamp": 2750,
+        "title": "Elkjøp Konkurranse",
+        "description": "Delta og vinn to billetter til Champions League",
+        "prize": "To billetter til Champions League",
+        "contestType": "giveaway",
+        "imageAsset": "billeter_power"
+      }
+    ],
+    "castingProducts": [
+      {
+        "id": "casting-product-combo",
+        "videoTimestamp": 2770,
+        "productId": "408895",
+        "productIds": ["408896"],
+        "title": "Spesialtilbud på TV og Lyd",
+        "description": "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen"
+      }
+    ]
+  }
+}

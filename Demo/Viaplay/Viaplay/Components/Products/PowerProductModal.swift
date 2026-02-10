@@ -1,16 +1,16 @@
 //
-//  PowerProductModal.swift
+//  CastingProductModal.swift
 //  Viaplay
 //
-//  Modal component for Power product events
-//  Goes directly to Power checkout WebView
+//  Modal component for Casting product events
+//  Goes directly to Casting checkout WebView
 //
 
 import SwiftUI
 import ReachuCore
 
-struct PowerProductModal: View {
-    let productEvent: PowerProductEvent
+struct CastingProductModal: View {
+    let productEvent: CastingProductEvent
     let onDismiss: () -> Void
     
     @StateObject private var campaignManager = CampaignManager.shared
@@ -21,7 +21,7 @@ struct PowerProductModal: View {
             Color.black
                 .ignoresSafeArea()
             
-            // Direct to Power checkout
+            // Direct to Casting checkout
             checkoutView
         }
     }
@@ -77,17 +77,17 @@ struct PowerProductModal: View {
                 .background(Color.white.opacity(0.1))
             
             // WebView with checkout
-            if let checkoutUrl = productEvent.powerCheckoutUrl,
+            if let checkoutUrl = productEvent.castingCheckoutUrl,
                let url = URL(string: checkoutUrl) {
-                PowerCheckoutWebViewContainer(
+                CastingCheckoutWebViewContainer(
                     url: url,
                     onDismiss: onDismiss,
                     onBack: nil
                 )
-            } else if let productUrl = productEvent.powerProductUrl,
+            } else if let productUrl = productEvent.castingProductUrl,
                       let url = URL(string: productUrl) {
                 // Fallback to product URL if checkout URL not available
-                PowerCheckoutWebViewContainer(
+                CastingCheckoutWebViewContainer(
                     url: url,
                     onDismiss: onDismiss,
                     onBack: nil

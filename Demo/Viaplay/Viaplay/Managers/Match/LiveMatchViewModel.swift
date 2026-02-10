@@ -152,7 +152,7 @@ class LiveMatchViewModel: ObservableObject {
         let pollCount = generatedEvents.filter { $0.eventType == .poll }.count
         let commentaryCount = generatedEvents.filter { $0.eventType == .adminComment }.count
         let announcementCount = generatedEvents.filter { $0.eventType == .announcement }.count
-        let powerContestCount = generatedEvents.filter { $0.eventType == .powerContest }.count
+        let castingContestCount = generatedEvents.filter { $0.eventType == .castingContest }.count
         
         print("📊 [LiveMatchViewModel] Highlights: \(highlightCount)")
         print("📊 [LiveMatchViewModel] Chats: \(chatCount)")
@@ -160,7 +160,7 @@ class LiveMatchViewModel: ObservableObject {
         print("📊 [LiveMatchViewModel] Polls: \(pollCount)")
         print("📊 [LiveMatchViewModel] Commentary: \(commentaryCount)")
         print("📊 [LiveMatchViewModel] Announcements: \(announcementCount)")
-        print("📊 [LiveMatchViewModel] Elkjøp Contests: \(powerContestCount)")
+        print("📊 [LiveMatchViewModel] Elkjøp Contests: \(castingContestCount)")
         
         // Show timestamp distribution
         let timestamps = generatedEvents.map { Int($0.videoTimestamp) }.sorted()
@@ -335,48 +335,48 @@ class LiveMatchViewModel: ObservableObject {
         self.objectWillChange.send()
     }
     
-    // MARK: - Power Contest Navigation (Demo only)
+    // MARK: - Casting Contest Navigation (Demo only)
     
-    func navigateToNextPowerContest() {
+    func navigateToNextCastingContest() {
         guard useTimelineSync else { return }
         
-        let powerContestEvents = timeline.allEvents
-            .filter { $0.eventType == .powerContest }
+        let castingContestEvents = timeline.allEvents
+            .filter { $0.eventType == .castingContest }
             .sorted { $0.videoTimestamp < $1.videoTimestamp }
         
-        guard !powerContestEvents.isEmpty else { return }
+        guard !castingContestEvents.isEmpty else { return }
         
         // Find the next event after current time
-        if let nextEvent = powerContestEvents.first(where: { $0.videoTimestamp > timeline.currentVideoTime }) {
+        if let nextEvent = castingContestEvents.first(where: { $0.videoTimestamp > timeline.currentVideoTime }) {
             // Navigate slightly before the event to show the start of the card
             let adjustedTimestamp = max(0, nextEvent.videoTimestamp - 2)
             navigateToTimestamp(adjustedTimestamp)
         } else {
             // If no next event, go to the first one
-            if let firstEvent = powerContestEvents.first {
+            if let firstEvent = castingContestEvents.first {
                 let adjustedTimestamp = max(0, firstEvent.videoTimestamp - 2)
                 navigateToTimestamp(adjustedTimestamp)
             }
         }
     }
     
-    func navigateToPreviousPowerContest() {
+    func navigateToPreviousCastingContest() {
         guard useTimelineSync else { return }
         
-        let powerContestEvents = timeline.allEvents
-            .filter { $0.eventType == .powerContest }
+        let castingContestEvents = timeline.allEvents
+            .filter { $0.eventType == .castingContest }
             .sorted { $0.videoTimestamp < $1.videoTimestamp }
         
-        guard !powerContestEvents.isEmpty else { return }
+        guard !castingContestEvents.isEmpty else { return }
         
         // Find the previous event before current time
-        if let previousEvent = powerContestEvents.last(where: { $0.videoTimestamp < timeline.currentVideoTime }) {
+        if let previousEvent = castingContestEvents.last(where: { $0.videoTimestamp < timeline.currentVideoTime }) {
             // Navigate slightly before the event to show the start of the card
             let adjustedTimestamp = max(0, previousEvent.videoTimestamp - 2)
             navigateToTimestamp(adjustedTimestamp)
         } else {
             // If no previous event, go to the last one
-            if let lastEvent = powerContestEvents.last {
+            if let lastEvent = castingContestEvents.last {
                 let adjustedTimestamp = max(0, lastEvent.videoTimestamp - 2)
                 navigateToTimestamp(adjustedTimestamp)
             }

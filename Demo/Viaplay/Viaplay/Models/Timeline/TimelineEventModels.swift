@@ -368,9 +368,9 @@ struct StatisticsUpdateEvent: TimelineEvent {
     var displayPriority: Int { 2 }
 }
 
-// MARK: - Power Contest Event
+// MARK: - Casting Contest Event
 
-struct PowerContestEvent: TimelineEvent {
+struct CastingContestEvent: TimelineEvent {
     let id: String
     let videoTimestamp: TimeInterval
     let title: String
@@ -380,7 +380,7 @@ struct PowerContestEvent: TimelineEvent {
     let metadata: [String: String]?
     let broadcastContext: BroadcastContext?  // Optional: Broadcast context for context-aware contests
     
-    var eventType: TimelineEventType { .powerContest }
+    var eventType: TimelineEventType { .castingContest }
     var displayPriority: Int { 8 }
     
     // Backward compatibility property
@@ -393,21 +393,21 @@ struct PowerContestEvent: TimelineEvent {
     }
 }
 
-// MARK: - Power Product Event
+// MARK: - Casting Product Event
 
-struct PowerProductEvent: TimelineEvent, Identifiable {
+struct CastingProductEvent: TimelineEvent, Identifiable {
     let id: String
     let videoTimestamp: TimeInterval
     let productId: String  // ID del producto en Reachu (primary)
     let productIds: [String]?  // IDs adicionales de productos (para mostrar múltiples)
     let title: String
     let description: String
-    let powerProductUrl: String?  // URL del producto en Power
-    let powerCheckoutUrl: String?  // URL del checkout en Power
+    let castingProductUrl: String?  // URL del producto en Casting
+    let castingCheckoutUrl: String?  // URL del checkout en Casting
     let imageAsset: String?  // Asset name para imagen del producto
     let metadata: [String: String]?
     
-    var eventType: TimelineEventType { .powerProduct }
+    var eventType: TimelineEventType { .castingProduct }
     var displayPriority: Int { 7 }
     
     // Helper to get all product IDs

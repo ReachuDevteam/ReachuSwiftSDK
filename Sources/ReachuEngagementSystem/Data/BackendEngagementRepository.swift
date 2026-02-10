@@ -18,6 +18,8 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         ReachuConfiguration.shared.campaignConfiguration.restAPIBaseURL
     }
     
+    private static let userIdStorageKey = "ReachuEngagement.UserId"
+    
     // MARK: - Initialization
     
     init(
@@ -32,7 +34,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     
     // MARK: - EngagementRepositoryProtocol Implementation
     
-    func loadPolls(for context: BroadcastContext) async -> [Poll] {
+    func loadPolls(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async -> [Poll] {
         let startTime = Date()
         var retryCount = 0
         
@@ -49,7 +51,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
             let polls = try await retryHandler.execute(
                 operation: {
                     retryCount += 1
-                    return try await self.fetchPollsFromBackend(for: context)
+                    return try await self.fetchPollsFromBackend(for: context, limit: limit, offset: offset)
                 },
                 shouldRetry: { error, attempt in
                     self.shouldRetry(error: error, attempt: attempt)
@@ -94,7 +96,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         }
     }
     
-    func loadContests(for context: BroadcastContext) async -> [Contest] {
+    func loadContests(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async -> [Contest] {
         let startTime = Date()
         var retryCount = 0
         
@@ -111,7 +113,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
             let contests = try await retryHandler.execute(
                 operation: {
                     retryCount += 1
-                    return try await self.fetchContestsFromBackend(for: context)
+                    return try await self.fetchContestsFromBackend(for: context, limit: limit, offset: offset)
                 },
                 shouldRetry: { error, attempt in
                     self.shouldRetry(error: error, attempt: attempt)
@@ -159,7 +161,8 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     func voteInPoll(
         pollId: String,
         optionId: String,
-        broadcastContext: BroadcastContext
+        broadcastContext: BroadcastContext,
+        userId: String? = nil
     ) async throws {
         let startTime = Date()
         var retryCount = 0
@@ -172,13 +175,15 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         }
         
         do {
+            let effectiveUserId = userId ?? getOrCreateUserId()
             try await retryHandler.execute(
                 operation: {
                     retryCount += 1
                     return try await self.submitVoteToBackend(
                         pollId: pollId,
                         optionId: optionId,
-                        broadcastContext: broadcastContext
+                        broadcastContext: broadcastContext,
+                        userId: effectiveUserId
                     )
                 },
                 shouldRetry: { error, attempt in
@@ -225,7 +230,8 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     func participateInContest(
         contestId: String,
         broadcastContext: BroadcastContext,
-        answers: [String: String]?
+        answers: [String: String]?,
+        userId: String? = nil
     ) async throws {
         let startTime = Date()
         var retryCount = 0
@@ -238,13 +244,15 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         }
         
         do {
+            let effectiveUserId = userId ?? getOrCreateUserId()
             try await retryHandler.execute(
                 operation: {
                     retryCount += 1
                     return try await self.submitContestParticipationToBackend(
                         contestId: contestId,
                         broadcastContext: broadcastContext,
-                        answers: answers
+                        answers: answers,
+                        userId: effectiveUserId
                     )
                 },
                 shouldRetry: { error, attempt in
@@ -290,8 +298,21 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     
     // MARK: - Private Methods
     
+    /// Get or create a persistent userId for engagement tracking
+    private func getOrCreateUserId() -> String {
+        // Try to get userId from UserDefaults first
+        if let existingUserId = UserDefaults.standard.string(forKey: Self.userIdStorageKey), !existingUserId.isEmpty {
+            return existingUserId
+        }
+        
+        // Generate a new UUID and store it
+        let newUserId = UUID().uuidString
+        UserDefaults.standard.set(newUserId, forKey: Self.userIdStorageKey)
+        return newUserId
+    }
+    
     /// Fetch polls from backend
-    private func fetchPollsFromBackend(for context: BroadcastContext) async throws -> [Poll] {
+    private func fetchPollsFromBackend(for context: BroadcastContext, limit: Int?, offset: Int?) async throws -> [Poll] {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
         
@@ -305,10 +326,20 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         }
         
         components.path = "/v1/engagement/polls"
-        components.queryItems = [
+        var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "broadcastId", value: context.broadcastId),
             URLQueryItem(name: "matchId", value: context.broadcastId) // backward compatibility
         ]
+        
+        // Add pagination parameters if provided
+        if let limit = limit {
+            queryItems.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+        if let offset = offset {
+            queryItems.append(URLQueryItem(name: "offset", value: String(offset)))
+        }
+        
+        components.queryItems = queryItems
         
         guard let url = components.url else {
             throw EngagementError.invalidURL
@@ -333,6 +364,11 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         if httpResponse.statusCode == 429 {
             let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
             throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        // Check for broadcast not found (404)
+        if httpResponse.statusCode == 404 {
+            throw EngagementError.broadcastNotFound(broadcastId: context.broadcastId)
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -413,7 +449,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     }
     
     /// Fetch contests from backend
-    private func fetchContestsFromBackend(for context: BroadcastContext) async throws -> [Contest] {
+    private func fetchContestsFromBackend(for context: BroadcastContext, limit: Int?, offset: Int?) async throws -> [Contest] {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
         
@@ -427,10 +463,20 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         }
         
         components.path = "/v1/engagement/contests"
-        components.queryItems = [
+        var queryItems: [URLQueryItem] = [
             URLQueryItem(name: "broadcastId", value: context.broadcastId),
             URLQueryItem(name: "matchId", value: context.broadcastId) // backward compatibility
         ]
+        
+        // Add pagination parameters if provided
+        if let limit = limit {
+            queryItems.append(URLQueryItem(name: "limit", value: String(limit)))
+        }
+        if let offset = offset {
+            queryItems.append(URLQueryItem(name: "offset", value: String(offset)))
+        }
+        
+        components.queryItems = queryItems
         
         guard let url = components.url else {
             throw EngagementError.invalidURL
@@ -455,6 +501,11 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         if httpResponse.statusCode == 429 {
             let retryAfter = httpResponse.value(forHTTPHeaderField: "Retry-After").flatMap { Int($0) }
             throw EngagementError.rateLimited(retryAfter: retryAfter)
+        }
+        
+        // Check for broadcast not found (404)
+        if httpResponse.statusCode == 404 {
+            throw EngagementError.broadcastNotFound(broadcastId: context.broadcastId)
         }
         
         guard (200...299).contains(httpResponse.statusCode) else {
@@ -534,7 +585,8 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     private func submitVoteToBackend(
         pollId: String,
         optionId: String,
-        broadcastContext: BroadcastContext
+        broadcastContext: BroadcastContext,
+        userId: String
     ) async throws {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
@@ -543,12 +595,21 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
             throw EngagementError.invalidData(["API key is empty"])
         }
         
+        // Convert pollId and optionId to Int (backend expects Int)
+        guard let pollIdInt = Int(pollId) else {
+            throw EngagementError.invalidData(["Invalid pollId format: \(pollId)"])
+        }
+        
+        guard let optionIdInt = Int(optionId) else {
+            throw EngagementError.invalidData(["Invalid optionId format: \(optionId)"])
+        }
+        
         // Build URL using URLComponents for safety
         guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
             throw EngagementError.invalidURL
         }
         
-        components.path = "/v1/engagement/polls/\(pollId)/vote"
+        components.path = "/v1/engagement/polls/\(pollIdInt)/vote"
         
         guard let url = components.url else {
             throw EngagementError.invalidURL
@@ -561,11 +622,12 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
         request.timeoutInterval = 10.0
         
-        // Build request body (API key removed from body, now in header)
+        // Build request body with userId
         let body: [String: Any] = [
             "broadcastId": broadcastContext.broadcastId,
             "matchId": broadcastContext.broadcastId, // backward compatibility
-            "optionId": optionId
+            "optionId": optionIdInt,
+            "userId": userId
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -594,7 +656,8 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
     private func submitContestParticipationToBackend(
         contestId: String,
         broadcastContext: BroadcastContext,
-        answers: [String: String]?
+        answers: [String: String]?,
+        userId: String
     ) async throws {
         let config = ReachuConfiguration.shared
         let apiKey = config.apiKey
@@ -603,12 +666,17 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
             throw EngagementError.invalidData(["API key is empty"])
         }
         
+        // Convert contestId to Int (backend expects Int)
+        guard let contestIdInt = Int(contestId) else {
+            throw EngagementError.invalidData(["Invalid contestId format: \(contestId)"])
+        }
+        
         // Build URL using URLComponents for safety
         guard var components = URLComponents(string: campaignRestAPIBaseURL) else {
             throw EngagementError.invalidURL
         }
         
-        components.path = "/v1/engagement/contests/\(contestId)/participate"
+        components.path = "/v1/engagement/contests/\(contestIdInt)/participate"
         
         guard let url = components.url else {
             throw EngagementError.invalidURL
@@ -621,10 +689,11 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
         request.setValue(apiKey, forHTTPHeaderField: "X-API-Key")
         request.timeoutInterval = 10.0
         
-        // Build request body (API key removed from body, now in header)
+        // Build request body with userId
         var body: [String: Any] = [
             "broadcastId": broadcastContext.broadcastId,
-            "matchId": broadcastContext.broadcastId // backward compatibility
+            "matchId": broadcastContext.broadcastId, // backward compatibility
+            "userId": userId
         ]
         
         if let answers = answers {
@@ -664,7 +733,7 @@ struct BackendEngagementRepository: EngagementRepositoryProtocol {
                 return true // Retry rate limit errors
             case .networkError(let urlError):
                 return RequestRetryHandler.isRetryableURLError(urlError)
-            case .decodingError, .invalidData, .invalidURL, .pollNotFound, .contestNotFound, .pollClosed, .alreadyVoted:
+            case .decodingError, .invalidData, .invalidURL, .pollNotFound, .contestNotFound, .pollClosed, .alreadyVoted, .broadcastNotFound:
                 return false // Don't retry these
             case .voteFailed, .participationFailed:
                 return false // These are already final errors

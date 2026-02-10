@@ -18,8 +18,8 @@ import ReachuEngagementUI
 struct ViaplayVideoPlayer: View {
     let match: Match
     let onDismiss: () -> Void
-    let onNavigateToNextPowerContest: (() -> Void)?
-    let onNavigateToPreviousPowerContest: (() -> Void)?
+    let onNavigateToNextCastingContest: (() -> Void)?
+    let onNavigateToPreviousCastingContest: (() -> Void)?
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
     @StateObject private var webSocketManager = WebSocketManager()
@@ -40,13 +40,13 @@ struct ViaplayVideoPlayer: View {
     init(
         match: Match,
         onDismiss: @escaping () -> Void,
-        onNavigateToNextPowerContest: (() -> Void)? = nil,
-        onNavigateToPreviousPowerContest: (() -> Void)? = nil
+        onNavigateToNextCastingContest: (() -> Void)? = nil,
+        onNavigateToPreviousCastingContest: (() -> Void)? = nil
     ) {
         self.match = match
         self.onDismiss = onDismiss
-        self.onNavigateToNextPowerContest = onNavigateToNextPowerContest
-        self.onNavigateToPreviousPowerContest = onNavigateToPreviousPowerContest
+        self.onNavigateToNextCastingContest = onNavigateToNextCastingContest
+        self.onNavigateToPreviousCastingContest = onNavigateToPreviousCastingContest
         
         // Initialize ProductFetchViewModel
         let config = ReachuConfiguration.shared
@@ -430,7 +430,7 @@ struct ViaplayVideoPlayer: View {
                 
                 Button(action: {
                     // Demo: Navigate to previous Elkjøp contest, fallback to seek backward
-                    if let onPrevious = onNavigateToPreviousPowerContest {
+                    if let onPrevious = onNavigateToPreviousCastingContest {
                         onPrevious()
                     } else {
                         playerViewModel.seekBackward()
@@ -449,7 +449,7 @@ struct ViaplayVideoPlayer: View {
                 
                 Button(action: {
                     // Demo: Navigate to next Elkjøp contest, fallback to seek forward
-                    if let onNext = onNavigateToNextPowerContest {
+                    if let onNext = onNavigateToNextCastingContest {
                         onNext()
                     } else {
                         playerViewModel.seekForward()

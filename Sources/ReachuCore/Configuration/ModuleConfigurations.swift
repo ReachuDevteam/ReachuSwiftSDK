@@ -949,3 +949,236 @@ public enum SyncStrategy: String, CaseIterable {
     case background = "background"
     case realtime = "realtime"
 }
+
+// MARK: - Demo Data Configuration
+
+/// Configuration for static demo data used in demos and development
+/// This data can be replaced with backend data or moved to reachu-config.json
+public struct DemoDataConfiguration {
+    
+    // MARK: - Assets
+    
+    public struct AssetConfiguration {
+        public let defaultLogo: String
+        public let defaultAvatar: String
+        public let backgroundImages: BackgroundImageAssets
+        public let brandAssets: BrandImageAssets
+        public let contestAssets: ContestImageAssets
+        
+        public struct BackgroundImageAssets {
+            public let footballField: String
+            public let mainBackground: String
+            public let sportDetail: String
+            public let sportDetailImage: String
+        }
+        
+        public init(
+            footballField: String = "football_field_bg",
+            mainBackground: String = "bg-main",
+            sportDetail: String = "bg",
+        
+        public init(
+            icon: String = "icon ",
+            logo: String = "logo"
+        ) {
+        
+        public init(
+            giftCard: String = "elkjop_konk",
+            championsLeagueTickets: String = "billeter_power"
+        ) {
+            self.giftCard = giftCard
+            self.championsLeagueTickets = championsLeagueTickets
+        }
+            self.icon = icon
+            self.logo = logo
+        }
+            sportDetailImage: String = "img1"
+        ) {
+            self.footballField = footballField
+            self.mainBackground = mainBackground
+            self.sportDetail = sportDetail
+            self.sportDetailImage = sportDetailImage
+        }
+        
+        public struct BrandImageAssets {
+            public let icon: String
+            public let logo: String
+        }
+        
+        public struct ContestImageAssets {
+            public let giftCard: String
+            public let championsLeagueTickets: String
+        }
+        
+        public init(
+            defaultLogo: String = "logo1",
+            defaultAvatar: String = "avatar_el",
+            backgroundImages: BackgroundImageAssets = BackgroundImageAssets(
+                footballField: "football_field_bg",
+                mainBackground: "bg-main",
+                sportDetail: "bg",
+                sportDetailImage: "img1"
+            ),
+            brandAssets: BrandImageAssets = BrandImageAssets(
+                icon: "icon ",
+                logo: "logo"
+            ),
+            contestAssets: ContestImageAssets = ContestImageAssets(
+                giftCard: "elkjop_konk",
+                championsLeagueTickets: "billeter_power"
+            )
+        ) {
+            self.defaultLogo = defaultLogo
+            self.defaultAvatar = defaultAvatar
+            self.backgroundImages = backgroundImages
+            self.brandAssets = brandAssets
+            self.contestAssets = contestAssets
+        }
+    }
+    
+    // MARK: - Demo Users
+    
+    public struct DemoUserConfiguration {
+        public let defaultUsername: String
+        public let chatUsernames: [ChatUsername]
+        public let socialAccounts: [SocialAccount]
+        
+        public struct ChatUsername: Codable {
+            public let name: String
+            public let color: String
+        }
+        
+        public struct SocialAccount: Codable {
+            public let name: String
+            public let handle: String
+            public let verified: Bool
+        }
+        
+        public init(
+            defaultUsername: String = "Usuario",
+            chatUsernames: [ChatUsername] = [],
+            socialAccounts: [SocialAccount] = []
+        ) {
+            self.defaultUsername = defaultUsername
+            self.chatUsernames = chatUsernames
+            self.socialAccounts = socialAccounts
+        }
+    }
+    
+    // MARK: - Product Mappings
+    
+    public struct ProductMapping: Codable {
+        public let name: String
+        public let productUrl: String
+        public let checkoutUrl: String
+    }
+    
+    // MARK: - Event IDs
+    
+    public struct EventIdConfiguration {
+        public let contestQuiz: String
+        public let contestGiveaway: String
+        public let productCombo: String
+        public let tweetHalftime1: String
+        public let tweetHalftime2: String
+        
+        public init(
+            contestQuiz: String = "casting-contest-quiz",
+            contestGiveaway: String = "casting-contest-giveaway",
+            productCombo: String = "casting-product-combo",
+            tweetHalftime1: String = "tweet-halftime-1",
+            tweetHalftime2: String = "tweet-halftime-2"
+        ) {
+            self.contestQuiz = contestQuiz
+            self.contestGiveaway = contestGiveaway
+            self.productCombo = productCombo
+            self.tweetHalftime1 = tweetHalftime1
+            self.tweetHalftime2 = tweetHalftime2
+        }
+    }
+    
+    // MARK: - Match Defaults
+    
+    public struct MatchDefaultConfiguration {
+        public let broadcastIdMappings: [String: String]
+        public let defaultScore: Int
+        
+        public init(
+            broadcastIdMappings: [String: String] = ["barcelona-psg": "barcelona-psg-2025-01-23"],
+            defaultScore: Int = 3
+        ) {
+            self.broadcastIdMappings = broadcastIdMappings
+            self.defaultScore = defaultScore
+        }
+    }
+    
+    // MARK: - Offer Banner
+    
+    public struct OfferBannerConfiguration {
+        public let countdown: CountdownConfiguration
+        public let title: String
+        public let subtitle: String
+        public let discountText: String
+        
+        public init(
+            days: Int = 2,
+            hours: Int = 1,
+            minutes: Int = 59,
+            seconds: Int = 47
+        ) {
+            self.days = days
+            self.hours = hours
+            self.minutes = minutes
+            self.seconds = seconds
+        }
+        public let buttonText: String
+        
+        public struct CountdownConfiguration {
+            public let days: Int
+            public let hours: Int
+            public let minutes: Int
+            public let seconds: Int
+        }
+        
+        public init(
+            countdown: CountdownConfiguration = CountdownConfiguration(days: 2, hours: 1, minutes: 59, seconds: 47),
+            title: String = "Ukens tilbud",
+            subtitle: String = "Se denne ukes beste tilbud",
+            discountText: String = "Opp til 30%",
+            buttonText: String = "Se alle tilbud"
+        ) {
+            self.countdown = countdown
+            self.title = title
+            self.subtitle = subtitle
+            self.discountText = discountText
+            self.buttonText = buttonText
+        }
+    }
+    
+    // MARK: - Properties
+    
+    public let assets: AssetConfiguration
+    public let demoUsers: DemoUserConfiguration
+    public let productMappings: [String: ProductMapping]
+    public let eventIds: EventIdConfiguration
+    public let matchDefaults: MatchDefaultConfiguration
+    public let offerBanner: OfferBannerConfiguration
+    
+    public init(
+        assets: AssetConfiguration = AssetConfiguration(),
+        demoUsers: DemoUserConfiguration = DemoUserConfiguration(),
+        productMappings: [String: ProductMapping] = [:],
+        eventIds: EventIdConfiguration = EventIdConfiguration(),
+        matchDefaults: MatchDefaultConfiguration = MatchDefaultConfiguration(),
+        offerBanner: OfferBannerConfiguration = OfferBannerConfiguration()
+    ) {
+        self.assets = assets
+        self.demoUsers = demoUsers
+        self.productMappings = productMappings
+        self.eventIds = eventIds
+        self.matchDefaults = matchDefaults
+        self.offerBanner = offerBanner
+    }
+    
+    public static let `default` = DemoDataConfiguration()
+}

@@ -1,16 +1,16 @@
 //
-//  PowerContestModal.swift
+//  CastingContestModal.swift
 //  Viaplay
 //
-//  Modal component for Power contest participation
+//  Modal component for Casting contest participation
 //  Interactive quiz with animated questions and phone number input
 //
 
 import SwiftUI
 import ReachuCore
 
-struct PowerContestModal: View {
-    let contest: PowerContestEvent
+struct CastingContestModal: View {
+    let contest: CastingContestEvent
     let onDismiss: () -> Void
     
     @StateObject private var campaignManager = CampaignManager.shared

@@ -1,14 +1,14 @@
 # Viaplay Demo - README Principal
 
-**Última actualización**: Enero 8, 2026  
-**Branch actual**: `entreteinment-view`  
-**Estado**: ✅ Refactorización completada, listo para testing
+**Última actualización**: Enero 23, 2026  
+**Branch actual**: `main`  
+**Estado**: ✅ Sistema de Demo Data creado, ⏳ Migración pendiente
 
 ---
 
 ## 🚀 Inicio Rápido
 
-**¿Primera vez aquí?** → Lee [`CURRENT_STATUS.md`](CURRENT_STATUS.md) para saber dónde estamos
+**¿Primera vez aquí?** → Lee **[PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md)** ⭐ para una visión completa del proyecto
 
 **¿Quieres probar la app?**
 ```bash
@@ -20,12 +20,35 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
 
 ## 📋 Índice de Documentación
 
+### 📖 Documentos Maestros (LEER PRIMERO)
+- **[PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md)** ⭐⭐⭐ - **DOCUMENTO PRINCIPAL**
+  - Resumen ejecutivo consolidado
+  - Estado actual completo
+  - Estructura del SDK
+  - Qué se hizo y qué falta
+  - Roadmap consolidado
+  - Referencias a todos los documentos
+
+- **[SDK_STRUCTURE_MAP.md](SDK_STRUCTURE_MAP.md)** ⭐⭐ - Mapa completo de estructura
+  - Árbol de directorios completo
+  - Descripción de módulos
+  - Responsabilidades de managers
+  - Flujo de datos
+  - Dependencias entre módulos
+  - Puntos de entrada principales
+
 ### 🎯 Estado y Progreso
-- **[CURRENT_STATUS.md](CURRENT_STATUS.md)** ⭐ - **LEE ESTO PRIMERO**
-  - Estado actual del proyecto
-  - Lo que está hecho y lo que falta
-  - Próximos pasos prioritarios
-  - Issues conocidos
+- **[PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md)** ⭐⭐⭐ - **Estado actual consolidado**
+  - Estado completo del proyecto
+  - Qué se hizo y qué falta
+  - Métricas del proyecto
+  - Próximos pasos críticos
+
+- **[BACKEND_INTEGRATION_ROADMAP.md](BACKEND_INTEGRATION_ROADMAP.md)** ⭐ - Roadmap de integración
+  - 3 fases de integración
+  - Tareas detalladas por prioridad
+  - Checklist de migración
+  - Orden recomendado de implementación
 
 ### 🔧 Setup y Configuración
 - **[SETUP_COMPLETE.md](SETUP_COMPLETE.md)** - Setup del SDK de Reachu
@@ -37,13 +60,16 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
   - Detalles de reachu-config.json
   - Opciones disponibles
 
+### 📊 Demo Data y Backend Integration
+- **[DEMO_DATA_INTEGRATION_GUIDE.md](DEMO_DATA_INTEGRATION_GUIDE.md)** ⭐ - Guía completa de Demo Data
+  - Cómo usar el sistema de datos estáticos
+  - Opciones de migración (JSON, Backend, Híbrido)
+  - Ejemplos de uso
+  - Plan de migración completo
+
+
 ### 🏗️ Refactorización y Arquitectura
-- **[REFACTORING_PLAN.md](REFACTORING_PLAN.md)** - Plan de refactorización
-  - Análisis de duplicación
-  - Componentes a crear
-  - Fases de implementación
-  
-- **[REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md)** - Resultados
+- **[REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md)** - Resultados de refactorización
   - 20 componentes creados
   - Métricas de mejora
   - Cómo usar los componentes
@@ -53,6 +79,17 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
   - Ejemplos antes/después
   - Flujo de datos completo
   - Responsabilidades por archivo
+
+- **[ARCHITECTURE_DIAGRAM.md](../../ARCHITECTURE_DIAGRAM.md)** - Diagrama de arquitectura
+  - Diagrama completo SDK + Backend
+  - Flujos principales
+  - Componentes clave
+
+### 📅 Timeline y Match Context
+- **[TIMELINE_SYSTEM.md](TIMELINE_SYSTEM.md)** - Sistema de timeline
+- **[TIMELINE_ARCHITECTURE.md](TIMELINE_ARCHITECTURE.md)** - Arquitectura del timeline
+- **[TIMELINE_SYNC_PLAN.md](TIMELINE_SYNC_PLAN.md)** - Plan de sincronización
+- **[USAGE_MATCH_CONTEXT.md](USAGE_MATCH_CONTEXT.md)** - Uso del contexto de match
 
 ### 🐛 Debugging
 - **[PRICE_LOGGING_GUIDE.md](../../PRICE_LOGGING_GUIDE.md)** - Debugging de precios
@@ -70,24 +107,31 @@ open /Users/angelo/ReachuSwiftSDK/Demo/Viaplay/Viaplay.xcodeproj
   - API reference
   - Ejemplos avanzados
 
+### 📝 Otros
+- **[DEMO_NOTES.md](DEMO_NOTES.md)** - Notas del demo
+- **[QUICK_START.md](QUICK_START.md)** - Inicio rápido
+
 ---
 
-## 📋 Índice por Tema
+## 📋 Guía de Navegación Rápida
 
 ### Si necesitas...
 
-| Necesito... | Ver archivo... |
-|-------------|----------------|
-| **Saber dónde estamos** | [CURRENT_STATUS.md](CURRENT_STATUS.md) ⭐ |
-| **Entender arquitectura** | [LOGIC_SEPARATION.md](LOGIC_SEPARATION.md) ⭐ |
-| Ver qué falta | [CURRENT_STATUS.md](CURRENT_STATUS.md) → "⏳ Lo que FALTA" |
-| Configurar el SDK | [SETUP_COMPLETE.md](SETUP_COMPLETE.md) |
-| Entender la refactorización | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) |
-| Ver separación de lógica | [LOGIC_SEPARATION.md](LOGIC_SEPARATION.md) |
-| Usar componentes | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) → "Componentes" |
-| Debuggear precios | [PRICE_LOGGING_GUIDE.md](../../PRICE_LOGGING_GUIDE.md) |
-| Usar Entertainment | [QUICK_START.md](QUICK_START.md) |
-| Compilar proyecto | [CURRENT_STATUS.md](CURRENT_STATUS.md) → "Comandos" |
+| Necesito... | Ver archivo... | Estado |
+|-------------|----------------|--------|
+| **Visión completa del proyecto** | [PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md) ⭐⭐⭐ | Actualizado |
+| **Entender estructura del SDK** | [SDK_STRUCTURE_MAP.md](SDK_STRUCTURE_MAP.md) ⭐⭐ | Actualizado |
+| **Saber dónde estamos** | [PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md) ⭐⭐⭐ | Actualizado |
+| **Ver roadmap de integración** | [BACKEND_INTEGRATION_ROADMAP.md](BACKEND_INTEGRATION_ROADMAP.md) ⭐ | Actualizado |
+| **Usar Demo Data** | [DEMO_DATA_INTEGRATION_GUIDE.md](DEMO_DATA_INTEGRATION_GUIDE.md) ⭐ | Actualizado |
+| **Entender arquitectura** | [LOGIC_SEPARATION.md](LOGIC_SEPARATION.md) ⭐ | Actualizado |
+| **Ver diagrama de arquitectura** | [ARCHITECTURE_DIAGRAM.md](../../ARCHITECTURE_DIAGRAM.md) | Actualizado |
+| **Configurar el SDK** | [SETUP_COMPLETE.md](SETUP_COMPLETE.md) | Actualizado |
+| **Entender la refactorización** | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) | Actualizado |
+| **Usar componentes** | [REFACTORING_COMPLETE.md](REFACTORING_COMPLETE.md) → "Componentes" | Actualizado |
+| **Debuggear precios** | [PRICE_LOGGING_GUIDE.md](../../PRICE_LOGGING_GUIDE.md) | Actualizado |
+| **Usar Entertainment** | [QUICK_START.md](QUICK_START.md) | Actualizado |
+| **Compilar proyecto** | [PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md) → "Próximos Pasos" | Actualizado |
 
 ---
 
@@ -517,7 +561,40 @@ open Demo/Viaplay/Viaplay.xcodeproj
 
 ---
 
-**Última actualización**: Enero 8, 2026  
-**Versión**: 2.0.0 (Refactored Architecture)  
-**Estado**: ✅ Listo para testing y merge
+**Última actualización**: Enero 23, 2026  
+**Versión**: 2.1.0 (Demo Data System)  
+**Estado**: ✅ Infraestructura lista, ⏳ Migración pendiente
+
+---
+
+## 📚 Documentación por Categoría
+
+### Documentos Principales (Actualizados)
+- ✅ `PROJECT_MASTER_DOCUMENTATION.md` - Documento maestro consolidado
+- ✅ `SDK_STRUCTURE_MAP.md` - Mapa completo de estructura del SDK
+- ✅ `BACKEND_INTEGRATION_ROADMAP.md` - Roadmap de integración con backend
+- ✅ `DEMO_DATA_INTEGRATION_GUIDE.md` - Guía de uso del sistema de demo data
+
+### Documentos de Estado
+- ✅ `PROJECT_MASTER_DOCUMENTATION.md` - Estado actual consolidado (reemplaza CURRENT_STATUS.md)
+- ✅ `DEMO_DATA_SUMMARY.md` - Resumen del sistema de demo data
+
+### Documentos de Arquitectura
+- ✅ `LOGIC_SEPARATION.md` - Arquitectura en capas
+- ✅ `REFACTORING_COMPLETE.md` - Resultados de refactorización
+- ✅ `ARCHITECTURE_DIAGRAM.md` - Diagrama de arquitectura
+
+### Documentos de Timeline
+- ✅ `TIMELINE_SYSTEM.md` - Sistema de timeline
+- ✅ `TIMELINE_ARCHITECTURE.md` - Arquitectura del timeline
+- ✅ `TIMELINE_SYNC_PLAN.md` - Plan de sincronización
+- ✅ `USAGE_MATCH_CONTEXT.md` - Uso del contexto de match
+
+### Documentos de Setup
+- ✅ `SETUP_COMPLETE.md` - Setup del SDK
+- ✅ `QUICK_START.md` - Inicio rápido
+
+---
+
+**Nota**: Para una visión completa y consolidada del proyecto, consulta **[PROJECT_MASTER_DOCUMENTATION.md](PROJECT_MASTER_DOCUMENTATION.md)** ⭐⭐⭐
 

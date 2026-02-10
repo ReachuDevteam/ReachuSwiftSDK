@@ -39,6 +39,7 @@ public class ReachuConfiguration: ObservableObject {
     @Published public private(set) var analyticsConfiguration: AnalyticsConfiguration = .default
     @Published public private(set) var brandConfiguration: BrandConfiguration = .default
     @Published public private(set) var engagementConfiguration: EngagementConfiguration = .default
+    @Published public private(set) var demoDataConfiguration: DemoDataConfiguration = .default
     
     // MARK: - Dynamic Configuration Properties
     @Published public private(set) var dynamicBrandConfig: DynamicBrandConfig?
@@ -69,6 +70,7 @@ public class ReachuConfiguration: ObservableObject {
         campaignConfig: CampaignConfiguration? = nil,
         analyticsConfig: AnalyticsConfiguration? = nil,
         brandConfig: BrandConfiguration? = nil,
+        demoDataConfig: DemoDataConfiguration? = nil,
         engagementConfig: EngagementConfiguration? = nil
     ) {
         let instance = ReachuConfiguration.shared
@@ -85,6 +87,7 @@ public class ReachuConfiguration: ObservableObject {
         instance.localizationConfiguration = localizationConfig ?? .default
         instance.campaignConfiguration = campaignConfig ?? .default
         instance.analyticsConfiguration = analyticsConfig ?? .default
+        instance.demoDataConfiguration = demoDataConfig ?? ConfigurationLoader.loadDemoDataConfiguration()
         instance.brandConfiguration = brandConfig ?? .default
         instance.engagementConfiguration = engagementConfig ?? .default
         

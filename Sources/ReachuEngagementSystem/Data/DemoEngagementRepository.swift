@@ -18,7 +18,7 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
     /// Set from demo app to handle conversion of PowerContestEvent to Contest
     public static var contestConverter: ((Any, BroadcastContext) -> Contest?)? = nil
     
-    public func loadPolls(for context: BroadcastContext) async -> [Poll] {
+    public func loadPolls(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async -> [Poll] {
         guard let eventsProvider = Self.timelineEventsProvider,
               let converter = Self.pollConverter else {
             ReachuLogger.warning("No timeline events provider or poll converter configured for demo mode", component: "DemoEngagementRepository")
@@ -28,14 +28,23 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
         let events = eventsProvider()
         
         // Filter and convert poll events
-        let polls = events
+        var polls = events
             .compactMap { event in converter(event, context) }
+        
+        // Apply pagination if provided (demo mode simulates pagination)
+        if let offset = offset {
+            let startIndex = min(offset, polls.count)
+            polls = Array(polls[startIndex...])
+        }
+        if let limit = limit {
+            polls = Array(polls.prefix(limit))
+        }
         
         ReachuLogger.debug("Loaded \(polls.count) polls from demo timeline for broadcastId: \(context.broadcastId)", component: "DemoEngagementRepository")
         return polls
     }
     
-    public func loadContests(for context: BroadcastContext) async -> [Contest] {
+    public func loadContests(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async -> [Contest] {
         guard let eventsProvider = Self.timelineEventsProvider,
               let converter = Self.contestConverter else {
             ReachuLogger.warning("No timeline events provider or contest converter configured for demo mode", component: "DemoEngagementRepository")
@@ -45,8 +54,17 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
         let events = eventsProvider()
         
         // Filter and convert contest events
-        let contests = events
+        var contests = events
             .compactMap { event in converter(event, context) }
+        
+        // Apply pagination if provided (demo mode simulates pagination)
+        if let offset = offset {
+            let startIndex = min(offset, contests.count)
+            contests = Array(contests[startIndex...])
+        }
+        if let limit = limit {
+            contests = Array(contests.prefix(limit))
+        }
         
         ReachuLogger.debug("Loaded \(contests.count) contests from demo timeline for broadcastId: \(context.broadcastId)", component: "DemoEngagementRepository")
         return contests
@@ -55,7 +73,8 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
     public func voteInPoll(
         pollId: String,
         optionId: String,
-        broadcastContext: BroadcastContext
+        broadcastContext: BroadcastContext,
+        userId: String? = nil
     ) async throws {
         // In demo mode, voting is simulated locally
         // No backend call is made
@@ -68,7 +87,8 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
     public func participateInContest(
         contestId: String,
         broadcastContext: BroadcastContext,
-        answers: [String: String]?
+        answers: [String: String]?,
+        userId: String? = nil
     ) async throws {
         // In demo mode, participation is simulated locally
         // No backend call is made

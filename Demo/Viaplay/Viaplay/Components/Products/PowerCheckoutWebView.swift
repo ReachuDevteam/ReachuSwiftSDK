@@ -1,14 +1,14 @@
 //
-//  PowerCheckoutWebView.swift
+//  CastingCheckoutWebView.swift
 //  Viaplay
 //
-//  WebView component for displaying Power checkout in an embedded view
+//  WebView component for displaying Casting checkout in an embedded view
 //
 
 import SwiftUI
 import WebKit
 
-struct PowerCheckoutWebView: UIViewRepresentable {
+struct CastingCheckoutWebView: UIViewRepresentable {
     let url: URL
     let onDismiss: () -> Void
     let onBack: (() -> Void)?
@@ -34,9 +34,9 @@ struct PowerCheckoutWebView: UIViewRepresentable {
     }
     
     class Coordinator: NSObject, WKNavigationDelegate {
-        var parent: PowerCheckoutWebView
+        var parent: CastingCheckoutWebView
         
-        init(_ parent: PowerCheckoutWebView) {
+        init(_ parent: CastingCheckoutWebView) {
             self.parent = parent
         }
         
@@ -67,7 +67,7 @@ struct PowerCheckoutWebView: UIViewRepresentable {
 
 // MARK: - SwiftUI Wrapper with Loading State
 
-struct PowerCheckoutWebViewContainer: View {
+struct CastingCheckoutWebViewContainer: View {
     let url: URL
     let onDismiss: () -> Void
     let onBack: (() -> Void)?
@@ -76,7 +76,7 @@ struct PowerCheckoutWebViewContainer: View {
     
     var body: some View {
         ZStack {
-            PowerCheckoutWebView(
+            CastingCheckoutWebView(
                 url: url,
                 onDismiss: onDismiss,
                 onBack: onBack,

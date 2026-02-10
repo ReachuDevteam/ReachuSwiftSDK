@@ -1110,3 +1110,202 @@ private struct PlistConfiguration {
     }
 }
 
+
+// MARK: - Demo Data Configuration JSON
+
+private struct JSONDemoDataConfiguration: Codable {
+    let assets: JSONAssetConfiguration?
+    let demoUsers: JSONDemoUserConfiguration?
+    let productMappings: [String: JSONProductMapping]?
+    let eventIds: JSONEventIdConfiguration?
+    let matchDefaults: JSONMatchDefaultConfiguration?
+    let offerBanner: JSONOfferBannerConfiguration?
+}
+
+private struct JSONAssetConfiguration: Codable {
+    let defaultLogo: String?
+    let defaultAvatar: String?
+    let backgroundImages: JSONBackgroundImageAssets?
+    let brandAssets: JSONBrandImageAssets?
+    let contestAssets: JSONContestImageAssets?
+}
+
+private struct JSONBackgroundImageAssets: Codable {
+    let footballField: String?
+    let mainBackground: String?
+    let sportDetail: String?
+    let sportDetailImage: String?
+}
+
+private struct JSONBrandImageAssets: Codable {
+    let icon: String?
+    let logo: String?
+}
+
+private struct JSONContestImageAssets: Codable {
+    let giftCard: String?
+    let championsLeagueTickets: String?
+}
+
+private struct JSONDemoUserConfiguration: Codable {
+    let defaultUsername: String?
+    let chatUsernames: [DemoDataConfiguration.DemoUserConfiguration.ChatUsername]?
+    let socialAccounts: [DemoDataConfiguration.DemoUserConfiguration.SocialAccount]?
+}
+
+private struct JSONProductMapping: Codable {
+    let name: String
+    let productUrl: String
+    let checkoutUrl: String
+}
+
+private struct JSONEventIdConfiguration: Codable {
+    let contestQuiz: String?
+    let contestGiveaway: String?
+    let productCombo: String?
+    let tweetHalftime1: String?
+    let tweetHalftime2: String?
+}
+
+private struct JSONMatchDefaultConfiguration: Codable {
+    let broadcastIdMappings: [String: String]?
+    let defaultScore: Int?
+}
+
+private struct JSONOfferBannerConfiguration: Codable {
+    let countdown: JSONCountdownConfiguration?
+    let title: String?
+    let subtitle: String?
+    let discountText: String?
+    let buttonText: String?
+}
+
+private struct JSONCountdownConfiguration: Codable {
+    let days: Int?
+    let hours: Int?
+    let minutes: Int?
+    let seconds: Int?
+}
+
+// MARK: - Demo Data Configuration Loader
+
+extension ConfigurationLoader {
+    
+    /// Load demo data configuration from JSON file
+    /// - Parameters:
+    ///   - fileName: Name of the JSON file (without extension). Defaults to "demo-static-data"
+    ///   - bundle: Bundle to search for the file. Defaults to main bundle
+    /// - Returns: DemoDataConfiguration loaded from JSON, or default if file not found
+    public static func loadDemoDataConfiguration(
+        fileName: String = "demo-static-data",
+        bundle: Bundle = .main
+    ) -> DemoDataConfiguration {
+        guard let url = bundle.url(forResource: fileName, withExtension: "json") else {
+            ReachuLogger.warning("Demo data config file '\(fileName).json' not found, using defaults", component: "Config")
+            return DemoDataConfiguration.default
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            let jsonConfig = try JSONDecoder().decode(JSONDemoDataConfiguration.self, from: data)
+            return createDemoDataConfiguration(from: jsonConfig)
+        } catch {
+            ReachuLogger.error("Error loading demo data config: \(error)", component: "Config")
+            return DemoDataConfiguration.default
+        }
+    }
+    
+    private static func createDemoDataConfiguration(from json: JSONDemoDataConfiguration) -> DemoDataConfiguration {
+        // Assets
+        let assets = json.assets.map { assetJson in
+            DemoDataConfiguration.AssetConfiguration(
+                defaultLogo: assetJson.defaultLogo ?? "logo1",
+                defaultAvatar: assetJson.defaultAvatar ?? "avatar_el",
+                backgroundImages: assetJson.backgroundImages.map { bg in
+                    DemoDataConfiguration.AssetConfiguration.BackgroundImageAssets(
+                        footballField: bg.footballField ?? "football_field_bg",
+                        mainBackground: bg.mainBackground ?? "bg-main",
+                        sportDetail: bg.sportDetail ?? "bg",
+                        sportDetailImage: bg.sportDetailImage ?? "img1"
+                    )
+                } ?? DemoDataConfiguration.AssetConfiguration.BackgroundImageAssets(),
+                brandAssets: assetJson.brandAssets.map { brand in
+                    DemoDataConfiguration.AssetConfiguration.BrandImageAssets(
+                        icon: brand.icon ?? "icon ",
+                        logo: brand.logo ?? "logo"
+                    )
+                } ?? DemoDataConfiguration.AssetConfiguration.BrandImageAssets(),
+                contestAssets: assetJson.contestAssets.map { contest in
+                    DemoDataConfiguration.AssetConfiguration.ContestImageAssets(
+                        giftCard: contest.giftCard ?? "elkjop_konk",
+                        championsLeagueTickets: contest.championsLeagueTickets ?? "billeter_power"
+                    )
+                } ?? DemoDataConfiguration.AssetConfiguration.ContestImageAssets()
+            )
+        } ?? DemoDataConfiguration.AssetConfiguration()
+        
+        // Demo Users
+        let demoUsers = json.demoUsers.map { userJson in
+            DemoDataConfiguration.DemoUserConfiguration(
+                defaultUsername: userJson.defaultUsername ?? "Usuario",
+                chatUsernames: userJson.chatUsernames ?? [],
+                socialAccounts: userJson.socialAccounts ?? []
+            )
+        } ?? DemoDataConfiguration.DemoUserConfiguration()
+        
+        // Product Mappings
+        let productMappings = json.productMappings?.compactMapValues { jsonMapping in
+            DemoDataConfiguration.ProductMapping(
+                name: jsonMapping.name,
+                productUrl: jsonMapping.productUrl,
+                checkoutUrl: jsonMapping.checkoutUrl
+            )
+        } ?? [:]
+        
+        // Event IDs
+        let eventIds = json.eventIds.map { eventJson in
+            DemoDataConfiguration.EventIdConfiguration(
+                contestQuiz: eventJson.contestQuiz ?? "casting-contest-quiz",
+                contestGiveaway: eventJson.contestGiveaway ?? "casting-contest-giveaway",
+                productCombo: eventJson.productCombo ?? "casting-product-combo",
+                tweetHalftime1: eventJson.tweetHalftime1 ?? "tweet-halftime-1",
+                tweetHalftime2: eventJson.tweetHalftime2 ?? "tweet-halftime-2"
+            )
+        } ?? DemoDataConfiguration.EventIdConfiguration()
+        
+        // Match Defaults
+        let matchDefaults = json.matchDefaults.map { matchJson in
+            DemoDataConfiguration.MatchDefaultConfiguration(
+                broadcastIdMappings: matchJson.broadcastIdMappings ?? ["barcelona-psg": "barcelona-psg-2025-01-23"],
+                defaultScore: matchJson.defaultScore ?? 3
+            )
+        } ?? DemoDataConfiguration.MatchDefaultConfiguration()
+        
+        // Offer Banner
+        let offerBanner = json.offerBanner.map { bannerJson in
+            DemoDataConfiguration.OfferBannerConfiguration(
+                countdown: bannerJson.countdown.map { countdownJson in
+                    DemoDataConfiguration.OfferBannerConfiguration.CountdownConfiguration(
+                        days: countdownJson.days ?? 2,
+                        hours: countdownJson.hours ?? 1,
+                        minutes: countdownJson.minutes ?? 59,
+                        seconds: countdownJson.seconds ?? 47
+                    )
+                } ?? DemoDataConfiguration.OfferBannerConfiguration.CountdownConfiguration(),
+                title: bannerJson.title ?? "Ukens tilbud",
+                subtitle: bannerJson.subtitle ?? "Se denne ukes beste tilbud",
+                discountText: bannerJson.discountText ?? "Opp til 30%",
+                buttonText: bannerJson.buttonText ?? "Se alle tilbud"
+            )
+        } ?? DemoDataConfiguration.OfferBannerConfiguration()
+        
+        return DemoDataConfiguration(
+            assets: assets,
+            demoUsers: demoUsers,
+            productMappings: productMappings,
+            eventIds: eventIds,
+            matchDefaults: matchDefaults,
+            offerBanner: offerBanner
+        )
+    }
+}

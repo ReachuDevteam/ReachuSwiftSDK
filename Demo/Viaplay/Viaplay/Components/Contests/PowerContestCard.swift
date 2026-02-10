@@ -1,8 +1,8 @@
 //
-//  PowerContestCard.swift
+//  CastingContestCard.swift
 //  Viaplay
 //
-//  Component for displaying Power contest events in the timeline
+//  Component for displaying Casting contest events in the timeline
 //  Similar design to HighlightVideoCard but customized for contests
 //
 
@@ -10,8 +10,8 @@ import SwiftUI
 import ReachuCore
 import ReachuDesignSystem
 
-struct PowerContestCard: View {
-    let contest: PowerContestEvent
+struct CastingContestCard: View {
+    let contest: CastingContestEvent
     let onParticipate: () -> Void
     
     @State private var showModal = false
@@ -150,7 +150,7 @@ struct PowerContestCard: View {
                 )
         )
         .sheet(isPresented: $showModal) {
-            PowerContestModal(contest: contest) {
+            CastingContestModal(contest: contest) {
                 showModal = false
             }
         }

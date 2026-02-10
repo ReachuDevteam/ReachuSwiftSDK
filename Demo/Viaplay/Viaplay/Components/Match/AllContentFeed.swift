@@ -67,10 +67,10 @@ struct AllContentFeed: View {
                         }
                         .onAppear {
                             // Debug: Log Elkjøp contest events
-                            let powerContests = timelineEvents.filter { $0.eventType == .powerContest }
-                            if !powerContests.isEmpty {
-                                print("🎯 [AllContentFeed] Elkjøp contest events found: \(powerContests.count)")
-                                for event in powerContests {
+                            let castingContests = timelineEvents.filter { $0.eventType == .castingContest }
+                            if !castingContests.isEmpty {
+                                print("🎯 [AllContentFeed] Elkjøp contest events found: \(castingContests.count)")
+                                for event in castingContests {
                                     print("  - ID: \(event.id), timestamp: \(event.videoTimestamp)s")
                                 }
                             }
@@ -192,12 +192,12 @@ struct AllContentFeed: View {
     
     private func handlePowerContestScroll(proxy: ScrollViewProxy, timestamp: TimeInterval) {
         // Find Elkjøp contest events near the navigated timestamp
-        let powerContestEvents = timelineEvents
-            .filter({ $0.eventType == .powerContest })
+        let castingContestEvents = timelineEvents
+            .filter({ $0.eventType == .castingContest })
             .sorted(by: { $0.videoTimestamp < $1.videoTimestamp })
         
         // Check if any Elkjøp contest is within 5 seconds of the navigated timestamp
-        if let targetEvent = powerContestEvents.first(where: { 
+        if let targetEvent = castingContestEvents.first(where: { 
             abs($0.videoTimestamp - timestamp) <= 5 
         }) {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
@@ -364,10 +364,10 @@ struct AllContentFeed: View {
                     ))
                 }
                 
-            // Power Products
-            case .powerProduct:
-                if let productEvent = wrappedEvent.event as? PowerProductEvent {
-                    PowerProductCardWrapper(
+            // Casting Products
+            case .castingProduct:
+                if let productEvent = wrappedEvent.event as? CastingProductEvent {
+                    CastingProductCardWrapper(
                         productEvent: productEvent,
                         onViewProduct: {
                             print("🛒 Usuario ve Elkjøp product: \(productEvent.id)")
@@ -380,9 +380,9 @@ struct AllContentFeed: View {
                 }
             
             // Elkjøp Contests
-            case .powerContest:
-                if let contest = wrappedEvent.event as? PowerContestEvent {
-                    PowerContestCardWrapper(
+            case .castingContest:
+                if let contest = wrappedEvent.event as? CastingContestEvent {
+                    CastingContestCardWrapper(
                         contest: contest,
                         onParticipate: {
                             print("🏆 Usuario participa en Elkjøp contest: \(contest.id)")

@@ -7,6 +7,14 @@ struct PollsResponse: Codable {
     let polls: [PollData]
     let broadcastStartTime: Date? // Broadcast start time at root level
     let matchStartTime: Date? // Match start time at root level (backward compatibility)
+    let pagination: PaginationMetadata?
+    
+    struct PaginationMetadata: Codable {
+        let limit: Int
+        let offset: Int
+        let total: Int
+        let hasMore: Bool
+    }
     
     struct PollData: Codable {
         let id: String
@@ -36,6 +44,14 @@ struct ContestsResponse: Codable {
     let contests: [ContestData]
     let broadcastStartTime: Date? // Broadcast start time at root level
     let matchStartTime: Date? // Match start time at root level (backward compatibility)
+    let pagination: PaginationMetadata?
+    
+    struct PaginationMetadata: Codable {
+        let limit: Int
+        let offset: Int
+        let total: Int
+        let hasMore: Bool
+    }
     
     struct ContestData: Codable {
         let id: String

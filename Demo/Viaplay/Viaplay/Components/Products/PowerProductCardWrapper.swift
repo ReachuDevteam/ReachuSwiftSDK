@@ -1,9 +1,9 @@
 //
-//  PowerProductCardWrapper.swift
+//  CastingProductCardWrapper.swift
 //  Viaplay
 //
 //  Wrapper component that uses REngagementProductGridCard from SDK
-//  Converts PowerProductEvent to SDK component format
+//  Converts CastingProductEvent to SDK component format
 //
 
 import SwiftUI
@@ -12,14 +12,14 @@ import ReachuUI
 import ReachuEngagementUI
 import ReachuDesignSystem
 
-struct PowerProductCardWrapper: View {
-    let productEvent: PowerProductEvent
+struct CastingProductCardWrapper: View {
+    let productEvent: CastingProductEvent
     let onViewProduct: () -> Void
     
     @State private var products: [Product] = []
     @State private var isLoadingProducts = false
     @State private var showModal = false
-    @State private var selectedProductEvent: PowerProductEvent?
+    @State private var selectedProductEvent: CastingProductEvent?
     
     @EnvironmentObject private var cartManager: CartManager
     
@@ -36,15 +36,15 @@ struct PowerProductCardWrapper: View {
             onProductTap: { productData in
                 // Find the matching Product from the loaded products
                 if let product = products.first(where: { String($0.id) == productData.productId }) {
-                    let tempEvent = PowerProductEvent(
+                    let tempEvent = CastingProductEvent(
                         id: productEvent.id + "-\(product.id)",
                         videoTimestamp: productEvent.videoTimestamp,
                         productId: String(product.id),
                         productIds: nil,
                         title: product.title,
                         description: productEvent.description,
-                        powerProductUrl: getProductUrl(for: product),
-                        powerCheckoutUrl: getProductUrl(for: product),
+                        castingProductUrl: getProductUrl(for: product),
+                        castingCheckoutUrl: getProductUrl(for: product),
                         imageAsset: nil,
                         metadata: nil
                     )
@@ -56,7 +56,7 @@ struct PowerProductCardWrapper: View {
             }
         )
         .fullScreenCover(item: $selectedProductEvent) { event in
-            PowerProductModal(productEvent: event) {
+            CastingProductModal(productEvent: event) {
                 selectedProductEvent = nil
                 showModal = false
             }
@@ -102,7 +102,7 @@ struct PowerProductCardWrapper: View {
             // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
             return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
         }
-        return productEvent.powerProductUrl
+        return productEvent.castingProductUrl
     }
     
     private func loadProducts() async {

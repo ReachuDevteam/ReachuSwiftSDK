@@ -1,9 +1,9 @@
 //
-//  PowerContestCardWrapper.swift
+//  CastingContestCardWrapper.swift
 //  Viaplay
 //
 //  Wrapper component that uses REngagementContestCard from SDK
-//  Converts PowerContestEvent to SDK component format
+//  Converts CastingContestEvent to SDK component format
 //
 
 import SwiftUI
@@ -11,8 +11,8 @@ import ReachuCore
 import ReachuEngagementUI
 import ReachuDesignSystem
 
-struct PowerContestCardWrapper: View {
-    let contest: PowerContestEvent
+struct CastingContestCardWrapper: View {
+    let contest: CastingContestEvent
     let onParticipate: () -> Void
     
     @State private var showModal = false
@@ -35,7 +35,7 @@ struct PowerContestCardWrapper: View {
             }
         )
         .sheet(isPresented: $showModal) {
-            PowerContestModal(contest: contest) {
+            CastingContestModal(contest: contest) {
                 showModal = false
             }
         }

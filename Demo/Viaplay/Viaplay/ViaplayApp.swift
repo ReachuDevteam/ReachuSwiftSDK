@@ -99,7 +99,7 @@ struct ViaplayApp: App {
             
             // Set contest converter closure
             DemoEngagementRepository.contestConverter = { event, context in
-                guard let contestEvent = event as? PowerContestEvent else { return nil }
+                guard let contestEvent = event as? CastingContestEvent else { return nil }
                 // Use broadcastContext from event or fallback to provided context
                 let eventContext = contestEvent.broadcastContext ?? context
                 

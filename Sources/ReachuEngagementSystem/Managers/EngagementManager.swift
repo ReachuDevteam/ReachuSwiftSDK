@@ -69,7 +69,7 @@ public class EngagementManager: ObservableObject {
     // MARK: - Public Methods
     
     /// Load engagement data (polls and contests) for a specific broadcast context
-    public func loadEngagement(for context: BroadcastContext) async {
+    public func loadEngagement(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async {
         ReachuLogger.debug("Loading engagement for broadcastId: \(context.broadcastId)", component: "EngagementManager")
         
         // Set broadcast start time in VideoSyncManager if available in BroadcastContext
@@ -95,10 +95,10 @@ public class EngagementManager: ObservableObject {
         
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
-                await self.loadPolls(for: context)
+                await self.loadPolls(for: context, limit: limit, offset: offset)
             }
             group.addTask {
-                await self.loadContests(for: context)
+                await self.loadContests(for: context, limit: limit, offset: offset)
             }
         }
     }
@@ -133,7 +133,8 @@ public class EngagementManager: ObservableObject {
     public func voteInPoll(
         pollId: String,
         optionId: String,
-        broadcastContext: BroadcastContext
+        broadcastContext: BroadcastContext,
+        userId: String? = nil
     ) async throws {
         // Verify that the poll belongs to the correct context
         guard let poll = pollsByBroadcast[broadcastContext.broadcastId]?.first(where: { $0.id == pollId }) else {
@@ -151,7 +152,7 @@ public class EngagementManager: ObservableObject {
         }
         
         // Send vote via repository (backend or demo)
-        try await repository.voteInPoll(pollId: pollId, optionId: optionId, broadcastContext: broadcastContext)
+        try await repository.voteInPoll(pollId: pollId, optionId: optionId, broadcastContext: broadcastContext, userId: userId)
         
         // Register participation locally
         participationRecord.insert(pollId)
@@ -164,7 +165,8 @@ public class EngagementManager: ObservableObject {
     public func participateInContest(
         contestId: String,
         broadcastContext: BroadcastContext,
-        answers: [String: String]? = nil
+        answers: [String: String]? = nil,
+        userId: String? = nil
     ) async throws {
         // Verify that the contest belongs to the correct context
         guard let contest = contestsByBroadcast[broadcastContext.broadcastId]?.first(where: { $0.id == contestId }) else {
@@ -175,7 +177,8 @@ public class EngagementManager: ObservableObject {
         try await repository.participateInContest(
             contestId: contestId,
             broadcastContext: broadcastContext,
-            answers: answers
+            answers: answers,
+            userId: userId
         )
         
         // Register participation locally
@@ -192,8 +195,8 @@ public class EngagementManager: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func loadPolls(for context: BroadcastContext) async {
-        let polls = await repository.loadPolls(for: context)
+    private func loadPolls(for context: BroadcastContext, limit: Int?, offset: Int?) async {
+        let polls = await repository.loadPolls(for: context, limit: limit, offset: offset)
         pollsByBroadcast[context.broadcastId] = polls
         
         // Set broadcastStartTime in VideoSyncManager from polls if available
@@ -205,8 +208,8 @@ public class EngagementManager: ObservableObject {
         ReachuLogger.debug("Loaded \(polls.count) polls for broadcastId: \(context.broadcastId)", component: "EngagementManager")
     }
     
-    private func loadContests(for context: BroadcastContext) async {
-        let contests = await repository.loadContests(for: context)
+    private func loadContests(for context: BroadcastContext, limit: Int?, offset: Int?) async {
+        let contests = await repository.loadContests(for: context, limit: limit, offset: offset)
         contestsByBroadcast[context.broadcastId] = contests
         
         // Set broadcastStartTime in VideoSyncManager from contests if available
@@ -291,6 +294,7 @@ public enum EngagementError: LocalizedError {
     case rateLimited(retryAfter: Int?)
     case httpError(statusCode: Int, message: String?)
     case invalidData([String])
+    case broadcastNotFound(broadcastId: String)
     
     public var errorDescription: String? {
         switch self {
@@ -318,6 +322,8 @@ public enum EngagementError: LocalizedError {
             return "HTTP error \(statusCode): \(message ?? "Unknown error")"
         case .invalidData(let errors):
             return "Invalid data: \(errors.joined(separator: ", "))"
+        case .broadcastNotFound(let broadcastId):
+            return "Broadcast not found: \(broadcastId)"
         }
     }
 }

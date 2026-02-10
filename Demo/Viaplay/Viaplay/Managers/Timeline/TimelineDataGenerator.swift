@@ -183,23 +183,23 @@ struct TimelineDataGenerator {
             metadata: ["type": "halftime"]
         )))
         
-        // MARK: - Power Events (during halftime break)
+        // MARK: - Casting Events (during halftime break)
         
-        // Power Contest 1: Quiz with gift card prize
-        events.append(AnyTimelineEvent(PowerContestEvent(
+        // Casting Contest 1: Quiz with gift card prize
+        events.append(AnyTimelineEvent(CastingContestEvent(
             id: "power-contest-quiz",
             videoTimestamp: 2720,
             title: "Elkjøp Konkurranse",
             description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
             prize: "Gavekort på 5000kr",
             contestType: .quiz,
-            // Asset mapping: gavekortpower (Power) -> elkjop_konk (Elkjøp)
-            // Legacy Power asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
+            // Asset mapping: gavekortpower (Casting) -> elkjop_konk (Elkjøp)
+            // Legacy Casting asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
             metadata: ["imageAsset": "elkjop_konk"],
             broadcastContext: nil
         )))
         
-        // Chat between Power events
+        // Chat between Casting events
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 2725,
             username: "PowerFan",
@@ -208,7 +208,7 @@ struct TimelineDataGenerator {
             likes: 12
         )))
         
-        // Tweet between Power events
+        // Tweet between Casting events
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-halftime-1",
             videoTimestamp: 2730,
@@ -222,8 +222,8 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        // Power Contest 2: Giveaway with Champions League tickets
-        events.append(AnyTimelineEvent(PowerContestEvent(
+        // Casting Contest 2: Giveaway with Champions League tickets
+        events.append(AnyTimelineEvent(CastingContestEvent(
             id: "power-contest-giveaway",
             videoTimestamp: 2750,
             title: "Elkjøp Konkurranse",
@@ -234,7 +234,7 @@ struct TimelineDataGenerator {
             broadcastContext: nil
         )))
         
-        // Chat between Power events
+        // Chat between Casting events
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 2755,
             username: "ChampionsFan",
@@ -243,7 +243,7 @@ struct TimelineDataGenerator {
             likes: 18
         )))
         
-        // Tweet between Power events
+        // Tweet between Casting events
         events.append(AnyTimelineEvent(TweetEvent(
             id: "tweet-halftime-2",
             videoTimestamp: 2760,
@@ -257,21 +257,21 @@ struct TimelineDataGenerator {
             metadata: nil
         )))
         
-        // Power Product: Combined product event with both TV and Soundbar
-        events.append(AnyTimelineEvent(PowerProductEvent(
+        // Casting Product: Combined product event with both TV and Soundbar
+        events.append(AnyTimelineEvent(CastingProductEvent(
             id: "power-product-combo",
             videoTimestamp: 2770,  // During halftime
             productId: "408895",  // Primary product: Samsung TV
             productIds: ["408896"],  // Additional product: Samsung Soundbar
             title: "Spesialtilbud på TV og Lyd",
             description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
-            powerProductUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
-            powerCheckoutUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+            castingProductUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+            castingCheckoutUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
             imageAsset: nil,
             metadata: nil
         )))
         
-        // Chat after Power product
+        // Chat after Casting product
         events.append(AnyTimelineEvent(ChatMessageEvent(
             videoTimestamp: 2775,
             username: "TechLover",
@@ -280,7 +280,7 @@ struct TimelineDataGenerator {
             likes: 9
         )))
         
-        // MARK: - Power Products (moved to halftime)
+        // MARK: - Casting Products (moved to halftime)
         
         // MARK: - Chat Messages (Sincronizados con eventos)
         

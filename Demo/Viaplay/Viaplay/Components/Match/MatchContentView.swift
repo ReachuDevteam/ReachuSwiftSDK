@@ -114,9 +114,9 @@ struct MatchContentView: View {
                             .filter { $0.eventType == .announcement }
                             .compactMap { $0.event as? AnnouncementEvent }
                             .filter { $0.metadata?["type"] == "contest" },
-                        powerContests: viewModel.timeline.allEvents
-                            .filter { $0.eventType == .powerContest }
-                            .compactMap { $0.event as? PowerContestEvent },
+                        castingContests: viewModel.timeline.allEvents
+                            .filter { $0.eventType == .castingContest }
+                            .compactMap { $0.event as? CastingContestEvent },
                         timeline: viewModel.timeline,
                         onNavigateToTimestamp: viewModel.useTimelineSync ? { timestamp in
                             viewModel.navigateToTimestamp(timestamp)
