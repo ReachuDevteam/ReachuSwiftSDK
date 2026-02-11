@@ -1261,6 +1261,145 @@ struct TimelineDataGenerator {
         return events.sorted { $0.videoTimestamp < $1.videoTimestamp }
     }
     
+    /// Generate timeline for Real Madrid - Barcelona (El Clásico)
+    /// Target match for backend integration - mock data for now
+    static func generateRealMadridBarcelonaTimeline() -> [AnyTimelineEvent] {
+        var events: [AnyTimelineEvent] = []
+        
+        // Pre-Match
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "lineup-madrid",
+            videoTimestamp: -300,
+            title: "Alineación Real Madrid",
+            message: "Once inicial del Real Madrid",
+            imageUrl: nil, actionUrl: nil, actionText: nil,
+            metadata: ["type": "lineup", "team": "home", "formation": "4-3-3"]
+        )))
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "lineup-barcelona",
+            videoTimestamp: -180,
+            title: "Alineación Barcelona",
+            message: "Once inicial del Barcelona",
+            imageUrl: nil, actionUrl: nil, actionText: nil,
+            metadata: ["type": "lineup", "team": "away", "formation": "4-3-3"]
+        )))
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "match-preview",
+            videoTimestamp: -60,
+            title: "¡El Clásico!",
+            message: "Real Madrid vs Barcelona - La Liga",
+            imageUrl: nil, actionUrl: nil, actionText: nil,
+            metadata: ["type": "preview"]
+        )))
+        
+        // Match Events
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "kickoff",
+            videoTimestamp: 0,
+            title: "⚽ Saque inicial",
+            message: "¡Comienza el Clásico! Real Madrid vs Barcelona",
+            imageUrl: nil, actionUrl: nil, actionText: nil,
+            metadata: ["type": "kickoff"]
+        )))
+        events.append(AnyTimelineEvent(MatchGoalEvent(
+            id: "goal-12",
+            videoTimestamp: 720,
+            player: "V. Vinícius Jr.",
+            team: .home,
+            score: "1-0",
+            assistBy: "J. Bellingham",
+            isOwnGoal: false,
+            isPenalty: false,
+            metadata: nil
+        )))
+        events.append(AnyTimelineEvent(MatchGoalEvent(
+            id: "goal-28",
+            videoTimestamp: 1680,
+            player: "Lamine Yamal",
+            team: .away,
+            score: "1-1",
+            assistBy: "Pedri",
+            isOwnGoal: false,
+            isPenalty: false,
+            metadata: nil
+        )))
+        events.append(AnyTimelineEvent(MatchCardEvent(
+            id: "card-35",
+            videoTimestamp: 2100,
+            player: "A. Tchouaméni",
+            team: .home,
+            cardType: .yellow,
+            reason: "Falta dura",
+            metadata: nil
+        )))
+        events.append(AnyTimelineEvent(AnnouncementEvent(
+            id: "halftime",
+            videoTimestamp: 2700,
+            title: "Descanso",
+            message: "Fin del primer tiempo - Real Madrid 1-1 Barcelona",
+            imageUrl: nil, actionUrl: nil, actionText: nil,
+            metadata: ["type": "halftime"]
+        )))
+        
+        // Casting events (halftime)
+        events.append(AnyTimelineEvent(CastingContestEvent(
+            id: "casting-contest-elclasico",
+            videoTimestamp: 2720,
+            title: "Concurso El Clásico",
+            description: "Participa y gana premios exclusivos",
+            prize: "1.000€ en productos",
+            contestType: .quiz,
+            metadata: ["imageAsset": "elkjop_konk"],
+            broadcastContext: nil
+        )))
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2725,
+            username: "Madridista",
+            text: "¡Qué partido! El Clásico nunca decepciona 🔥",
+            usernameColor: .orange,
+            likes: 42
+        )))
+        events.append(AnyTimelineEvent(ChatMessageEvent(
+            videoTimestamp: 2735,
+            username: "Culé",
+            text: "Lamine Yamal el futuro de La Liga 🏆",
+            usernameColor: .orange,
+            likes: 28
+        )))
+        
+        // Second half
+        events.append(AnyTimelineEvent(MatchGoalEvent(
+            id: "goal-67",
+            videoTimestamp: 4020,
+            player: "Rodrygo",
+            team: .home,
+            score: "2-1",
+            assistBy: "V. Vinícius Jr.",
+            isOwnGoal: false,
+            isPenalty: false,
+            metadata: nil
+        )))
+        events.append(AnyTimelineEvent(MatchSubstitutionEvent(
+            id: "sub-75",
+            videoTimestamp: 4500,
+            playerIn: "Raphinha",
+            playerOut: "Lamine Yamal",
+            team: .away,
+            metadata: nil
+        )))
+        events.append(AnyTimelineEvent(CommentaryEvent(
+            id: "comm-80",
+            videoTimestamp: 4800,
+            minute: 80,
+            text: "Minuto 80. El Real Madrid defiende el resultado. El Barcelona presiona buscando el empate.",
+            commentaryType: .general,
+            isHighlighted: false,
+            metadata: nil
+        )))
+        
+        return events.sorted { $0.videoTimestamp < $1.videoTimestamp }
+    }
+    
     /// Generate random chat messages throughout the match
     static func generateRandomChatMessages(count: Int = 50, maxMinute: Int = 90) -> [ChatMessageEvent] {
         let users: [(String, Color)] = [

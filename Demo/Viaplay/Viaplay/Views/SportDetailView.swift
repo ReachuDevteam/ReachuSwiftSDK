@@ -8,6 +8,7 @@
 import SwiftUI
 import ReachuCore
 import ReachuUI
+import ReachuCastingUI
 
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode
@@ -69,7 +70,7 @@ struct SportDetailView: View {
                                 Button(action: { showCastDeviceSelection = true }) {
                                     Image(systemName: castingManager.isCasting ? "tv.fill" : "airplayvideo")
                                         .font(.system(size: 18, weight: .semibold))
-                                        .foregroundColor(castingManager.isCasting ? ViaplayTheme.Colors.pink : .white)
+                                        .foregroundColor(castingManager.isCasting ? RCastingTheme.Colors.pink : .white)
                                 }
                             }
                             .padding(.horizontal, 16)
@@ -191,18 +192,19 @@ struct SportDetailView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
                     
-                        // Event details
+                        // Event details (dynamic from match when available)
                         VStack(alignment: .leading, spacing: 14) {
-                            DetailRow(icon: "clock", text: "Today 14:00")
-                            DetailRow(icon: "mic", text: "Engelsk")
-                            DetailRow(icon: "mappin.circle", text: "Newgiza Sports Club")
+                            let match = createMatchFromDetail()
+                            DetailRow(icon: "clock", text: match.title == "Real Madrid - Barcelona" ? "24. januar 20:00" : "Today 14:00")
+                            DetailRow(icon: "mic", text: match.commentator ?? "Engelsk")
+                            DetailRow(icon: "mappin.circle", text: match.venue)
                             
                             VStack(alignment: .leading, spacing: 3) {
-                                Text("Padel: Champions League")
+                                Text(match.subtitle)
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white)
                                 
-                                Text("Available to: 31 October at 20:30")
+                                Text(match.availability.description)
                                     .font(.system(size: 12, weight: .regular))
                                     .foregroundColor(.white.opacity(0.6))
                             }
@@ -294,7 +296,7 @@ struct SportDetailView: View {
                 if !showVideoPlayer {
                     VStack {
                         Spacer()
-                        ViaplayBottomNav(selectedTab: $selectedTab)
+                        RCastingBottomNav(selectedTab: $selectedTab)
                             .frame(width: geometry.size.width)
                     }
                 }
@@ -302,7 +304,7 @@ struct SportDetailView: View {
         }
         .navigationBarHidden(true)
         .fullScreenCover(isPresented: $showVideoPlayer) {
-            ViaplayVideoPlayer(match: createMatchFromDetail()) {
+            RCastingVideoPlayer(match: createMatchFromDetail()) {
                 showVideoPlayer = false
             }
             .environmentObject(cartManager)
@@ -314,11 +316,11 @@ struct SportDetailView: View {
             }
         }
         .fullScreenCover(isPresented: $showCastingView) {
-            ViaplayCastingActiveView(match: createMatchFromDetail())
+            RCastingActiveView(match: createMatchFromDetail())
                 .environmentObject(cartManager)
         }
         .fullScreenCover(isPresented: $showLiveMatchView) {
-            LiveMatchViewRefactored(match: createMatchFromDetail()) {
+            LiveMatchView(match: createMatchFromDetail()) {
                 showLiveMatchView = false
             }
         }
@@ -331,9 +333,14 @@ struct SportDetailView: View {
     
     // Helper para crear un Match desde los datos del SportDetailView
     private func createMatchFromDetail() -> Match {
-        // Si el título contiene Barcelona y PSG, usar esos equipos
+        // Barcelona - PSG: demo con data estática (Live akkurat nå)
         if title.contains("Barcelona") && title.contains("PSG") {
             return Match.barcelonaPSG
+        }
+        
+        // Real Madrid - Barcelona: target para integración backend (Vår beste sport)
+        if title.contains("Real Madrid") && title.contains("Barcelona") {
+            return Match.realMadridBarcelona
         }
         
         return Match(

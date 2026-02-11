@@ -6,36 +6,48 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuUI
+import ReachuCastingUI
 
 struct SportView: View {
     @Binding var selectedTab: Int
     @Binding var showSportView: Bool
     @State private var currentCarouselIndex = 0
     
-    let carouselCards = [
-        CarouselCardData(
-            imageUrl: "img1",
-            time: "THIS EVENING 18:55",
-            logo: "LIGUE 1",
-            title: "Lorient - PSG",
-            subtitle: "Ligue 1 | 10. runde"
-        ),
-        CarouselCardData(
-            imageUrl: "img1",
-            time: "TONIGHT 21:30",
-            logo: "PREMIER LEAGUE",
-            title: "Manchester United - Chelsea",
-            subtitle: "Premier League | 12. runde"
-        ),
-        CarouselCardData(
-            imageUrl: "img1",
-            time: "TOMORROW 19:00",
-            logo: "PREMIER LEAGUE",
-            title: "Liverpool - Arsenal",
-            subtitle: "Premier League | 12. runde"
-        )
-    ]
+    private var carouselCards: [CarouselCardData] {
+        let items = DemoDataManager.shared.carouselCards
+        if items.isEmpty {
+            return [
+                CarouselCardData(imageUrl: "img1", time: "TONIGHT 20:00", logo: "LA LIGA", title: "Real Madrid - Barcelona", subtitle: "La Liga | 12. runde"),
+                CarouselCardData(imageUrl: "img1", time: "TONIGHT 21:30", logo: "PREMIER LEAGUE", title: "Manchester United - Chelsea", subtitle: "Premier League | 12. runde"),
+                CarouselCardData(imageUrl: "img1", time: "TOMORROW 19:00", logo: "PREMIER LEAGUE", title: "Liverpool - Arsenal", subtitle: "Premier League | 12. runde")
+            ]
+        }
+        return items.map { CarouselCardData(imageUrl: $0.imageUrl, time: $0.time, logo: $0.logo, title: $0.title, subtitle: $0.subtitle) }
+    }
+    
+    private var liveCardsData: [(logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String?)] {
+        let items = DemoDataManager.shared.liveCards
+        if items.isEmpty {
+            return [
+                ("UEFA", "star.fill", "Barcelona - PSG", "Champions League", "15:00", "bg"),
+                ("CHALLENGE TOUR", "globe", "Rolex Grand", "European Challenge", "12:00", nil)
+            ]
+        }
+        return items.map { ($0.logo, $0.logoIcon, $0.title, $0.subtitle, $0.time, $0.backgroundImage) }
+    }
+    
+    private var sportClipsData: [(imageUrl: String, time: String, title: String, subtitle: String, isLarge: Bool)] {
+        let items = DemoDataManager.shared.sportClips
+        if items.isEmpty {
+            return [
+                ("img1", "00:51", "Haaland ofret sitt for å redde City-poeng", "PREMIER LEAGUE | 2K. OKTOBER", false),
+                ("img1", "00:53", "Jørgen Strand Larsen scoring i Premier League", "PREMIER LEAGUE", false)
+            ]
+        }
+        return items.map { ($0.imageUrl, $0.time, $0.title, $0.subtitle, $0.isLarge) }
+    }
     
     var body: some View {
         GeometryReader { geometry in
@@ -97,24 +109,18 @@ struct SportView: View {
                             
                             ScrollView(.horizontal, showsIndicators: false) {
                                 HStack(spacing: 12) {
-                                    LiveSportCard(
-                                        selectedTab: $selectedTab,
-                                        logo: "UEFA",
-                                        logoIcon: "star.fill",
-                                        title: "Barcelona - PSG",
-                                        subtitle: "Champions League",
-                                        time: "15:00",
-                                        backgroundImage: "bg"
-                                    )
-                                    
-                                    LiveSportCard(
-                                        selectedTab: $selectedTab,
-                                        logo: "CHALLENGE TOUR",
-                                        logoIcon: "globe",
-                                        title: "Rolex Grand",
-                                        subtitle: "European Challenge",
-                                        time: "12:00"
-                                    )
+                                    ForEach(liveCardsData.indices, id: \.self) { index in
+                                        let item = liveCardsData[index]
+                                        LiveSportCard(
+                                            selectedTab: $selectedTab,
+                                            logo: item.logo,
+                                            logoIcon: item.logoIcon,
+                                            title: item.title,
+                                            subtitle: item.subtitle,
+                                            time: item.time,
+                                            backgroundImage: item.backgroundImage
+                                        )
+                                    }
                                 }
                                 .padding(.horizontal, 16)
                             }
@@ -125,24 +131,16 @@ struct SportView: View {
                         // De beste klippene akkurat nå Section
                         SportSection(
                             title: "De beste klippene akkurat nå",
-                            cards: [
+                            cards: sportClipsData.map { item in
                                 SportCard(
                                     selectedTab: $selectedTab,
-                                    imageUrl: "img1",
-                                    time: "00:51",
-                                    title: "Haaland ofret sitt for å redde City-poeng",
-                                    subtitle: "PREMIER LEAGUE | 2K. OKTOBER",
-                                    isLarge: false
-                                ),
-                                SportCard(
-                                    selectedTab: $selectedTab,
-                                    imageUrl: "img1",
-                                    time: "00:53",
-                                    title: "Jørgen Strand Larsen scoring i Premier League",
-                                    subtitle: "PREMIER LEAGUE",
-                                    isLarge: false
+                                    imageUrl: item.imageUrl,
+                                    time: item.time,
+                                    title: item.title,
+                                    subtitle: item.subtitle,
+                                    isLarge: item.isLarge
                                 )
-                            ]
+                            }
                         )
                         
                         // Populær sport Section
@@ -211,7 +209,7 @@ struct SportView: View {
                 // Bottom Navigation
                 VStack {
                     Spacer()
-                    ViaplayBottomNav(selectedTab: $selectedTab)
+                    RCastingBottomNav(selectedTab: $selectedTab)
                         .frame(width: geometry.size.width)
                 }
             }

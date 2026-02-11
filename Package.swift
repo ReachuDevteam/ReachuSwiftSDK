@@ -71,6 +71,12 @@ let package = Package(
         //         "ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI",
         //     ]
         // ),
+        // Casting UI - live match casting components
+        .library(
+            name: "ReachuCastingUI",
+            targets: ["ReachuCastingUI"]
+        ),
+
         .library(
             name: "ReachuComplete",
             targets: [
@@ -79,7 +85,8 @@ let package = Package(
                 "ReachuDesignSystem",
                 "ReachuUI",
                 "ReachuEngagementSystem",
-                "ReachuEngagementUI"
+                "ReachuEngagementUI",
+                "ReachuCastingUI"
             ]
         ),        
     ],
@@ -232,6 +239,20 @@ let package = Package(
             ],
             path: "Sources/ReachuTesting"
         ),
+
+        // MARK: - Casting UI Target
+        .target(
+            name: "ReachuCastingUI",
+            dependencies: [
+                "ReachuCore",
+                "ReachuUI",
+                "ReachuEngagementSystem",
+                "ReachuEngagementUI",
+                "ReachuDesignSystem",
+            ],
+            path: "Sources/ReachuCastingUI"
+        ),
+
         // MARK: - Test Targets
         .testTarget(
             name: "ReachuUITests",

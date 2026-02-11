@@ -1120,6 +1120,59 @@ private struct JSONDemoDataConfiguration: Codable {
     let eventIds: JSONEventIdConfiguration?
     let matchDefaults: JSONMatchDefaultConfiguration?
     let offerBanner: JSONOfferBannerConfiguration?
+    let carouselCards: JSONCarouselCardsConfiguration?
+    let liveCards: JSONLiveCardsConfiguration?
+    let sportClips: JSONSportClipsConfiguration?
+    let matches: JSONMatchesConfiguration?
+}
+
+private struct JSONCarouselCardsConfiguration: Codable {
+    let items: [JSONCarouselCardItem]?
+}
+
+private struct JSONCarouselCardItem: Codable {
+    let imageUrl: String?
+    let time: String?
+    let logo: String?
+    let title: String?
+    let subtitle: String?
+}
+
+private struct JSONLiveCardsConfiguration: Codable {
+    let items: [JSONLiveCardItem]?
+}
+
+private struct JSONLiveCardItem: Codable {
+    let logo: String?
+    let logoIcon: String?
+    let title: String?
+    let subtitle: String?
+    let time: String?
+    let backgroundImage: String?
+}
+
+private struct JSONSportClipsConfiguration: Codable {
+    let items: [JSONSportClipItem]?
+}
+
+private struct JSONSportClipItem: Codable {
+    let imageUrl: String?
+    let time: String?
+    let title: String?
+    let subtitle: String?
+    let isLarge: Bool?
+}
+
+private struct JSONMatchesConfiguration: Codable {
+    let items: [JSONMatchItem]?
+}
+
+private struct JSONMatchItem: Codable {
+    let broadcastId: String?
+    let title: String?
+    let subtitle: String?
+    let imageUrl: String?
+    let isLive: Bool?
 }
 
 private struct JSONAssetConfiguration: Codable {
@@ -1299,13 +1352,53 @@ extension ConfigurationLoader {
             )
         } ?? DemoDataConfiguration.OfferBannerConfiguration()
         
+        // Carousel Cards
+        let carouselCards = json.carouselCards?.items?.compactMap { item -> DemoDataConfiguration.CarouselCardItem? in
+            guard let title = item.title, let subtitle = item.subtitle else { return nil }
+            return DemoDataConfiguration.CarouselCardItem(
+                imageUrl: item.imageUrl ?? "img1",
+                time: item.time ?? "",
+                logo: item.logo ?? "",
+                title: title,
+                subtitle: subtitle
+            )
+        } ?? []
+        
+        // Live Cards
+        let liveCards = json.liveCards?.items?.compactMap { item -> DemoDataConfiguration.LiveCardItem? in
+            guard let title = item.title, let subtitle = item.subtitle else { return nil }
+            return DemoDataConfiguration.LiveCardItem(
+                logo: item.logo ?? "",
+                logoIcon: item.logoIcon ?? "star.fill",
+                title: title,
+                subtitle: subtitle,
+                time: item.time ?? "",
+                backgroundImage: item.backgroundImage
+            )
+        } ?? []
+        
+        // Sport Clips
+        let sportClips = json.sportClips?.items?.compactMap { item -> DemoDataConfiguration.SportClipItem? in
+            guard let title = item.title else { return nil }
+            return DemoDataConfiguration.SportClipItem(
+                imageUrl: item.imageUrl ?? "img1",
+                time: item.time ?? "",
+                title: title,
+                subtitle: item.subtitle ?? "",
+                isLarge: item.isLarge ?? false
+            )
+        } ?? []
+        
         return DemoDataConfiguration(
             assets: assets,
             demoUsers: demoUsers,
             productMappings: productMappings,
             eventIds: eventIds,
             matchDefaults: matchDefaults,
-            offerBanner: offerBanner
+            offerBanner: offerBanner,
+            carouselCards: carouselCards,
+            liveCards: liveCards,
+            sportClips: sportClips
         )
     }
 }

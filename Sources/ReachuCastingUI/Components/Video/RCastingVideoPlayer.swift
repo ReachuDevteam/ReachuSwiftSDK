@@ -1,5 +1,5 @@
 //
-//  ViaplayVideoPlayer.swift
+//  RCastingVideoPlayer.swift
 //  Viaplay
 //
 //  Created by Angelo Sepulveda on 27/10/2025.
@@ -15,14 +15,14 @@ import ReachuEngagementUI
 
 /// Viaplay Video Player with casting support
 /// Simulates a live streaming experience with AirPlay/Chromecast capability
-struct ViaplayVideoPlayer: View {
+public struct RCastingVideoPlayer: View {
     let match: Match
     let onDismiss: () -> Void
     let onNavigateToNextCastingContest: (() -> Void)?
     let onNavigateToPreviousCastingContest: (() -> Void)?
     
     @StateObject private var playerViewModel = VideoPlayerViewModel()
-    @StateObject private var webSocketManager = WebSocketManager()
+    @StateObject private var eventStreamer = EventStreamerManager()
     @StateObject private var campaignManager = CampaignManager.shared
     @StateObject private var productFetchViewModel: ProductFetchViewModel
     @EnvironmentObject private var cartManager: CartManager
@@ -37,7 +37,7 @@ struct ViaplayVideoPlayer: View {
     @State private var isLoadingVideo = true
     @State private var showProductDetail = false
     
-    init(
+    public init(
         match: Match,
         onDismiss: @escaping () -> Void,
         onNavigateToNextCastingContest: (() -> Void)? = nil,
@@ -71,7 +71,7 @@ struct ViaplayVideoPlayer: View {
         verticalSizeClass == .compact
     }
     
-    var body: some View {
+    public var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Video Player Layer
@@ -129,7 +129,7 @@ struct ViaplayVideoPlayer: View {
             }
 
             ZStack {
-                ViaplayChatOverlay(
+                RCastingChatOverlay(
                     showControls: $playerViewModel.showControls,
                     onExpandedChange: { expanded in
                         isChatExpanded = expanded
@@ -151,7 +151,7 @@ struct ViaplayVideoPlayer: View {
             }
             
             // Poll Overlay (alineado con TV2: respeta estado del chat y onVote)
-            if let poll = webSocketManager.currentPoll, showPoll {
+            if let poll = eventStreamer.currentPoll, showPoll {
                 REngagementPollOverlay(
                     question: poll.question,
                     subtitle: nil,
@@ -177,7 +177,7 @@ struct ViaplayVideoPlayer: View {
             }
             
             // Product Overlay (sobre el chat y poll)
-            if let productEvent = webSocketManager.currentProduct, showProduct {
+            if let productEvent = eventStreamer.currentProduct, showProduct {
                 REngagementProductOverlay(
                     product: REngagementProductData(
                         productId: productEvent.productId,
@@ -236,7 +236,7 @@ struct ViaplayVideoPlayer: View {
             }
             
             // Contest Overlay
-            if let contest = webSocketManager.currentContest, showContest {
+            if let contest = eventStreamer.currentContest, showContest {
                 REngagementContestOverlay(
                     name: contest.name,
                     prize: contest.prize,
@@ -284,18 +284,18 @@ struct ViaplayVideoPlayer: View {
             // Enable all orientations for video playback
             setOrientation(.allButUpsideDown)
             
-            // Conectar WebSocket
-            webSocketManager.connect()
+            // Conectar event streamer
+            eventStreamer.connect()
         }
         .onDisappear {
             playerViewModel.cleanup()
             // Return to portrait when dismissed
             setOrientation(.portrait)
             
-            // Desconectar WebSocket
-            webSocketManager.disconnect()
+            // Desconectar event streamer
+            eventStreamer.disconnect()
         }
-        .onReceive(webSocketManager.$currentPoll) { newPoll in
+        .onReceive(eventStreamer.$currentPoll) { newPoll in
             guard let poll = newPoll else { return }
             print("🎯 [VideoPlayer] Poll recibido: \(poll.question)")
             if true {
@@ -316,7 +316,7 @@ struct ViaplayVideoPlayer: View {
                 }
             }
         }
-        .onReceive(webSocketManager.$currentProduct) { newProduct in
+        .onReceive(eventStreamer.$currentProduct) { newProduct in
             guard let product = newProduct else { return }
             print("🎯 [VideoPlayer] Producto recibido: \(product.name)")
             if true {
@@ -334,7 +334,7 @@ struct ViaplayVideoPlayer: View {
                 }
             }
         }
-        .onReceive(webSocketManager.$currentContest) { newContest in
+        .onReceive(eventStreamer.$currentContest) { newContest in
             guard let contest = newContest else { return }
             print("🎁 [VideoPlayer] Concurso recibido: \(contest.name)")
             if true {
@@ -658,18 +658,18 @@ struct ViaplayVideoPlayer: View {
             channelId: config.campaignConfiguration.channelId
         )
         
-        print("🎯 [ViaplayVideoPlayer] Setting up broadcast context: \(broadcastContext.broadcastId)")
+        print("🎯 [RCastingVideoPlayer] Setting up broadcast context: \(broadcastContext.broadcastId)")
         
         if autoDiscover {
             // Use auto-discovery mode
-            print("🎯 [ViaplayVideoPlayer] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
+            print("🎯 [RCastingVideoPlayer] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
             await campaignManager.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
             
             // Set broadcast context to filter components
             await campaignManager.setBroadcastContext(broadcastContext)
         } else {
             // Legacy mode: just set broadcast context if campaign is already loaded
-            print("🎯 [ViaplayVideoPlayer] Legacy mode, setting broadcast context")
+            print("🎯 [RCastingVideoPlayer] Legacy mode, setting broadcast context")
             await campaignManager.setBroadcastContext(broadcastContext)
         }
     }
@@ -689,180 +689,6 @@ struct CustomVideoPlayerView: UIViewControllerRepresentable {
     
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {
         // No updates needed
-    }
-}
-
-// MARK: - View Model
-@MainActor
-class VideoPlayerViewModel: ObservableObject {
-    @Published var player: AVPlayer?
-    @Published var isPlaying = false  // DEMO: Starts paused
-    @Published var showControls = true
-    @Published var progress: Double = 0
-    @Published var currentTimeText = "00:00"
-    @Published var durationText = "2:10:48"
-    @Published var isMuted = true
-    @Published var playbackSpeed: Float = 1.0
-    
-    private var timeObserver: Any?
-    private var controlsTimer: Timer?
-    
-    func setupPlayer() {
-        // Priority 1: Try local video file (if included in bundle)
-        if let localVideoPath = Bundle.main.path(forResource: "match", ofType: "mp4") {
-            let url = URL(fileURLWithPath: localVideoPath)
-            print("🎥 [VideoPlayer] Using local video: match.mp4")
-            initializePlayer(with: url)
-            return
-        }
-        
-        // Priority 2: Load from Firebase Storage (remote video)
-        // This video is hosted on Firebase Storage and works perfectly with AVPlayer
-        print("🌐 [VideoPlayer] Loading video from Firebase Storage...")
-        
-        let firebaseVideoURL = "https://firebasestorage.googleapis.com/v0/b/tipio-1ec97.appspot.com/o/bar.v.psg.1.ucl.01.10.2025.fullmatchsports.com.1080p.mp4?alt=media&token=593ce8a1-0462-4c37-98c3-e399f25e3853"
-        
-        guard let videoURL = URL(string: firebaseVideoURL) else {
-            print("❌ [VideoPlayer] Invalid Firebase URL")
-            return
-        }
-        
-        print("✅ [VideoPlayer] Firebase video URL ready")
-        initializePlayer(with: videoURL)
-    }
-    
-    private func initializePlayer(with url: URL) {
-        print("🎬 [VideoPlayer] Initializing player with URL: \(url)")
-        
-        let playerItem = AVPlayerItem(url: url)
-        let player = AVPlayer(playerItem: playerItem)
-        
-        // Configure audio session for background playback
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .moviePlayback)
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            print("❌ [VideoPlayer] Failed to configure audio session: \(error)")
-        }
-        
-        self.player = player
-        
-        // Start playing immediately
-        player.play()
-        isPlaying = true
-        
-        // Setup time observer
-        setupTimeObserver()
-        
-        // Auto-hide controls after 3 seconds
-        startControlsTimer()
-        
-        print("✅ [VideoPlayer] Player initialized and playing")
-    }
-    
-    private func setupTimeObserver() {
-        guard let player = player else { return }
-        
-        let interval = CMTime(seconds: 0.5, preferredTimescale: CMTimeScale(NSEC_PER_SEC))
-        timeObserver = player.addPeriodicTimeObserver(forInterval: interval, queue: .main) { [weak self] time in
-            guard let self = self else { return }
-            
-            if let duration = player.currentItem?.duration, duration.seconds > 0 {
-                let progress = time.seconds / duration.seconds
-                self.progress = min(max(progress, 0), 1)
-                
-                // Update time text
-                self.currentTimeText = self.formatTime(time.seconds)
-                self.durationText = self.formatTime(duration.seconds)
-            }
-        }
-    }
-    
-    private func formatTime(_ seconds: Double) -> String {
-        let minutes = Int(seconds) / 60
-        let remainingSeconds = Int(seconds) % 60
-        return String(format: "%d:%02d", minutes, remainingSeconds)
-    }
-    
-    func togglePlayPause() {
-        guard let player = player else { return }
-        
-        if isPlaying {
-            player.pause()
-            isPlaying = false
-        } else {
-            player.play()
-            isPlaying = true
-        }
-        
-        startControlsTimer()
-    }
-    
-    func toggleMute() {
-        guard let player = player else { return }
-        
-        isMuted.toggle()
-        player.isMuted = isMuted
-    }
-    
-    func seekBackward() {
-        guard let player = player else { return }
-        let currentTime = player.currentTime()
-        let newTime = CMTime(seconds: max(0, currentTime.seconds - 10), preferredTimescale: currentTime.timescale)
-        player.seek(to: newTime)
-    }
-    
-    func seekForward() {
-        guard let player = player else { return }
-        let currentTime = player.currentTime()
-        let newTime = CMTime(seconds: currentTime.seconds + 10, preferredTimescale: currentTime.timescale)
-        player.seek(to: newTime)
-    }
-    
-    func togglePlaybackSpeed() {
-        guard let player = player else { return }
-        
-        switch playbackSpeed {
-        case 1.0:
-            playbackSpeed = 1.25
-        case 1.25:
-            playbackSpeed = 1.5
-        case 1.5:
-            playbackSpeed = 2.0
-        default:
-            playbackSpeed = 1.0
-        }
-        
-        player.rate = playbackSpeed
-    }
-    
-    func toggleControlsVisibility() {
-        withAnimation(.easeInOut(duration: 0.3)) {
-            showControls.toggle()
-        }
-        
-        if showControls {
-            startControlsTimer()
-        }
-    }
-    
-    private func startControlsTimer() {
-        controlsTimer?.invalidate()
-        controlsTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
-                withAnimation(.easeInOut(duration: 0.3)) {
-                    self?.showControls = false
-                }
-            }
-        }
-    }
-    
-    func cleanup() {
-        timeObserver = nil
-        controlsTimer?.invalidate()
-        controlsTimer = nil
-        player?.pause()
-        player = nil
     }
 }
 
@@ -900,79 +726,9 @@ private func orientationToUIDeviceOrientation(_ mask: UIInterfaceOrientationMask
     }
 }
 
-// MARK: - Overlay Views (legacy - no longer used)
-// ContestOverlayView has been replaced by ViaplayContestOverlay
-struct ContestOverlayView: View {
-    let contest: ContestEventData
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            if let imageUrl = contest.campaignLogo, let url = URL(string: imageUrl) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.3))
-                }
-                .frame(height: 120)
-                .cornerRadius(8)
-            } else {
-                Rectangle()
-                    .fill(Color.gray.opacity(0.3))
-                    .frame(height: 120)
-                    .cornerRadius(8)
-            }
-            
-            VStack(spacing: 8) {
-                Text(contest.name)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                
-                Text("Premie: \(contest.prize)")
-                    .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.8))
-                    .multilineTextAlignment(.center)
-                
-                Text("Frist: \(contest.deadline)")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Color(red: 0.96, green: 0.08, blue: 0.42))
-            }
-            
-            HStack(spacing: 12) {
-                Button(action: {}) {
-                    Text("Delta")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color(red: 0.96, green: 0.08, blue: 0.42))
-                        .cornerRadius(8)
-                }
-                
-                Button(action: onDismiss) {
-                    Text("Lukk")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
-                }
-            }
-        }
-        .padding(20)
-        .background(Color.black.opacity(0.8))
-        .cornerRadius(16)
-    }
-}
-
-struct ViaplayVideoPlayer_Previews: PreviewProvider {
+struct RCastingVideoPlayer_Previews: PreviewProvider {
     static var previews: some View {
-        ViaplayVideoPlayer(match: Match.barcelonaPSG) {
+        RCastingVideoPlayer(match: Match.barcelonaPSG) {
             print("Dismissed")
         }
         .environmentObject(CartManager())

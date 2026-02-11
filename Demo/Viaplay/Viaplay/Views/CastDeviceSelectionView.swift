@@ -1,4 +1,5 @@
 import SwiftUI
+import ReachuCastingUI
 
 /// Vista para seleccionar dispositivo de casting (estilo Viaplay)
 struct CastDeviceSelectionView: View {
@@ -29,7 +30,7 @@ struct CastDeviceSelectionView: View {
                             dismiss()
                         }
                         .font(.system(size: 17))
-                        .foregroundColor(ViaplayTheme.Colors.pink)
+                        .foregroundColor(RCastingTheme.Colors.pink)
                         .padding(.trailing, 16)
                     }
                 )

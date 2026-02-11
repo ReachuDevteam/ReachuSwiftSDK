@@ -1112,6 +1112,62 @@ public struct DemoDataConfiguration {
         }
     }
     
+    // MARK: - Carousel Cards
+    
+    public struct CarouselCardItem: Codable {
+        public let imageUrl: String
+        public let time: String
+        public let logo: String
+        public let title: String
+        public let subtitle: String
+        
+        public init(imageUrl: String = "img1", time: String = "", logo: String = "", title: String = "", subtitle: String = "") {
+            self.imageUrl = imageUrl
+            self.time = time
+            self.logo = logo
+            self.title = title
+            self.subtitle = subtitle
+        }
+    }
+    
+    // MARK: - Live Cards
+    
+    public struct LiveCardItem: Codable {
+        public let logo: String
+        public let logoIcon: String
+        public let title: String
+        public let subtitle: String
+        public let time: String
+        public let backgroundImage: String?
+        
+        public init(logo: String = "", logoIcon: String = "star.fill", title: String = "", subtitle: String = "", time: String = "", backgroundImage: String? = nil) {
+            self.logo = logo
+            self.logoIcon = logoIcon
+            self.title = title
+            self.subtitle = subtitle
+            self.time = time
+            self.backgroundImage = backgroundImage
+        }
+    }
+    
+    // MARK: - Sport Clips
+    
+    public struct SportClipItem: Codable {
+        public let imageUrl: String
+        public let time: String
+        public let title: String
+        public let subtitle: String
+        public let isLarge: Bool
+        
+        public init(imageUrl: String = "img1", time: String = "", title: String = "", subtitle: String = "", isLarge: Bool = false) {
+            self.imageUrl = imageUrl
+            self.time = time
+            self.title = title
+            self.subtitle = subtitle
+            self.isLarge = isLarge
+        }
+    }
+    
     // MARK: - Offer Banner
     
     public struct OfferBannerConfiguration {
@@ -1163,6 +1219,9 @@ public struct DemoDataConfiguration {
     public let eventIds: EventIdConfiguration
     public let matchDefaults: MatchDefaultConfiguration
     public let offerBanner: OfferBannerConfiguration
+    public let carouselCards: [CarouselCardItem]
+    public let liveCards: [LiveCardItem]
+    public let sportClips: [SportClipItem]
     
     public init(
         assets: AssetConfiguration = AssetConfiguration(),
@@ -1170,7 +1229,10 @@ public struct DemoDataConfiguration {
         productMappings: [String: ProductMapping] = [:],
         eventIds: EventIdConfiguration = EventIdConfiguration(),
         matchDefaults: MatchDefaultConfiguration = MatchDefaultConfiguration(),
-        offerBanner: OfferBannerConfiguration = OfferBannerConfiguration()
+        offerBanner: OfferBannerConfiguration = OfferBannerConfiguration(),
+        carouselCards: [CarouselCardItem] = [],
+        liveCards: [LiveCardItem] = [],
+        sportClips: [SportClipItem] = []
     ) {
         self.assets = assets
         self.demoUsers = demoUsers
@@ -1178,6 +1240,9 @@ public struct DemoDataConfiguration {
         self.eventIds = eventIds
         self.matchDefaults = matchDefaults
         self.offerBanner = offerBanner
+        self.carouselCards = carouselCards
+        self.liveCards = liveCards
+        self.sportClips = sportClips
     }
     
     public static let `default` = DemoDataConfiguration()

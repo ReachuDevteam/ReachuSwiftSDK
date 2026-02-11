@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCastingUI
 
 struct MatchLineupView: View {
     let homeLineup: TeamLineup

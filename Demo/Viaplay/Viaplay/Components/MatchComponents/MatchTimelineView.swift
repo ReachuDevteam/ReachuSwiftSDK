@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCastingUI
 
 struct MatchTimelineView: View {
     let timeline: MatchTimeline

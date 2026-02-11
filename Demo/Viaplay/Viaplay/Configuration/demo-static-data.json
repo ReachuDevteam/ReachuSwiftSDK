@@ -122,9 +122,92 @@
         "id": "casting-product-combo",
         "videoTimestamp": 2770,
         "productId": "408895",
-        "productIds": ["408896"],
+        "productIds": [
+          "408896"
+        ],
         "title": "Spesialtilbud på TV og Lyd",
         "description": "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen"
+      }
+    ]
+  },
+  "carouselCards": {
+    "items": [
+      {
+        "imageUrl": "img1",
+        "time": "TONIGHT 20:00",
+        "logo": "LA LIGA",
+        "title": "Real Madrid - Barcelona",
+        "subtitle": "La Liga | 12. runde"
+      },
+      {
+        "imageUrl": "img1",
+        "time": "TONIGHT 21:30",
+        "logo": "PREMIER LEAGUE",
+        "title": "Manchester United - Chelsea",
+        "subtitle": "Premier League | 12. runde"
+      },
+      {
+        "imageUrl": "img1",
+        "time": "TOMORROW 19:00",
+        "logo": "PREMIER LEAGUE",
+        "title": "Liverpool - Arsenal",
+        "subtitle": "Premier League | 12. runde"
+      }
+    ]
+  },
+  "liveCards": {
+    "items": [
+      {
+        "logo": "UEFA",
+        "logoIcon": "star.fill",
+        "title": "Barcelona - PSG",
+        "subtitle": "Champions League",
+        "time": "15:00",
+        "backgroundImage": "bg"
+      },
+      {
+        "logo": "CHALLENGE TOUR",
+        "logoIcon": "globe",
+        "title": "Rolex Grand",
+        "subtitle": "European Challenge",
+        "time": "12:00",
+        "backgroundImage": "img1"
+      }
+    ]
+  },
+  "sportClips": {
+    "items": [
+      {
+        "imageUrl": "img1",
+        "time": "00:51",
+        "title": "Haaland ofret sitt for å redde City-poeng",
+        "subtitle": "PREMIER LEAGUE | 2K. OKTOBER",
+        "isLarge": false
+      },
+      {
+        "imageUrl": "img1",
+        "time": "00:53",
+        "title": "Jørgen Strand Larsen scoring i Premier League",
+        "subtitle": "PREMIER LEAGUE",
+        "isLarge": false
+      }
+    ]
+  },
+  "matches": {
+    "items": [
+      {
+        "broadcastId": "barcelona-psg-2025-01-23",
+        "title": "Barcelona - PSG",
+        "subtitle": "UEFA Champions League",
+        "imageUrl": "img1",
+        "isLive": true
+      },
+      {
+        "broadcastId": "real-madrid-barcelona-2025-01-24",
+        "title": "Real Madrid - Barcelona",
+        "subtitle": "La Liga",
+        "imageUrl": "img1",
+        "isLive": false
       }
     ]
   }

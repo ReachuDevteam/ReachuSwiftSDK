@@ -8,10 +8,14 @@ import Combine
 
 /// Vista que se muestra cuando el casting está activo en Viaplay
 /// Permite controlar el video y ver los overlays mientras se castea
-struct ViaplayCastingActiveView: View {
+public struct RCastingActiveView: View {
     let match: Match
     @StateObject private var castingManager = CastingManager.shared
-    @StateObject private var webSocketManager = WebSocketManager()
+    
+    public init(match: Match) {
+        self.match = match
+    }
+    @StateObject private var eventStreamer = EventStreamerManager()
     @StateObject private var chatManager = ChatManager()
     @StateObject private var campaignManager = CampaignManager.shared
     @EnvironmentObject private var cartManager: CartManager
@@ -36,7 +40,7 @@ struct ViaplayCastingActiveView: View {
         return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
     }
     
-    var body: some View {
+    public var body: some View {
         ZStack {
             // Background
             Image(match.backgroundImage)
@@ -67,7 +71,7 @@ struct ViaplayCastingActiveView: View {
                     .frame(minHeight: 40)
                 
                 // Eventos interactivos
-                if let poll = webSocketManager.currentPoll {
+                if let poll = eventStreamer.currentPoll {
                     REngagementPollCard(
                         question: poll.question,
                         subtitle: nil,
@@ -83,10 +87,10 @@ struct ViaplayCastingActiveView: View {
                             print("📊 [Poll] Votado: \(optionId)")
                         },
                         onDismiss: {
-                            webSocketManager.currentPoll = nil
+                            eventStreamer.currentPoll = nil
                         }
                     )
-                } else if let productEvent = webSocketManager.currentProduct {
+                } else if let productEvent = eventStreamer.currentProduct {
                     REngagementProductCard(
                         product: REngagementProductData(
                             productId: productEvent.productId,
@@ -100,12 +104,12 @@ struct ViaplayCastingActiveView: View {
                             print("🛍️ Producto agregado al carrito")
                         },
                         onDismiss: {
-                            webSocketManager.currentProduct = nil
+                            eventStreamer.currentProduct = nil
                         },
                         onShowDetail: nil
                     )
                     .environmentObject(cartManager)
-                } else if let contest = webSocketManager.currentContest {
+                } else if let contest = eventStreamer.currentContest {
                     let brandConfig = ReachuConfiguration.shared.brandConfiguration
                     
                     REngagementContestCard(
@@ -119,7 +123,7 @@ struct ViaplayCastingActiveView: View {
                         displayTime: contest.deadline,
                         onParticipate: {
                             print("🎁 [Contest] Usuario se unió")
-                            webSocketManager.currentContest = nil
+                            eventStreamer.currentContest = nil
                         }
                     )
                 }
@@ -158,7 +162,7 @@ struct ViaplayCastingActiveView: View {
             await setupBroadcastContext()
         }
         .onAppear {
-            webSocketManager.connect()
+            eventStreamer.connect()
             chatManager.startSimulation()
             
             // Set match start time in VideoSyncManager if available
@@ -168,7 +172,7 @@ struct ViaplayCastingActiveView: View {
             startVideoTimeTimer()
         }
         .onDisappear {
-            webSocketManager.disconnect()
+            eventStreamer.disconnect()
             chatManager.stopSimulation()
             
             // Stop video time timer
@@ -523,18 +527,18 @@ struct ViaplayCastingActiveView: View {
             channelId: config.campaignConfiguration.channelId
         )
         
-        print("🎯 [ViaplayCastingActiveView] Setting up broadcast context: \(broadcastContext.broadcastId)")
+        print("🎯 [RCastingActiveView] Setting up broadcast context: \(broadcastContext.broadcastId)")
         
         if autoDiscover {
             // Use auto-discovery mode
-            print("🎯 [ViaplayCastingActiveView] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
+            print("🎯 [RCastingActiveView] Auto-discovery enabled, discovering campaigns for broadcast: \(broadcastContext.broadcastId)")
             await campaignManager.discoverCampaigns(broadcastId: broadcastContext.broadcastId)
             
             // Set broadcast context to filter components
             await campaignManager.setBroadcastContext(broadcastContext)
         } else {
             // Legacy mode: just set broadcast context if campaign is already loaded
-            print("🎯 [ViaplayCastingActiveView] Legacy mode, setting broadcast context")
+            print("🎯 [RCastingActiveView] Legacy mode, setting broadcast context")
             await campaignManager.setBroadcastContext(broadcastContext)
         }
         
@@ -579,7 +583,7 @@ struct ViaplayCastingActiveView: View {
         VideoSyncManager.shared.updateVideoTime(0)
         
         // Create timer that updates every second
-        // Note: ViaplayCastingActiveView is a struct, so we can't use [weak self]
+        // Note: RCastingActiveView is a struct, so we can't use [weak self]
         // We'll use a local counter and update VideoSyncManager
         var timeCounter = 0
         videoTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
@@ -600,7 +604,7 @@ struct ViaplayCastingActiveView: View {
 }
 
 #Preview {
-    ViaplayCastingActiveView(match: Match.barcelonaPSG)
+    RCastingActiveView(match: Match.barcelonaPSG)
         .environmentObject(CartManager())
 }
 

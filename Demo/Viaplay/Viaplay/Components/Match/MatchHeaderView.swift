@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuCore
+import ReachuCastingUI
 
 struct MatchHeaderView: View {
     let match: Match

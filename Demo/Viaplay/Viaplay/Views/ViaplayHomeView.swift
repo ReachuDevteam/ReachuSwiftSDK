@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuUI
+import ReachuCastingUI
 
 struct ViaplayHomeView: View {
     @Binding var selectedTab: Int
@@ -233,7 +234,7 @@ struct ViaplayHomeView: View {
                 // Bottom Navigation
                 VStack {
                     Spacer()
-                    ViaplayBottomNav(selectedTab: $selectedTab)
+                    RCastingBottomNav(selectedTab: $selectedTab)
                         .frame(width: geometry.size.width)
                 }
             }

@@ -1,5 +1,5 @@
 //
-//  ViaplayBottomNav.swift
+//  RCastingBottomNav.swift
 //  Viaplay
 //
 //  Created by Angelo Sepulveda on 27/10/2025.
@@ -7,10 +7,14 @@
 
 import SwiftUI
 
-struct ViaplayBottomNav: View {
+public struct RCastingBottomNav: View {
     @Binding var selectedTab: Int
     
-    var body: some View {
+    public init(selectedTab: Binding<Int>) {
+        self._selectedTab = selectedTab
+    }
+    
+    public var body: some View {
         HStack(spacing: 0) {
             TabButton(
                 icon: "house.fill",
@@ -80,6 +84,6 @@ struct TabButton: View {
 }
 
 #Preview {
-    ViaplayBottomNav(selectedTab: .constant(0))
-        .background(ViaplayTheme.Colors.black)
+    RCastingBottomNav(selectedTab: .constant(0))
+        .background(RCastingTheme.Colors.black)
 }

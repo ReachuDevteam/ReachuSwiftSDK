@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuCastingUI
 
 struct FinalStatsCard: View {
     let statistics: MatchStatistics

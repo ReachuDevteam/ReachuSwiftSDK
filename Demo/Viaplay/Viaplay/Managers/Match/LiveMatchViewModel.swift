@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import ReachuCastingUI
 
 @MainActor
 class LiveMatchViewModel: ObservableObject {
@@ -139,8 +140,14 @@ class LiveMatchViewModel: ObservableObject {
     // MARK: - Timeline Data Loading
     
     private func loadTimelineData() {
-        // Load rich Barcelona vs PSG timeline
-        let generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
+        // Load timeline based on match
+        let generatedEvents: [AnyTimelineEvent]
+        if match.title.contains("Real Madrid") && match.title.contains("Barcelona") {
+            generatedEvents = TimelineDataGenerator.generateRealMadridBarcelonaTimeline()
+        } else {
+            // Barcelona-PSG and others: use demo timeline
+            generatedEvents = TimelineDataGenerator.generateBarcelonaPSGTimeline()
+        }
         
         print("📊 [LiveMatchViewModel] Loading rich timeline data...")
         print("📊 [LiveMatchViewModel] Total events generated: \(generatedEvents.count)")
@@ -401,27 +408,4 @@ class LiveMatchViewModel: ObservableObject {
     }
     
 }
-
-// MARK: - Match Tab Enum
-
-enum MatchTab: String, CaseIterable {
-    case all = "All"
-    case chat = "Chat"
-    case highlights = "Highlights"
-    case statistics = "Statistics"
-    case polls = "Interaktivt"  // Polls & Contests
-    case liveScores = "Live Scores"
-    
-    var icon: String {
-        switch self {
-        case .all: return "square.grid.2x2"
-        case .chat: return "message"
-        case .highlights: return "play.rectangle"
-        case .liveScores: return "trophy"
-        case .polls: return "hand.raised.fill"
-        case .statistics: return "chart.bar"
-        }
-    }
-}
-
 

@@ -160,6 +160,23 @@ public class DemoDataManager {
     public var offerBannerButtonText: String {
         configuration.offerBanner.buttonText
     }
+    
+    // MARK: - Sport View Data
+    
+    /// Get carousel cards for SportView "Vår beste sport" section
+    public var carouselCards: [DemoDataConfiguration.CarouselCardItem] {
+        configuration.carouselCards
+    }
+    
+    /// Get live cards for SportView "Live akkurat nå" section
+    public var liveCards: [DemoDataConfiguration.LiveCardItem] {
+        configuration.liveCards
+    }
+    
+    /// Get sport clips for SportView "De beste klippene akkurat nå" section
+    public var sportClips: [DemoDataConfiguration.SportClipItem] {
+        configuration.sportClips
+    }
 }
 
 // MARK: - Supporting Enums
