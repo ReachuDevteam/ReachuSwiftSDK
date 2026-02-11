@@ -970,44 +970,44 @@ public struct DemoDataConfiguration {
             public let mainBackground: String
             public let sportDetail: String
             public let sportDetailImage: String
-        }
-        
-        public init(
-            footballField: String = "football_field_bg",
-            mainBackground: String = "bg-main",
-            sportDetail: String = "bg",
-        
-        public init(
-            icon: String = "icon ",
-            logo: String = "logo"
-        ) {
-        
-        public init(
-            giftCard: String = "elkjop_konk",
-            championsLeagueTickets: String = "billeter_power"
-        ) {
-            self.giftCard = giftCard
-            self.championsLeagueTickets = championsLeagueTickets
-        }
-            self.icon = icon
-            self.logo = logo
-        }
-            sportDetailImage: String = "img1"
-        ) {
-            self.footballField = footballField
-            self.mainBackground = mainBackground
-            self.sportDetail = sportDetail
-            self.sportDetailImage = sportDetailImage
+            
+            public init(
+                footballField: String = "football_field_bg",
+                mainBackground: String = "bg-main",
+                sportDetail: String = "bg",
+                sportDetailImage: String = "img1"
+            ) {
+                self.footballField = footballField
+                self.mainBackground = mainBackground
+                self.sportDetail = sportDetail
+                self.sportDetailImage = sportDetailImage
+            }
         }
         
         public struct BrandImageAssets {
             public let icon: String
             public let logo: String
+            
+            public init(
+                icon: String = "icon ",
+                logo: String = "logo"
+            ) {
+                self.icon = icon
+                self.logo = logo
+            }
         }
         
         public struct ContestImageAssets {
             public let giftCard: String
             public let championsLeagueTickets: String
+            
+            public init(
+                giftCard: String = "elkjop_konk",
+                championsLeagueTickets: String = "billeter_power"
+            ) {
+                self.giftCard = giftCard
+                self.championsLeagueTickets = championsLeagueTickets
+            }
         }
         
         public init(
@@ -1119,18 +1119,6 @@ public struct DemoDataConfiguration {
         public let title: String
         public let subtitle: String
         public let discountText: String
-        
-        public init(
-            days: Int = 2,
-            hours: Int = 1,
-            minutes: Int = 59,
-            seconds: Int = 47
-        ) {
-            self.days = days
-            self.hours = hours
-            self.minutes = minutes
-            self.seconds = seconds
-        }
         public let buttonText: String
         
         public struct CountdownConfiguration {
@@ -1138,10 +1126,22 @@ public struct DemoDataConfiguration {
             public let hours: Int
             public let minutes: Int
             public let seconds: Int
+            
+            public init(
+                days: Int = 2,
+                hours: Int = 1,
+                minutes: Int = 59,
+                seconds: Int = 47
+            ) {
+                self.days = days
+                self.hours = hours
+                self.minutes = minutes
+                self.seconds = seconds
+            }
         }
         
         public init(
-            countdown: CountdownConfiguration = CountdownConfiguration(days: 2, hours: 1, minutes: 59, seconds: 47),
+            countdown: CountdownConfiguration = CountdownConfiguration(),
             title: String = "Ukens tilbud",
             subtitle: String = "Se denne ukes beste tilbud",
             discountText: String = "Opp til 30%",
