@@ -54,6 +54,29 @@ public class ConfigurationLoader {
                 return
             }
             
+            // 2.5. Check demo-config for Skistar: use Skistar API key when active=skistar
+            if let configURL = bundle.url(forResource: "demo-config", withExtension: "json") {
+                do {
+                    let data = try Data(contentsOf: configURL)
+                    let demoConfig = try JSONDecoder().decode(DemoConfigJSON.self, from: data)
+                    if let active = demoConfig.active, active.lowercased() == "skistar" {
+                        let skistarPath = bundle.path(forResource: "reachu-config-skistar", ofType: "json", inDirectory: "Configuration")
+                            ?? bundle.path(forResource: "reachu-config-skistar", ofType: "json", inDirectory: "Configuration/brands/skistar")
+                            ?? bundle.path(forResource: "reachu-config-skistar", ofType: "json")
+                        if let path = skistarPath, let data = FileManager.default.contents(atPath: path) {
+                            ReachuLogger.debug("Loading Skistar demo config: reachu-config-skistar.json", component: "Config")
+                            let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
+                            let userCountry = userCountryCode ?? ProcessInfo.processInfo.environment["REACHU_USER_COUNTRY"]
+                            applyConfiguration(config, bundle: bundle, userCountryCode: userCountry)
+                            ReachuLogger.success("Skistar configuration loaded successfully", component: "Config")
+                            return
+                        }
+                    }
+                } catch {
+                    ReachuLogger.debug("Could not check demo-config for Skistar: \(error)", component: "Config")
+                }
+            }
+            
             // 3. Check for config files in order of preference
             let configFiles = [
                 "reachu-config",                 // User custom (highest priority)
@@ -212,7 +235,9 @@ public class ConfigurationLoader {
             productDetailConfig: productDetailConfig,
             localizationConfig: localizationConfig,
             campaignConfig: campaignConfig,
-            analyticsConfig: analyticsConfig
+            analyticsConfig: analyticsConfig,
+            brandConfig: brandConfig,
+            engagementConfig: engagementConfig
         )
         
         // Initialize Stripe automatically if available
@@ -1113,17 +1138,47 @@ private struct PlistConfiguration {
 
 // MARK: - Demo Data Configuration JSON
 
+private struct JSONDemoBrandConfiguration: Codable {
+    let name: String?
+    let iconAsset: String?
+}
+
 private struct JSONDemoDataConfiguration: Codable {
+    let brand: JSONDemoBrandConfiguration?
     let assets: JSONAssetConfiguration?
     let demoUsers: JSONDemoUserConfiguration?
     let productMappings: [String: JSONProductMapping]?
     let eventIds: JSONEventIdConfiguration?
     let matchDefaults: JSONMatchDefaultConfiguration?
     let offerBanner: JSONOfferBannerConfiguration?
+    let timelineEvents: JSONTimelineEventsConfiguration?
     let carouselCards: JSONCarouselCardsConfiguration?
     let liveCards: JSONLiveCardsConfiguration?
     let sportClips: JSONSportClipsConfiguration?
-    let matches: JSONMatchesConfiguration?
+}
+
+private struct JSONTimelineEventsConfiguration: Codable {
+    let castingContests: [JSONCastingContest]?
+    let castingProducts: [JSONCastingProduct]?
+}
+
+private struct JSONCastingContest: Codable {
+    let id: String?
+    let videoTimestamp: Int?
+    let title: String?
+    let description: String?
+    let prize: String?
+    let contestType: String?
+    let imageAsset: String?
+}
+
+private struct JSONCastingProduct: Codable {
+    let id: String?
+    let videoTimestamp: Int?
+    let productId: String?
+    let productIds: [String]?
+    let title: String?
+    let description: String?
 }
 
 private struct JSONCarouselCardsConfiguration: Codable {
@@ -1143,12 +1198,14 @@ private struct JSONLiveCardsConfiguration: Codable {
 }
 
 private struct JSONLiveCardItem: Codable {
+    let broadcastId: String?
     let logo: String?
     let logoIcon: String?
     let title: String?
     let subtitle: String?
     let time: String?
     let backgroundImage: String?
+    let isLive: Bool?
 }
 
 private struct JSONSportClipsConfiguration: Codable {
@@ -1161,18 +1218,6 @@ private struct JSONSportClipItem: Codable {
     let title: String?
     let subtitle: String?
     let isLarge: Bool?
-}
-
-private struct JSONMatchesConfiguration: Codable {
-    let items: [JSONMatchItem]?
-}
-
-private struct JSONMatchItem: Codable {
-    let broadcastId: String?
-    let title: String?
-    let subtitle: String?
-    let imageUrl: String?
-    let isLive: Bool?
 }
 
 private struct JSONAssetConfiguration: Codable {
@@ -1242,9 +1287,18 @@ private struct JSONCountdownConfiguration: Codable {
 
 // MARK: - Demo Data Configuration Loader
 
+private struct DemoConfigJSON: Codable {
+    let active: String?
+    let available: [String]?
+}
+
 extension ConfigurationLoader {
     
     /// Load demo data configuration from JSON file
+    ///
+    /// **Brand variants (demo only):** Priority: 1) REACHU_DEMO_BRAND env var, 2) demo-config.json "active",
+    /// 3) root demo-static-data.json. Edit demo-config.json and change "active" to switch demos.
+    ///
     /// - Parameters:
     ///   - fileName: Name of the JSON file (without extension). Defaults to "demo-static-data"
     ///   - bundle: Bundle to search for the file. Defaults to main bundle
@@ -1253,13 +1307,46 @@ extension ConfigurationLoader {
         fileName: String = "demo-static-data",
         bundle: Bundle = .main
     ) -> DemoDataConfiguration {
-        guard let url = bundle.url(forResource: fileName, withExtension: "json") else {
+        var url: URL?
+
+        // 1. Resolve active brand: env var > demo-config.json > nil
+        var brand: String? = ProcessInfo.processInfo.environment["REACHU_DEMO_BRAND"]
+        if (brand == nil || brand!.isEmpty), let configURL = bundle.url(forResource: "demo-config", withExtension: "json") {
+            do {
+                let data = try Data(contentsOf: configURL)
+                let demoConfig = try JSONDecoder().decode(DemoConfigJSON.self, from: data)
+                if let active = demoConfig.active, !active.isEmpty {
+                    brand = active
+                    ReachuLogger.debug("Demo config: active=\(active)", component: "Config")
+                }
+            } catch {
+                ReachuLogger.debug("Could not load demo-config.json: \(error)", component: "Config")
+            }
+        }
+
+        // 2. If brand resolved, try Configuration/brands/<brand>/<brand>-demo-static-data.json
+        // (Unique filenames per brand avoid "Multiple commands produce" Xcode build conflicts)
+        if let b = brand, !b.isEmpty {
+            let subdirectory = "Configuration/brands/\(b)"
+            let brandFileName = "\(b)-demo-static-data"
+            url = bundle.url(forResource: brandFileName, withExtension: "json", subdirectory: subdirectory)
+            if url != nil {
+                ReachuLogger.debug("Loading demo data from brand variant: \(subdirectory)", component: "Config")
+            }
+        }
+
+        // 3. Fallback: demo-static-data.json (root or Configuration)
+        if url == nil {
+            url = bundle.url(forResource: fileName, withExtension: "json")
+        }
+
+        guard let configURL = url else {
             ReachuLogger.warning("Demo data config file '\(fileName).json' not found, using defaults", component: "Config")
             return DemoDataConfiguration.default
         }
-        
+
         do {
-            let data = try Data(contentsOf: url)
+            let data = try Data(contentsOf: configURL)
             let jsonConfig = try JSONDecoder().decode(JSONDemoDataConfiguration.self, from: data)
             return createDemoDataConfiguration(from: jsonConfig)
         } catch {
@@ -1269,6 +1356,14 @@ extension ConfigurationLoader {
     }
     
     private static func createDemoDataConfiguration(from json: JSONDemoDataConfiguration) -> DemoDataConfiguration {
+        // Brand (optional - overrides reachu-config for demo)
+        let demoBrand = json.brand.map { b in
+            BrandConfiguration(
+                name: b.name ?? "Elkjøp",
+                iconAsset: b.iconAsset ?? "logo1"
+            )
+        }
+        
         // Assets
         let assets = json.assets.map { assetJson in
             DemoDataConfiguration.AssetConfiguration(
@@ -1352,6 +1447,35 @@ extension ConfigurationLoader {
             )
         } ?? DemoDataConfiguration.OfferBannerConfiguration()
         
+        // Timeline Events
+        let castingContests = json.timelineEvents?.castingContests?.compactMap { c -> DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem? in
+            guard let id = c.id, !id.isEmpty else { return nil }
+            return DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem(
+                id: id,
+                videoTimestamp: c.videoTimestamp ?? 2720,
+                title: c.title ?? "Konkurranse",
+                description: c.description ?? "",
+                prize: c.prize ?? "",
+                contestType: c.contestType ?? "quiz",
+                imageAsset: c.imageAsset ?? "elkjop_konk"
+            )
+        } ?? []
+        let castingProducts = json.timelineEvents?.castingProducts?.compactMap { p -> DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem? in
+            guard let id = p.id, !id.isEmpty, let productId = p.productId, !productId.isEmpty else { return nil }
+            return DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem(
+                id: id,
+                videoTimestamp: p.videoTimestamp ?? 2770,
+                productId: productId,
+                productIds: p.productIds ?? [],
+                title: p.title ?? "",
+                description: p.description ?? ""
+            )
+        } ?? []
+        let timelineEvents = DemoDataConfiguration.TimelineEventsConfiguration(
+            castingContests: castingContests,
+            castingProducts: castingProducts
+        )
+        
         // Carousel Cards
         let carouselCards = json.carouselCards?.items?.compactMap { item -> DemoDataConfiguration.CarouselCardItem? in
             guard let title = item.title, let subtitle = item.subtitle else { return nil }
@@ -1367,13 +1491,23 @@ extension ConfigurationLoader {
         // Live Cards
         let liveCards = json.liveCards?.items?.compactMap { item -> DemoDataConfiguration.LiveCardItem? in
             guard let title = item.title, let subtitle = item.subtitle else { return nil }
+            let broadcastId: String
+            if let id = item.broadcastId, !id.isEmpty {
+                broadcastId = id
+            } else if title.contains("Barcelona") && title.contains("PSG") {
+                broadcastId = matchDefaults.broadcastIdMappings["barcelona-psg"] ?? "barcelona-psg-2025-01-23"
+            } else {
+                broadcastId = "unknown-broadcast"
+            }
             return DemoDataConfiguration.LiveCardItem(
+                broadcastId: broadcastId,
                 logo: item.logo ?? "",
                 logoIcon: item.logoIcon ?? "star.fill",
                 title: title,
                 subtitle: subtitle,
                 time: item.time ?? "",
-                backgroundImage: item.backgroundImage
+                backgroundImage: item.backgroundImage,
+                isLive: item.isLive
             )
         } ?? []
         
@@ -1390,12 +1524,14 @@ extension ConfigurationLoader {
         } ?? []
         
         return DemoDataConfiguration(
+            brand: demoBrand,
             assets: assets,
             demoUsers: demoUsers,
             productMappings: productMappings,
             eventIds: eventIds,
             matchDefaults: matchDefaults,
             offerBanner: offerBanner,
+            timelineEvents: timelineEvents,
             carouselCards: carouselCards,
             liveCards: liveCards,
             sportClips: sportClips

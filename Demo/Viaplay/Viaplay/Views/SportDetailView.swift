@@ -9,15 +9,25 @@ import SwiftUI
 import ReachuCore
 import ReachuUI
 import ReachuCastingUI
+import ReachuDesignSystem
 
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var cartManager: CartManager
     @Binding var selectedTab: Int
+    let broadcastId: String?
     let title: String
     let subtitle: String
     let imageUrl: String
     @State private var showVideoPlayer = false
+    
+    init(selectedTab: Binding<Int>, broadcastId: String?, title: String, subtitle: String, imageUrl: String) {
+        self._selectedTab = selectedTab
+        self.broadcastId = broadcastId
+        self.title = title
+        self.subtitle = subtitle
+        self.imageUrl = imageUrl
+    }
     @State private var showLiveMatchView = false
     @StateObject private var castingManager = CastingManager.shared
     @State private var showCastDeviceSelection = false
@@ -335,7 +345,22 @@ struct SportDetailView: View {
     private func createMatchFromDetail() -> Match {
         // Barcelona - PSG: demo con data estática (Live akkurat nå)
         if title.contains("Barcelona") && title.contains("PSG") {
-            return Match.barcelonaPSG
+            let base = Match.barcelonaPSG
+            return Match(
+                homeTeam: base.homeTeam,
+                awayTeam: base.awayTeam,
+                title: base.title,
+                subtitle: base.subtitle,
+                competition: base.competition,
+                venue: base.venue,
+                commentator: base.commentator,
+                isLive: base.isLive,
+                backgroundImage: base.backgroundImage,
+                availability: base.availability,
+                relatedContent: base.relatedContent,
+                campaignLogo: base.campaignLogo,
+                broadcastIdOverride: broadcastId ?? "barcelona-psg-2025-01-23"
+            )
         }
         
         // Real Madrid - Barcelona: target para integración backend (Vår beste sport)
@@ -355,7 +380,8 @@ struct SportDetailView: View {
             backgroundImage: imageUrl,
             availability: .available,
             relatedContent: [],
-            campaignLogo: nil
+            campaignLogo: nil,
+            broadcastIdOverride: broadcastId
         )
     }
 }
@@ -382,9 +408,11 @@ struct DetailRow: View {
 #Preview {
     SportDetailView(
         selectedTab: .constant(1),
+        broadcastId: "lorient-psg-2025",
         title: "Lorient - PSG",
         subtitle: "Ligue 1 | 10. runde",
         imageUrl: "img1"
     )
+    .environmentObject(CartManager())
 }
 

@@ -1133,20 +1133,74 @@ public struct DemoDataConfiguration {
     // MARK: - Live Cards
     
     public struct LiveCardItem: Codable {
+        public let broadcastId: String
         public let logo: String
         public let logoIcon: String
         public let title: String
         public let subtitle: String
         public let time: String
         public let backgroundImage: String?
+        public let isLive: Bool?
         
-        public init(logo: String = "", logoIcon: String = "star.fill", title: String = "", subtitle: String = "", time: String = "", backgroundImage: String? = nil) {
+        public init(broadcastId: String = "", logo: String = "", logoIcon: String = "star.fill", title: String = "", subtitle: String = "", time: String = "", backgroundImage: String? = nil, isLive: Bool? = nil) {
+            self.broadcastId = broadcastId
             self.logo = logo
             self.logoIcon = logoIcon
             self.title = title
             self.subtitle = subtitle
             self.time = time
             self.backgroundImage = backgroundImage
+            self.isLive = isLive
+        }
+    }
+    
+    // MARK: - Timeline Events (casting contests, products)
+    
+    public struct TimelineEventsConfiguration {
+        public let castingContests: [CastingContestItem]
+        public let castingProducts: [CastingProductItem]
+        
+        public struct CastingContestItem {
+            public let id: String
+            public let videoTimestamp: Int
+            public let title: String
+            public let description: String
+            public let prize: String
+            public let contestType: String
+            public let imageAsset: String
+            
+            public init(id: String = "", videoTimestamp: Int = 0, title: String = "", description: String = "", prize: String = "", contestType: String = "quiz", imageAsset: String = "elkjop_konk") {
+                self.id = id
+                self.videoTimestamp = videoTimestamp
+                self.title = title
+                self.description = description
+                self.prize = prize
+                self.contestType = contestType
+                self.imageAsset = imageAsset
+            }
+        }
+        
+        public struct CastingProductItem {
+            public let id: String
+            public let videoTimestamp: Int
+            public let productId: String
+            public let productIds: [String]
+            public let title: String
+            public let description: String
+            
+            public init(id: String = "", videoTimestamp: Int = 0, productId: String = "", productIds: [String] = [], title: String = "", description: String = "") {
+                self.id = id
+                self.videoTimestamp = videoTimestamp
+                self.productId = productId
+                self.productIds = productIds
+                self.title = title
+                self.description = description
+            }
+        }
+        
+        public init(castingContests: [CastingContestItem] = [], castingProducts: [CastingProductItem] = []) {
+            self.castingContests = castingContests
+            self.castingProducts = castingProducts
         }
     }
     
@@ -1213,33 +1267,39 @@ public struct DemoDataConfiguration {
     
     // MARK: - Properties
     
+    public let brand: BrandConfiguration?
     public let assets: AssetConfiguration
     public let demoUsers: DemoUserConfiguration
     public let productMappings: [String: ProductMapping]
     public let eventIds: EventIdConfiguration
     public let matchDefaults: MatchDefaultConfiguration
     public let offerBanner: OfferBannerConfiguration
+    public let timelineEvents: TimelineEventsConfiguration
     public let carouselCards: [CarouselCardItem]
     public let liveCards: [LiveCardItem]
     public let sportClips: [SportClipItem]
     
     public init(
+        brand: BrandConfiguration? = nil,
         assets: AssetConfiguration = AssetConfiguration(),
         demoUsers: DemoUserConfiguration = DemoUserConfiguration(),
         productMappings: [String: ProductMapping] = [:],
         eventIds: EventIdConfiguration = EventIdConfiguration(),
         matchDefaults: MatchDefaultConfiguration = MatchDefaultConfiguration(),
         offerBanner: OfferBannerConfiguration = OfferBannerConfiguration(),
+        timelineEvents: TimelineEventsConfiguration = TimelineEventsConfiguration(),
         carouselCards: [CarouselCardItem] = [],
         liveCards: [LiveCardItem] = [],
         sportClips: [SportClipItem] = []
     ) {
+        self.brand = brand
         self.assets = assets
         self.demoUsers = demoUsers
         self.productMappings = productMappings
         self.eventIds = eventIds
         self.matchDefaults = matchDefaults
         self.offerBanner = offerBanner
+        self.timelineEvents = timelineEvents
         self.carouselCards = carouselCards
         self.liveCards = liveCards
         self.sportClips = sportClips

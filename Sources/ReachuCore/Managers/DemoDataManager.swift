@@ -87,6 +87,16 @@ public class DemoDataManager {
     public func socialAccount(named name: String) -> DemoDataConfiguration.DemoUserConfiguration.SocialAccount? {
         configuration.demoUsers.socialAccounts.first { $0.name == name }
     }
+
+    /// Get all chat usernames for timeline events
+    public var chatUsernames: [DemoDataConfiguration.DemoUserConfiguration.ChatUsername] {
+        configuration.demoUsers.chatUsernames
+    }
+
+    /// Get all social accounts for timeline events
+    public var socialAccounts: [DemoDataConfiguration.DemoUserConfiguration.SocialAccount] {
+        configuration.demoUsers.socialAccounts
+    }
     
     // MARK: - Product Mappings
     
@@ -120,6 +130,18 @@ public class DemoDataManager {
     /// Get event ID for product combo
     public var productComboEventId: String {
         configuration.eventIds.productCombo
+    }
+    
+    // MARK: - Timeline Events
+    
+    /// Get casting contest events for timeline
+    public var castingContests: [DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem] {
+        configuration.timelineEvents.castingContests
+    }
+    
+    /// Get casting product events for timeline
+    public var castingProducts: [DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem] {
+        configuration.timelineEvents.castingProducts
     }
     
     // MARK: - Match Defaults

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuDesignSystem
 
 struct MOTMVotingCard: View {
     let topPlayers: [PlayerCandidate]

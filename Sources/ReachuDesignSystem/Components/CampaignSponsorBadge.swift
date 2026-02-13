@@ -40,7 +40,7 @@ public struct CampaignSponsorBadge: View {
                 .font(.system(size: 9, weight: .medium))
                 .foregroundColor(colors.textSecondary)
             
-            // Campaign logo from CampaignManager with caching
+            // Campaign logo from CampaignManager with caching; fallback to brand logo (e.g. Elkjøp, Skistar) when no campaign
             if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
                 CachedAsyncImage(url: url) { image in
                     image
@@ -48,15 +48,16 @@ public struct CampaignSponsorBadge: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: maxWidth, maxHeight: maxHeight)
                 } placeholder: {
-                    // Placeholder will be instant if cached
                     Rectangle()
                         .fill(colors.surfaceSecondary)
                         .frame(maxWidth: maxWidth, maxHeight: maxHeight)
                 }
             } else {
-                // Fallback placeholder if no campaign logo
-                Rectangle()
-                    .fill(colors.surfaceSecondary)
+                // Fallback: use brand logo from demo/reachu config (Elkjøp, Skistar, etc.)
+                let iconAsset = ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset
+                Image(iconAsset)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: maxWidth, maxHeight: maxHeight)
             }
         }

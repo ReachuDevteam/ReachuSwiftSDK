@@ -7,6 +7,7 @@
 
 import Foundation
 import ReachuCore
+import ReachuDesignSystem
 
 /// Helper to manage cache clearing for both campaign data and images
 struct CacheHelper {

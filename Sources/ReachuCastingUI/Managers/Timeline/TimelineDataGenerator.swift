@@ -5,6 +5,8 @@
 
 import Foundation
 import SwiftUI
+import ReachuCore
+import ReachuDesignSystem
 
 public struct TimelineDataGenerator {
 
@@ -180,102 +182,88 @@ public struct TimelineDataGenerator {
             metadata: ["type": "halftime"]
         )))
         
-        // MARK: - Casting Events (during halftime break)
-        
-        // Casting Contest 1: Quiz with gift card prize
-        events.append(AnyTimelineEvent(CastingContestEvent(
-            id: "power-contest-quiz",
-            videoTimestamp: 2720,
-            title: "Elkjøp Konkurranse",
-            description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
-            prize: "Gavekort på 5000kr",
-            contestType: .quiz,
-            // Asset mapping: gavekortpower (Casting) -> elkjop_konk (Elkjøp)
-            // Legacy Casting asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
-            metadata: ["imageAsset": "elkjop_konk"],
-            broadcastContext: nil
-        )))
-        
-        // Chat between Casting events
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2725,
-            username: "PowerFan",
-            text: "Dette er en fantastisk mulighet! 🎁",
-            usernameColor: .orange,
-            likes: 12
-        )))
-        
-        // Tweet between Casting events
-        events.append(AnyTimelineEvent(TweetEvent(
-            id: "tweet-halftime-1",
-            videoTimestamp: 2730,
-            authorName: "Power Norge",
-            authorHandle: "@PowerNorge",
-            authorAvatar: nil,
-            tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽",
-            isVerified: true,
-            likes: 234,
-            retweets: 89,
-            metadata: nil
-        )))
-        
-        // Casting Contest 2: Giveaway with Champions League tickets
-        events.append(AnyTimelineEvent(CastingContestEvent(
-            id: "power-contest-giveaway",
-            videoTimestamp: 2750,
-            title: "Elkjøp Konkurranse",
-            description: "Delta og vinn to billetter til Champions League",
-            prize: "To billetter til Champions League",
-            contestType: .giveaway,
-            metadata: ["imageAsset": "billeter_power"],
-            broadcastContext: nil
-        )))
-        
-        // Chat between Casting events
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2755,
-            username: "ChampionsFan",
-            text: "Billetter til Champions League?! Jeg må delta! 🎫",
-            usernameColor: .purple,
-            likes: 18
-        )))
-        
-        // Tweet between Casting events
-        events.append(AnyTimelineEvent(TweetEvent(
-            id: "tweet-halftime-2",
-            videoTimestamp: 2760,
-            authorName: "Viaplay Sport",
-            authorHandle: "@ViaplaySport",
-            authorAvatar: nil,
-            tweetText: "Spennende konkurranser under pausen! Delta nå! 🏆",
-            isVerified: true,
-            likes: 456,
-            retweets: 123,
-            metadata: nil
-        )))
-        
-        // Casting Product: Combined product event with both TV and Soundbar
-        events.append(AnyTimelineEvent(CastingProductEvent(
-            id: "power-product-combo",
-            videoTimestamp: 2770,  // During halftime
-            productId: "408895",  // Primary product: Samsung TV
-            productIds: ["408896"],  // Additional product: Samsung Soundbar
-            title: "Spesialtilbud på TV og Lyd",
-            description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
-            castingProductUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
-            castingCheckoutUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
-            imageAsset: nil,
-            metadata: nil
-        )))
-        
-        // Chat after Casting product
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2775,
-            username: "TechLover",
-            text: "25% rabatt?! Dette må jeg sjekke ut! 📺",
-            usernameColor: .cyan,
-            likes: 9
-        )))
+        // MARK: - Casting Events (during halftime break) - from DemoDataManager
+        let dm = DemoDataManager.shared
+        let contests = dm.castingContests
+        let products = dm.castingProducts
+        let chatUsernames = dm.chatUsernames
+        let socialAccounts = dm.socialAccounts
+
+        var castingTimestamp = 2720
+        for (idx, c) in contests.enumerated() {
+            events.append(AnyTimelineEvent(CastingContestEvent(
+                id: c.id,
+                videoTimestamp: TimeInterval(c.videoTimestamp),
+                title: c.title,
+                description: c.description,
+                prize: c.prize,
+                contestType: c.contestType == "giveaway" ? .giveaway : .quiz,
+                metadata: ["imageAsset": c.imageAsset],
+                broadcastContext: nil
+            )))
+            castingTimestamp = c.videoTimestamp + 5
+            if idx < chatUsernames.count {
+                let u = chatUsernames[idx]
+                events.append(AnyTimelineEvent(ChatMessageEvent(
+                    videoTimestamp: TimeInterval(castingTimestamp),
+                    username: u.name,
+                    text: "Dette er en fantastisk mulighet! 🎁",
+                    usernameColor: Color(hex: u.color) ?? .orange,
+                    likes: 12
+                )))
+                castingTimestamp += 5
+            }
+            if idx < socialAccounts.count {
+                let s = socialAccounts[idx]
+                events.append(AnyTimelineEvent(TweetEvent(
+                    id: "tweet-halftime-\(idx+1)",
+                    videoTimestamp: TimeInterval(castingTimestamp),
+                    authorName: s.name,
+                    authorHandle: s.handle,
+                    authorAvatar: nil,
+                    tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽",
+                    isVerified: s.verified,
+                    likes: 234,
+                    retweets: 89,
+                    metadata: nil
+                )))
+                castingTimestamp += 20
+            }
+        }
+        if contests.isEmpty {
+            castingTimestamp = 2720
+        }
+
+        for (idx, p) in products.enumerated() {
+            let productUrl = dm.productUrl(for: p.productId)
+            let checkoutUrl = dm.checkoutUrl(for: p.productId)
+            events.append(AnyTimelineEvent(CastingProductEvent(
+                id: p.id,
+                videoTimestamp: TimeInterval(p.videoTimestamp),
+                productId: p.productId,
+                productIds: p.productIds,
+                title: p.title,
+                description: p.description,
+                castingProductUrl: productUrl,
+                castingCheckoutUrl: checkoutUrl,
+                imageAsset: nil,
+                metadata: nil
+            )))
+            if idx < chatUsernames.count, chatUsernames.count > contests.count {
+                let u = chatUsernames[min(contests.count + idx, chatUsernames.count - 1)]
+                events.append(AnyTimelineEvent(ChatMessageEvent(
+                    videoTimestamp: TimeInterval(p.videoTimestamp + 5),
+                    username: u.name,
+                    text: "Dette må jeg sjekke ut! 📺",
+                    usernameColor: Color(hex: u.color) ?? .cyan,
+                    likes: 9
+                )))
+            }
+        }
+
+        if contests.isEmpty && products.isEmpty {
+            events.append(contentsOf: Self.fallbackCastingEvents())
+        }
         
         // MARK: - Casting Products (moved to halftime)
         
@@ -1454,5 +1442,115 @@ public struct TimelineDataGenerator {
         }
         
         return chatEvents.sorted { $0.videoTimestamp < $1.videoTimestamp }
+    }
+
+    private static func fallbackCastingEvents() -> [AnyTimelineEvent] {
+        let dm = DemoDataManager.shared
+        let brandName = ReachuConfiguration.shared.effectiveBrandConfiguration.name
+        let isSkistar = brandName.lowercased().contains("skistar") || brandName.lowercased().contains("ski star")
+
+        if isSkistar {
+            // Skistar demo: vinterferie med 20% rabatt (Reachu ID 408897)
+            let productTitle = "Ikke gå glipp av muligheten til å bestille ferien din for vinterferien – få 20% eksklusiv rabatt kun under pausen"
+            let skistarUrl1 = "https://www.skistar.com/no/online-booking/Catalog2/?r=5&an=2&ad=2026-02-28&sid=21823&aid=21901_260228_260307_1_L_1002&fl=1"
+            let skistarUrl2 = "https://www.skistar.com/no/online-booking/Catalog2/?r=5&an=2&ad=2026-02-28&sid=21823&aid=22050_260228_260307_1_L_1002&fl=1"
+            // Ambos productos usan Reachu ID 408897; cada card tiene su propia URL
+            let productUrl1 = dm.productUrl(for: "408897") ?? skistarUrl1
+            let checkoutUrl1 = dm.checkoutUrl(for: "408897") ?? skistarUrl1
+            return [
+                AnyTimelineEvent(CastingContestEvent(
+                    id: "skistar-contest-quiz",
+                    videoTimestamp: 2720,
+                    title: "Ski Star Konkurranse",
+                    description: "Delta og vinn ei feriepakke til skifjellet – svar på 3 spørsmål om ski og vinterferie",
+                    prize: "Feriepakke til skifjellet",
+                    contestType: .quiz,
+                    metadata: ["imageAsset": "competitio-skistar-1"],
+                    broadcastContext: nil
+                )),
+                AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2725, username: "SnowLover", text: "Dette er en fantastisk mulighet! 🎿", usernameColor: .cyan, likes: 12)),
+                AnyTimelineEvent(TweetEvent(id: "tweet-halftime-1", videoTimestamp: 2730, authorName: "Ski Star Resort", authorHandle: "@SkiStarResort", authorAvatar: nil, tweetText: "Ikke gå glipp av feriepakken til skifjellet! 🏔️", isVerified: true, likes: 234, retweets: 89, metadata: nil)),
+                AnyTimelineEvent(CastingContestEvent(
+                    id: "skistar-contest-giveaway",
+                    videoTimestamp: 2750,
+                    title: "Ski Star Konkurranse",
+                    description: "Delta og vinn ei feriepakke til skifjellet for to personer – inkluderer overnatting og skiløyper",
+                    prize: "Feriepakke til skifjellet for 2 personer",
+                    contestType: .giveaway,
+                    metadata: ["imageAsset": "competitio-skistar-2"],
+                    broadcastContext: nil
+                )),
+                AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2755, username: "AlpineFan", text: "Feriepakke til skifjellet?! Jeg må delta! ⛷️", usernameColor: .purple, likes: 18)),
+                AnyTimelineEvent(TweetEvent(id: "tweet-halftime-2", videoTimestamp: 2760, authorName: "Viaplay Sport", authorHandle: "@ViaplaySport", authorAvatar: nil, tweetText: "Spennende konkurranser under pausen! Delta nå! 🏆", isVerified: true, likes: 456, retweets: 123, metadata: nil)),
+                AnyTimelineEvent(CastingProductEvent(
+                    id: "skistar-product-1",
+                    videoTimestamp: 2770,
+                    productId: "408897",
+                    productIds: ["408897"],
+                    title: productTitle,
+                    description: productTitle,
+                    castingProductUrl: productUrl1,
+                    castingCheckoutUrl: checkoutUrl1,
+                    imageAsset: nil,
+                    metadata: nil
+                )),
+                AnyTimelineEvent(CastingProductEvent(
+                    id: "skistar-product-2",
+                    videoTimestamp: 2775,
+                    productId: "408897",
+                    productIds: ["408897"],
+                    title: productTitle,
+                    description: productTitle,
+                    castingProductUrl: skistarUrl2,
+                    castingCheckoutUrl: skistarUrl2,
+                    imageAsset: nil,
+                    metadata: nil
+                )),
+                AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2780, username: "SlopeMaster", text: "20% rabatt?! Dette må jeg sjekke ut! ⛷️", usernameColor: .green, likes: 9))
+            ]
+        }
+
+        // Elkjøp demo (default)
+        let productUrl = dm.productUrl(for: "408895")
+        let checkoutUrl = dm.checkoutUrl(for: "408895")
+        return [
+            AnyTimelineEvent(CastingContestEvent(
+                id: "power-contest-quiz",
+                videoTimestamp: 2720,
+                title: "Elkjøp Konkurranse",
+                description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
+                prize: "Gavekort på 5000kr",
+                contestType: .quiz,
+                metadata: ["imageAsset": "elkjop_konk"],
+                broadcastContext: nil
+            )),
+            AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2725, username: "PowerFan", text: "Dette er en fantastisk mulighet! 🎁", usernameColor: .orange, likes: 12)),
+            AnyTimelineEvent(TweetEvent(id: "tweet-halftime-1", videoTimestamp: 2730, authorName: "Power Norge", authorHandle: "@PowerNorge", authorAvatar: nil, tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽", isVerified: true, likes: 234, retweets: 89, metadata: nil)),
+            AnyTimelineEvent(CastingContestEvent(
+                id: "power-contest-giveaway",
+                videoTimestamp: 2750,
+                title: "Elkjøp Konkurranse",
+                description: "Delta og vinn to billetter til Champions League",
+                prize: "To billetter til Champions League",
+                contestType: .giveaway,
+                metadata: ["imageAsset": "billeter_power"],
+                broadcastContext: nil
+            )),
+            AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2755, username: "ChampionsFan", text: "Billetter til Champions League?! Jeg må delta! 🎫", usernameColor: .purple, likes: 18)),
+            AnyTimelineEvent(TweetEvent(id: "tweet-halftime-2", videoTimestamp: 2760, authorName: "Viaplay Sport", authorHandle: "@ViaplaySport", authorAvatar: nil, tweetText: "Spennende konkurranser under pausen! Delta nå! 🏆", isVerified: true, likes: 456, retweets: 123, metadata: nil)),
+            AnyTimelineEvent(CastingProductEvent(
+                id: "power-product-combo",
+                videoTimestamp: 2770,
+                productId: "408895",
+                productIds: ["408896"],
+                title: "Spesialtilbud på TV og Lyd",
+                description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
+                castingProductUrl: productUrl,
+                castingCheckoutUrl: checkoutUrl,
+                imageAsset: nil,
+                metadata: nil
+            )),
+            AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2775, username: "TechLover", text: "25% rabatt?! Dette må jeg sjekke ut! 📺", usernameColor: .cyan, likes: 9))
+        ]
     }
 }

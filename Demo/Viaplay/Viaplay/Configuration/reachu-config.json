@@ -1,13 +1,18 @@
 {
   "name": "Viaplay Demo Configuration",
   "version": "1.0.0",
-  "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
+  "apiKey": "TRH6T7T-PQM4618-K383SFE-ZA8DZG2",
   "environment": "development",
   "theme": {
-    "name": "Elkjøp Theme",
+    "name": "Ski Star Theme",
     "mode": "dark",
     "_brandColors": {
       "_comment": "Brand color references for documentation",
+      "skistar": {
+        "primary": "#BF2317",
+        "secondary": "#FFFFFF",
+        "description": "Ski Star red and white"
+      },
       "elkjøp": {
         "primary": "#69A333",
         "description": "Elkjøp green - used as primary color"
@@ -19,8 +24,8 @@
       }
     },
     "lightColors": {
-      "primary": "#69A333",
-      "secondary": "#9933FF",
+      "primary": "#BF2317",
+      "secondary": "#FFFFFF",
       "background": "#FFFFFF",
       "surface": "#F5F5F5",
       "surfaceSecondary": "#E0E0E0",
@@ -34,11 +39,11 @@
       "textOnPrimary": "#FFFFFF",
       "border": "#E0E0E0",
       "borderSecondary": "#BDBDBD",
-      "priceColor": "#69A333"
+      "priceColor": "#BF2317"
     },
     "darkColors": {
-      "primary": "#69A333",
-      "secondary": "#9933FF",
+      "primary": "#BF2317",
+      "secondary": "#FFFFFF",
       "background": "#1B1B25",
       "surface": "#161B22",
       "surfaceSecondary": "#21262D",
@@ -52,7 +57,7 @@
       "textOnPrimary": "#FFFFFF",
       "border": "#21262D",
       "borderSecondary": "#4A4A4A",
-      "priceColor": "#69A333"
+      "priceColor": "#BF2317"
     }
   },
   "typography": {
@@ -126,7 +131,7 @@
   "liveShow": {
     "campaignId": 28,
     "tipio": {
-      "apiKey": "KCXF10Y-W5T4PCR-GG5119A-Z64SQ9S",
+      "apiKey": "TRH6T7T-PQM4618-K383SFE-ZA8DZG2",
       "baseUrl": "https://stg-dev-microservices.tipioapp.com"
     }
   },
@@ -150,15 +155,15 @@
   "campaigns": {
     "webSocketBaseURL": "https://dev-campaing.reachu.io",
     "restAPIBaseURL": "https://dev-campaing.reachu.io",
-    "campaignAdminApiKey": "xxl_api_key_507d4014243d8360",
+    "campaignAdminApiKey": "viaplay_api_key_0c611e983b314ff8",
     "_comment": "autoDiscover: true = use auto-discovery endpoint (/v1/sdk/campaigns), false = use legacy single campaign mode (campaignId from liveShow.campaignId)",
     "autoDiscover": true,
     "_comment2": "channelId: Optional channel ID for broadcast context. Can be null.",
     "channelId": null
   },
   "brand": {
-    "name": "Elkjøp",
-    "iconAsset": "avatar_el",
+    "name": "Ski Star",
+    "iconAsset": "skistar-logo",
     "_comment": "Brand configuration for engagement components. Legacy Power values: name='Power', iconAsset='avatar_power'"
   },
   "engagement": {

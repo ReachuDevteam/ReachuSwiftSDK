@@ -8,6 +8,8 @@
 
 import Foundation
 import SwiftUI
+import ReachuCore
+import ReachuDesignSystem
 
 struct TimelineDataGenerator {
     
@@ -185,100 +187,105 @@ struct TimelineDataGenerator {
         
         // MARK: - Casting Events (during halftime break)
         
-        // Casting Contest 1: Quiz with gift card prize
-        events.append(AnyTimelineEvent(CastingContestEvent(
-            id: "power-contest-quiz",
-            videoTimestamp: 2720,
-            title: "Elkjøp Konkurranse",
-            description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
-            prize: "Gavekort på 5000kr",
-            contestType: .quiz,
-            // Asset mapping: gavekortpower (Casting) -> elkjop_konk (Elkjøp)
-            // Legacy Casting asset preserved: gavekortpower (full contest graphic with orange background, gift box, gift card)
-            metadata: ["imageAsset": "elkjop_konk"],
-            broadcastContext: nil
-        )))
+        // Casting Contests: from DemoDataManager (per brand)
+        let dm = DemoDataManager.shared
+        let contests = dm.castingContests
+        let chatUsernames = dm.chatUsernames
+        let socialAccounts = dm.socialAccounts
+        var ts = 2720
+        for (idx, c) in contests.enumerated() {
+            events.append(AnyTimelineEvent(CastingContestEvent(
+                id: c.id,
+                videoTimestamp: TimeInterval(c.videoTimestamp),
+                title: c.title,
+                description: c.description,
+                prize: c.prize,
+                contestType: c.contestType == "giveaway" ? .giveaway : .quiz,
+                metadata: ["imageAsset": c.imageAsset],
+                broadcastContext: nil
+            )))
+            ts = c.videoTimestamp + 5
+            if idx < chatUsernames.count {
+                let u = chatUsernames[idx]
+                events.append(AnyTimelineEvent(ChatMessageEvent(
+                    videoTimestamp: TimeInterval(ts),
+                    username: u.name,
+                    text: "Dette er en fantastisk mulighet! 🎁",
+                    usernameColor: Color(hex: u.color),
+                    likes: 12
+                )))
+                ts += 5
+            }
+            if idx < socialAccounts.count {
+                let s = socialAccounts[idx]
+                events.append(AnyTimelineEvent(TweetEvent(
+                    id: "tweet-halftime-\(idx+1)",
+                    videoTimestamp: TimeInterval(ts),
+                    authorName: s.name,
+                    authorHandle: s.handle,
+                    authorAvatar: nil,
+                    tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽",
+                    isVerified: s.verified,
+                    likes: 234,
+                    retweets: 89,
+                    metadata: nil
+                )))
+                ts += 20
+            }
+        }
+        if contests.isEmpty {
+            ts = 2720
+        }
         
-        // Chat between Casting events
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2725,
-            username: "PowerFan",
-            text: "Dette er en fantastisk mulighet! 🎁",
-            usernameColor: .orange,
-            likes: 12
-        )))
-        
-        // Tweet between Casting events
-        events.append(AnyTimelineEvent(TweetEvent(
-            id: "tweet-halftime-1",
-            videoTimestamp: 2730,
-            authorName: "Power Norge",
-            authorHandle: "@PowerNorge",
-            authorAvatar: nil,
-            tweetText: "Ikke gå glipp av våre eksklusive tilbud under kampen! 🛒⚽",
-            isVerified: true,
-            likes: 234,
-            retweets: 89,
-            metadata: nil
-        )))
-        
-        // Casting Contest 2: Giveaway with Champions League tickets
-        events.append(AnyTimelineEvent(CastingContestEvent(
-            id: "power-contest-giveaway",
-            videoTimestamp: 2750,
-            title: "Elkjøp Konkurranse",
-            description: "Delta og vinn to billetter til Champions League",
-            prize: "To billetter til Champions League",
-            contestType: .giveaway,
-            metadata: ["imageAsset": "billeter_power"],
-            broadcastContext: nil
-        )))
-        
-        // Chat between Casting events
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2755,
-            username: "ChampionsFan",
-            text: "Billetter til Champions League?! Jeg må delta! 🎫",
-            usernameColor: .purple,
-            likes: 18
-        )))
-        
-        // Tweet between Casting events
-        events.append(AnyTimelineEvent(TweetEvent(
-            id: "tweet-halftime-2",
-            videoTimestamp: 2760,
-            authorName: "Viaplay Sport",
-            authorHandle: "@ViaplaySport",
-            authorAvatar: nil,
-            tweetText: "Spennende konkurranser under pausen! Delta nå! 🏆",
-            isVerified: true,
-            likes: 456,
-            retweets: 123,
-            metadata: nil
-        )))
-        
-        // Casting Product: Combined product event with both TV and Soundbar
-        events.append(AnyTimelineEvent(CastingProductEvent(
-            id: "power-product-combo",
-            videoTimestamp: 2770,  // During halftime
-            productId: "408895",  // Primary product: Samsung TV
-            productIds: ["408896"],  // Additional product: Samsung Soundbar
-            title: "Spesialtilbud på TV og Lyd",
-            description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
-            castingProductUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
-            castingCheckoutUrl: "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
-            imageAsset: nil,
-            metadata: nil
-        )))
-        
-        // Chat after Casting product
-        events.append(AnyTimelineEvent(ChatMessageEvent(
-            videoTimestamp: 2775,
-            username: "TechLover",
-            text: "25% rabatt?! Dette må jeg sjekke ut! 📺",
-            usernameColor: .cyan,
-            likes: 9
-        )))
+        // Casting Product: from DemoDataManager (URLs, texts per brand)
+        for p in dm.castingProducts {
+            let productUrl = dm.productUrl(for: p.productId)
+            let checkoutUrl = dm.checkoutUrl(for: p.productId)
+            events.append(AnyTimelineEvent(CastingProductEvent(
+                id: p.id,
+                videoTimestamp: TimeInterval(p.videoTimestamp),
+                productId: p.productId,
+                productIds: p.productIds.isEmpty ? nil : p.productIds,
+                title: p.title,
+                description: p.description,
+                castingProductUrl: productUrl,
+                castingCheckoutUrl: checkoutUrl,
+                imageAsset: nil,
+                metadata: nil
+            )))
+            if let u = dm.chatUsernames.last {
+                events.append(AnyTimelineEvent(ChatMessageEvent(
+                    videoTimestamp: TimeInterval(p.videoTimestamp + 5),
+                    username: u.name,
+                    text: "Dette må jeg sjekke ut! 📺",
+                    usernameColor: Color(hex: u.color),
+                    likes: 9
+                )))
+            }
+        }
+        if dm.castingProducts.isEmpty {
+            let productUrl = dm.productUrl(for: "408895")
+            let checkoutUrl = dm.checkoutUrl(for: "408895")
+            events.append(AnyTimelineEvent(CastingProductEvent(
+                id: "power-product-combo",
+                videoTimestamp: 2770,
+                productId: "408895",
+                productIds: ["408896"],
+                title: "Spesialtilbud på TV og Lyd",
+                description: "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen",
+                castingProductUrl: productUrl,
+                castingCheckoutUrl: checkoutUrl,
+                imageAsset: nil,
+                metadata: nil
+            )))
+            events.append(AnyTimelineEvent(ChatMessageEvent(
+                videoTimestamp: 2775,
+                username: "TechLover",
+                text: "25% rabatt?! Dette må jeg sjekke ut! 📺",
+                usernameColor: .cyan,
+                likes: 9
+            )))
+        }
         
         // MARK: - Casting Products (moved to halftime)
         

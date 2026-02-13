@@ -143,8 +143,9 @@ public class CampaignManager: ObservableObject {
             campaignId: campaignId,
             broadcastId: currentBroadcastContext?.broadcastId
         ) {
-            // Update ReachuConfiguration with dynamic config
-            if let brandConfig = config.brand {
+            // Update ReachuConfiguration with dynamic config (skip brand in demo mode - demo brand takes precedence)
+            let isDemoMode = ReachuConfiguration.shared.engagementConfiguration.demoMode
+            if let brandConfig = config.brand, !isDemoMode {
                 ReachuConfiguration.shared.updateDynamicBrandConfig(brandConfig)
             }
             if let engagementConfig = config.engagement {

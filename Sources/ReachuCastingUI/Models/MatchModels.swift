@@ -21,6 +21,8 @@ public struct Match: Identifiable {
     public let availability: MatchAvailability
     public let relatedContent: [RelatedTeam]
     public let campaignLogo: String?
+    /// Override for broadcast context when provided via liveCards config
+    public let broadcastIdOverride: String?
 
     public init(
         id: UUID = UUID(),
@@ -35,7 +37,8 @@ public struct Match: Identifiable {
         backgroundImage: String,
         availability: MatchAvailability,
         relatedContent: [RelatedTeam],
-        campaignLogo: String?
+        campaignLogo: String?,
+        broadcastIdOverride: String? = nil
     ) {
         self.id = id
         self.homeTeam = homeTeam
@@ -50,6 +53,7 @@ public struct Match: Identifiable {
         self.availability = availability
         self.relatedContent = relatedContent
         self.campaignLogo = campaignLogo
+        self.broadcastIdOverride = broadcastIdOverride
     }
 }
 
@@ -114,7 +118,7 @@ public struct RelatedTeam: Identifiable {
 extension Match {
     /// Creates a BroadcastContext from Match for SDK integration
     public func toBroadcastContext(channelId: Int? = nil) -> BroadcastContext {
-        let broadcastId = generateBroadcastId()
+        let broadcastId = broadcastIdOverride ?? generateBroadcastId()
         return BroadcastContext(
             broadcastId: broadcastId,
             broadcastName: title,

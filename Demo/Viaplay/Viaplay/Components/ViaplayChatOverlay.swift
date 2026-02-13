@@ -1,6 +1,7 @@
 // Copiado y adaptado de TV2ChatOverlay.swift de tv2demo
 import SwiftUI
 import Combine
+import ReachuDesignSystem
 
 // Import shared chat models
 import struct Viaplay.ChatMessage

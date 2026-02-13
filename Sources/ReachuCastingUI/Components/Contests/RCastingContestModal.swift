@@ -74,7 +74,7 @@ struct CastingContestModal: View {
             VStack(spacing: 0) {
                 // Header with logo
                 HStack {
-                    // Campaign logo
+                    // Campaign logo or brand logo fallback (Skistar, Elkjøp, etc.)
                     if let logoUrl = campaignManager.currentCampaign?.campaignLogo {
                         AsyncImage(url: URL(string: logoUrl)) { phase in
                             switch phase {
@@ -93,6 +93,11 @@ struct CastingContestModal: View {
                                 EmptyView()
                             }
                         }
+                    } else {
+                        Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(height: 30)
                     }
                     
                     Spacer()

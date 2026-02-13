@@ -91,6 +91,14 @@ public class ReachuConfiguration: ObservableObject {
         instance.brandConfiguration = brandConfig ?? .default
         instance.engagementConfiguration = engagementConfig ?? .default
         
+        // Apply demo brand to dynamic config when in demo mode (so CampaignSponsorBadge shows correct logo)
+        if let demoBrand = instance.demoDataConfiguration.brand {
+            instance.updateDynamicBrandConfig(DynamicBrandConfig(
+                name: demoBrand.name,
+                iconAsset: demoBrand.iconAsset
+            ))
+        }
+        
         // Configure localization system
         ReachuLocalization.shared.configure(instance.localizationConfiguration)
         

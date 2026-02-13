@@ -9,6 +9,7 @@
 import SwiftUI
 import AVKit
 import Combine
+import ReachuDesignSystem
 
 struct HighlightVideoCard: View {
     let highlight: HighlightTimelineEvent

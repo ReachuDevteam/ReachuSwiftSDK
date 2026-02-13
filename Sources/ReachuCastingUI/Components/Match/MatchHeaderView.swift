@@ -27,8 +27,9 @@ struct MatchHeaderView: View {
                         .font(.system(size: 9, weight: .medium))
                         .foregroundColor(.white.opacity(0.6))
                     
-                    // Campaign logo from CampaignManager
-                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl) {
+                    // Campaign logo from CampaignManager; in demo mode use brand logo (Elkjøp, Skistar)
+                    if let logoUrl = campaignManager.currentCampaign?.campaignLogo, let url = URL(string: logoUrl),
+                       !ReachuConfiguration.shared.engagementConfiguration.demoMode {
                         AsyncImage(url: url) { phase in
                             switch phase {
                             case .empty:
@@ -40,23 +41,13 @@ struct MatchHeaderView: View {
                                     .aspectRatio(contentMode: .fit)
                                     .frame(height: 18)
                             case .failure:
-                                Image("logo1")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(height: 18)
+                                brandLogoImage
                             @unknown default:
-                                Image("logo1")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(height: 18)
+                                brandLogoImage
                             }
                         }
                     } else {
-                        // Fallback to hardcoded logo if no campaign logo
-                        Image("logo1")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 18)
+                        brandLogoImage
                     }
                 }
                 
@@ -79,12 +70,12 @@ struct MatchHeaderView: View {
             .padding(.horizontal, 12)
             .padding(.top, 5)
             
-            // Teams and Score (smaller logos)
+            // Teams and Score (use team.logo asset when available, else URL fallback)
             HStack(spacing: 12) {
                 TeamLogoView(
                     team: match.homeTeam,
-                    size: 50,  // Smaller: was 60
-                    imageUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/200px-FC_Barcelona_%28crest%29.svg.png"
+                    size: 50,
+                    imageUrl: nil
                 )
                 .frame(maxWidth: .infinity)
                 
@@ -96,8 +87,8 @@ struct MatchHeaderView: View {
                 
                 TeamLogoView(
                     team: match.awayTeam,
-                    size: 50,  // Smaller: was 60
-                    imageUrl: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/200px-Paris_Saint-Germain_F.C..svg.png"
+                    size: 50,
+                    imageUrl: nil
                 )
                 .frame(maxWidth: .infinity)
             }
@@ -126,6 +117,13 @@ struct MatchHeaderView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 4)
         }
+    }
+    
+    private var brandLogoImage: some View {
+        Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
+            .resizable()
+            .aspectRatio(contentMode: .fit)
+            .frame(height: 18)
     }
 }
 

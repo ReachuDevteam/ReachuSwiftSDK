@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuDesignSystem
 
 struct TimelinePollCard: View {
     let poll: PollTimelineEvent

@@ -250,6 +250,9 @@ public struct REngagementContestCard: View {
             // Full contest graphic asset (for Elkjøp) - use for complete contest visual
             // Equivalent to Power's gavekortpower asset
             return "elkjop_konk"
+        case "competitio-skistar-1", "competitio-skistar-2":
+            // Skistar demo assets - pass through
+            return assetName
         default:
             // Return as-is for other assets
             return assetName

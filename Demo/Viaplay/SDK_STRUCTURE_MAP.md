@@ -338,8 +338,13 @@ DemoDataManager.shared
 - defaultAvatar: String
 - productUrl(for: String) -> String?
 - broadcastId(for: String) -> String?
+- liveCards: [LiveCardItem]  // cada item incluye broadcastId para casting
+- carouselCards: [CarouselCardItem]
+- sportClips: [SportClipItem]
 - randomChatUsername() -> String
 - offerBannerCountdown: CountdownConfiguration
+
+Nota: El modelo usa broadcast (liveCards con broadcastId), no matches
 ```
 
 ### EngagementManager

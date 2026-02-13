@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuDesignSystem
 
 struct PlayerInterviewCard: View {
     let playerName: String

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuDesignSystem
 
 struct PredictionPollCard: View {
     let homeTeam: String

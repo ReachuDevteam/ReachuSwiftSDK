@@ -117,6 +117,12 @@ Este documento lista todos los valores hardcodeados encontrados en los component
 ### Componentes Compartidos Movidos al SDK
 - ✅ `CachedAsyncImage.swift` → `ReachuDesignSystem/Components/`
 - ✅ `CampaignSponsorBadge.swift` → `ReachuDesignSystem/Components/`
+- ✅ Copias duplicadas en Demo eliminadas - el Demo usa los componentes de ReachuDesignSystem
+
+### Modelo Broadcast (reemplaza matches)
+- ✅ `liveCards` en demo-static-data.json incluye `broadcastId` para cada item
+- ✅ Sección `matches` eliminada del JSON y ConfigurationLoader
+- ✅ `LiveCardItem` con `broadcastId` e `isLive` para navegación al casting
 
 ### Archivos Eliminados
 - ✅ `ViaplayCastingPollCardView.swift` (demo)

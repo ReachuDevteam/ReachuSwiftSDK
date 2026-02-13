@@ -1,0 +1,34 @@
+{
+  "_comment": "Placeholder for second demo brand. Copy structure from brands/elkjop/demo-static-data.json and customize.",
+  "version": "1.0.0",
+  "assets": {
+    "defaultLogo": "logo1",
+    "defaultAvatar": "avatar_el",
+    "backgroundImages": {
+      "footballField": "football_field_bg",
+      "mainBackground": "bg-main",
+      "sportDetail": "bg",
+      "sportDetailImage": "img1"
+    },
+    "brandAssets": {"icon": "icon ", "logo": "logo"},
+    "contestAssets": {"giftCard": "elkjop_konk", "championsLeagueTickets": "billeter_power"}
+  },
+  "demoUsers": {
+    "defaultUsername": "Usuario",
+    "chatUsernames": [],
+    "socialAccounts": []
+  },
+  "productMappings": {},
+  "eventIds": {
+    "contestQuiz": "casting-contest-quiz",
+    "contestGiveaway": "casting-contest-giveaway",
+    "productCombo": "casting-product-combo",
+    "tweetHalftime1": "tweet-halftime-1",
+    "tweetHalftime2": "tweet-halftime-2"
+  },
+  "matchDefaults": {"broadcastIdMappings": {}, "defaultScore": 0},
+  "timelineEvents": {"castingContests": [], "castingProducts": []},
+  "carouselCards": {"items": []},
+  "liveCards": {"items": []},
+  "sportClips": {"items": []}
+}

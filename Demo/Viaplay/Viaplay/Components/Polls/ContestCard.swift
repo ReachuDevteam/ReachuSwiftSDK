@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuDesignSystem
 
 struct ContestCard: View {
     let contestId: String

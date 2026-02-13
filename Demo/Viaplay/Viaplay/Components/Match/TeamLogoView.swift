@@ -21,18 +21,20 @@ struct TeamLogoView: View {
     
     var body: some View {
         VStack(spacing: 8) {
-            AsyncImage(url: imageUrl.flatMap(URL.init)) { image in
-                image
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-            } placeholder: {
-                Circle()
-                    .fill(Color.blue.opacity(0.3))
-                    .overlay(
-                        Text(team.shortName)
-                            .font(.system(size: size * 0.233, weight: .bold))
-                            .foregroundColor(.white)
-                    )
+            Group {
+                if let url = imageUrl.flatMap(URL.init), url.absoluteString.hasPrefix("http") {
+                    AsyncImage(url: url) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                    } placeholder: { logoPlaceholder }
+                } else if !team.logo.isEmpty {
+                    Image(team.logo)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                } else {
+                    logoPlaceholder
+                }
             }
             .frame(width: size, height: size)
             
@@ -43,6 +45,16 @@ struct TeamLogoView: View {
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+    
+    private var logoPlaceholder: some View {
+        Circle()
+            .fill(Color.blue.opacity(0.3))
+            .overlay(
+                Text(team.shortName)
+                    .font(.system(size: size * 0.233, weight: .bold))
+                    .foregroundColor(.white)
+            )
     }
 }
 

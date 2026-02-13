@@ -7,6 +7,7 @@
 
 import SwiftUI
 import ReachuCastingUI
+import ReachuDesignSystem
 
 struct StatPreviewCard: View {
     let statistics: MatchStatistics

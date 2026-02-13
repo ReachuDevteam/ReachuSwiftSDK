@@ -1,6 +1,7 @@
 {
-  "_comment": "Static demo data configuration for Viaplay demo. This data can be replaced with backend data or moved to reachu-config.json in the future.",
+  "_comment": "Static demo data configuration for Viaplay demo - Elkjøp variant. Demo only.",
   "version": "1.0.0",
+  "brand": {"name": "Elkjøp", "iconAsset": "logo1"},
   "assets": {
     "_comment": "Image asset names used as fallbacks throughout the demo",
     "defaultLogo": "logo1",
@@ -22,36 +23,16 @@
   },
   "demoUsers": {
     "_comment": "Demo usernames for chat and social features",
-    "defaultUsername": "Usuario",
+    "defaultUsername": "Bruker",
     "chatUsernames": [
-      {
-        "name": "Angelo",
-        "color": "#F5145A"
-      },
-      {
-        "name": "PowerFan",
-        "color": "#FF9500"
-      },
-      {
-        "name": "ChampionsFan",
-        "color": "#9933FF"
-      },
-      {
-        "name": "TechLover",
-        "color": "#00CED1"
-      }
+      {"name": "Angelo", "color": "#F5145A"},
+      {"name": "ElkjøpFan", "color": "#FF9500"},
+      {"name": "ChampionsFan", "color": "#9933FF"},
+      {"name": "TechLover", "color": "#00CED1"}
     ],
     "socialAccounts": [
-      {
-        "name": "Power Norge",
-        "handle": "@PowerNorge",
-        "verified": true
-      },
-      {
-        "name": "Viaplay Sport",
-        "handle": "@ViaplaySport",
-        "verified": true
-      }
+      {"name": "Elkjøp", "handle": "@ElkjopNorge", "verified": true},
+      {"name": "Viaplay Sport", "handle": "@ViaplaySport", "verified": true}
     ]
   },
   "productMappings": {
@@ -77,26 +58,19 @@
   },
   "matchDefaults": {
     "_comment": "Default match values. Should come from Match model or backend",
-    "broadcastIdMappings": {
-      "barcelona-psg": "barcelona-psg-2025-01-23"
-    },
+    "broadcastIdMappings": {"barcelona-psg": "barcelona-psg-2025-01-23"},
     "defaultScore": 3
   },
   "offerBanner": {
     "_comment": "Offer banner countdown values. Should be calculated from campaign expiration date",
-    "countdown": {
-      "days": 2,
-      "hours": 1,
-      "minutes": 59,
-      "seconds": 47
-    },
+    "countdown": {"days": 2, "hours": 1, "minutes": 59, "seconds": 47},
     "title": "Ukens tilbud",
     "subtitle": "Se denne ukes beste tilbud",
     "discountText": "Opp til 30%",
     "buttonText": "Se alle tilbud"
   },
   "timelineEvents": {
-    "_comment": "Static timeline event data. In production, this should come from backend or be generated dynamically",
+    "_comment": "Static timeline event data. Demo only.",
     "castingContests": [
       {
         "id": "casting-contest-quiz",
@@ -122,9 +96,7 @@
         "id": "casting-product-combo",
         "videoTimestamp": 2770,
         "productId": "408895",
-        "productIds": [
-          "408896"
-        ],
+        "productIds": ["408896"],
         "title": "Spesialtilbud på TV og Lyd",
         "description": "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen"
       }
@@ -132,69 +104,21 @@
   },
   "carouselCards": {
     "items": [
-      {
-        "imageUrl": "img1",
-        "time": "TONIGHT 20:00",
-        "logo": "LA LIGA",
-        "title": "Real Madrid - Barcelona",
-        "subtitle": "La Liga | 12. runde"
-      },
-      {
-        "imageUrl": "img1",
-        "time": "TONIGHT 21:30",
-        "logo": "PREMIER LEAGUE",
-        "title": "Manchester United - Chelsea",
-        "subtitle": "Premier League | 12. runde"
-      },
-      {
-        "imageUrl": "img1",
-        "time": "TOMORROW 19:00",
-        "logo": "PREMIER LEAGUE",
-        "title": "Liverpool - Arsenal",
-        "subtitle": "Premier League | 12. runde"
-      }
+      {"imageUrl": "img1", "time": "TONIGHT 20:00", "logo": "LA LIGA", "title": "Real Madrid - Barcelona", "subtitle": "La Liga | 12. runde"},
+      {"imageUrl": "img1", "time": "TONIGHT 21:30", "logo": "PREMIER LEAGUE", "title": "Manchester United - Chelsea", "subtitle": "Premier League | 12. runde"},
+      {"imageUrl": "img1", "time": "TOMORROW 19:00", "logo": "PREMIER LEAGUE", "title": "Liverpool - Arsenal", "subtitle": "Premier League | 12. runde"}
     ]
   },
   "liveCards": {
     "items": [
-      {
-        "broadcastId": "barcelona-psg-2025-01-23",
-        "logo": "UEFA",
-        "logoIcon": "star.fill",
-        "title": "Barcelona - PSG",
-        "subtitle": "Champions League",
-        "time": "15:00",
-        "backgroundImage": "bg",
-        "isLive": true
-      },
-      {
-        "broadcastId": "rolex-grand-european-challenge",
-        "logo": "CHALLENGE TOUR",
-        "logoIcon": "globe",
-        "title": "Rolex Grand",
-        "subtitle": "European Challenge",
-        "time": "12:00",
-        "backgroundImage": "img1",
-        "isLive": false
-      }
+      {"broadcastId": "barcelona-psg-2025-01-23", "logo": "UEFA", "logoIcon": "star.fill", "title": "Barcelona - PSG", "subtitle": "Champions League", "time": "15:00", "backgroundImage": "bg", "isLive": true},
+      {"broadcastId": "rolex-grand-european-challenge", "logo": "CHALLENGE TOUR", "logoIcon": "globe", "title": "Rolex Grand", "subtitle": "European Challenge", "time": "12:00", "backgroundImage": "img1", "isLive": false}
     ]
   },
   "sportClips": {
     "items": [
-      {
-        "imageUrl": "img1",
-        "time": "00:51",
-        "title": "Haaland ofret sitt for å redde City-poeng",
-        "subtitle": "PREMIER LEAGUE | 2K. OKTOBER",
-        "isLarge": false
-      },
-      {
-        "imageUrl": "img1",
-        "time": "00:53",
-        "title": "Jørgen Strand Larsen scoring i Premier League",
-        "subtitle": "PREMIER LEAGUE",
-        "isLarge": false
-      }
+      {"imageUrl": "img1", "time": "00:51", "title": "Haaland ofret sitt for å redde City-poeng", "subtitle": "PREMIER LEAGUE | 2K. OKTOBER", "isLarge": false},
+      {"imageUrl": "img1", "time": "00:53", "title": "Jørgen Strand Larsen scoring i Premier League", "subtitle": "PREMIER LEAGUE", "isLarge": false}
     ]
   }
 }

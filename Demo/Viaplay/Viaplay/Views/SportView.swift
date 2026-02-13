@@ -9,6 +9,7 @@ import SwiftUI
 import ReachuCore
 import ReachuUI
 import ReachuCastingUI
+import ReachuDesignSystem
 
 struct SportView: View {
     @Binding var selectedTab: Int
@@ -27,15 +28,15 @@ struct SportView: View {
         return items.map { CarouselCardData(imageUrl: $0.imageUrl, time: $0.time, logo: $0.logo, title: $0.title, subtitle: $0.subtitle) }
     }
     
-    private var liveCardsData: [(logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String?)] {
+    private var liveCardsData: [(broadcastId: String, logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String?)] {
         let items = DemoDataManager.shared.liveCards
         if items.isEmpty {
             return [
-                ("UEFA", "star.fill", "Barcelona - PSG", "Champions League", "15:00", "bg"),
-                ("CHALLENGE TOUR", "globe", "Rolex Grand", "European Challenge", "12:00", nil)
+                ("barcelona-psg-2025-01-23", "UEFA", "star.fill", "Barcelona - PSG", "Champions League", "15:00", "bg"),
+                ("rolex-grand-european-challenge", "CHALLENGE TOUR", "globe", "Rolex Grand", "European Challenge", "12:00", nil)
             ]
         }
-        return items.map { ($0.logo, $0.logoIcon, $0.title, $0.subtitle, $0.time, $0.backgroundImage) }
+        return items.map { ($0.broadcastId, $0.logo, $0.logoIcon, $0.title, $0.subtitle, $0.time, $0.backgroundImage) }
     }
     
     private var sportClipsData: [(imageUrl: String, time: String, title: String, subtitle: String, isLarge: Bool)] {
@@ -113,6 +114,7 @@ struct SportView: View {
                                         let item = liveCardsData[index]
                                         LiveSportCard(
                                             selectedTab: $selectedTab,
+                                            broadcastId: item.broadcastId,
                                             logo: item.logo,
                                             logoIcon: item.logoIcon,
                                             title: item.title,
@@ -237,6 +239,7 @@ struct CarouselCard: View {
     var body: some View {
         NavigationLink(destination: SportDetailView(
             selectedTab: $selectedTab,
+            broadcastId: nil,
             title: data.title,
             subtitle: data.subtitle,
             imageUrl: data.imageUrl
@@ -395,6 +398,7 @@ struct SportCard: View {
     var body: some View {
         NavigationLink(destination: SportDetailView(
             selectedTab: $selectedTab,
+            broadcastId: nil,
             title: title,
             subtitle: subtitle,
             imageUrl: imageUrl
@@ -456,6 +460,7 @@ struct SportCard: View {
 
 struct LiveSportCard: View {
     @Binding var selectedTab: Int
+    let broadcastId: String
     let logo: String
     let logoIcon: String
     let title: String
@@ -463,8 +468,9 @@ struct LiveSportCard: View {
     let time: String
     let backgroundImage: String?
     
-    init(selectedTab: Binding<Int>, logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String? = nil) {
+    init(selectedTab: Binding<Int>, broadcastId: String, logo: String, logoIcon: String, title: String, subtitle: String, time: String, backgroundImage: String? = nil) {
         self._selectedTab = selectedTab
+        self.broadcastId = broadcastId
         self.logo = logo
         self.logoIcon = logoIcon
         self.title = title
@@ -476,6 +482,7 @@ struct LiveSportCard: View {
     var body: some View {
         NavigationLink(destination: SportDetailView(
             selectedTab: $selectedTab,
+            broadcastId: broadcastId,
             title: title,
             subtitle: subtitle,
             imageUrl: "img1"
