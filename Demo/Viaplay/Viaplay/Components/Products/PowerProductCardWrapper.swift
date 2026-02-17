@@ -17,48 +17,64 @@ struct CastingProductCardWrapper: View {
     let onViewProduct: () -> Void
     
     @State private var products: [Product] = []
+    @State private var demoProducts: [REngagementProductData] = []
     @State private var isLoadingProducts = false
     @State private var showModal = false
     @State private var selectedProductEvent: CastingProductEvent?
     
     @EnvironmentObject private var cartManager: CartManager
     
+    private var displayProducts: [REngagementProductData] {
+        if !products.isEmpty {
+            return convertProductsToSDKFormat(products)
+        }
+        return demoProducts
+    }
+    
     var body: some View {
-        let brandConfig = ReachuConfiguration.shared.brandConfiguration
+        let brandConfig = ReachuConfiguration.shared.effectiveBrandConfiguration
         
         return REngagementProductGridCard(
-            products: convertProductsToSDKFormat(products),
+            products: displayProducts,
             promotionalText: productEvent.description.isEmpty ? "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen" : productEvent.description,
             brandName: brandConfig.name,
             brandIcon: brandConfig.iconAsset,
             displayTime: productEvent.displayTime,
             isLoading: isLoadingProducts,
             onProductTap: { productData in
-                // Find the matching Product from the loaded products
-                if let product = products.first(where: { String($0.id) == productData.productId }) {
-                    let tempEvent = CastingProductEvent(
-                        id: productEvent.id + "-\(product.id)",
-                        videoTimestamp: productEvent.videoTimestamp,
-                        productId: String(product.id),
-                        productIds: nil,
-                        title: product.title,
-                        description: productEvent.description,
-                        castingProductUrl: getProductUrl(for: product),
-                        castingCheckoutUrl: getProductUrl(for: product),
-                        imageAsset: nil,
-                        metadata: nil
-                    )
-                    
-                    selectedProductEvent = tempEvent
-                    showModal = true
-                    onViewProduct()
-                }
+                let productId = productData.productId ?? ""
+                let url = DemoDataManager.shared.productUrl(for: productId) ?? productEvent.castingProductUrl
+                let tempEvent = CastingProductEvent(
+                    id: productEvent.id + "-\(productId)",
+                    videoTimestamp: productEvent.videoTimestamp,
+                    productId: productId,
+                    productIds: nil,
+                    title: productData.name,
+                    description: productEvent.description,
+                    castingProductUrl: url,
+                    castingCheckoutUrl: DemoDataManager.shared.checkoutUrl(for: productId) ?? url,
+                    imageAsset: nil,
+                    metadata: nil
+                )
+                selectedProductEvent = tempEvent
+                showModal = true
+                onViewProduct()
             }
         )
         .fullScreenCover(item: $selectedProductEvent) { event in
             CastingProductModal(productEvent: event) {
                 selectedProductEvent = nil
                 showModal = false
+            }
+        }
+        .onAppear {
+            if demoProducts.isEmpty {
+                let ids = productEvent.allProductIds.isEmpty ? ["408895", "408896"] : productEvent.allProductIds
+                let fallback = buildDemoProducts(from: ids)
+                demoProducts = fallback
+                if !fallback.isEmpty {
+                    isLoadingProducts = false
+                }
             }
         }
         .task {
@@ -93,23 +109,17 @@ struct CastingProductCardWrapper: View {
         return Int(discount.rounded())
     }
     
-    private func getProductUrl(for product: Product) -> String? {
-        let productIdString = String(product.id)
-        if productIdString == "408895" {
-            // Samsung 75" QN85F Neo QLED 4K MiniLED Smart TV (2025)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
-        } else if productIdString == "408896" {
-            // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
-        }
-        return productEvent.castingProductUrl
-    }
-    
     private func loadProducts() async {
-        isLoadingProducts = true
-        
-        let productIds = productEvent.allProductIds
-        
+        var productIds = productEvent.allProductIds
+        if productIds.isEmpty {
+            productIds = ["408895", "408896"]
+        }
+        // Show demo products immediately (from productMappings) so cards + URLs are visible
+        let fallback = buildDemoProducts(from: productIds)
+        await MainActor.run {
+            self.demoProducts = fallback
+            self.isLoadingProducts = fallback.isEmpty
+        }
         do {
             let productIdInts = productIds.compactMap { Int($0) }
             let loadedProducts = try await ProductService.shared.loadProducts(
@@ -121,11 +131,33 @@ struct CastingProductCardWrapper: View {
             await MainActor.run {
                 self.products = loadedProducts
                 self.isLoadingProducts = false
+                if loadedProducts.isEmpty {
+                    self.demoProducts = buildDemoProducts(from: productIds)
+                }
             }
         } catch {
             await MainActor.run {
+                self.products = []
+                self.demoProducts = buildDemoProducts(from: productIds)
                 self.isLoadingProducts = false
             }
+        }
+    }
+    
+    private func buildDemoProducts(from productIds: [String]) -> [REngagementProductData] {
+        let dm = DemoDataManager.shared
+        let currencySymbol = ReachuConfiguration.shared.marketConfiguration.currencySymbol
+        let priceStr = "\(currencySymbol) —"
+        return productIds.compactMap { id in
+            guard let mapping = dm.productMapping(for: id) else { return nil }
+            return REngagementProductData(
+                productId: id,
+                name: mapping.name,
+                description: nil,
+                price: priceStr,
+                imageUrl: "",
+                discountPercentage: 25
+            )
         }
     }
 }

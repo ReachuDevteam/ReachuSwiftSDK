@@ -1,0 +1,119 @@
+{
+  "_comment": "Static demo data - Power variant. Demo only. Legacy retail brand.",
+  "version": "1.0.0",
+  "brand": {
+    "name": "Power",
+    "iconAsset": "logo1"
+  },
+  "assets": {
+    "defaultLogo": "logo1",
+    "defaultAvatar": "avatar_el",
+    "backgroundImages": {
+      "footballField": "football_field_bg",
+      "mainBackground": "bg-main",
+      "sportDetail": "bg",
+      "sportDetailImage": "img1"
+    },
+    "brandAssets": {
+      "icon": "icon ",
+      "logo": "logo"
+    },
+    "contestAssets": {
+      "giftCard": "gavekortpower",
+      "championsLeagueTickets": "billeter_power2"
+    }
+  },
+  "demoUsers": {
+    "defaultUsername": "Bruker",
+    "chatUsernames": [
+      {"name": "PowerFan", "color": "#FF9500"},
+      {"name": "ChampionsFan", "color": "#9933FF"},
+      {"name": "TechLover", "color": "#00CED1"}
+    ],
+    "socialAccounts": [
+      {"name": "Power Norge", "handle": "@PowerNorge", "verified": true},
+      {"name": "Viaplay Sport", "handle": "@ViaplaySport", "verified": true}
+    ]
+  },
+  "productMappings": {
+    "408895": {
+      "name": "Samsung 75\" QN85F Neo QLED 4K MiniLED Smart TV (2025)",
+      "productUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+      "checkoutUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
+    },
+    "408896": {
+      "name": "Samsung 5.1.2ch HW-Q810F lydplanke (sort)",
+      "productUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694",
+      "checkoutUrl": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
+    }
+  },
+  "eventIds": {
+    "contestQuiz": "casting-contest-quiz",
+    "contestGiveaway": "casting-contest-giveaway",
+    "productCombo": "casting-product-combo",
+    "tweetHalftime1": "tweet-halftime-1",
+    "tweetHalftime2": "tweet-halftime-2"
+  },
+  "matchDefaults": {
+    "broadcastIdMappings": {"barcelona-psg": "barcelona-psg-2025-01-23"},
+    "defaultScore": 3
+  },
+  "offerBanner": {
+    "countdown": {"days": 2, "hours": 1, "minutes": 59, "seconds": 47},
+    "title": "Ukens tilbud",
+    "subtitle": "Se denne ukes beste tilbud",
+    "discountText": "Opp til 30%",
+    "buttonText": "Se alle tilbud"
+  },
+  "timelineEvents": {
+    "castingContests": [
+      {
+        "id": "power-contest-quiz",
+        "videoTimestamp": 2720,
+        "title": "Power Konkurranse",
+        "description": "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
+        "prize": "Gavekort på 5000kr",
+        "contestType": "quiz",
+        "imageAsset": "gavekortpower"
+      },
+      {
+        "id": "power-contest-giveaway",
+        "videoTimestamp": 2750,
+        "title": "Power Konkurranse",
+        "description": "Delta og vinn to billetter til Champions League",
+        "prize": "To billetter til Champions League",
+        "contestType": "giveaway",
+        "imageAsset": "billeter_power2"
+      }
+    ],
+    "castingProducts": [
+      {
+        "id": "power-product-combo",
+        "videoTimestamp": 2770,
+        "productId": "408895",
+        "productIds": ["408896"],
+        "title": "Spesialtilbud på TV og Lyd",
+        "description": "Ikke gå glipp av denne muligheten - 25% rabatt kun under kampen"
+      }
+    ]
+  },
+  "carouselCards": {
+    "items": [
+      {"imageUrl": "img1", "time": "TONIGHT 20:00", "logo": "LA LIGA", "title": "Real Madrid - Barcelona", "subtitle": "La Liga | 12. runde"},
+      {"imageUrl": "img1", "time": "TONIGHT 21:30", "logo": "PREMIER LEAGUE", "title": "Manchester United - Chelsea", "subtitle": "Premier League | 12. runde"},
+      {"imageUrl": "img1", "time": "TOMORROW 19:00", "logo": "PREMIER LEAGUE", "title": "Liverpool - Arsenal", "subtitle": "Premier League | 12. runde"}
+    ]
+  },
+  "liveCards": {
+    "items": [
+      {"broadcastId": "barcelona-psg-2025-01-23", "logo": "UEFA", "logoIcon": "star.fill", "title": "Barcelona - PSG", "subtitle": "Champions League", "time": "15:00", "backgroundImage": "bg", "isLive": true},
+      {"broadcastId": "rolex-grand-european-challenge", "logo": "CHALLENGE TOUR", "logoIcon": "globe", "title": "Rolex Grand", "subtitle": "European Challenge", "time": "12:00", "backgroundImage": "img1", "isLive": false}
+    ]
+  },
+  "sportClips": {
+    "items": [
+      {"imageUrl": "img1", "time": "00:51", "title": "Haaland ofret sitt for å redde City-poeng", "subtitle": "PREMIER LEAGUE | 2K. OKTOBER", "isLarge": false},
+      {"imageUrl": "img1", "time": "00:53", "title": "Jørgen Strand Larsen scoring i Premier League", "subtitle": "PREMIER LEAGUE", "isLarge": false}
+    ]
+  }
+}

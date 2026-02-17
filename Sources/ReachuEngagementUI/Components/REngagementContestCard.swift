@@ -229,19 +229,22 @@ public struct REngagementContestCard: View {
     
     // MARK: - Asset Mapping
     
-    /// Maps legacy Power assets to Elkjøp assets
-    /// Preserves Power assets in comments for reference
+    /// Maps legacy Power assets to Elkjøp assets when brand is Elkjøp.
+    /// For Power brand, uses gavekortpower and billeter_power2 directly.
     /// 
     /// Asset Reference:
     /// - Power: gavekortpower (full contest graphic with orange background, gift box, gift card)
     /// - Elkjøp: elkjop_konk (full contest graphic - equivalent to gavekortpower)
     /// - Elkjøp: elkjop_gavekort (gift card only asset)
     private func mapAssetName(_ assetName: String) -> String {
+        let isPower = ReachuConfiguration.shared.effectiveBrandConfiguration.name.lowercased().contains("power")
+        if isPower {
+            // Power brand: use Power assets as-is (gavekortpower, billeter_power2, etc.)
+            return assetName
+        }
         switch assetName {
         case "gavekortpower":
-            // Legacy Power asset - mapped to Elkjøp contest graphic
-            // Power original: gavekortpower (full contest graphic with orange background, gift box, gift card)
-            // This asset is preserved in the demo for reference but mapped to elkjop_konk for Elkjøp campaigns
+            // Power asset - map to Elkjøp when brand is Elkjøp
             return "elkjop_konk"
         case "elkjop_gavekort":
             // Gift card only asset (for Elkjøp) - use when only showing the gift card

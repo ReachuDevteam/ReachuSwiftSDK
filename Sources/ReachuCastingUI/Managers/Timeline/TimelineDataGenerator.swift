@@ -1448,6 +1448,7 @@ public struct TimelineDataGenerator {
         let dm = DemoDataManager.shared
         let brandName = ReachuConfiguration.shared.effectiveBrandConfiguration.name
         let isSkistar = brandName.lowercased().contains("skistar") || brandName.lowercased().contains("ski star")
+        let isPower = brandName.lowercased().contains("power")
 
         if isSkistar {
             // Skistar demo: vinterferie med 20% rabatt (Reachu ID 408897)
@@ -1510,18 +1511,19 @@ public struct TimelineDataGenerator {
             ]
         }
 
-        // Elkjøp demo (default)
+        // Power / Elkjøp demo (default)
+        let contestTitle = isPower ? "Power Konkurranse" : "Elkjøp Konkurranse"
         let productUrl = dm.productUrl(for: "408895")
         let checkoutUrl = dm.checkoutUrl(for: "408895")
         return [
             AnyTimelineEvent(CastingContestEvent(
                 id: "power-contest-quiz",
                 videoTimestamp: 2720,
-                title: "Elkjøp Konkurranse",
+                title: contestTitle,
                 description: "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
                 prize: "Gavekort på 5000kr",
                 contestType: .quiz,
-                metadata: ["imageAsset": "elkjop_konk"],
+                metadata: ["imageAsset": "gavekortpower"],
                 broadcastContext: nil
             )),
             AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2725, username: "PowerFan", text: "Dette er en fantastisk mulighet! 🎁", usernameColor: .orange, likes: 12)),
@@ -1529,11 +1531,11 @@ public struct TimelineDataGenerator {
             AnyTimelineEvent(CastingContestEvent(
                 id: "power-contest-giveaway",
                 videoTimestamp: 2750,
-                title: "Elkjøp Konkurranse",
+                title: contestTitle,
                 description: "Delta og vinn to billetter til Champions League",
                 prize: "To billetter til Champions League",
                 contestType: .giveaway,
-                metadata: ["imageAsset": "billeter_power"],
+                metadata: ["imageAsset": "billeter_power2"],
                 broadcastContext: nil
             )),
             AnyTimelineEvent(ChatMessageEvent(videoTimestamp: 2755, username: "ChampionsFan", text: "Billetter til Champions League?! Jeg må delta! 🎫", usernameColor: .purple, likes: 18)),

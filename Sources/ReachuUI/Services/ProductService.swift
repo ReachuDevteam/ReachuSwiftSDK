@@ -17,24 +17,33 @@ public class ProductService {
     
     // MARK: - SDK Client Management
     
-    /// Get or create SDK client (thread-safe)
+    /// Get or create SDK client for product fetching (thread-safe)
+    /// Uses productApiKey when configured (e.g. Power → Elkjøp catalog for IDs 408895/408896)
     private func getSdkClient() throws -> SdkClient {
-        if let cached = cachedSdkClient {
-            return cached
-        }
-        
         let config = ReachuConfiguration.shared
         
         guard let baseURL = URL(string: config.environment.graphQLURL) else {
             throw ProductServiceError.invalidConfiguration("Invalid GraphQL URL: \(config.environment.graphQLURL)")
         }
         
-        let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
+        // Use productApiKey when set (e.g. Power demo fetches from Elkjøp catalog for IDs 408895/408896)
+        let effectiveKey: String
+        if let productKey = config.productApiKey, !productKey.isEmpty {
+            effectiveKey = productKey
+            ReachuLogger.debug("Using productApiKey for product fetch", component: "ProductService")
+        } else {
+            effectiveKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
+        }
         
-        let client = SdkClient(baseUrl: baseURL, apiKey: apiKey)
+        // Reuse cached client only if it matches current effective key (handles config switches)
+        if let cached = cachedSdkClient, cached.apiKey == effectiveKey {
+            return cached
+        }
+        
+        let client = SdkClient(baseUrl: baseURL, apiKey: effectiveKey)
         cachedSdkClient = client
         
-        ReachuLogger.debug("Created SDK client", component: "ProductService")
+        ReachuLogger.debug("Created SDK client for products", component: "ProductService")
         
         return client
     }

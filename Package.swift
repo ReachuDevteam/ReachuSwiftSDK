@@ -47,10 +47,10 @@ let package = Package(
         ),
 
         // LiveShow - optional target (FASE 3)
-        // .library(
-        //     name: "ReachuLiveShow",
-        //     targets: ["ReachuCore", "ReachuLiveShow"]
-        // ),
+        .library(
+            name: "ReachuLiveShow",
+            targets: ["ReachuCore", "ReachuLiveShow"]
+        ),
 
         // Testing utilities - internal testing helpers
         .library(
@@ -59,10 +59,10 @@ let package = Package(
         ),
 
         // LiveShow UI Components - optional target (FASE 3)
-        // .library(
-        //     name: "ReachuLiveUI",
-        //     targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
-        // ),
+        .library(
+            name: "ReachuLiveUI",
+            targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
+        ),
 
         // Complete SDK - everything included
         // .library(

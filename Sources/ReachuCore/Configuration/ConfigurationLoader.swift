@@ -54,26 +54,29 @@ public class ConfigurationLoader {
                 return
             }
             
-            // 2.5. Check demo-config for Skistar: use Skistar API key when active=skistar
+            // 2.5. Check demo-config: when active brand has a dedicated reachu-config-<brand>.json, use it
+            // (e.g. active=skistar -> reachu-config-skistar.json, active=power -> reachu-config-power.json)
             if let configURL = bundle.url(forResource: "demo-config", withExtension: "json") {
                 do {
                     let data = try Data(contentsOf: configURL)
                     let demoConfig = try JSONDecoder().decode(DemoConfigJSON.self, from: data)
-                    if let active = demoConfig.active, active.lowercased() == "skistar" {
-                        let skistarPath = bundle.path(forResource: "reachu-config-skistar", ofType: "json", inDirectory: "Configuration")
-                            ?? bundle.path(forResource: "reachu-config-skistar", ofType: "json", inDirectory: "Configuration/brands/skistar")
-                            ?? bundle.path(forResource: "reachu-config-skistar", ofType: "json")
-                        if let path = skistarPath, let data = FileManager.default.contents(atPath: path) {
-                            ReachuLogger.debug("Loading Skistar demo config: reachu-config-skistar.json", component: "Config")
-                            let config = try JSONDecoder().decode(JSONConfiguration.self, from: data)
+                    if let active = demoConfig.active, !active.isEmpty {
+                        let configFileName = "reachu-config-\(active.lowercased())"
+                        let brandSubdir = "Configuration/brands/\(active.lowercased())"
+                        let brandPath = bundle.path(forResource: configFileName, ofType: "json", inDirectory: brandSubdir)
+                            ?? bundle.path(forResource: configFileName, ofType: "json", inDirectory: "Configuration")
+                            ?? bundle.path(forResource: configFileName, ofType: "json")
+                        if let path = brandPath, let fileData = FileManager.default.contents(atPath: path) {
+                            ReachuLogger.debug("Loading \(active) demo config: \(configFileName).json", component: "Config")
+                            let config = try JSONDecoder().decode(JSONConfiguration.self, from: fileData)
                             let userCountry = userCountryCode ?? ProcessInfo.processInfo.environment["REACHU_USER_COUNTRY"]
                             applyConfiguration(config, bundle: bundle, userCountryCode: userCountry)
-                            ReachuLogger.success("Skistar configuration loaded successfully", component: "Config")
+                            ReachuLogger.success("\(active) configuration loaded successfully", component: "Config")
                             return
                         }
                     }
                 } catch {
-                    ReachuLogger.debug("Could not check demo-config for Skistar: \(error)", component: "Config")
+                    ReachuLogger.debug("Could not check demo-config for brand override: \(error)", component: "Config")
                 }
             }
             
@@ -225,6 +228,7 @@ public class ConfigurationLoader {
 
         ReachuConfiguration.configure(
             apiKey: config.apiKey,
+            productApiKey: config.productApiKey,
             environment: ReachuEnvironment(rawValue: config.environment) ?? .production,
             theme: theme,
             cartConfig: cartConfig,
@@ -820,6 +824,7 @@ public class ConfigurationLoader {
 
 private struct JSONConfiguration: Codable {
     let apiKey: String
+    let productApiKey: String?  // Optional: use for product.fetch when main key's catalog doesn't have the IDs (e.g. Power → Elkjøp)
     let campaignId: Int?  // Campaign ID at root level (preferred)
     let environment: String
     let theme: JSONThemeConfiguration?

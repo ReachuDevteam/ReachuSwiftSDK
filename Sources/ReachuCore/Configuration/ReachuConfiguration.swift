@@ -26,6 +26,9 @@ public class ReachuConfiguration: ObservableObject {
     
     // MARK: - Configuration Properties
     @Published public private(set) var apiKey: String = ""
+    /// Optional API key for product fetching. When set, ProductService uses this instead of apiKey
+    /// (e.g. Power demo uses Elkjøp key to fetch products 408895/408896 that exist in Elkjøp catalog)
+    @Published public private(set) var productApiKey: String? = nil
     @Published public private(set) var environment: ReachuEnvironment = .sandbox
     @Published public private(set) var theme: ReachuTheme = .default
     @Published public private(set) var cartConfiguration: CartConfiguration = .default
@@ -58,6 +61,7 @@ public class ReachuConfiguration: ObservableObject {
     /// Main configuration method - call once at app startup
     public static func configure(
         apiKey: String,
+        productApiKey: String? = nil,
         environment: ReachuEnvironment = .production,
         theme: ReachuTheme? = nil,
         cartConfig: CartConfiguration? = nil,
@@ -76,6 +80,7 @@ public class ReachuConfiguration: ObservableObject {
         let instance = ReachuConfiguration.shared
         
         instance.apiKey = apiKey
+        instance.productApiKey = productApiKey
         instance.environment = environment
         instance.theme = theme ?? .default
         instance.cartConfiguration = cartConfig ?? .default
