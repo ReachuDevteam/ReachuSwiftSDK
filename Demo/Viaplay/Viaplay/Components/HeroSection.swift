@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 struct HeroSection: View {
     let content: HeroContent
@@ -13,8 +14,8 @@ struct HeroSection: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Background Image from assets
-                Image("bg-main")
+                // Background Image from config
+                Image(DemoDataManager.shared.backgroundImage(for: .mainBackground))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                     .frame(width: geometry.size.width, height: 500)
@@ -41,12 +42,12 @@ struct HeroSection: View {
                             
                             // Viaplay Icon + Logo from assets
                             HStack(alignment: .center, spacing: 0) {
-                                Image("icon ")
+                                Image(DemoDataManager.shared.brandAsset(for: .icon))
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(width: 32, height: 32)
                                 
-                                Image("logo")
+                                Image(DemoDataManager.shared.brandAsset(for: .logo))
                                     .renderingMode(.template)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)

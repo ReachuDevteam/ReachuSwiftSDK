@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuUI
 import ReachuCastingUI
 
@@ -192,12 +193,12 @@ struct ViaplayHomeView: View {
                                 
                                 // Viaplay Icon + Logo from assets
                                 HStack(alignment: .center, spacing: 0) {
-                                    Image("icon ")
+                                    Image(DemoDataManager.shared.brandAsset(for: .icon))
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: 28, height: 28)
                                     
-                                    Image("logo")
+                                    Image(DemoDataManager.shared.brandAsset(for: .logo))
                                         .renderingMode(.template)
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)

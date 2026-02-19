@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuDesignSystem
 
 struct TimelinePollCard: View {
@@ -46,7 +47,7 @@ struct TimelinePollCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Viaplay Avstemning")
+                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Avstemning")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

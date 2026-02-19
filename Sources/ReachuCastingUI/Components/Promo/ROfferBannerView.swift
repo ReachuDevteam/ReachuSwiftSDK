@@ -46,20 +46,20 @@ public struct ROfferBannerView: View {
                                     .scaledToFit()
                                     .frame(height: 16)
                             case .failure:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 16)
                             @unknown default:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 16)
                             }
                         }
                     } else {
-                        // Fallback to hardcoded logo if no campaign logo
-                        Image("logo1")
+                        // Fallback to config logo if no campaign logo
+                        Image(DemoDataManager.shared.defaultLogo)
                             .resizable()
                             .scaledToFit()
                             .frame(height: 16)
@@ -128,8 +128,8 @@ public struct ROfferBannerView: View {
         ZStack(alignment: .leading) {
             // Background with image and overlays
             ZStack {
-                // Background image (football field)
-                Image("football_field_bg")
+                // Background image (football field) from config
+                Image(DemoDataManager.shared.backgroundImage(for: .footballField))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                 

@@ -46,12 +46,12 @@ struct ViaplayOfferBannerView: View {
                                     .scaledToFit()
                                     .frame(height: 16)
                             case .failure:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 16)
                             @unknown default:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .scaledToFit()
                                     .frame(height: 16)
@@ -59,7 +59,7 @@ struct ViaplayOfferBannerView: View {
                         }
                     } else {
                         // Fallback to hardcoded logo if no campaign logo
-                        Image("logo1")
+                        Image(DemoDataManager.shared.defaultLogo)
                             .resizable()
                             .scaledToFit()
                             .frame(height: 16)
@@ -129,7 +129,7 @@ struct ViaplayOfferBannerView: View {
             // Background with image and overlays
             ZStack {
                 // Background image (football field)
-                Image("football_field_bg")
+                Image(DemoDataManager.shared.backgroundImage(for: .footballField))
                     .resizable()
                     .aspectRatio(contentMode: .fill)
                 

@@ -34,8 +34,8 @@ struct SportDetailView: View {
                     VStack(spacing: 0) {
                         // Hero section with image and overlays
                         ZStack(alignment: .topLeading) {
-                            // Background image - use bg for Barcelona - PSG
-                            Image("bg")
+                            // Background image from config
+                            Image(DemoDataManager.shared.backgroundImage(for: .sportDetail))
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
                                 .frame(width: geometry.size.width, height: 320)
@@ -223,7 +223,7 @@ struct SportDetailView: View {
                             
                             // Live card
                             ZStack(alignment: .topLeading) {
-                                Image("img1")
+                                Image(DemoDataManager.shared.backgroundImage(for: .sportDetailImage))
                                     .resizable()
                                     .aspectRatio(contentMode: .fill)
                                     .frame(width: geometry.size.width - 32, height: 150)

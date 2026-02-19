@@ -31,8 +31,8 @@ struct CastingProductCard: View {
         return VStack(alignment: .leading, spacing: 12) {
             // Header (similar to CastingContestCard)
             HStack(spacing: 8) {
-                // Brand avatar - hardcoded: siempre usar avatar_el
-                Image("avatar_el")
+                // Brand avatar from config (consistent with brand name)
+                Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
@@ -277,16 +277,8 @@ struct CastingProductCard: View {
     // MARK: - Helper to get product URL
     
     private func getProductUrl(for product: Product) -> String? {
-        // Map product IDs to their Elkjøp URLs
         let productIdString = String(product.id)
-        if productIdString == "408895" {
-            // Samsung 75" QN85F Neo QLED 4K MiniLED Smart TV (2025)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
-        } else if productIdString == "408896" {
-            // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
-        }
-        return productEvent.castingProductUrl
+        return DemoDataManager.shared.productUrl(for: productIdString) ?? productEvent.castingProductUrl
     }
     
     // MARK: - Discount Badge

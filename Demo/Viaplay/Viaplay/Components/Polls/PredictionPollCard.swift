@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 
 struct PredictionPollCard: View {
     let homeTeam: String
@@ -51,7 +52,7 @@ struct PredictionPollCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Viaplay Spådom")
+                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Spådom")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuCastingUI
 
 struct StatPreviewCard: View {
@@ -24,14 +25,14 @@ struct StatPreviewCard: View {
             // Header with Viaplay branding and sponsor
             HStack(spacing: 8) {
                 // Viaplay icon
-                Image("icon ")
+                Image(DemoDataManager.shared.brandAsset(for: .icon))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Viaplay Statistics")
+                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Statistics")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

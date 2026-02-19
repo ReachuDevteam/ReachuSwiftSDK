@@ -66,7 +66,7 @@ struct LineupCard: View {
             // Header (Viaplay avatar, not team)
             HStack(spacing: 8) {
                 // Viaplay icon
-                Image("icon ")
+                Image(DemoDataManager.shared.brandAsset(for: .icon))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
@@ -74,7 +74,7 @@ struct LineupCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text("Viaplay Oppstilling")
+                        Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Oppstilling")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         
@@ -119,12 +119,12 @@ struct LineupCard: View {
                                     .aspectRatio(contentMode: .fit)
                                     .frame(maxWidth: 50, maxHeight: 16)
                             case .failure:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(maxWidth: 50, maxHeight: 16)
                             @unknown default:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(maxWidth: 50, maxHeight: 16)
@@ -132,7 +132,7 @@ struct LineupCard: View {
                         }
                     } else {
                         // Fallback to hardcoded logo if no campaign logo
-                        Image("logo1")
+                        Image(DemoDataManager.shared.defaultLogo)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(maxWidth: 50, maxHeight: 16)

@@ -32,9 +32,9 @@ public class DemoDataManager {
         configuration.assets.defaultLogo
     }
     
-    /// Get default avatar asset name
+    /// Get default avatar asset name (brand avatar - consistent with effectiveBrandConfiguration)
     public var defaultAvatar: String {
-        configuration.assets.defaultAvatar
+        ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset
     }
     
     /// Get background image asset name
@@ -83,9 +83,35 @@ public class DemoDataManager {
         configuration.demoUsers.chatUsernames.randomElement()
     }
     
+    /// Get chat username at index (for timeline events)
+    public func chatUsername(at index: Int) -> DemoDataConfiguration.DemoUserConfiguration.ChatUsername? {
+        let usernames = configuration.demoUsers.chatUsernames
+        guard index >= 0, index < usernames.count else { return nil }
+        return usernames[index]
+    }
+    
     /// Get social account by name
     public func socialAccount(named name: String) -> DemoDataConfiguration.DemoUserConfiguration.SocialAccount? {
         configuration.demoUsers.socialAccounts.first { $0.name == name }
+    }
+    
+    /// Get social account at index (for timeline events)
+    public func socialAccount(at index: Int) -> DemoDataConfiguration.DemoUserConfiguration.SocialAccount? {
+        let accounts = configuration.demoUsers.socialAccounts
+        guard index >= 0, index < accounts.count else { return nil }
+        return accounts[index]
+    }
+    
+    // MARK: - Timeline Events
+    
+    /// Get casting contests from config (for demo timeline)
+    public var timelineCastingContests: [DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem] {
+        configuration.timelineEvents.castingContests
+    }
+    
+    /// Get casting products from config (for demo timeline)
+    public var timelineCastingProducts: [DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem] {
+        configuration.timelineEvents.castingProducts
     }
     
     // MARK: - Product Mappings
@@ -120,6 +146,16 @@ public class DemoDataManager {
     /// Get event ID for product combo
     public var productComboEventId: String {
         configuration.eventIds.productCombo
+    }
+    
+    /// Get event ID for tweet halftime 1
+    public var tweetHalftime1EventId: String {
+        configuration.eventIds.tweetHalftime1
+    }
+    
+    /// Get event ID for tweet halftime 2
+    public var tweetHalftime2EventId: String {
+        configuration.eventIds.tweetHalftime2
     }
     
     // MARK: - Match Defaults

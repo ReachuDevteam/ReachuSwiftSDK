@@ -9,6 +9,7 @@
 import SwiftUI
 import AVKit
 import Combine
+import ReachuCore
 import ReachuDesignSystem
 
 struct HighlightVideoCard: View {
@@ -47,7 +48,7 @@ struct HighlightVideoCard: View {
             // Header (like tweet header)
             HStack(spacing: 8) {
                 // Viaplay logo
-                Image("icon ")  // Viaplay icon from assets
+                Image(DemoDataManager.shared.brandAsset(for: .icon))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
@@ -55,7 +56,7 @@ struct HighlightVideoCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text("Viaplay Highlights")
+                        Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Highlights")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         

@@ -212,7 +212,9 @@ public class ConfigurationLoader {
             productDetailConfig: productDetailConfig,
             localizationConfig: localizationConfig,
             campaignConfig: campaignConfig,
-            analyticsConfig: analyticsConfig
+            analyticsConfig: analyticsConfig,
+            brandConfig: brandConfig,
+            engagementConfig: engagementConfig
         )
         
         // Initialize Stripe automatically if available
@@ -1114,6 +1116,7 @@ private struct PlistConfiguration {
 // MARK: - Demo Data Configuration JSON
 
 private struct JSONDemoDataConfiguration: Codable {
+    let brand: JSONBrandOverride?
     let assets: JSONAssetConfiguration?
     let demoUsers: JSONDemoUserConfiguration?
     let productMappings: [String: JSONProductMapping]?
@@ -1124,6 +1127,31 @@ private struct JSONDemoDataConfiguration: Codable {
     let liveCards: JSONLiveCardsConfiguration?
     let sportClips: JSONSportClipsConfiguration?
     let matches: JSONMatchesConfiguration?
+    let timelineEvents: JSONTimelineEventsConfiguration?
+}
+
+private struct JSONTimelineEventsConfiguration: Codable {
+    let castingContests: [JSONCastingContestItem]?
+    let castingProducts: [JSONCastingProductItem]?
+}
+
+private struct JSONCastingContestItem: Codable {
+    let id: String?
+    let videoTimestamp: Int?
+    let title: String?
+    let description: String?
+    let prize: String?
+    let contestType: String?
+    let imageAsset: String?
+}
+
+private struct JSONCastingProductItem: Codable {
+    let id: String?
+    let videoTimestamp: Int?
+    let productId: String?
+    let productIds: [String]?
+    let title: String?
+    let description: String?
 }
 
 private struct JSONCarouselCardsConfiguration: Codable {
@@ -1173,6 +1201,11 @@ private struct JSONMatchItem: Codable {
     let subtitle: String?
     let imageUrl: String?
     let isLive: Bool?
+}
+
+private struct JSONBrandOverride: Codable {
+    let name: String?
+    let iconAsset: String?
 }
 
 private struct JSONAssetConfiguration: Codable {
@@ -1269,10 +1302,19 @@ extension ConfigurationLoader {
     }
     
     private static func createDemoDataConfiguration(from json: JSONDemoDataConfiguration) -> DemoDataConfiguration {
+        // Brand override (optional - when present, ensures demo data drives brand name + icon consistently)
+        let brand: BrandConfiguration? = json.brand.flatMap { b in
+            guard b.name != nil || b.iconAsset != nil else { return nil }
+            return BrandConfiguration(
+                name: b.name ?? BrandConfiguration.default.name,
+                iconAsset: b.iconAsset ?? BrandConfiguration.default.iconAsset
+            )
+        }
+        
         // Assets
         let assets = json.assets.map { assetJson in
             DemoDataConfiguration.AssetConfiguration(
-                defaultLogo: assetJson.defaultLogo ?? "logo1",
+                defaultLogo: assetJson.defaultLogo ?? "default_logo",
                 defaultAvatar: assetJson.defaultAvatar ?? "avatar_el",
                 backgroundImages: assetJson.backgroundImages.map { bg in
                     DemoDataConfiguration.AssetConfiguration.BackgroundImageAssets(
@@ -1290,8 +1332,8 @@ extension ConfigurationLoader {
                 } ?? DemoDataConfiguration.AssetConfiguration.BrandImageAssets(),
                 contestAssets: assetJson.contestAssets.map { contest in
                     DemoDataConfiguration.AssetConfiguration.ContestImageAssets(
-                        giftCard: contest.giftCard ?? "elkjop_konk",
-                        championsLeagueTickets: contest.championsLeagueTickets ?? "billeter_power"
+                        giftCard: contest.giftCard ?? "contest_prize_giftcard",
+                        championsLeagueTickets: contest.championsLeagueTickets ?? "contest_prize_tickets"
                     )
                 } ?? DemoDataConfiguration.AssetConfiguration.ContestImageAssets()
             )
@@ -1389,7 +1431,39 @@ extension ConfigurationLoader {
             )
         } ?? []
         
+        // Timeline Events (casting contests and products for demo mode)
+        let castingContests = json.timelineEvents?.castingContests?.compactMap { item -> DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem? in
+            guard let id = item.id, let title = item.title, let description = item.description,
+                  let prize = item.prize, let contestType = item.contestType, let imageAsset = item.imageAsset else { return nil }
+            return DemoDataConfiguration.TimelineEventsConfiguration.CastingContestItem(
+                id: id,
+                videoTimestamp: item.videoTimestamp ?? 2720,
+                title: title,
+                description: description,
+                prize: prize,
+                contestType: contestType,
+                imageAsset: imageAsset
+            )
+        } ?? []
+        let castingProducts = json.timelineEvents?.castingProducts?.compactMap { item -> DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem? in
+            guard let id = item.id, let productId = item.productId, let title = item.title,
+                  let description = item.description else { return nil }
+            return DemoDataConfiguration.TimelineEventsConfiguration.CastingProductItem(
+                id: id,
+                videoTimestamp: item.videoTimestamp ?? 2770,
+                productId: productId,
+                productIds: item.productIds ?? [],
+                title: title,
+                description: description
+            )
+        } ?? []
+        let timelineEvents = DemoDataConfiguration.TimelineEventsConfiguration(
+            castingContests: castingContests,
+            castingProducts: castingProducts
+        )
+        
         return DemoDataConfiguration(
+            brand: brand,
             assets: assets,
             demoUsers: demoUsers,
             productMappings: productMappings,
@@ -1398,7 +1472,8 @@ extension ConfigurationLoader {
             offerBanner: offerBanner,
             carouselCards: carouselCards,
             liveCards: liveCards,
-            sportClips: sportClips
+            sportClips: sportClips,
+            timelineEvents: timelineEvents
         )
     }
 }

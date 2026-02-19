@@ -41,12 +41,12 @@ struct MatchHeaderView: View {
                                     .aspectRatio(contentMode: .fit)
                                     .frame(height: 18)
                             case .failure:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(height: 18)
                             @unknown default:
-                                Image("logo1")
+                                Image(DemoDataManager.shared.defaultLogo)
                                     .resizable()
                                     .aspectRatio(contentMode: .fit)
                                     .frame(height: 18)
@@ -54,7 +54,7 @@ struct MatchHeaderView: View {
                         }
                     } else {
                         // Fallback to hardcoded logo if no campaign logo
-                        Image("logo1")
+                        Image(DemoDataManager.shared.defaultLogo)
                             .resizable()
                             .aspectRatio(contentMode: .fit)
                             .frame(height: 18)

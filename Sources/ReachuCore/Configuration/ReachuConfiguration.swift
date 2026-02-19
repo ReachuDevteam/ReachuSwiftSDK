@@ -88,7 +88,17 @@ public class ReachuConfiguration: ObservableObject {
         instance.campaignConfiguration = campaignConfig ?? .default
         instance.analyticsConfiguration = analyticsConfig ?? .default
         instance.demoDataConfiguration = demoDataConfig ?? ConfigurationLoader.loadDemoDataConfiguration()
-        instance.brandConfiguration = brandConfig ?? .default
+        // Brand: demo data overrides reachu-config for consistency (single source per demo)
+        if let demoBrand = instance.demoDataConfiguration.brand {
+            instance.brandConfiguration = demoBrand
+        } else if let brand = brandConfig {
+            // Sync icon from demo assets when no explicit brand in demo data
+            let iconAsset = instance.demoDataConfiguration.assets.defaultAvatar
+            instance.brandConfiguration = BrandConfiguration(name: brand.name, iconAsset: iconAsset)
+        } else {
+            let iconAsset = instance.demoDataConfiguration.assets.defaultAvatar
+            instance.brandConfiguration = BrandConfiguration(name: BrandConfiguration.default.name, iconAsset: iconAsset)
+        }
         instance.engagementConfiguration = engagementConfig ?? .default
         
         // Configure localization system

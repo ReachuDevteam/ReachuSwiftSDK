@@ -242,14 +242,14 @@ public struct REngagementContestCard: View {
             // Legacy Power asset - mapped to Elkjøp contest graphic
             // Power original: gavekortpower (full contest graphic with orange background, gift box, gift card)
             // This asset is preserved in the demo for reference but mapped to elkjop_konk for Elkjøp campaigns
-            return "elkjop_konk"
+            return "contest_prize_giftcard"
         case "elkjop_gavekort":
             // Gift card only asset (for Elkjøp) - use when only showing the gift card
             return "elkjop_gavekort"
         case "elkjop_konk":
             // Full contest graphic asset (for Elkjøp) - use for complete contest visual
             // Equivalent to Power's gavekortpower asset
-            return "elkjop_konk"
+            return "contest_prize_giftcard"
         default:
             // Return as-is for other assets
             return assetName

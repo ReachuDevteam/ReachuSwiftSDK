@@ -95,14 +95,7 @@ struct CastingProductCardWrapper: View {
     
     private func getProductUrl(for product: Product) -> String? {
         let productIdString = String(product.id)
-        if productIdString == "408895" {
-            // Samsung 75" QN85F Neo QLED 4K MiniLED Smart TV (2025)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
-        } else if productIdString == "408896" {
-            // Samsung 5.1.2ch HW-Q810F lydplanke (sort)
-            return "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
-        }
-        return productEvent.castingProductUrl
+        return DemoDataManager.shared.productUrl(for: productIdString) ?? productEvent.castingProductUrl
     }
     
     private func loadProducts() async {

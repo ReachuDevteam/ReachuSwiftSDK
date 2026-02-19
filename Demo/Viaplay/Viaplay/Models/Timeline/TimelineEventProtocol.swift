@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import ReachuCore
 
 // MARK: - Timeline Event Protocol
 
@@ -82,8 +83,10 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .trivia: return "Trivia"
         case .prediction: return "Spådom"
         case .voting: return "Avstemning"
-        case .castingContest: return "Elkjøp Konkurranse"
-        case .castingProduct: return "Elkjøp Produkt"
+        case .castingContest:
+            return "\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Konkurranse"
+        case .castingProduct:
+            return "\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Produkt"
         
         // Commerce events
         case .productHighlight: return "Produkt"

@@ -24,8 +24,8 @@ struct CastingContestCard: View {
         return VStack(alignment: .leading, spacing: 10) {
             // Header (similar to HighlightVideoCard)
             HStack(spacing: 8) {
-                // Brand avatar - hardcoded: siempre usar avatar_el
-                Image("avatar_el")
+                // Brand avatar from config (consistent with brand name)
+                Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)

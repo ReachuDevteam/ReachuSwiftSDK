@@ -103,7 +103,7 @@ struct CastingProductModal: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    Text("Kontakt Elkjøp for å fullføre kjøpet")
+                    Text("Kontakt \(ReachuConfiguration.shared.effectiveBrandConfiguration.name) for å fullføre kjøpet")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.7))
                         .multilineTextAlignment(.center)

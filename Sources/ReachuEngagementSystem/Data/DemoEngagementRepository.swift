@@ -15,7 +15,7 @@ public struct DemoEngagementRepository: EngagementRepositoryProtocol {
     public static var pollConverter: ((Any, BroadcastContext) -> Poll?)? = nil
     
     /// Closure to convert contest events to Contest models
-    /// Set from demo app to handle conversion of PowerContestEvent to Contest
+    /// Set from demo app to handle conversion of CastingContestEvent to Contest
     public static var contestConverter: ((Any, BroadcastContext) -> Contest?)? = nil
     
     public func loadPolls(for context: BroadcastContext, limit: Int? = nil, offset: Int? = nil) async -> [Poll] {

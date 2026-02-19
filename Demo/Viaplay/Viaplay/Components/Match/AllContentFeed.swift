@@ -66,16 +66,6 @@ struct AllContentFeed: View {
                                     removal: .opacity
                                 ))
                         }
-                        .onAppear {
-                            // Debug: Log Elkjøp contest events
-                            let castingContests = timelineEvents.filter { $0.eventType == .castingContest }
-                            if !castingContests.isEmpty {
-                                print("🎯 [AllContentFeed] Elkjøp contest events found: \(castingContests.count)")
-                                for event in castingContests {
-                                    print("  - ID: \(event.id), timestamp: \(event.videoTimestamp)s")
-                                }
-                            }
-                        }
                         
                         // Invisible anchor at bottom
                         Color.clear
@@ -110,8 +100,8 @@ struct AllContentFeed: View {
                     }
                 }
                 .onChange(of: lastNavigatedTimestamp) { newTimestamp in
-                    // When navigating to a timestamp, check if we need to scroll to an Elkjøp contest
-                    handlePowerContestScroll(proxy: proxy, timestamp: newTimestamp)
+                    // When navigating to a timestamp, check if we need to scroll to a Casting contest
+                    handleCastingContestScroll(proxy: proxy, timestamp: newTimestamp)
                 }
             }
             
@@ -191,13 +181,13 @@ struct AllContentFeed: View {
         NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
-    private func handlePowerContestScroll(proxy: ScrollViewProxy, timestamp: TimeInterval) {
-        // Find Elkjøp contest events near the navigated timestamp
+    private func handleCastingContestScroll(proxy: ScrollViewProxy, timestamp: TimeInterval) {
+        // Find Casting contest events near the navigated timestamp
         let castingContestEvents = timelineEvents
             .filter({ $0.eventType == .castingContest })
             .sorted(by: { $0.videoTimestamp < $1.videoTimestamp })
         
-        // Check if any Elkjøp contest is within 5 seconds of the navigated timestamp
+        // Check if any Casting contest is within 5 seconds of the navigated timestamp
         if let targetEvent = castingContestEvents.first(where: { 
             abs($0.videoTimestamp - timestamp) <= 5 
         }) {
@@ -370,9 +360,7 @@ struct AllContentFeed: View {
                 if let productEvent = wrappedEvent.event as? CastingProductEvent {
                     CastingProductCardWrapper(
                         productEvent: productEvent,
-                        onViewProduct: {
-                            print("🛒 Usuario ve Elkjøp product: \(productEvent.id)")
-                        }
+                        onViewProduct: {}
                     )
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.95).combined(with: .opacity),
@@ -380,14 +368,12 @@ struct AllContentFeed: View {
                     ))
                 }
             
-            // Elkjøp Contests
+            // Casting Contests
             case .castingContest:
                 if let contest = wrappedEvent.event as? CastingContestEvent {
                     CastingContestCardWrapper(
                         contest: contest,
-                        onParticipate: {
-                            print("🏆 Usuario participa en Elkjøp contest: \(contest.id)")
-                        }
+                        onParticipate: {}
                     )
                     .transition(.asymmetric(
                         insertion: .scale(scale: 0.95).combined(with: .opacity),

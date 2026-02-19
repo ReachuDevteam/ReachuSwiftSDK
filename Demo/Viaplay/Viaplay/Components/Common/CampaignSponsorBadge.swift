@@ -44,14 +44,14 @@ struct CampaignSponsorBadge: View {
                         .frame(maxWidth: maxWidth, maxHeight: maxHeight)
                 } placeholder: {
                     // Only show placeholder if not cached (will be instant if cached)
-                    Image("logo1")
+                    Image(DemoDataManager.shared.defaultLogo)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .frame(maxWidth: maxWidth, maxHeight: maxHeight)
                 }
             } else {
                 // Fallback to hardcoded logo if no campaign logo
-                Image("logo1")
+                Image(DemoDataManager.shared.defaultLogo)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: maxWidth, maxHeight: maxHeight)

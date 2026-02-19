@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuDesignSystem
 
 struct FinalStatsCard: View {
@@ -27,7 +28,7 @@ struct FinalStatsCard: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack(spacing: 8) {
-                Image("icon ")
+                Image(DemoDataManager.shared.brandAsset(for: .icon))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)

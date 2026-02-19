@@ -65,16 +65,6 @@ struct AllContentFeed: View {
                                     removal: .opacity
                                 ))
                         }
-                        .onAppear {
-                            // Debug: Log Elkjøp contest events
-                            let castingContests = timelineEvents.filter { $0.eventType == .castingContest }
-                            if !castingContests.isEmpty {
-                                print("🎯 [AllContentFeed] Elkjøp contest events found: \(castingContests.count)")
-                                for event in castingContests {
-                                    print("  - ID: \(event.id), timestamp: \(event.videoTimestamp)s")
-                                }
-                            }
-                        }
                         
                         // Invisible anchor at bottom
                         Color.clear

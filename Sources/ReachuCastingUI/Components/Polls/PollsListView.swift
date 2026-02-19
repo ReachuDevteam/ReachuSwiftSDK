@@ -73,9 +73,7 @@ struct PollsListView: View {
                     ForEach(visibleCastingContests, id: \.id) { contest in
                         RCastingContestCard(
                             contest: contest,
-                            onParticipate: {
-                                print("🏆 Usuario participa en Elkjøp contest: \(contest.id)")
-                            }
+                            onParticipate: {}
                         )
                         .padding(.horizontal, 16)
                         .id(contest.id)

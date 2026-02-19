@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import ReachuCore
 import ReachuDesignSystem
 
 struct ContestCard: View {
@@ -64,7 +65,7 @@ struct ContestCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Viaplay Konkurranse")
+                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Konkurranse")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

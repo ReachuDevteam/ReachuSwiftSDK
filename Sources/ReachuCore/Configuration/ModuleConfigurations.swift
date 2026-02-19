@@ -854,7 +854,7 @@ public struct BrandConfiguration {
     
     public static let `default` = BrandConfiguration()
     
-    /// Legacy Power brand configuration (preserved for reference)
+    /// Legacy Power brand configuration. Kept for API compatibility; prefer `elkjøp` for new demos.
     public static let power = BrandConfiguration(
         name: "Power",
         iconAsset: "avatar_power"
@@ -1002,8 +1002,8 @@ public struct DemoDataConfiguration {
             public let championsLeagueTickets: String
             
             public init(
-                giftCard: String = "elkjop_konk",
-                championsLeagueTickets: String = "billeter_power"
+                giftCard: String = "contest_prize_giftcard",
+                championsLeagueTickets: String = "contest_prize_tickets"
             ) {
                 self.giftCard = giftCard
                 self.championsLeagueTickets = championsLeagueTickets
@@ -1011,7 +1011,7 @@ public struct DemoDataConfiguration {
         }
         
         public init(
-            defaultLogo: String = "logo1",
+            defaultLogo: String = "default_logo",
             defaultAvatar: String = "avatar_el",
             backgroundImages: BackgroundImageAssets = BackgroundImageAssets(
                 footballField: "football_field_bg",
@@ -1024,8 +1024,8 @@ public struct DemoDataConfiguration {
                 logo: "logo"
             ),
             contestAssets: ContestImageAssets = ContestImageAssets(
-                giftCard: "elkjop_konk",
-                championsLeagueTickets: "billeter_power"
+                giftCard: "contest_prize_giftcard",
+                championsLeagueTickets: "contest_prize_tickets"
             )
         ) {
             self.defaultLogo = defaultLogo
@@ -1094,6 +1094,56 @@ public struct DemoDataConfiguration {
             self.productCombo = productCombo
             self.tweetHalftime1 = tweetHalftime1
             self.tweetHalftime2 = tweetHalftime2
+        }
+    }
+    
+    // MARK: - Timeline Events (for demo mode)
+    
+    public struct TimelineEventsConfiguration {
+        public let castingContests: [CastingContestItem]
+        public let castingProducts: [CastingProductItem]
+        
+        public struct CastingContestItem {
+            public let id: String
+            public let videoTimestamp: Int
+            public let title: String
+            public let description: String
+            public let prize: String
+            public let contestType: String
+            public let imageAsset: String
+            
+            public init(id: String, videoTimestamp: Int, title: String, description: String, prize: String, contestType: String, imageAsset: String) {
+                self.id = id
+                self.videoTimestamp = videoTimestamp
+                self.title = title
+                self.description = description
+                self.prize = prize
+                self.contestType = contestType
+                self.imageAsset = imageAsset
+            }
+        }
+        
+        public struct CastingProductItem {
+            public let id: String
+            public let videoTimestamp: Int
+            public let productId: String
+            public let productIds: [String]
+            public let title: String
+            public let description: String
+            
+            public init(id: String, videoTimestamp: Int, productId: String, productIds: [String], title: String, description: String) {
+                self.id = id
+                self.videoTimestamp = videoTimestamp
+                self.productId = productId
+                self.productIds = productIds
+                self.title = title
+                self.description = description
+            }
+        }
+        
+        public init(castingContests: [CastingContestItem] = [], castingProducts: [CastingProductItem] = []) {
+            self.castingContests = castingContests
+            self.castingProducts = castingProducts
         }
     }
     
@@ -1211,6 +1261,10 @@ public struct DemoDataConfiguration {
         }
     }
     
+    // MARK: - Brand Override (optional - when set, overrides reachu-config brand for demo consistency)
+    
+    public let brand: BrandConfiguration?
+    
     // MARK: - Properties
     
     public let assets: AssetConfiguration
@@ -1222,8 +1276,10 @@ public struct DemoDataConfiguration {
     public let carouselCards: [CarouselCardItem]
     public let liveCards: [LiveCardItem]
     public let sportClips: [SportClipItem]
+    public let timelineEvents: TimelineEventsConfiguration
     
     public init(
+        brand: BrandConfiguration? = nil,
         assets: AssetConfiguration = AssetConfiguration(),
         demoUsers: DemoUserConfiguration = DemoUserConfiguration(),
         productMappings: [String: ProductMapping] = [:],
@@ -1232,8 +1288,10 @@ public struct DemoDataConfiguration {
         offerBanner: OfferBannerConfiguration = OfferBannerConfiguration(),
         carouselCards: [CarouselCardItem] = [],
         liveCards: [LiveCardItem] = [],
-        sportClips: [SportClipItem] = []
+        sportClips: [SportClipItem] = [],
+        timelineEvents: TimelineEventsConfiguration = TimelineEventsConfiguration()
     ) {
+        self.brand = brand
         self.assets = assets
         self.demoUsers = demoUsers
         self.productMappings = productMappings
@@ -1243,6 +1301,7 @@ public struct DemoDataConfiguration {
         self.carouselCards = carouselCards
         self.liveCards = liveCards
         self.sportClips = sportClips
+        self.timelineEvents = timelineEvents
     }
     
     public static let `default` = DemoDataConfiguration()

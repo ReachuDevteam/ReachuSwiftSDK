@@ -1,9 +1,14 @@
 {
   "_comment": "Static demo data configuration for Viaplay demo. This data can be replaced with backend data or moved to reachu-config.json in the future.",
   "version": "1.0.0",
+  "brand": {
+    "_comment": "Brand name and icon - single source for demo consistency. Overrides reachu-config when present.",
+    "name": "Elkjøp",
+    "iconAsset": "avatar_el"
+  },
   "assets": {
     "_comment": "Image asset names used as fallbacks throughout the demo",
-    "defaultLogo": "logo1",
+    "defaultLogo": "default_logo",
     "defaultAvatar": "avatar_el",
     "backgroundImages": {
       "footballField": "football_field_bg",
@@ -16,8 +21,8 @@
       "logo": "logo"
     },
     "contestAssets": {
-      "giftCard": "elkjop_konk",
-      "championsLeagueTickets": "billeter_power"
+      "giftCard": "contest_prize_giftcard",
+      "championsLeagueTickets": "contest_prize_tickets"
     }
   },
   "demoUsers": {
@@ -29,8 +34,8 @@
         "color": "#F5145A"
       },
       {
-        "name": "PowerFan",
-        "color": "#FF9500"
+        "name": "ElkjøpFan",
+        "color": "#69A333"
       },
       {
         "name": "ChampionsFan",
@@ -43,8 +48,8 @@
     ],
     "socialAccounts": [
       {
-        "name": "Power Norge",
-        "handle": "@PowerNorge",
+        "name": "Elkjøp Norge",
+        "handle": "@ElkjøpNorge",
         "verified": true
       },
       {
@@ -105,7 +110,7 @@
         "description": "Delta og vinn et gavekort på 5000kr ved å svare på et lite quiz",
         "prize": "Gavekort på 5000kr",
         "contestType": "quiz",
-        "imageAsset": "elkjop_konk"
+        "imageAsset": "contest_prize_giftcard"
       },
       {
         "id": "casting-contest-giveaway",
@@ -114,7 +119,7 @@
         "description": "Delta og vinn to billetter til Champions League",
         "prize": "To billetter til Champions League",
         "contestType": "giveaway",
-        "imageAsset": "billeter_power"
+        "imageAsset": "contest_prize_tickets"
       }
     ],
     "castingProducts": [

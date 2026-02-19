@@ -15,7 +15,7 @@ struct AdminCommentCard: View {
             // Header
             HStack(spacing: 8) {
                 // Viaplay logo badge
-                Image("icon ")  // Viaplay icon from assets
+                Image(DemoDataManager.shared.brandAsset(for: .icon))
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)

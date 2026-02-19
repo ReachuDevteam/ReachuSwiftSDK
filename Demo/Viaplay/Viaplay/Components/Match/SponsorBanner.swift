@@ -14,8 +14,8 @@ struct SponsorBanner: View {
     
     @StateObject private var campaignManager = CampaignManager.shared
     
-    init(logoName: String = "logo1", text: String = "Sponset av") {
-        self.logoName = logoName
+    init(logoName: String? = nil, text: String = "Sponset av") {
+        self.logoName = logoName ?? DemoDataManager.shared.defaultLogo
         self.text = text
     }
     
@@ -66,7 +66,7 @@ struct SponsorBanner: View {
 #Preview {
     VStack(spacing: 0) {
         SponsorBanner()
-        SponsorBanner(logoName: "logo1", text: "Presented by")
+        SponsorBanner(logoName: DemoDataManager.shared.defaultLogo, text: "Presented by")
     }
 }
 

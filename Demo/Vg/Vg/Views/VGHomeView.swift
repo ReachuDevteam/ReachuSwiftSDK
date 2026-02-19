@@ -175,7 +175,7 @@ struct VGHomeView: View {
                                 .font(.system(size: 9, weight: .medium))
                                 .foregroundColor(.white.opacity(0.8))
                             
-                            Image("logo1")
+                            Image(DemoDataManager.shared.defaultLogo)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(maxWidth: 80, maxHeight: 24)
