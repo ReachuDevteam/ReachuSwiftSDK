@@ -1,5 +1,5 @@
 import SwiftUI
-import ReachuUI
+import VioUI
 
 struct MatchDetailView: View {
     let match: Match

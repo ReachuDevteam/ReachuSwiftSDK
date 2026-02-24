@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import ReachuCastingUI
+import VioCastingUI
 
 struct HighlightSummaryView: View {
     let highlights: [HighlightTimelineEvent]

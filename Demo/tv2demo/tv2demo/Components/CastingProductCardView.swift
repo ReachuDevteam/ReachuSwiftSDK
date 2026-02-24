@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 /// Wrapper de TV2ProductOverlay.productCard con ProductFetchViewModel propio
 /// Carga datos desde Reachu API y los muestra
@@ -106,7 +106,7 @@ struct CastingProductCardView: View {
     }
     
     private var shouldShowDiscountBadge: Bool {
-        guard ReachuConfiguration.shared.uiConfiguration.showDiscountBadge else {
+        guard VioConfiguration.shared.uiConfiguration.showDiscountBadge else {
             return false
         }
         return discountPercentage != nil && (discountPercentage ?? 0) > 0

@@ -7,9 +7,9 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuUI
-import ReachuDesignSystem
+import VioCore
+import VioUI
+import VioDesignSystem
 
 struct CastingProductCard: View {
     let productEvent: CastingProductEvent
@@ -25,14 +25,14 @@ struct CastingProductCard: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        let brandConfig = ReachuConfiguration.shared.brandConfiguration
-        let colors = ReachuColors.adaptive(for: colorScheme)
+        let brandConfig = VioConfiguration.shared.brandConfiguration
+        let colors = VioColors.adaptive(for: colorScheme)
         
         return VStack(alignment: .leading, spacing: 12) {
             // Header (similar to CastingContestCard)
             HStack(spacing: 8) {
                 // Brand avatar from config (consistent with brand name)
-                Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
+                Image(VioConfiguration.shared.effectiveBrandConfiguration.iconAsset)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
@@ -237,7 +237,7 @@ struct CastingProductCard: View {
                     title: product.title,
                     description: productEvent.description,
                     castingProductUrl: getProductUrl(for: product),
-                    castingCheckoutUrl: getProductUrl(for: product),
+                    castingCheckoutUrl: getCheckoutUrl(for: product),
                     imageAsset: nil,
                     metadata: nil
                 )
@@ -276,9 +276,45 @@ struct CastingProductCard: View {
     
     // MARK: - Helper to get product URL
     
-    private func getProductUrl(for product: Product) -> String? {
+    /// Viaplay demo fallback URLs (from demo-static-data.json) - used when config lookup fails
+    private static let viaplayProductUrls: [String: (productUrl: String, checkoutUrl: String)] = [
+        "408895": (
+            "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+            "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443"
+        ),
+        "408896": (
+            "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694",
+            "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
+        )
+    ]
+    
+    /// Resolves the config product ID - API may return different IDs than productMappings (e.g. retailer ID vs casting ID)
+    private func configProductId(for product: Product) -> String? {
         let productIdString = String(product.id)
-        return DemoDataManager.shared.productUrl(for: productIdString) ?? productEvent.castingProductUrl
+        if DemoDataManager.shared.productUrl(for: productIdString) != nil || Self.viaplayProductUrls[productIdString] != nil {
+            return productIdString
+        }
+        guard let index = products.firstIndex(where: { $0.id == product.id }),
+              index < productEvent.allProductIds.count else {
+            return nil
+        }
+        return productEvent.allProductIds[index]
+    }
+    
+    private func getProductUrl(for product: Product) -> String? {
+        if let configId = configProductId(for: product) {
+            return DemoDataManager.shared.productUrl(for: configId)
+                ?? Self.viaplayProductUrls[configId]?.productUrl
+        }
+        return productEvent.castingProductUrl?.isEmpty == false ? productEvent.castingProductUrl : nil
+    }
+    
+    private func getCheckoutUrl(for product: Product) -> String? {
+        if let configId = configProductId(for: product) {
+            return DemoDataManager.shared.checkoutUrl(for: configId)
+                ?? Self.viaplayProductUrls[configId]?.checkoutUrl
+        }
+        return productEvent.castingCheckoutUrl?.isEmpty == false ? productEvent.castingCheckoutUrl : nil
     }
     
     // MARK: - Discount Badge

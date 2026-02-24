@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import ReachuCore
+import VioCore
 
 // MARK: - Timeline Event Protocol
 
@@ -84,9 +84,9 @@ enum TimelineEventType: String, Codable, CaseIterable {
         case .prediction: return "Spådom"
         case .voting: return "Avstemning"
         case .castingContest:
-            return "\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Konkurranse"
+            return "\(VioConfiguration.shared.effectiveBrandConfiguration.name) Konkurranse"
         case .castingProduct:
-            return "\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Produkt"
+            return "\(VioConfiguration.shared.effectiveBrandConfiguration.name) Produkt"
         
         // Commerce events
         case .productHighlight: return "Produkt"

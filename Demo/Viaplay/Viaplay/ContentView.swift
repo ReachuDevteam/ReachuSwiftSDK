@@ -6,10 +6,10 @@
 //
 
 import SwiftUI
-import ReachuUI
-import ReachuCore
-// import ReachuLiveUI
-// import ReachuLiveShow
+import VioUI
+import VioCore
+// import VioLiveUI
+// import VioLiveShow
 
 struct ContentView: View {
     @EnvironmentObject var cartManager: CartManager
@@ -96,12 +96,12 @@ extension ContentView {
     }
 
     private func resolveBaseURL() -> URL? {
-        let urlString = ReachuConfiguration.shared.environment.graphQLURL
+        let urlString = VioConfiguration.shared.environment.graphQLURL
         return URL(string: urlString)
     }
 
     private func logConfig() {
-        let cfg = ReachuConfiguration.shared
+        let cfg = VioConfiguration.shared
         print("🧭 [Diag][Reachu] env=\(cfg.environment.rawValue) base=\(cfg.environment.graphQLURL)")
         print("🧭 [Diag][Reachu] apiKey=\(maskKey(cfg.apiKey))")
         print("🧭 [Diag][Reachu] market country=\(cfg.marketConfiguration.countryCode) currency=\(cfg.marketConfiguration.currencyCode)")
@@ -112,7 +112,7 @@ extension ContentView {
             print("❌ [Diag][Reachu] Invalid base URL from configuration")
             return nil
         }
-        let key = ReachuConfiguration.shared.apiKey.isEmpty ? "DEMO_KEY" : ReachuConfiguration.shared.apiKey
+        let key = VioConfiguration.shared.apiKey.isEmpty ? "DEMO_KEY" : VioConfiguration.shared.apiKey
         print("🔌 [Diag][Reachu] Creating SdkClient base=\(base.absoluteString) apiKey=\(maskKey(key))")
         return SdkClient(baseUrl: base, apiKey: key)
     }
@@ -134,11 +134,11 @@ extension ContentView {
     }
 
     private func currentCurrency() -> String {
-        ReachuConfiguration.shared.marketConfiguration.currencyCode
+        VioConfiguration.shared.marketConfiguration.currencyCode
     }
 
     private func currentCountry() -> String {
-        ReachuConfiguration.shared.marketConfiguration.countryCode
+        VioConfiguration.shared.marketConfiguration.countryCode
     }
 
     private func debugReachuPing() async {

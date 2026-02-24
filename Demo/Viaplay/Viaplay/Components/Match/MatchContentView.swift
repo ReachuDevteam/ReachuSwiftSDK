@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ReachuCastingUI
+import VioCastingUI
 
 struct MatchContentView: View {
     let selectedTab: MatchTab

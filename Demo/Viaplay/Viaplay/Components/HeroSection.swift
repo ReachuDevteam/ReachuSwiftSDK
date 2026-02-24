@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct HeroSection: View {
     let content: HeroContent

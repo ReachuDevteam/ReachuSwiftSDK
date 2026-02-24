@@ -6,9 +6,9 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuUI
-import ReachuCastingUI
+import VioCore
+import VioUI
+import VioCastingUI
 
 struct SportDetailView: View {
     @Environment(\.presentationMode) var presentationMode

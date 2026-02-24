@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct LineupCard: View {
     let teamName: String
@@ -74,7 +74,7 @@ struct LineupCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Oppstilling")
+                        Text("\(VioConfiguration.shared.effectiveBrandConfiguration.name) Oppstilling")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         

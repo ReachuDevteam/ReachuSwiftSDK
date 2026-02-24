@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 @main
 struct tv2demoApp: App {
@@ -23,8 +23,8 @@ struct tv2demoApp: App {
         print("🚀 [TV2Demo] Loading Reachu SDK configuration...")
         ConfigurationLoader.loadConfiguration()
         print("✅ [TV2Demo] Reachu SDK configured successfully")
-        print("🎨 [TV2Demo] Theme: \(ReachuConfiguration.shared.theme.name)")
-        print("🎨 [TV2Demo] Mode: \(ReachuConfiguration.shared.theme.mode)")
+        print("🎨 [TV2Demo] Theme: \(VioConfiguration.shared.theme.name)")
+        print("🎨 [TV2Demo] Mode: \(VioConfiguration.shared.theme.mode)")
     }
     
     var body: some Scene {

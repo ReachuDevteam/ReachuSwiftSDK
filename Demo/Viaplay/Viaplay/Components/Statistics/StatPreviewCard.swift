@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuCastingUI
+import VioCore
+import VioCastingUI
 
 struct StatPreviewCard: View {
     let statistics: MatchStatistics
@@ -32,7 +32,7 @@ struct StatPreviewCard: View {
                     .clipShape(Circle())
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Statistics")
+                    Text("\(VioConfiguration.shared.effectiveBrandConfiguration.name) Statistics")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

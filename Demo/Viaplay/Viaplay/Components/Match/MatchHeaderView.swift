@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuCastingUI
+import VioCore
+import VioCastingUI
 
 struct MatchHeaderView: View {
     let match: Match

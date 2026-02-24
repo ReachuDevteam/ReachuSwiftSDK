@@ -8,7 +8,7 @@
 
 import Foundation
 import Combine
-import ReachuCastingUI
+import VioCastingUI
 
 @MainActor
 class MatchSimulationManager: ObservableObject {

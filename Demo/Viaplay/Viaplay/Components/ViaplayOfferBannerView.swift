@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 /// Offer Banner View - Static version
 /// Banner promocional con imagen de fondo para ofertas especiales

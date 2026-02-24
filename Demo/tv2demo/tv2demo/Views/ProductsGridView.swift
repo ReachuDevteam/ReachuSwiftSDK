@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 /// Products Grid View
 /// Vista con grid de productos similar a ReachuDemoApp
@@ -166,7 +166,7 @@ struct ProductsGridView: View {
         
         do {
             // Create SDK client
-            let config = ReachuConfiguration.shared
+            let config = VioConfiguration.shared
             let baseURL = URL(string: config.environment.graphQLURL)!
             let apiKey = config.apiKey.isEmpty ? "DEMO_KEY" : config.apiKey
             let sdk = SdkClient(baseUrl: baseURL, apiKey: apiKey)

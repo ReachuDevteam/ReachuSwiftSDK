@@ -83,7 +83,7 @@ Demo funcional de Viaplay que integre el SDK de Reachu para mostrar:
 - ✅ `DemoDataManager` singleton implementado
 - ✅ `demo-static-data.json` con toda la data estática
 - ✅ `ConfigurationLoader` extendido para cargar demo data
-- ✅ Integrado en `ReachuConfiguration`
+- ✅ Integrado en `VioConfiguration`
 - ✅ Default initializers con valores por defecto
 
 ### ⏳ Pendiente
@@ -122,11 +122,11 @@ Demo funcional de Viaplay que integre el SDK de Reachu para mostrar:
 **Ubicación**: `Sources/ReachuCore/`
 
 **Configuration/**
-- `ReachuConfiguration.swift` - Singleton de configuración global
+- `VioConfiguration.swift` - Singleton de configuración global
 - `ConfigurationLoader.swift` - Carga de configuraciones desde JSON
 - `ModuleConfigurations.swift` - Estructuras de configuración (incluye `DemoDataConfiguration`)
-- `ReachuTheme.swift` - Sistema de temas
-- `ReachuLocalization.swift` - Sistema de localización
+- `VioTheme.swift` - Sistema de temas
+- `VioLocalization.swift` - Sistema de localización
 
 **Managers/**
 - `CampaignManager.swift` - Gestión de campañas y WebSocket
@@ -240,7 +240,7 @@ Demo funcional de Viaplay que integre el SDK de Reachu para mostrar:
 - [x] `DemoDataManager` singleton implementado
 - [x] `demo-static-data.json` creado con toda la data estática
 - [x] `ConfigurationLoader` extendido
-- [x] Integrado en `ReachuConfiguration`
+- [x] Integrado en `VioConfiguration`
 - [x] Default initializers implementados
 
 #### Integración SDK ✅
@@ -422,7 +422,7 @@ Demo funcional de Viaplay que integre el SDK de Reachu para mostrar:
 - `Sources/ReachuCore/Managers/DemoDataManager.swift` - Manager de datos estáticos
 - `Sources/ReachuCore/Configuration/ModuleConfigurations.swift` - Estructuras de configuración
 - `Sources/ReachuCore/Configuration/ConfigurationLoader.swift` - Loader de configuraciones
-- `Sources/ReachuCore/Configuration/ReachuConfiguration.swift` - Configuración global
+- `Sources/ReachuCore/Configuration/VioConfiguration.swift` - Configuración global
 
 ---
 
@@ -441,7 +441,7 @@ ConfigurationLoader.loadDemoDataConfiguration()
     ↓
 DemoDataConfiguration
     ↓
-ReachuConfiguration.shared.demoDataConfiguration
+VioConfiguration.shared.demoDataConfiguration
     ↓
 DemoDataManager.shared
 ```

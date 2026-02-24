@@ -7,10 +7,10 @@
 
 import SwiftUI
 import CoreData
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 // TODO: Add ReachuCore package dependency in Xcode
-// import ReachuCore
+// import VioCore
 
 @main
 struct VgApp: App {
@@ -23,11 +23,11 @@ struct VgApp: App {
         print("🚀 [VG] Loading Reachu SDK configuration...")
         ConfigurationLoader.loadConfiguration()
         print("✅ [VG] Reachu SDK configured successfully")
-        print("🎨 [VG] Theme: \(ReachuConfiguration.shared.theme.name)")
-        print("🎨 [VG] Mode: \(ReachuConfiguration.shared.theme.mode)")
+        print("🎨 [VG] Theme: \(VioConfiguration.shared.theme.name)")
+        print("🎨 [VG] Mode: \(VioConfiguration.shared.theme.mode)")
 
         // MARK: - Reachu Diagnostic Logs
-        let cfg = ReachuConfiguration.shared
+        let cfg = VioConfiguration.shared
         let apiKeyMasked = cfg.apiKey.isEmpty ? "(empty)" : String(repeating: "*", count: max(0, cfg.apiKey.count - 4)) + cfg.apiKey.suffix(4)
         print("🔧 [Reachu][Config] environment=\(cfg.environment.rawValue)")
         print("🔧 [Reachu][Config] graphQLURL=\(cfg.environment.graphQLURL)")

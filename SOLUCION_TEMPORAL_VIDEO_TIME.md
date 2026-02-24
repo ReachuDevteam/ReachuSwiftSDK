@@ -146,7 +146,7 @@ func refreshEngagement(for broadcastContext: BroadcastContext, videoTime: Int?) 
         // Actualizar estado local
         self.polls = polls
     } catch {
-        ReachuLogger.error("Failed to refresh polls: \(error)", component: "EngagementManager")
+        VioLogger.error("Failed to refresh polls: \(error)", component: "EngagementManager")
     }
     
     // Refrescar contests
@@ -157,7 +157,7 @@ func refreshEngagement(for broadcastContext: BroadcastContext, videoTime: Int?) 
         )
         self.contests = contests
     } catch {
-        ReachuLogger.error("Failed to refresh contests: \(error)", component: "EngagementManager")
+        VioLogger.error("Failed to refresh contests: \(error)", component: "EngagementManager")
     }
 }
 ```

@@ -2,8 +2,8 @@ import SwiftUI
 import AVKit
 import AVFoundation
 import Combine
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 /// TV2 Video Player with casting support
 /// Simulates a live streaming experience with AirPlay/Chromecast capability
@@ -26,7 +26,7 @@ struct TV2VideoPlayer: View {
     
     // SDK Client para fetch de productos
     private var sdkClient: SdkClient {
-        let config = ReachuConfiguration.shared
+        let config = VioConfiguration.shared
         let baseURL = URL(string: config.environment.graphQLURL)!
         return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
     }

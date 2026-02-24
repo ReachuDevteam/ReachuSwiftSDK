@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 struct VGFullScreenPlayerView: View {
     @Environment(\.dismiss) private var dismiss

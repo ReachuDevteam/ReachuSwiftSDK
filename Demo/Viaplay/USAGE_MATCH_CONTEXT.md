@@ -92,7 +92,7 @@ Una vez establecido el broadcast context:
 ### Para Usar Broadcast Context en Otros Lugares
 
 ```swift
-import ReachuCore
+import VioCore
 
 // Crear broadcast context desde Match
 let broadcastContext = match.toBroadcastContext(channelId: 1)

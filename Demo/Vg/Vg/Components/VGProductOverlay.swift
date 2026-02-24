@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 /// Componente para mostrar un producto individual del WebSocket
 /// Estilo basado en las cards del SDK de Reachu
@@ -161,7 +161,7 @@ struct VGProductOverlay: View {
     }
     
     private var shouldShowDiscountBadge: Bool {
-        guard ReachuConfiguration.shared.uiConfiguration.showDiscountBadge else { return false }
+        guard VioConfiguration.shared.uiConfiguration.showDiscountBadge else { return false }
         return discountPercentage != nil && (discountPercentage ?? 0) > 0
     }
     

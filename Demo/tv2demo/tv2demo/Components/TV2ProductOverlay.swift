@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 /// Componente para mostrar un producto individual
 /// Estilo basado en las cards del SDK de Reachu
@@ -187,7 +187,7 @@ struct TV2ProductOverlay: View {
     }
     
     private var shouldShowDiscountBadge: Bool {
-        guard ReachuConfiguration.shared.uiConfiguration.showDiscountBadge else {
+        guard VioConfiguration.shared.uiConfiguration.showDiscountBadge else {
             return false
         }
         return discountPercentage != nil && (discountPercentage ?? 0) > 0

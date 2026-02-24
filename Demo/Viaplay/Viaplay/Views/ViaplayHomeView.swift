@@ -6,9 +6,9 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuUI
-import ReachuCastingUI
+import VioCore
+import VioUI
+import VioCastingUI
 
 struct ViaplayHomeView: View {
     @Binding var selectedTab: Int

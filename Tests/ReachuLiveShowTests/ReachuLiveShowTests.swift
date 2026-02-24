@@ -1,5 +1,5 @@
 import XCTest
-@testable import ReachuLiveShow
+@testable import VioLiveShow
 
 final class ReachuLiveShowTests: XCTestCase {
     

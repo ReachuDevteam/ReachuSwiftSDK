@@ -7,7 +7,8 @@
 //
 
 import SwiftUI
-import ReachuCastingUI
+import VioCore
+import VioCastingUI
 
 struct FinalStatsCard: View {
     let statistics: MatchStatistics

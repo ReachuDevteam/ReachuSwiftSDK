@@ -7,8 +7,8 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuDesignSystem
+import VioCore
+import VioDesignSystem
 
 struct CastingContestCard: View {
     let contest: CastingContestEvent
@@ -18,14 +18,14 @@ struct CastingContestCard: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        let brandConfig = ReachuConfiguration.shared.brandConfiguration
-        let colors = ReachuColors.adaptive(for: colorScheme)
+        let brandConfig = VioConfiguration.shared.brandConfiguration
+        let colors = VioColors.adaptive(for: colorScheme)
         
         return VStack(alignment: .leading, spacing: 10) {
             // Header (similar to HighlightVideoCard)
             HStack(spacing: 8) {
                 // Brand avatar from config (consistent with brand name)
-                Image(ReachuConfiguration.shared.effectiveBrandConfiguration.iconAsset)
+                Image(VioConfiguration.shared.effectiveBrandConfiguration.iconAsset)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)

@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 /// Vista que se muestra cuando el casting está activo
 /// Permite controlar el video y ver los overlays mientras se castea
@@ -23,7 +23,7 @@ struct CastingActiveView: View {
     }
     
     private var sdkClient: SdkClient {
-        let config = ReachuConfiguration.shared
+        let config = VioConfiguration.shared
         let baseURL = URL(string: config.environment.graphQLURL)!
         return SdkClient(baseUrl: baseURL, apiKey: config.apiKey)
     }

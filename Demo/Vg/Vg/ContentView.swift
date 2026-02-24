@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 struct ContentView: View {
     @EnvironmentObject private var cartManager: CartManager

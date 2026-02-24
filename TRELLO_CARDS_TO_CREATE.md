@@ -56,7 +56,7 @@ Implement dynamic configuration management from backend
 - `Sources/ReachuCore/Models/DynamicConfigModels.swift` (nuevo)
 - `Sources/ReachuCore/Network/ConfigAPIClient.swift` (nuevo)
 - `Sources/ReachuCore/Managers/CampaignManager.swift` (actualizado)
-- `Sources/ReachuCore/Configuration/ReachuConfiguration.swift` (actualizado)
+- `Sources/ReachuCore/Configuration/VioConfiguration.swift` (actualizado)
 - `Documentation/BACKEND_API_SPEC.md` (nuevo)
 - `Documentation/BACKEND_IMPLEMENTATION_GUIDE.md` (nuevo)
 - `Documentation/BACKEND_QA_RESPONSES.md` (nuevo)
@@ -76,7 +76,7 @@ Implement dynamic configuration management from backend
 - DynamicConfigModels definidos
 - ConfigAPIClient implementado
 - CampaignManager integrado
-- ReachuConfiguration actualizado con effectiveBrandConfiguration
+- VioConfiguration actualizado con effectiveBrandConfiguration
 - Documentación BACKEND_API_SPEC.md creada
 - Documentación BACKEND_IMPLEMENTATION_GUIDE.md creada
 - Documentación BACKEND_QA_RESPONSES.md creada

@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct PredictionPollCard: View {
     let homeTeam: String
@@ -52,7 +52,7 @@ struct PredictionPollCard: View {
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Spådom")
+                    Text("\(VioConfiguration.shared.effectiveBrandConfiguration.name) Spådom")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.white)
                     

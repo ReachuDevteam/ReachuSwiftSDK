@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 struct MatchDetailView: View {
     let matchTitle: String
@@ -103,7 +103,7 @@ struct MatchDetailView: View {
                         }
                         .padding(.top, 24)
                         .padding(.horizontal, 16)
-                        // Auto-loads based on ReachuConfiguration (currency/country)
+                        // Auto-loads based on VioConfiguration (currency/country)
                         RProductCarousel(componentId: "product-carousel-template", layout: "compact")
                     }
                 }

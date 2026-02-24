@@ -332,7 +332,7 @@ Sent when configuration changes and clients should invalidate cache and reload.
 When receiving this event, the SDK should:
 1. Invalidate cached configuration for the affected campaign/match
 2. Reload configuration from the appropriate endpoint
-3. Update `ReachuConfiguration` with new values
+3. Update `VioConfiguration` with new values
 4. Notify subscribed components of changes
 
 ---

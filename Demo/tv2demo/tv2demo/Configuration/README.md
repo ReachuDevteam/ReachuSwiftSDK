@@ -20,7 +20,7 @@ En `tv2demoApp.swift`:
 
 ```swift
 import SwiftUI
-import ReachuCore
+import VioCore
 
 @main
 struct tv2demoApp: App {
@@ -153,7 +153,7 @@ El SDK soporta 3 modos:
 Si necesitas cambiar la configuración mientras la app está corriendo:
 
 ```swift
-import ReachuCore
+import VioCore
 
 // Recargar configuración
 ConfigurationLoader.loadConfiguration()
@@ -177,15 +177,15 @@ Una vez cargada la configuración:
 
 ```swift
 import SwiftUI
-import ReachuDesignSystem
+import VioDesignSystem
 
 struct MyView: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Text("Hello")
-            .foregroundColor(ReachuColors.adaptive(for: colorScheme).textPrimary)
-            .background(ReachuColors.adaptive(for: colorScheme).background)
+            .foregroundColor(VioColors.adaptive(for: colorScheme).textPrimary)
+            .background(VioColors.adaptive(for: colorScheme).background)
     }
 }
 ```
@@ -194,8 +194,8 @@ O usa el tema estático:
 
 ```swift
 Text("Static")
-    .foregroundColor(ReachuColors.textPrimary)
-    .background(ReachuColors.background)
+    .foregroundColor(VioColors.textPrimary)
+    .background(VioColors.background)
 ```
 
 ---
@@ -250,8 +250,8 @@ Si no encuentra el archivo:
 ```swift
 // tv2demoApp.swift
 import SwiftUI
-import ReachuCore
-import ReachuDesignSystem
+import VioCore
+import VioDesignSystem
 
 @main
 struct tv2demoApp: App {
@@ -260,7 +260,7 @@ struct tv2demoApp: App {
         ConfigurationLoader.loadConfiguration()
         
         // 2. Verificar que se cargó
-        let config = ReachuConfiguration.shared
+        let config = VioConfiguration.shared
         print("📱 App: \(config.brand?.name ?? "Unknown")")
         print("🎨 Theme: \(config.theme.mode)")
     }

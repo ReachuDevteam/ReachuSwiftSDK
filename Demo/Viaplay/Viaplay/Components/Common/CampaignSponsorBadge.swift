@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct CampaignSponsorBadge: View {
     let text: String

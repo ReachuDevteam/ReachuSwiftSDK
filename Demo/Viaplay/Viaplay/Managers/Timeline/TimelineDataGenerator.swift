@@ -8,8 +8,8 @@
 
 import Foundation
 import SwiftUI
-import ReachuCore
-import ReachuDesignSystem
+import VioCore
+import VioDesignSystem
 
 struct TimelineDataGenerator {
     

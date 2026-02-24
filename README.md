@@ -95,9 +95,9 @@ This is the stable release (`1.0.0`) of Reachu Swift SDK. For beta versions, you
 
 ```swift title="App.swift"
 import SwiftUI
-import ReachuCore
-import ReachuUI
-import ReachuDesignSystem
+import VioCore
+import VioUI
+import VioDesignSystem
 
 @main
 struct YourApp: App {
@@ -212,7 +212,7 @@ Removable floating indicator for active streams:
 ### Ecommerce Components
 ```swift
 import SwiftUI
-import ReachuUI
+import VioUI
 
 struct ProductView: View {
     let products: [Product]
@@ -260,8 +260,8 @@ struct ProductView: View {
 ### LiveShow Integration
 ```swift
 import SwiftUI
-import ReachuLiveShow
-import ReachuLiveUI
+import VioLiveShow
+import VioLiveUI
 
 struct MainAppView: View {
     var body: some View {

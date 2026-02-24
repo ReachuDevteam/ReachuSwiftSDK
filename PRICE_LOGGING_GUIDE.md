@@ -255,7 +255,7 @@ print("...")
 O usar el sistema de logging de Reachu:
 
 ```swift
-ReachuLogger.debug("...", component: "CartModule")
+VioLogger.debug("...", component: "CartModule")
 ```
 
 

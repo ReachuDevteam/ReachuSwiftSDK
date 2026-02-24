@@ -1,5 +1,5 @@
 import SwiftUI
-import ReachuCastingUI
+import VioCastingUI
 
 /// Vista para seleccionar dispositivo de casting (estilo Viaplay)
 struct CastDeviceSelectionView: View {

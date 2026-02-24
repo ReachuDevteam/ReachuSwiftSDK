@@ -7,7 +7,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct CastingProductModal: View {
     let productEvent: CastingProductEvent
@@ -24,6 +24,59 @@ struct CastingProductModal: View {
             // Direct to Casting checkout
             checkoutView
         }
+    }
+    
+    // MARK: - URL Resolution
+    
+    private static let viaplayProductUrls: [String: String] = [
+        "408895": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/tv-og-tilbehor/tv/samsung-75-qn85f-neo-qled-4k-miniled-smart-tv-2025/906443",
+        "408896": "https://www.elkjop.no/product/tv-lyd-og-smarte-hjem/hoyttalere-og-hi-fi/lydplanke/samsung-512ch-hw-q810f-lydplanke-sort/908694"
+    ]
+    
+    private func resolveCheckoutUrl(for event: CastingProductEvent) -> URL? {
+        print("🛒 [CastingProductModal] resolveCheckoutUrl - productId: \(event.productId), allProductIds: \(event.allProductIds)")
+        print("🛒 [CastingProductModal] event.castingCheckoutUrl: \(event.castingCheckoutUrl ?? "nil")")
+        print("🛒 [CastingProductModal] event.castingProductUrl: \(event.castingProductUrl ?? "nil")")
+        
+        if let u = event.castingCheckoutUrl, !u.isEmpty, let url = URL(string: u) {
+            print("🛒 [CastingProductModal] ✓ Using event.castingCheckoutUrl")
+            return url
+        }
+        if let u = event.castingProductUrl, !u.isEmpty, let url = URL(string: u) {
+            print("🛒 [CastingProductModal] ✓ Using event.castingProductUrl")
+            return url
+        }
+        let productId = event.productId
+        if let u = DemoDataManager.shared.checkoutUrl(for: productId), let url = URL(string: u) {
+            print("🛒 [CastingProductModal] ✓ Using DemoDataManager.checkoutUrl for \(productId)")
+            return url
+        }
+        if let u = DemoDataManager.shared.productUrl(for: productId), let url = URL(string: u) {
+            print("🛒 [CastingProductModal] ✓ Using DemoDataManager.productUrl for \(productId)")
+            return url
+        }
+        for id in event.allProductIds {
+            if let u = DemoDataManager.shared.checkoutUrl(for: id), let url = URL(string: u) {
+                print("🛒 [CastingProductModal] ✓ Using DemoDataManager.checkoutUrl for allProductIds[\(id)]")
+                return url
+            }
+            if let u = DemoDataManager.shared.productUrl(for: id), let url = URL(string: u) {
+                print("🛒 [CastingProductModal] ✓ Using DemoDataManager.productUrl for allProductIds[\(id)]")
+                return url
+            }
+        }
+        if let u = Self.viaplayProductUrls[productId], let url = URL(string: u) {
+            print("🛒 [CastingProductModal] ✓ Using viaplayProductUrls for \(productId)")
+            return url
+        }
+        for id in event.allProductIds {
+            if let u = Self.viaplayProductUrls[id], let url = URL(string: u) {
+                print("🛒 [CastingProductModal] ✓ Using viaplayProductUrls for allProductIds[\(id)]")
+                return url
+            }
+        }
+        print("🛒 [CastingProductModal] ✗ No URL found - showing error")
+        return nil
     }
     
     // MARK: - Checkout View
@@ -76,24 +129,15 @@ struct CastingProductModal: View {
             Divider()
                 .background(Color.white.opacity(0.1))
             
-            // WebView with checkout
-            if let checkoutUrl = productEvent.castingCheckoutUrl,
-               let url = URL(string: checkoutUrl) {
-                CastingCheckoutWebViewContainer(
-                    url: url,
-                    onDismiss: onDismiss,
-                    onBack: nil
-                )
-            } else if let productUrl = productEvent.castingProductUrl,
-                      let url = URL(string: productUrl) {
-                // Fallback to product URL if checkout URL not available
+            // WebView with checkout - resolve URL from event, DemoDataManager, or Viaplay fallback
+            if let url = resolveCheckoutUrl(for: productEvent) {
                 CastingCheckoutWebViewContainer(
                     url: url,
                     onDismiss: onDismiss,
                     onBack: nil
                 )
             } else {
-                // No URL available
+                // No URL available after all fallbacks
                 VStack(spacing: 16) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 48))

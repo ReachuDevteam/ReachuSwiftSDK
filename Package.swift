@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ReachuSwiftSDK",
+    name: "VioSwiftSDK",
     platforms: [
         .iOS(.v15),
         .macOS(.v12),
@@ -12,86 +12,86 @@ let package = Package(
     products: [
         // Core product - always needed (FASE 1)
         .library(
-            name: "ReachuCore",
-            targets: ["ReachuCore"]
+            name: "VioCore",
+            targets: ["VioCore"]
         ),
 
         // Network module - internal shared networking (FASE 1)
         .library(
-            name: "ReachuNetwork",
-            targets: ["ReachuNetwork"]
+            name: "VioNetwork",
+            targets: ["VioNetwork"]
         ),
 
         // UI Components - optional target (FASE 2)
         .library(
-            name: "ReachuUI",
-            targets: ["ReachuCore", "ReachuUI"]
+            name: "VioUI",
+            targets: ["VioCore", "VioUI"]
         ),
 
         // Design System - internal UI shared components (FASE 2)
         .library(
-            name: "ReachuDesignSystem",
-            targets: ["ReachuDesignSystem"]
+            name: "VioDesignSystem",
+            targets: ["VioDesignSystem"]
         ),
 
         // Engagement System - engagement logic and models (FASE 4)
         .library(
-            name: "ReachuEngagementSystem",
-            targets: ["ReachuEngagementSystem"]
+            name: "VioEngagementSystem",
+            targets: ["VioEngagementSystem"]
         ),
 
         // Engagement UI - engagement UI components (FASE 4)
         .library(
-            name: "ReachuEngagementUI",
-            targets: ["ReachuEngagementSystem", "ReachuEngagementUI"]
+            name: "VioEngagementUI",
+            targets: ["VioEngagementSystem", "VioEngagementUI"]
         ),
 
         // LiveShow - optional target (FASE 3)
         // .library(
-        //     name: "ReachuLiveShow",
-        //     targets: ["ReachuCore", "ReachuLiveShow"]
+        //     name: "VioLiveShow",
+        //     targets: ["VioCore", "VioLiveShow"]
         // ),
 
         // Testing utilities - internal testing helpers
         .library(
-            name: "ReachuTesting",
-            targets: ["ReachuTesting"]
+            name: "VioTesting",
+            targets: ["VioTesting"]
         ),
 
         // LiveShow UI Components - optional target (FASE 3)
         // .library(
-        //     name: "ReachuLiveUI",
-        //     targets: ["ReachuCore", "ReachuLiveShow", "ReachuLiveUI"]
+        //     name: "VioLiveUI",
+        //     targets: ["VioCore", "VioLiveShow", "VioLiveUI"]
         // ),
 
         // Complete SDK - everything included
         // .library(
-        //     name: "ReachuComplete",
+        //     name: "VioComplete",
         //     targets: [
-        //         "ReachuCore", "ReachuDesignSystem", "ReachuUI", "ReachuLiveShow", "ReachuLiveUI",
+        //         "VioCore", "VioDesignSystem", "VioUI", "VioLiveShow", "VioLiveUI",
         //     ]
         // ),
         // Casting UI - live match casting components
         .library(
-            name: "ReachuCastingUI",
-            targets: ["ReachuCastingUI"]
+            name: "VioCastingUI",
+            targets: ["VioCastingUI"]
         ),
 
         .library(
-            name: "ReachuComplete",
+            name: "VioComplete",
             targets: [
-                "ReachuCore",
-                "ReachuNetwork",
-                "ReachuDesignSystem",
-                "ReachuUI",
-                "ReachuEngagementSystem",
-                "ReachuEngagementUI",
-                "ReachuCastingUI"
+                "VioCore",
+                "VioNetwork",
+                "VioDesignSystem",
+                "VioUI",
+                "VioEngagementSystem",
+                "VioEngagementUI",
+                "VioCastingUI"
             ]
         ),        
     ],
     dependencies: [
-        // GraphQL client for Reachu API
+        // GraphQL client for Vio API
         .package(url: "https://github.com/apollographql/apollo-ios.git", from: "1.0.0"),
 
         // WebSocket for LiveShow real-time features
@@ -116,21 +116,21 @@ let package = Package(
     targets: [
         // MARK: - INTERNAL: Network Target (Shared)
         .target(
-            name: "ReachuNetwork",
+            name: "VioNetwork",
             dependencies: [
                 .product(name: "Apollo", package: "apollo-ios")
             ],
-            path: "Sources/ReachuNetwork"
+            path: "Sources/VioNetwork"
         ),
 
         // MARK: - FASE 1: Core Target (Required)
         .target(
-            name: "ReachuCore",
+            name: "VioCore",
             dependencies: [
-                "ReachuNetwork",
+                "VioNetwork",
                 .product(name: "Mixpanel", package: "mixpanel-swift")
             ],
-            path: "Sources/ReachuCore",
+            path: "Sources/VioCore",
             exclude: [
                 // Documentation and examples (not part of the target build)
                 "Configuration/LOCALIZATION_GUIDE.md",
@@ -152,21 +152,21 @@ let package = Package(
 
         // MARK: - INTERNAL: Design System Target (Shared)
         .target(
-            name: "ReachuDesignSystem",
+            name: "VioDesignSystem",
             dependencies: [
-                "ReachuCore",
+                "VioCore",
                 .product(name: "Nuke", package: "Nuke"),
             ],
-            path: "Sources/ReachuDesignSystem"
+            path: "Sources/VioDesignSystem"
         ),
 
         // MARK: - FASE 2: UI Components Target (Optional)
         .target(
-            name: "ReachuUI",
+            name: "VioUI",
             dependencies: [
-                "ReachuCore",
-                "ReachuDesignSystem",
-                "ReachuTesting",  // For previews and mock data
+                "VioCore",
+                "VioDesignSystem",
+                "VioTesting",  // For previews and mock data
                 .product(
                     name: "StripePaymentSheet", package: "stripe-ios",
                     condition: .when(platforms: [.iOS])),
@@ -175,7 +175,7 @@ let package = Package(
                     condition: .when(platforms: [.iOS])),
 
             ],
-            path: "Sources/ReachuUI",
+            path: "Sources/VioUI",
             exclude: [
                 "Components/RProductSlider/README.md",
                 "Components/README.md",
@@ -188,81 +188,81 @@ let package = Package(
 
         // MARK: - FASE 3: LiveShow Target (Optional)
         .target(
-            name: "ReachuLiveShow",
+            name: "VioLiveShow",
             dependencies: [
-                "ReachuCore",
-                "ReachuNetwork",
+                "VioCore",
+                "VioNetwork",
                 .product(name: "Starscream", package: "Starscream"),
                 .product(name: "SocketIO", package: "socket.io-client-swift"),
             ],
-            path: "Sources/ReachuLiveShow"
+            path: "Sources/VioLiveShow"
         ),
 
         // MARK: - FASE 3: LiveShow UI Target (Optional)
         .target(
-            name: "ReachuLiveUI",
+            name: "VioLiveUI",
             dependencies: [
-                "ReachuCore",
-                "ReachuLiveShow",
-                "ReachuUI",
-                "ReachuDesignSystem",
+                "VioCore",
+                "VioLiveShow",
+                "VioUI",
+                "VioDesignSystem",
             ],
-            path: "Sources/ReachuLiveUI"
+            path: "Sources/VioLiveUI"
         ),
 
         // MARK: - FASE 4: Engagement System Target (Optional)
         .target(
-            name: "ReachuEngagementSystem",
+            name: "VioEngagementSystem",
             dependencies: [
-                "ReachuCore",
+                "VioCore",
             ],
-            path: "Sources/ReachuEngagementSystem"
+            path: "Sources/VioEngagementSystem"
         ),
 
         // MARK: - FASE 4: Engagement UI Target (Optional)
         .target(
-            name: "ReachuEngagementUI",
+            name: "VioEngagementUI",
             dependencies: [
-                "ReachuCore",
-                "ReachuEngagementSystem",
-                "ReachuDesignSystem",
+                "VioCore",
+                "VioEngagementSystem",
+                "VioDesignSystem",
             ],
-            path: "Sources/ReachuEngagementUI"
+            path: "Sources/VioEngagementUI"
         ),
 
         // MARK: - INTERNAL: Testing Utilities Target
         .target(
-            name: "ReachuTesting",
+            name: "VioTesting",
             dependencies: [
-                "ReachuCore",
-                "ReachuNetwork",
+                "VioCore",
+                "VioNetwork",
             ],
-            path: "Sources/ReachuTesting"
+            path: "Sources/VioTesting"
         ),
 
         // MARK: - Casting UI Target
         .target(
-            name: "ReachuCastingUI",
+            name: "VioCastingUI",
             dependencies: [
-                "ReachuCore",
-                "ReachuUI",
-                "ReachuEngagementSystem",
-                "ReachuEngagementUI",
-                "ReachuDesignSystem",
+                "VioCore",
+                "VioUI",
+                "VioEngagementSystem",
+                "VioEngagementUI",
+                "VioDesignSystem",
             ],
-            path: "Sources/ReachuCastingUI"
+            path: "Sources/VioCastingUI"
         ),
 
         // MARK: - Test Targets
         .testTarget(
-            name: "ReachuUITests",
+            name: "VioUITests",
             dependencies: [
-                "ReachuUI",
-                "ReachuCore",
-                "ReachuDesignSystem",
-                "ReachuLiveShow"
+                "VioUI",
+                "VioCore",
+                "VioDesignSystem",
+                "VioLiveShow"
             ],
-            path: "Tests/ReachuUITests"
+            path: "Tests/VioUITests"
         )
     ]
 )

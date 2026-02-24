@@ -7,7 +7,7 @@ Mantener la demo funcional mientras se conecta gradualmente con el backend real.
 - ✅ Sistema de configuración de data estática creado (`DemoDataConfiguration`, `DemoDataManager`)
 - ✅ JSON con toda la data estática (`demo-static-data.json`)
 - ✅ Loader y manager implementados en SDK
-- ✅ Integrado en `ReachuConfiguration`
+- ✅ Integrado en `VioConfiguration`
 - ✅ Default initializers con valores por defecto
 - ✅ Documentación completa creada (`DEMO_DATA_INTEGRATION_GUIDE.md`, `DEMO_DATA_SUMMARY.md`)
 - ⏳ Componentes aún usan valores hardcoded (Fase 1 pendiente)

@@ -171,7 +171,7 @@ Ejemplo de estructura en config:
 public class ReachuSDK {
     public let entertainment: EntertainmentManager
     
-    public init(config: ReachuConfiguration) {
+    public init(config: VioConfiguration) {
         self.entertainment = EntertainmentManager(
             userId: config.userId,
             apiClient: self.apiClient,

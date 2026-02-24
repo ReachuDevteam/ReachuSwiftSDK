@@ -35,7 +35,7 @@ This document confirms that the Viaplay demo has been properly configured with R
 **File**: `Viaplay/Components/ViaplayVideoPlayer.swift`
 
 Changes made:
-- ✅ Added `import ReachuLiveUI`
+- ✅ Added `import VioLiveUI`
 - ✅ Added `@StateObject private var campaignManager = CampaignManager.shared`
 - ✅ Added `DynamicComponentRenderer()` with z-index 10,000,000
 - ✅ Connected to Campaign Manager in `onAppear`
@@ -49,7 +49,7 @@ DynamicComponentRenderer()
 
 // In onAppear
 // CampaignManager.shared initializes automatically with campaignId from config
-let campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
+let campaignId = VioConfiguration.shared.liveShowConfiguration.campaignId
 print("🎯 [Viaplay] Campaign ID configured: \(campaignId)")
 
 // Reinitialize if needed
@@ -95,7 +95,7 @@ campaignManager.disconnect()
 ```
 ViaplayApp.swift
 ├── Loads reachu-config.json via ConfigurationLoader
-├── Initializes ReachuConfiguration.shared
+├── Initializes VioConfiguration.shared
 └── Provides CartManager & CheckoutDraft to all views
 
 ViaplayVideoPlayer.swift

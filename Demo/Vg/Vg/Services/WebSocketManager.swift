@@ -1,6 +1,6 @@
 import Foundation
 import Combine
-import ReachuCore
+import VioCore
 
 class WebSocketManager: NSObject, ObservableObject {
     @Published var isConnected = false
@@ -24,7 +24,7 @@ class WebSocketManager: NSObject, ObservableObject {
         }
         
         // Obtener campaignId del config dinámicamente
-        let campaignId = ReachuConfiguration.shared.liveShowConfiguration.campaignId
+        let campaignId = VioConfiguration.shared.liveShowConfiguration.campaignId
         let url = URL(string: "wss://dev-campaing.reachu.io/ws/\(campaignId)")!
         print("🔌 [WebSocket] Conectando a: \(url.absoluteString) (campaignId: \(campaignId))")
         print("🔌 [WebSocket] Verificando si hay eventos activos para campaignId: \(campaignId)")
@@ -34,7 +34,7 @@ class WebSocketManager: NSObject, ObservableObject {
         request.timeoutInterval = 10.0
         
         // Agregar API key a los headers si está disponible
-        let config = ReachuConfiguration.shared
+        let config = VioConfiguration.shared
         if !config.apiKey.isEmpty {
             request.setValue(config.apiKey, forHTTPHeaderField: "X-API-Key")
             let apiKeyMasked = String(repeating: "*", count: max(0, config.apiKey.count - 4)) + config.apiKey.suffix(4)

@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuCore
-import ReachuUI
+import VioCore
+import VioUI
 
 /// Versión compacta de producto específica para la vista de casting
 struct CastingProductCard: View {

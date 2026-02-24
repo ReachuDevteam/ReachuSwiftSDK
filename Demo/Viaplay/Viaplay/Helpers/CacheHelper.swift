@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import ReachuCore
+import VioCore
 
 /// Helper to manage cache clearing for both campaign data and images
 struct CacheHelper {
@@ -24,7 +24,7 @@ struct CacheHelper {
     static func setupCacheClearingListener() {
         // Prevent duplicate listener registration
         guard !listenersSetup else {
-            ReachuLogger.debug("Cache clearing listeners already setup, skipping", component: "CacheHelper")
+            VioLogger.debug("Cache clearing listeners already setup, skipping", component: "CacheHelper")
             return
         }
         listenersSetup = true
@@ -36,7 +36,7 @@ struct CacheHelper {
         ) { _ in
             // Clear image cache when campaign cache is cleared
             ImageLoader.clearCache()
-            ReachuLogger.info("Image cache cleared due to configuration change", component: "CacheHelper")
+            VioLogger.info("Image cache cleared due to configuration change", component: "CacheHelper")
         }
         
         // Listen for specific logo changes
@@ -53,7 +53,7 @@ struct CacheHelper {
                let oldLogoUrl = URL(string: oldLogoUrlString) {
                 // Clear specific logo from cache
                 ImageLoader.clearCache(for: oldLogoUrl)
-                ReachuLogger.debug("Cleared cache for logo: \(oldLogoUrlString)", component: "CacheHelper")
+                VioLogger.debug("Cleared cache for logo: \(oldLogoUrlString)", component: "CacheHelper")
             }
             
             // Pre-load new logo if provided
@@ -70,9 +70,9 @@ struct CacheHelper {
                         configuration.timeoutIntervalForResource = 10.0
                         let session = URLSession(configuration: configuration)
                         _ = try await session.data(from: newLogoUrl)
-                        ReachuLogger.debug("Pre-loaded new logo: \(newLogoUrlString)", component: "CacheHelper")
+                        VioLogger.debug("Pre-loaded new logo: \(newLogoUrlString)", component: "CacheHelper")
                     } catch {
-                        ReachuLogger.warning("Failed to pre-load logo (timeout or error): \(error)", component: "CacheHelper")
+                        VioLogger.warning("Failed to pre-load logo (timeout or error): \(error)", component: "CacheHelper")
                     }
                 }
             }
@@ -87,6 +87,6 @@ struct CacheHelper {
         // Clear image cache (from demo) - will also be cleared by notification listener
         ImageLoader.clearCache()
         
-        ReachuLogger.info("Cleared both campaign cache and image cache", component: "CacheHelper")
+        VioLogger.info("Cleared both campaign cache and image cache", component: "CacheHelper")
     }
 }

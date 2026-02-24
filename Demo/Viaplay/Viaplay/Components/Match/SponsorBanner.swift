@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ReachuCore
+import VioCore
 
 struct SponsorBanner: View {
     let logoName: String

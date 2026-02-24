@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-import ReachuCastingUI
+import VioCastingUI
 
 struct MatchNavigationTabs: View {
     @Binding var selectedTab: MatchTab

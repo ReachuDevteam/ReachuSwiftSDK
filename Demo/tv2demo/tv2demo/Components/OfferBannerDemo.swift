@@ -1,6 +1,6 @@
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 /// Demo view showing how to use the dynamic Offer Banner
 struct OfferBannerDemo: View {

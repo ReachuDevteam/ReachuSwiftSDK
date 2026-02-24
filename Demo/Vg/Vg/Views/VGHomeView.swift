@@ -6,8 +6,8 @@
 //
 
 import SwiftUI
-import ReachuUI
-import ReachuCore
+import VioUI
+import VioCore
 
 struct VGHomeView: View {
     @State private var selectedTab = 3 // "Direkte" tab

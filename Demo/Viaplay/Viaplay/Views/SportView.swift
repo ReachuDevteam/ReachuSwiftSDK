@@ -6,9 +6,9 @@
 //
 
 import SwiftUI
-import ReachuCore
-import ReachuUI
-import ReachuCastingUI
+import VioCore
+import VioUI
+import VioCastingUI
 
 struct SportView: View {
     @Binding var selectedTab: Int
@@ -184,7 +184,7 @@ struct SportView: View {
                             }
                             .padding(.top, 24)
                             .padding(.horizontal, 16)
-                            // Auto-loads based on ReachuConfiguration (currency/country)
+                            // Auto-loads based on VioConfiguration (currency/country)
                             RProductSlider(
                                 title: nil,
                                 products: nil,

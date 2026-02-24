@@ -7,9 +7,9 @@
 
 import SwiftUI
 import CoreData
-import ReachuCore
-import ReachuUI
-import ReachuEngagementSystem
+import VioCore
+import VioUI
+import VioEngagementSystem
 
 @main
 struct ViaplayApp: App {
@@ -27,11 +27,11 @@ struct ViaplayApp: App {
         print("🚀 [Viaplay] Loading Reachu SDK configuration...")
         ConfigurationLoader.loadConfiguration()
         print("✅ [Viaplay] Reachu SDK configured successfully")
-        print("🎨 [Viaplay] Theme: \(ReachuConfiguration.shared.theme.name)")
-        print("🎨 [Viaplay] Mode: \(ReachuConfiguration.shared.theme.mode)")
+        print("🎨 [Viaplay] Theme: \(VioConfiguration.shared.theme.name)")
+        print("🎨 [Viaplay] Mode: \(VioConfiguration.shared.theme.mode)")
 
         // MARK: - Reachu Diagnostic Logs
-        let cfg = ReachuConfiguration.shared
+        let cfg = VioConfiguration.shared
         let apiKeyMasked = cfg.apiKey.isEmpty ? "(empty)" : String(repeating: "*", count: max(0, cfg.apiKey.count - 4)) + cfg.apiKey.suffix(4)
         print("🔧 [Reachu][Config] environment=\(cfg.environment.rawValue)")
         print("🔧 [Reachu][Config] graphQLURL=\(cfg.environment.graphQLURL)")
@@ -42,7 +42,7 @@ struct ViaplayApp: App {
         CacheHelper.setupCacheClearingListener()
         
         // Configure demo mode for Engagement System if enabled
-        if ReachuConfiguration.shared.engagementConfiguration.demoMode {
+        if VioConfiguration.shared.engagementConfiguration.demoMode {
             // Set timeline events provider for DemoEngagementRepository
             DemoEngagementRepository.timelineEventsProvider = {
                 TimelineDataGenerator.generateBarcelonaPSGTimeline().map { $0.event }

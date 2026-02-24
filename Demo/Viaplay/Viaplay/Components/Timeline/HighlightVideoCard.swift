@@ -9,7 +9,7 @@
 import SwiftUI
 import AVKit
 import Combine
-import ReachuCore
+import VioCore
 
 struct HighlightVideoCard: View {
     let highlight: HighlightTimelineEvent
@@ -55,7 +55,7 @@ struct HighlightVideoCard: View {
                 
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 4) {
-                        Text("\(ReachuConfiguration.shared.effectiveBrandConfiguration.name) Highlights")
+                        Text("\(VioConfiguration.shared.effectiveBrandConfiguration.name) Highlights")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundColor(.white)
                         

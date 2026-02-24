@@ -7,7 +7,7 @@
 
 import SwiftUI
 import Combine
-import ReachuCore
+import VioCore
 
 /// AsyncImage with caching support to avoid loading indicators
 /// Caches images in memory and disk, only shows loading if image is not cached
@@ -72,7 +72,7 @@ class ImageLoader: ObservableObject {
         
         // Validate URL scheme
         guard Self.isValidImageURL(url) else {
-            ReachuLogger.warning("Invalid URL scheme for image: \(url.absoluteString)", component: "ImageLoader")
+            VioLogger.warning("Invalid URL scheme for image: \(url.absoluteString)", component: "ImageLoader")
             self.image = nil
             return
         }
@@ -93,7 +93,7 @@ class ImageLoader: ObservableObject {
                 return
             }
         } catch {
-            ReachuLogger.warning("Failed to load image from disk cache: \(error)", component: "ImageLoader")
+            VioLogger.warning("Failed to load image from disk cache: \(error)", component: "ImageLoader")
         }
         
         // Load from network
@@ -107,17 +107,17 @@ class ImageLoader: ObservableObject {
                     do {
                         try saveToDisk(image: uiImage, key: cacheKey as String)
                     } catch {
-                        ReachuLogger.warning("Failed to save image to disk cache: \(error)", component: "ImageLoader")
+                        VioLogger.warning("Failed to save image to disk cache: \(error)", component: "ImageLoader")
                     }
                     // Update image
                     await MainActor.run {
                         self.image = Image(uiImage: uiImage)
                     }
                 } else {
-                    ReachuLogger.warning("Failed to create UIImage from data for URL: \(url.absoluteString)", component: "ImageLoader")
+                    VioLogger.warning("Failed to create UIImage from data for URL: \(url.absoluteString)", component: "ImageLoader")
                 }
             } catch {
-                ReachuLogger.error("Failed to load image from network: \(error)", component: "ImageLoader")
+                VioLogger.error("Failed to load image from network: \(error)", component: "ImageLoader")
             }
         }
     }
@@ -171,7 +171,7 @@ class ImageLoader: ObservableObject {
         
         // Validate URL scheme
         guard isValidImageURL(url) else {
-            ReachuLogger.warning("Cannot clear cache for invalid URL scheme: \(url.absoluteString)", component: "ImageLoader")
+            VioLogger.warning("Cannot clear cache for invalid URL scheme: \(url.absoluteString)", component: "ImageLoader")
             return
         }
         
@@ -185,9 +185,9 @@ class ImageLoader: ObservableObject {
         if let fileURL = cacheFileURL(key: key) {
             do {
                 try fileManager.removeItem(at: fileURL)
-                ReachuLogger.debug("Cleared cache for logo: \(url.absoluteString)", component: "ImageLoader")
+                VioLogger.debug("Cleared cache for logo: \(url.absoluteString)", component: "ImageLoader")
             } catch {
-                ReachuLogger.warning("Failed to remove cached logo file: \(error)", component: "ImageLoader")
+                VioLogger.warning("Failed to remove cached logo file: \(error)", component: "ImageLoader")
             }
         }
     }

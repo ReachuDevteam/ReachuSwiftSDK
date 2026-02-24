@@ -15,7 +15,7 @@ Power utiliza una paleta de colores naranja y azul:
   - Hex aproximado: `#007AFF` (iOS Blue)
   - Uso: Badge de verificación (checkmark.seal.fill)
 
-**Nota**: Estos colores fueron reemplazados por `ReachuColors.primary` y `ReachuColors.info` en el SDK para permitir personalización por campaña.
+**Nota**: Estos colores fueron reemplazados por `VioColors.primary` y `VioColors.info` en el SDK para permitir personalización por campaña.
 
 ## Elkjøp Brand Colors
 
@@ -75,12 +75,12 @@ Para usar los colores de Elkjøp, configura el tema así:
 
 ## Migración de Colores Hardcodeados
 
-Todos los componentes del SDK ahora usan `ReachuColors.adaptive(for: colorScheme)` en lugar de colores hardcodeados:
+Todos los componentes del SDK ahora usan `VioColors.adaptive(for: colorScheme)` en lugar de colores hardcodeados:
 
-- `Color.orange` → `ReachuColors.primary`
-- `Color.blue` → `ReachuColors.info`
-- `Color.white` → `ReachuColors.textPrimary`
-- `Color.black` → `ReachuColors.background` o `ReachuColors.textPrimary` (según contexto)
+- `Color.orange` → `VioColors.primary`
+- `Color.blue` → `VioColors.info`
+- `Color.white` → `VioColors.textPrimary`
+- `Color.black` → `VioColors.background` o `VioColors.textPrimary` (según contexto)
 - Colores hex hardcodeados → Colores del tema configurado
 
 ## Assets de Imágenes

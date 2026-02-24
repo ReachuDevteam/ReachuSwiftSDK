@@ -319,14 +319,14 @@ Necesitamos logging consistente en todo el sistema para facilitar debugging y mo
 **Funcionalidades:**
 
 1. **Usar sistema de logging del SDK**
-   - Si existe `ReachuLogger` o equivalente, usarlo
+   - Si existe `VioLogger` o equivalente, usarlo
    - Si no, usar `Log` de Android con tags consistentes
 
 2. **Niveles de logging apropiados**
-   - `Log.d()` / `ReachuLogger.debug()`: Para información de debugging
-   - `Log.i()` / `ReachuLogger.info()`: Para eventos importantes
-   - `Log.w()` / `ReachuLogger.warning()`: Para advertencias (URLs inválidas, timeouts)
-   - `Log.e()` / `ReachuLogger.error()`: Para errores (fallos de red, disco)
+   - `Log.d()` / `VioLogger.debug()`: Para información de debugging
+   - `Log.i()` / `VioLogger.info()`: Para eventos importantes
+   - `Log.w()` / `VioLogger.warning()`: Para advertencias (URLs inválidas, timeouts)
+   - `Log.e()` / `VioLogger.error()`: Para errores (fallos de red, disco)
 
 3. **Tags consistentes**
    - "ImageLoader" para operaciones de cache de imágenes

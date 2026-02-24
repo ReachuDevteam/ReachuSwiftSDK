@@ -1,5 +1,5 @@
 import XCTest
-@testable import ReachuCore
+@testable import VioCore
 
 final class ReachuCoreTests: XCTestCase {
     
